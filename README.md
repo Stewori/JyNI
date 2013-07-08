@@ -20,7 +20,7 @@ Table of contents
 
 
 
-1) What is JyNI?
+1. What is JyNI?
 ----------------
 
 One well known current drawback of Jython is that it does not support native extensions written for CPython like NumPy and Scipy.
@@ -44,7 +44,7 @@ After that we will focus on SciPy and others.
 
 
 
-2) Current state
+2. Current state
 ----------------
 
 We are currently able to load a C-extension into Jython, call methods and access attributes,
@@ -73,7 +73,7 @@ Section 3 contains a brief description of the necessary steps.
 
 
 
-3) Building and testing
+3. Building and testing
 -----------------------
 
 Easiest way to build JyNI is to setup C-, and Java-projects with an IDE of choice.
@@ -133,7 +133,7 @@ To run it with Jython use the newest release of version 2.7
 
 
 
-4) Roadmap
+4. Roadmap
 ----------
 
 Support remaining crucial builtin types (we plan to implement them in the following order):
@@ -152,7 +152,7 @@ Further steps:
 
 
 
-5) Binary compatibility
+5. Binary compatibility
 -----------------------
 
 CPython-extensions must be compiled with the flag WITH_PYMALLOC activated. Otherwise they may not use
@@ -172,7 +172,7 @@ We hope, extensions that suffer from this issue are very rare or not existent.
 
 
 
-6) Summary of changes to Python-code
+6. Summary of changes to Python-code
 ------------------------------------
 
 Briefly speaking, we took the python files crucial for loading native C-extensions and modified them to perform the explained purpose of JyNI.
@@ -189,7 +189,7 @@ However, also in these cases, we usually don't rewrite everything. Functions tha
 
 
 
-7) Copyright notice
+7. Copyright notice
 -------------------
 
 Copyright of Python and Jython:
