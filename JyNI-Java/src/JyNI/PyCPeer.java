@@ -103,24 +103,24 @@ public class PyCPeer extends PyObject {
 		System.out.println(er.getType().getName());*/
 		//return er;
 	}
-	
- 	public PyObject __findattr_ex__(String name)
- 	{
- 		//System.out.println("Look for attribute "+name+" in PyCPeer");
- 		PyObject er = JyNI.getAttrString(objectHandle, name);
- 		return er != null ? er : Py.None;
- 		//return super.__findattr_ex__(name);
- 	}
- 	
- 	public PyString __repr__() {
-        return (PyString) JyNI.repr(objectHandle);
-    }
- 	
- 	public String toString()
- 	{
- 		return JyNI.PyObjectAsString(objectHandle);
- 	}
-	
+
+	public PyObject __findattr_ex__(String name)
+	{
+		//System.out.println("Look for attribute "+name+" in PyCPeer");
+		PyObject er = JyNI.getAttrString(objectHandle, name);
+		return er != null ? er : Py.None;
+		//return super.__findattr_ex__(name);
+	}
+
+	public PyString __repr__() {
+		return (PyString) JyNI.repr(objectHandle);
+	}
+
+	public String toString()
+	{
+		return JyNI.PyObjectAsString(objectHandle);
+	}
+
 	/**
 	 * Though it is discouraged in JNI-documentation,
 	 * we use finalize to tidy up the native references
