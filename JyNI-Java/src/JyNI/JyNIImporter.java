@@ -1,0 +1,214 @@
+/*
+ * Copyright of Python and Jython:
+ * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+ * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 
+ * Copyright of JyNI:
+ * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ *
+ *
+ * This file is part of JyNI.
+ *
+ * JyNI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JyNI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * Linking this library statically or dynamically with other modules is
+ * making a combined work based on this library.  Thus, the terms and
+ * conditions of the GNU General Public License cover the whole
+ * combination.
+ *
+ * As a special exception, the copyright holders of this library give you
+ * permission to link this library with independent modules to produce an
+ * executable, regardless of the license terms of these independent
+ * modules, and to copy and distribute the resulting executable under
+ * terms of your choice, provided that you also meet, for each linked
+ * independent module, the terms and conditions of the license of that
+ * module.  An independent module is a module which is not derived from
+ * or based on this library.  If you modify this library, you may extend
+ * this exception to your version of the library, but you are not
+ * obligated to do so.  If you do not wish to do so, delete this
+ * exception statement from your version.
+ */
+
+
+package JyNI;
+
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.PySystemState;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Vector;
+import java.util.List;
+import java.util.HashMap;
+
+/**
+ * Load Java classes.
+ */
+public class JyNIImporter extends PyObject {
+	public static HashMap<String, JyNIModuleInfo> dynModules = new HashMap<String, JyNIModuleInfo>();
+	
+	//public static final String JAVA_IMPORT_PATH_ENTRY = "__classpath__";
+	List knownPaths = null;
+	Vector<String> libPaths = new Vector<String>();
+
+	public JyNIImporter()
+	{
+		super();
+	}
+	
+	public JyNIImporter(List knownPaths)
+	{
+		super();
+		this.knownPaths = knownPaths;
+	}
+	
+	public JyNIImporter(String... knownPaths)
+	{
+		super();
+		this.knownPaths = Arrays.asList(knownPaths);
+	}
+	
+	public PyObject __call__(PyObject args[], String keywords[]) {
+		//if(args[0].toString().endsWith(JAVA_IMPORT_PATH_ENTRY)){
+			//return this;
+		//}
+		//System.out.println("CPythonImporter7: "+args[0]+"  "+args.length);
+		//libPath = args[0].toString();
+		String s = args[0].toString();
+		if (knownPaths == null)
+		{
+			if (!libPaths.contains(s)) libPaths.add(s);
+			return this;
+		} else if (knownPaths.contains(s))
+		{
+			if (!libPaths.contains(s)) libPaths.add(s);
+			return this;
+		}
+		/*String suf = "."+getSystemDependendDynamicLibraryExtension();
+		System.out.println(suf);
+		File look = new File(args[0].toString());
+		String[] ch = look.list();
+		for (int i = 0; i < ch.length; ++i)
+		{
+			//if (s.endsWith(suf))
+			{
+				//System.out.println("CPythonExtension handles "+args[0]);
+				//libPaths.add(args[0]);
+				//return this;
+			}
+		}
+		//return this;*/
+		throw Py.ImportError("unable to handle");
+	}
+	
+	/**
+	 * Find the module for the fully qualified name.
+	 *
+	 * @param name the fully qualified name of the module
+	 * @return a loader instance if this importer can load the module, None
+	 *		 otherwise
+	 */
+	public PyObject find_module(String name) {
+		return find_module(name, Py.None);
+	}
+
+	/**
+	 * Find the module for the fully qualified name.
+	 *
+	 * @param name the fully qualified name of the module
+	 * @param path if installed on the meta-path None or a module path
+	 * @return a loader instance if this importer can load the module, None
+	 *		 otherwise
+	 */
+	public PyObject find_module(String name, PyObject path) {
+		/*Py.writeDebug("import", "trying " + name
+				+ " in packagemanager for path " + path);
+		PyObject ret = PySystemState.packageManager.lookupName(name.intern());
+		if (ret != null) {
+			Py.writeComment("import", "'" + name + "' as java package");
+			return this;
+		}*/
+		String suf = "."+getSystemDependendDynamicLibraryExtension();
+		for (String s : libPaths)
+		{
+			File fl = new File(s);
+			//if (fl.exists())
+			String[] ch = fl.list();
+			if (ch != null)
+			{
+				for (String m : ch)
+				{
+					if (m.equals(name+suf))
+					{
+						//System.out.println("CPythonExtensionImporter found extension "+name);
+						//System.out.println("Extension-Path: "+s+File.separatorChar+m);
+						dynModules.put(name, new JyNIModuleInfo(name, s+File.separatorChar+m, null));
+						return this;
+					}
+				}	
+			}
+		}
+		//System.out.println("CPythonExtensionImporter8: "+name);
+		//System.out.println("Path: "+path);
+		//System.out.println("look in "+libPath);
+		return Py.None;
+	}
+
+	public PyObject load_module(String name) {
+		//System.out.println("000load module: "+name);
+		JyNIModuleInfo inf = dynModules.get(name);
+		if (inf.module == null)
+			inf.module = JyNI.loadModule(name, inf.path);
+		//return JyNI.loadModule(name, "path");
+		//return inf.module;
+		//System.out.println("000path: "+inf.path);
+		return Py.NotImplemented; //PySystemState.packageManager.lookupName(name.intern());
+	}
+	
+	/**
+	 * Returns a string representation of the object.
+	 *
+	 * @return a string representation of the object.
+	 */
+	public String toString() {
+		return this.getType().toString();
+	}
+	
+	public static String getSystemDependendDynamicLibraryExtension()
+	{
+		String OS = System.getProperty("os.name").toLowerCase();
+		//if isWindows:
+		if (OS.indexOf("win") >= 0) return "dll";
+		else return "so";
+	}
+	
+	//not needed, since CPython-extensions ignore this naming-standard.
+	//Only difference in filename is the ending, i.e. ".so" or ".dll"
+	public static String libNameToFileName(String libName)
+	{
+		String OS = System.getProperty("os.name").toLowerCase();
+		//isWindows:
+		if (OS.indexOf("win") >= 0) return libName+".dll";
+		else return "lib"+libName+".so";
+		/*
+		//isUnix:
+		if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 ) return "lib"+libName+".so";
+		//isMac:
+		if (OS.indexOf("mac") >= 0) return "lib"+libName+".so";
+		//isSolaris:
+		if (OS.indexOf("sunos") >= 0) return "lib"+libName+".so";*/
+	 
+	}
+}
