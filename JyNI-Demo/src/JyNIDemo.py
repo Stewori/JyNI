@@ -5,8 +5,6 @@ Created on 30.06.2013
 '''
 
 import sys
-#print sys.version
-#print sys.platform
 
 sys.path.append('/home/stefan/eclipseWorkspace/JyNI/DemoExtension/Debug')
 
@@ -14,9 +12,9 @@ import DemoExtension
 print "--------Access Docstring----------"
 print DemoExtension.__doc__
 
-print "To prove that Jython is running, we make a java call:"
-from  java.lang import System
-print "System.currentTimeMillis: "+str(System.currentTimeMillis())
+#print "To prove that Jython is running, we make a java call:"
+#from  java.lang import System
+#print "System.currentTimeMillis: "+str(System.currentTimeMillis())
 
 
 print ""

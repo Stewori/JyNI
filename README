@@ -121,7 +121,7 @@ already supported features of JyNI. It can be build like an
 ordinary Python-extension as described in the tutorial
 http://docs.python.org/2/extending/extending.html
 
-Test.py demonstrates the use of PythonExtension from Python-side.
+JyNI-Demo/src/JyNIDemo.py demonstrates the use of DemoExtension from Python-side.
 It should run perfectly with either CPython 2.7.x or Jython+JyNI.
 To run it with Jython use the newest release of version 2.7
 (currently beta) and be sure to have JyNI.jar on the run-time classpath.
