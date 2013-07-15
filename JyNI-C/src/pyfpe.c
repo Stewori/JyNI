@@ -1,4 +1,4 @@
-/* This File is based on formatter_unicode.c from CPython 2.7.4 release.
+/* This File is based on pyfpe.c from CPython 2.7.4 release.
  * It has been modified to suite JyNI needs.
  *
  * Copyright of the original file:
@@ -43,21 +43,26 @@
  * exception statement from your version.
  */
 
-/* Implements the unicode (as opposed to string) version of the
-   built-in formatter for unicode.  That is, unicode.__format__(). */
+#include "pyconfig_JyNI.h"
+#include "pyfpe_JyNI.h"
+/* 
+ * The signal handler for SIGFPE is actually declared in an external
+ * module fpectl, or as preferred by the user.  These variable
+ * definitions are required in order to compile Python without
+ * getting missing externals, but to actually handle SIGFPE requires
+ * defining a handler and enabling generation of SIGFPE.
+ */
 
-#include "Python.h"
-
-#ifdef Py_USING_UNICODE
-
-#include "stringlib/unicodedefs.h"
-
-#define FORMAT_STRING _PyUnicode_FormatAdvanced
-
-/* don't define FORMAT_LONG, FORMAT_FLOAT, and FORMAT_COMPLEX, since
-   we can live with only the string versions of those.  The builtin
-   format() will convert them to unicode. */
-
-#include "stringlib/formatter.h"
-
+#ifdef WANT_SIGFPE_HANDLER
+jmp_buf PyFPE_jbuf;
+int PyFPE_counter = 0;
 #endif
+
+/* Have this outside the above #ifdef, since some picky ANSI compilers issue a 
+   warning when compiling an empty file. */
+
+double
+PyFPE_dummy(void *dummy)
+{
+	return 1.0;
+}

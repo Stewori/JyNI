@@ -62,7 +62,6 @@
 //PyFPE_jbuf
 /* JNI-Shortcuts: */
 
-#define jdbg if (0)
 
 //Shortcut to get JNI-environment,
 //including check for whether JNI version is supported.

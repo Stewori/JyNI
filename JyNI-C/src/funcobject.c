@@ -47,9 +47,9 @@
 /* Function object implementation */
 
 #include "JyNI.h"
-#include "code.h"
-#include "eval.h"
-#include "structmember.h"
+//#include "code.h"
+//#include "eval.h"
+#include "structmember_JyNI.h"
 
 //PyObject *
 //PyFunction_New(PyObject *code, PyObject *globals)

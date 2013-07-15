@@ -72,43 +72,37 @@ PyTypeObject* builtinExceptions[builtinExceptionCount];
 //JNIEXPORT jobject JNICALL Java_JyNI_JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 {
-//	puts("64 bit check:");
-//	printf("%i\n", sizeof(int));
-	//printf("%i\n", SIZEOF_SIZE_T);
-	//printf("%i\n", SIZEOF_INT);
-
-	jdbg puts("we will later load the following module at this place:");
 	const char* utf_string;
 
-	jboolean isCopy;
+	//jboolean isCopy;
 
-	utf_string = (*env)->GetStringUTFChars(env, moduleName, &isCopy);
+	utf_string = (*env)->GetStringUTFChars(env, moduleName, NULL);
 	//"+1" for 0-termination:
 	char mName[strlen(utf_string)+1];
 	strcpy(mName, utf_string);
 	(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
-	utf_string = (*env)->GetStringUTFChars(env, modulePath, &isCopy);
+	utf_string = (*env)->GetStringUTFChars(env, modulePath, NULL);
 	//"+1" for 0-termination:
 	char mPath[strlen(utf_string)+1];
 	strcpy(mPath, utf_string);
 	(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
-	//PyExc_ImportError
-	jdbg puts("Module:");
-	jdbg puts(mName);
-	jdbg printf("%i\n", strlen(mName));
-	jdbg puts("");
-	jdbg puts("Path:");
-	jdbg puts(mPath);
-	jdbg printf("%i\n", strlen(mPath));
+
+	// puts("Module:");
+	// puts(mName);
+	// printf("%i\n", strlen(mName));
+	// puts("");
+	// puts("Path:");
+	// puts(mPath);
+	// printf("%i\n", strlen(mPath));
 	FILE *fp;
 	fp = fopen(mPath, "r" PY_STDIOTEXTMODE);
 	if (fp == NULL)
 		//PyErr_SetFromErrno(PyExc_IOError);
 		puts("some error happened opening the file");
-	jdbg puts("start loading");
+	// puts("start loading");
 	//PyObject* er = _PyImport_LoadDynamicModule(mName, mPath, fp);
 	jobject er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
-	jdbg puts("loading done");
+	// puts("loading done");
 	if (fclose(fp))
 		puts("Some error occured on file close");
 	return er;
@@ -272,9 +266,9 @@ inline void initBuiltinTypes()
 																	builtinTypes[2].jy_class = pyNoneClass;				builtinTypes[2].flags = 0;
 	builtinTypes[3].py_type = &PyFile_Type;							builtinTypes[3].jy_class = pyFileClass;				builtinTypes[3].flags = JY_TRUNCATE_FLAG_MASK;
 	builtinTypes[4].py_type = &PyModule_Type;						builtinTypes[4].jy_class = pyModuleClass;			builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK;
-	/*builtinTypes[5].py_type = &PyCell_Type;							builtinTypes[5].jy_class = pyCellClass;				builtinTypes[5].flags = 0;*/
+	/*builtinTypes[5].py_type = &PyCell_Type;						builtinTypes[5].jy_class = pyCellClass;				builtinTypes[5].flags = 0;*/
 	builtinTypes[6].py_type = &PyClass_Type;						builtinTypes[6].jy_class = pyClassClass;			builtinTypes[6].flags = 0;
-	/*builtinTypes[7].py_type = &PyInstance_Type;						builtinTypes[7].jy_class = pyInstanceClass;		builtinTypes[7].flags = 0;
+	/*builtinTypes[7].py_type = &PyInstance_Type;					builtinTypes[7].jy_class = pyInstanceClass;		builtinTypes[7].flags = 0;
 	builtinTypes[8].py_type = &PyMethod_Type;						builtinTypes[8].jy_class = pyMethodClass;			builtinTypes[8].flags = 0;
 	builtinTypes[9].py_type = &PyFunction_Type;						builtinTypes[9].jy_class = pyFunctionClass;			builtinTypes[9].flags = 0;
 	builtinTypes[10].py_type = &PyClassMethod_Type;					builtinTypes[10].jy_class = pyClassMethodClass;		builtinTypes[10].flags = 0;
@@ -1861,7 +1855,7 @@ inline jint initSingletons(JNIEnv *env)
 //JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 jint JyNI_init(JavaVM *jvm)
 {
-	jdbg puts("JyNI_init");
+	// puts("JyNI_init");
 
 	//cout << "Hier OnLoad7!" << endl;
 	java = jvm; // cache the JavaVM pointer

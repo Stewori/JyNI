@@ -51,7 +51,7 @@
 #include "JyNI.h"
 #include "structseq_JyNI.h"
 
-#include <ctype.h>
+//#include <ctype.h>
 #include <float.h>
 #include <errno.h> //temporary fix for JyNI - configure should solve this in Python.h
 

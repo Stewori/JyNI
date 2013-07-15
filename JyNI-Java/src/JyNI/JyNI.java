@@ -53,15 +53,12 @@ public class JyNI {
 	static {
 		String dir = System.getProperty("user.dir");
 		dir = dir.substring(0, dir.lastIndexOf('/'));
-		System.load(dir+"/JyNI-Loader/Debug/libJyNI-Loader.so");
-		initJyNI(dir+"/JyNI-C/Debug/libJyNI.so");
+		System.load(dir+"/../JyNI-Loader/Debug/libJyNI-Loader.so");
+		initJyNI(dir+"/../JyNI-C/Debug/libJyNI.so");
 	}
 	
 	public static final String JyNIHandleAttr = "_JyNIHandleAttr".intern();
 	
-	/*We simply trust that they won't change this value.
-	Why should they? It would only issue binary compatibility.
-	 */
 	/**Lazy function call binding.*/
 	public static final int RTLD_LAZY = 0x00001;
 	/**Immediate function call binding.*/

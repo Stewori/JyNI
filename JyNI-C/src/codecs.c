@@ -54,7 +54,7 @@ Copyright (c) Corporation for National Research Initiatives.
    ------------------------------------------------------------------------ */
 
 #include "JyNI.h"
-#include <ctype.h>
+//#include <ctype.h>
 
 /* --- Codec Registry ----------------------------------------------------- */
 

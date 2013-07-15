@@ -47,9 +47,9 @@
 /* Abstract Object Interface (many thanks to Jim Fulton) */
 
 #include "JyNI.h"
-#include <ctype.h>
-#include "structmember.h" /* we need the offsetof() macro from there */
-#include "longintrepr.h"
+//#include <ctype.h>
+#include "structmember_JyNI.h" /* we need the offsetof() macro from there */
+#include "longintrepr_JyNI.h"
 
 #define NEW_STYLE_NUMBER(o) PyType_HasFeature((o)->ob_type, \
                 Py_TPFLAGS_CHECKTYPES)

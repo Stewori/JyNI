@@ -47,7 +47,7 @@
 /* Generic object operations; and implementation of None (NoObject) */
 
 #include "JyNI.h"
-#include "structmember.h"
+#include "structmember_JyNI.h"
 //#include "frameobject.h"
 
 #ifdef __cplusplus

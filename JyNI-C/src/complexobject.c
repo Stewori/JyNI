@@ -51,7 +51,7 @@
 /* Submitted by Jim Hugunin */
 
 #include "JyNI.h"
-#include "structmember.h"
+#include "structmember_JyNI.h"
 #include "errno.h"
 
 #ifndef WITHOUT_COMPLEX

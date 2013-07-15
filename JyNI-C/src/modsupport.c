@@ -76,8 +76,8 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-	jdbg puts("Py_InitModule4 called with name:");
-	jdbg puts(name);
+	// puts("Py_InitModule4 called with name:");
+	// puts(name);
 	//puts("doing nothing for now...");
 
 	/*puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_name);
@@ -147,7 +147,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 //	env(NULL);
 //	//m = JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_AddModule, (*env)->NewStringUTF(env, name)));
 //	m = PyImport_AddModule(name);
-	jdbg puts("module created");
+	// puts("module created");
 	//printf("dest-check for module7: %u\n", (int) PyModule_Check(m));
 	//printf("%u\n", (jlong) m2);
 	//printf("dest-type: %u\n", (int) m->ob_type);

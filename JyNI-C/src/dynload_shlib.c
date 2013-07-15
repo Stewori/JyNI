@@ -114,7 +114,7 @@ static int nhandles = 0;
 dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 									const char *pathname, FILE *fp)
 {
-	jdbg puts("_PyImport_GetDynLoadFunc");
+	// puts("_PyImport_GetDynLoadFunc");
 	dl_funcptr p;
 	void *handle;
 	char funcname[258];

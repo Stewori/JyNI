@@ -46,9 +46,9 @@
 
 /* Map C struct members to Python object attributes */
 
-#include "Python.h"
+#include "Python_JyNI.h"
 
-#include "structmember.h"
+#include "structmember_JyNI.h"
 
 //static PyObject *
 //listmembers(struct memberlist *mlist)
