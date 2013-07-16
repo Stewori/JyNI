@@ -47,7 +47,7 @@
 #ifndef Py_PYMATH_H
 #define Py_PYMATH_H
 
-#include "pyconfig_JyNI.h" /* include for defines */
+#include "pyconfig.h" /* include for defines */
 
 /**************************************************************************
 Symbols and macros to supply platform-independent interfaces to mathematical

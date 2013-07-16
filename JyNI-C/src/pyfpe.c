@@ -43,7 +43,7 @@
  * exception statement from your version.
  */
 
-#include "pyconfig_JyNI.h"
+#include "pyconfig.h"
 #include "pyfpe_JyNI.h"
 /* 
  * The signal handler for SIGFPE is actually declared in an external

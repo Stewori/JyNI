@@ -61,7 +61,7 @@
 /* Include nearly all Python header files */
 
 //#include "patchlevel_JyNI.h"
-#include "pyconfig_JyNI.h"
+#include "pyconfig.h"
 //#include "pymacconfig_JyNI.h"
 
 /* Cyclic gc is always enabled, starting with release 2.3a1.  Supply the

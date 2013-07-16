@@ -47,7 +47,7 @@
 #ifndef Py_PYPORT_H
 #define Py_PYPORT_H
 
-#include "pyconfig_JyNI.h" /* include for defines */
+#include "pyconfig.h" /* include for defines */
 
 /* Some versions of HP-UX & Solaris need inttypes.h for int32_t,
    INT32_MAX, etc. */

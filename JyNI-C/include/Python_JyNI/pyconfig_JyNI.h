@@ -1008,7 +1008,7 @@
 #define Py_UNICODE_SIZE 2
 
 /* Define if you want to have a Unicode type. */
-#define Py_USING_UNICODE 0
+#define Py_USING_UNICODE 1
 
 /* assume C89 semantics that RETSIGTYPE is always void */
 #define RETSIGTYPE void
