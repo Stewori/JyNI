@@ -60,10 +60,12 @@ Exception-types are conceptually supported, but are currently not usable due to 
 More coming soon.
 
 
-JyNI has only been tested on Linux Mint Debian edition 64 bit yet.
+JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit) yet.
 Theoretically, the current version should be buildable for systems with shlib.
 We have not yet developed auto-tools-scripts.
 So building/installing/testing JyNI can only be done by hand at the moment.
+If you get the provided LMDE-binaries working on an other distribution, feel free
+to report your results (see contact section).
 Section 3 contains a brief description of the necessary steps.
 
 
@@ -76,22 +78,26 @@ Easiest way to build JyNI is to setup C-, and Java-projects with an IDE of choic
 3 Projects are needed: JyNI-C, JyNI-Java and JyNI-Loader (and optionally JyNI-DemoExtension).
 
 
+
 C-section
+.........
 
 JyNI-C and JyNI-Loader are C-projects and must be enabled to include some header
 directories via gcc-option -I.
 
 For JyNI-Loader:
--JNI
+- JNI
 (usually located in /usr/lib/jvm/java-[version]-openjdk-[architecture]/include)
--"include"-subfolder from JyNI-Java
+- "include"-subfolder from JyNI-Java
 
 For JyNI-C:
--JNI (like above)
--its own "include"-subfolder and all subfolders within
+- JNI (like above)
+- its own "include"-subfolder and all subfolders within
+- some folder with an appropriate pyconfig.h for the current system
+(if python-dev for 2.7.x is installed, /usr/include/python2.7 is sufficient for this)
 
 Don't forget to use the fPIC-option.
-Finally link JyNI-C and JyNI-Loader to following dynamic libraries
+Finally link JyNI-C and JyNI-Loader to following dynamic libraries:
 
 libJyNI.so (JyNI-C)
 libJyNI-Loader.so (JyNI-Loader)
@@ -99,22 +105,31 @@ libJyNI-Loader.so (JyNI-Loader)
 Linking is said to require -ldl, though I observed it to work without.
 
 
+
 Java-Section
+............
 
 JyNI-Java needs to have Jython 2.7 beta on its build-time classpath.
-We haven't yet implemented a smart way for JyNI-Java to find
-libJyNI.so and libJyNI-Loader.so .
-As a temporary hack, please modify the lines in the static initializer
-of JyNI.java to contain the correct paths:
 
-System.load("[path to JyNI-Loader build-dir]/libJyNI-Loader.so");
-initJyNI("[path to JyNI-C build-dir]/libJyNI.so");
+The libraries
+- libJyNI-Loader.so
+- libJyNI.so
+should be on the java library path. However, we implemented a wider
+search and also look on the calsspath (but not inside jars) and in
+typical places where IDEs place their build-results
+(such as JyNI-Loader/Release, JyNI-Loader/Debug,
+JyNI-C/Release, JyNI-C/Debug).
 
-Put the resulting class-files into JyNI.jar and also include
-the JyNI-Java-subfolder "META-INF".
+To run Jython with JyNI, the built class files must be on the
+classpath along with the JyNI-Java subfolder "META-INF".
+If you want to make a jar-file (JyNI.jar) from the resulting
+class-files, don't forget to include the mentioned JyNI-Java
+subfolder "META-INF" into it.
+
 
 
 Test-Example
+............
 
 "DemoExtension" is a CPython-extension that demonstrates the
 already supported features of JyNI. It can be build like an
@@ -132,18 +147,19 @@ To run it with Jython use the newest release of version 2.7
 4. Roadmap
 ----------
 
-Support remaining crucial builtin types (we plan to implement them in the following order):
--PyUnicode
--PySet
+Support some more builtin types, at least:
+- PyUnicode
+- PySet
+- PyInstance if possible
 
 Further steps:
--fix exception, error and warning support
--implement parameter access and object calls more cleanly
--fix garbage collection
--fix pydoc interoperation
--focus on numpy-specific needs
--test and support on other platforms
--provide autotools-support
+- fix exception, error and warning support
+- implement parameter access and object calls more cleanly
+- fix garbage collection
+- fix pydoc interoperation
+- focus on numpy-specific needs
+- test and support on other platforms
+- provide autotools-support
 
 
 
@@ -153,9 +169,9 @@ Further steps:
 
 CPython-extensions must be compiled with the flag WITH_PYMALLOC activated. Otherwise they may not use
 the macros PyObject_MALLOC, PyObject_REALLOC and PyObject_FREE directly.
-If they do, JyNI will most likely produce segmantation faults. This is because without the flag,
-these macros directly map to the systems malloc-function family. In that case JyNI would not
-be able to prepare the JyObject-header in every case.
+If they use these macros with WITH_PYMALLOC not activated, JyNI will most likely produce segmantation
+faults. This is because without the flag, these macros directly map to the systems malloc-function
+family. In that case JyNI would not be able to prepare the JyObject-header in every case.
 However, it would be easy to recompile such extensions for JyNI. Simply add the WITH_PYMALLOC-definition
 at compile-time or replace the macros by their corresponding function-calls.
 

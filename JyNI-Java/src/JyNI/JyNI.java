@@ -48,13 +48,89 @@ import org.python.core.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.io.File;
 
 public class JyNI {
 	static {
+		//To make configuration easier, we not only search in the library path for the libs,
+		//but also in the classpath and some additional typical places.
+		//We currently don't look inside jar files.
+		String classpath = System.getProperty("java.class.path");
+		String libpath = System.getProperty("java.library.path");
+		//System.out.println("lp: "+libpath);
+		String[] commonPositions = (libpath+File.pathSeparator+classpath).split(File.pathSeparator);
+		for (int i = 0; i < commonPositions.length; ++i)
+		{
+			if (commonPositions[i].endsWith(".jar"))
+			{
+				commonPositions[i] = commonPositions[i].substring(0, commonPositions[i].lastIndexOf("/"));
+			}
+			//System.out.println(commonPositions[i]);
+		}
+		//these are relative paths to typical positions where IDEs place their build-results:
+		String[] loaderPositions = {".", "bin", "../JyNI-Loader/Release", "../JyNI-Loader/Debug"};
+		String[] libPositions = {".", "bin", "../JyNI-C/Release", "../JyNI-C/Debug"};
+		String loader = "libJyNI-Loader.so";
+		String lib = "libJyNI.so";
+		
+		boolean loaded = false;
 		String dir = System.getProperty("user.dir");
 		dir = dir.substring(0, dir.lastIndexOf('/'));
-		System.load(dir+"/../JyNI-Loader/Debug/libJyNI-Loader.so");
-		initJyNI(dir+"/../JyNI-C/Debug/libJyNI.so");
+		String[] fileNames = new String[commonPositions.length+loaderPositions.length];
+		int pos = 0;
+		for (int i = 0; i < commonPositions.length; ++i)
+		{
+			fileNames[pos++] = commonPositions[i]+"/"+loader;
+		}
+		for (int i = 0; i < loaderPositions.length; ++i)
+		{
+			fileNames[pos++] = dir+"/"+loaderPositions[i]+"/"+loader;
+		}
+		
+		
+		for (int i = 0; !loaded && i < fileNames.length; ++i)
+		{
+			File loaderFile = new File(fileNames[i]);
+			if (loaderFile.exists())
+			{
+				System.load(fileNames[i]);
+				loaded = true;
+			} //else
+				//System.out.println("not found: "+loaderFile.getPath());
+		}
+		if (!loaded)
+		{
+			System.err.print("Can't find library file: "+loader);
+			System.exit(1);
+		}
+		
+		
+		fileNames = new String[commonPositions.length+libPositions.length];
+		pos = 0;
+		for (int i = 0; i < commonPositions.length; ++i)
+		{
+			fileNames[pos++] = commonPositions[i]+"/"+lib;
+		}
+		for (int i = 0; i < libPositions.length; ++i)
+		{
+			fileNames[pos++] = dir+"/"+libPositions[i]+"/"+lib;
+		}
+		
+		loaded = false;
+		for (int i = 0; !loaded && i < fileNames.length; ++i)
+		{
+			File libFile = new File(fileNames[i]);
+			if (libFile.exists())
+			{
+				initJyNI(fileNames[i]);
+				loaded = true;
+			}
+		}
+		if (!loaded)
+		{
+			System.err.print("Can't find library file: "+lib);
+			System.exit(1);
+		}
 	}
 	
 	public static final String JyNIHandleAttr = "_JyNIHandleAttr".intern();
