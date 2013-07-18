@@ -64,7 +64,7 @@ JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit
 Theoretically, the current version should be buildable for systems with shlib.
 We have not yet developed auto-tools-scripts.
 So building/installing/testing JyNI can only be done by hand at the moment.
-If you get the provided LMDE-binaries working on an other distribution, feel free
+If you get the provided LMDE-binaries working on another distribution, feel free
 to report your results (see contact section).
 Section 3 contains a brief description of the necessary steps.
 
