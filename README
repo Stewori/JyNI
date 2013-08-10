@@ -1,3 +1,9 @@
+If not yet done, make sure to visit our project homepage at
+
+www.jyni.org
+
+
+
 Table of contents
 ---------------------------------------------
 
@@ -245,7 +251,7 @@ in the file "COPYING".  If you do not have the source code, it is available at:
 
 
 JyNI is partly based on source-files from CPython 2.7.3 and 2.7.4.
-As such, it inludes the common license of CPython 2.7.3, 2.7.4
+As such, it includes the common license of CPython 2.7.3, 2.7.4
 and Jython in the file "PSF-LICENSE-2". Whether a source-file
 is directly based on CPython source-code is documented at the
 beginning of each file.
@@ -263,6 +269,4 @@ For convenience, a copy of the current section is provided in the file
 9. Contact
 ----------
 
-For questions, bug reports or other feedback, write to stefan.richthofer@gmx.de.
-Please don't report obvious issues resulting from not yet implemented API
-(see section "Roadmap") as bugs.
+Please use the contact information provided on www.jyni.org, section "contact".
