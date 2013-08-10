@@ -57,6 +57,7 @@
 extern jobject JyNone;
 extern jobject JyNotImplemented;
 extern jobject JyEllipsis;
+extern jobject JyEmptyFrozenSet;
 
 extern jclass pyObjectClass;
 extern jmethodID pyObjectGetType;
@@ -66,6 +67,13 @@ extern jmethodID pyObject__getattr__;
 extern jmethodID pyObject__findattr__;
 extern jmethodID pyObject__setattr__;
 extern jmethodID pyObject__repr__;
+extern jmethodID pyObjectHashCode;
+extern jmethodID pyObject__reduce__;
+extern jmethodID pyObject__and__;
+extern jmethodID pyObject__or__;
+extern jmethodID pyObject__sub__;
+extern jmethodID pyObject__xor__;
+extern jmethodID pyObject__isub__;
 
 extern jclass pyFrameClass;
 
@@ -177,8 +185,34 @@ extern jclass pyXRangeClass;
 extern jclass pySequenceIterClass;
 extern jclass pyFastSequenceIterClass;
 extern jclass pyReversedIteratorClass;
+
+extern jclass pyBaseSetClass;
+extern jmethodID pyBaseSetSize;
+extern jmethodID pyBaseSet_update;
+//extern jmethodID pyBaseSetbaseset_union;
+extern jmethodID pyBaseSetbaseset_issubset;
+extern jmethodID pyBaseSetbaseset_issuperset;
+extern jmethodID pyBaseSetbaseset_isdisjoint;
+extern jmethodID pyBaseSetbaseset_difference;
+extern jmethodID pyBaseSetbaseset_differenceMulti;
+extern jmethodID pyBaseSetbaseset_symmetric_difference;
+extern jmethodID pyBaseSetbaseset_intersection;
+//extern jmethodID pyBaseSetbaseset_copy;
+extern jmethodID pyBaseSetbaseset___contains__;
+
 extern jclass pySetClass;
+extern jmethodID pySetFromIterableConstructor;
+extern jmethodID pySetset_pop;
+extern jmethodID pySetset_clear;
+extern jmethodID pySetset_discard;
+extern jmethodID pySetset_add;
+extern jmethodID pySetset_difference_update;
+extern jmethodID pySetset_intersection_update;
+extern jmethodID pySetset_symmetric_difference_update;
+
 extern jclass pyFrozenSetClass;
+extern jmethodID pyFrozenSetFromIterableConstructor;
+
 extern jclass pyEnumerationClass;
 
 extern jclass pySliceClass;

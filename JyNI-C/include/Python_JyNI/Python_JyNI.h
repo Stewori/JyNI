@@ -145,7 +145,6 @@
 #include "floatobject_JyNI.h"
 #ifndef WITHOUT_COMPLEX
 #include "complexobject_JyNI.h"
-//#include "complexobject.h"
 #endif
 //#include "rangeobject_JyNI.h"
 #include "stringobject_JyNI.h"
@@ -157,7 +156,7 @@
 #include "listobject_JyNI.h"
 #include "dictobject_JyNI.h"
 //#include "enumobject_JyNI.h"
-//#include "setobject_JyNI.h"
+#include "setobject_JyNI.h"
 #include "methodobject_JyNI.h"
 #include "moduleobject_JyNI.h"
 #include "funcobject_JyNI.h"

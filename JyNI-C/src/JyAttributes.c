@@ -55,7 +55,10 @@ const char* JyAttributeSyncFunctions = "sync";
 const char* JyAttributeModuleFile = "modf";
 const char* JyAttributeModuleName = "modn";
 const char* JyAttributeStringInterned = "strI";
-const char* JyAttributeTruncateSize = "trSi"; //defaults to sizeof(PyObjectHead)
+const char* JyAttributeSetEntry = "setE";
+
+//defaults to 0; note that on alloc this value is added to the anyway allocated size sizeof(PyObjectHead)
+//const char* JyAttributeTruncateSize = "trSi";
 
 inline void JyNI_ClearJyAttributes(JyObject* obj)
 {
@@ -64,12 +67,32 @@ inline void JyNI_ClearJyAttributes(JyObject* obj)
 	{
 		JyAttribute* nxt2 = nxt->next;
 		//if (nxt->value != NULL)
-		if ((nxt->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt->value))
-			free(nxt->value);
+//		if ((nxt->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt->value))
+//			free(nxt->value);
+		JyNI_ClearJyAttributeValue(nxt);
 		free(nxt);
 		nxt = nxt2;
 	}
 	obj->attr = NULL;
+}
+
+inline void JyNI_ClearJyAttributeValue(JyAttribute* att)
+{
+	if ((att->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (att->value))
+	{
+		if (att->flags & JY_ATTR_VAR_SIZE_FLAG_MASK)
+		{
+			JyAttributeElement* elem = (JyAttributeElement*) att->value;
+			while (elem != NULL)
+			{
+				JyAttributeElement* tmp = elem;
+				elem = elem->next;
+				free(elem->value);
+				free(elem);
+			}
+		} else
+			free(att->value);
+	}
 }
 
 inline void JyNI_ClearJyAttribute(JyObject* obj, const char* name)
@@ -81,8 +104,9 @@ inline void JyNI_ClearJyAttribute(JyObject* obj, const char* name)
 		if (nxt2 != NULL && nxt2->name == name)
 		{
 			nxt->next = nxt2->next;
-			if ((nxt2->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt2->value))
-				free(nxt2->value);
+			//if ((nxt2->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt2->value))
+			//	free(nxt2->value);
+			JyNI_ClearJyAttributeValue(nxt);
 			free(nxt2);
 		} else
 			nxt = nxt2;

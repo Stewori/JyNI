@@ -279,3 +279,34 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 	(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
 	return op;
 }
+
+
+//jobject JySync_Init_JySet_From_PySet(PyObject* src) not needed because of truncation
+
+PyObject* JySync_Init_PySet_From_JySet(jobject src) //needed because truncation is only partial
+{
+	PySetObject* so = (PySetObject *) PySet_Type.tp_alloc(&PySet_Type, 0);
+	JyObject* jy = AS_JY(so);
+	jy->jy = src;
+	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+	env(NULL);
+	so->used = (*env)->CallIntMethod(env, src, pyBaseSetSize);
+	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, (jlong) so);
+	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src); //maybe do this direct to have lesser security manager issues
+	return (PyObject*) so;
+}
+
+//jobject JySync_Init_JyFrozenSet_From_PyFrozenSet(PyObject* src) not needed because of truncation
+
+PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src) //needed because truncation is only partial
+{
+	PySetObject* so = (PySetObject *) PyFrozenSet_Type.tp_alloc(&PyFrozenSet_Type, 0);
+	JyObject* jy = AS_JY(so);
+	jy->jy = src;
+	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+	env(NULL);
+	so->used = (*env)->CallIntMethod(env, src, pyBaseSetSize);
+	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, (jlong) so);
+	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src); //maybe do this direct to have lesser security manager issues
+	return (PyObject*) so;
+}

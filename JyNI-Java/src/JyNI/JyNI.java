@@ -122,7 +122,9 @@ public class JyNI {
 			File libFile = new File(fileNames[i]);
 			if (libFile.exists())
 			{
+				System.out.println("initJyNI: "+fileNames[i]);
 				initJyNI(fileNames[i]);
+				System.out.println("initJyNI done");
 				loaded = true;
 			}
 		}
@@ -184,6 +186,26 @@ public class JyNI {
 	public static native PyObject JyList_set(long handle, int index, PyObject o, long pyObject);
 	public static native void JyList_add(long handle, int index, PyObject o, long pyObject);
 	public static native PyObject JyList_remove(long handle, int index);
+	
+	//Set-Stuff:
+	public static native void JySet_putSize(long handle, int size);
+	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
+	/*public static PyObject PySet_pop(BaseSet set)
+	{
+		if (set.isEmpty()) return null;
+		Iterator it = set.iterator();
+		Object obj = it.next();
+		
+		PyObject er = (PyObject) obj;//it.next();
+		System.out.println("PySet_pop retrieves "+er.__repr__());
+//		while (!set.remove(er))
+//		{
+//			try {er = (PyObject) it.next();}
+//			catch (Exception e) {it = set.iterator();}
+//		}
+//		System.out.println("PySet_pop returns "+er.__repr__());
+		return er;
+	}*/
 	
 //	public static PyObject callModuleFunction(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject... args)
 //	{
@@ -415,52 +437,114 @@ public class JyNI {
 		return er2;
 	}
 	
-	protected static int lastIndex;
+	protected static int lastDictIndex;
 	protected static PyDictionary lastDict;
 	protected static Iterator<Map.Entry<PyObject, PyObject>> dictIterator;
 	public static synchronized JyNIDictNextResult getPyDictionary_Next(PyDictionary dict, int index)
 	{
-		if (dict == lastDict && index == lastIndex && dictIterator != null)
+		if (dict == lastDict && index == lastDictIndex && dictIterator != null)
 		{
 			Map.Entry<PyObject, PyObject> me;
 			PyObject value;
 			while (dictIterator.hasNext())
 			{
-				++lastIndex;
+				++lastDictIndex;
 				me = dictIterator.next();
 				value = me.getValue();
 				if (value != null)
 				{
-					if (lastIndex == dict.size()) lastIndex = -lastIndex;
-					return new JyNIDictNextResult(lastIndex, me.getKey(), value);
+					if (lastDictIndex == dict.size()) lastDictIndex = -lastDictIndex;
+					return new JyNIDictNextResult(lastDictIndex, me.getKey(), value);
 				}
 			}
 		} else
 		{
 			lastDict = dict;
 			dictIterator = dict.getMap().entrySet().iterator();
-			lastIndex = 0;
+			lastDictIndex = 0;
 			Map.Entry<PyObject, PyObject> me;
-			while (lastIndex < index)
+			while (lastDictIndex < index)
 			{
-				++lastIndex;
+				++lastDictIndex;
 				if (!dictIterator.hasNext()) return null;
 				else dictIterator.next();
 			}
 			PyObject value;
 			while (dictIterator.hasNext())
 			{
-				++lastIndex;
+				++lastDictIndex;
 				me = dictIterator.next();
 				value = me.getValue();
 				if (value != null)
 				{
-					if (lastIndex == dict.size()) lastIndex = -lastIndex;
-					return new JyNIDictNextResult(lastIndex, me.getKey(), value);
+					if (lastDictIndex == dict.size()) lastDictIndex = -lastDictIndex;
+					return new JyNIDictNextResult(lastDictIndex, me.getKey(), value);
 				}
 			}
 		}
 		return null;
+	}
+	
+	protected static int lastSetIndex;
+	protected static BaseSet lastSet;
+	protected static Iterator<PyObject> setIterator;
+	public static synchronized JyNISetNextResult getPySet_Next(BaseSet set, int index)
+	{
+		if (set == lastSet && index == lastSetIndex && setIterator != null)
+		{
+			PyObject key;
+			while (setIterator.hasNext())
+			{
+				++lastSetIndex;
+				key = setIterator.next();
+				if (key != null)
+				{
+					if (lastSetIndex == set.size()) lastSetIndex = -lastSetIndex;
+					return new JyNISetNextResult(lastSetIndex, key);
+				}
+			}
+		} else
+		{
+			lastSet = set;
+			try {
+				Field backend = BaseSet.class.getDeclaredField("_set");
+				backend.setAccessible(true);
+				Set<PyObject> set2 = (Set<PyObject>) backend.get(set);
+				setIterator = set2.iterator();
+			} catch (Exception e)
+			{
+				lastSet = null;
+				setIterator = null;
+				return null;
+			}
+			lastSetIndex = 0;
+			while (lastSetIndex < index)
+			{
+				++lastSetIndex;
+				if (!setIterator.hasNext()) return null;
+				else setIterator.next();
+			}
+			PyObject key;
+			while (setIterator.hasNext())
+			{
+				++lastSetIndex;
+				key = setIterator.next();
+				if (key != null)
+				{
+					if (lastSetIndex == set.size()) lastSetIndex = -lastSetIndex;
+					return new JyNISetNextResult(lastSetIndex, key);
+				}
+			}
+		}
+		return null;
+	}
+	
+	public static synchronized BaseSet copyPySet(BaseSet set)
+	{
+		if (set instanceof PySet)
+			return new PySet(set);
+		else if (set instanceof PyFrozenSet) return set;
+		else return null;
 	}
 	
 	public static void printPyLong(PyObject pl)

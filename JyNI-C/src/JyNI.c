@@ -72,6 +72,7 @@ PyTypeObject* builtinExceptions[builtinExceptionCount];
 //JNIEXPORT jobject JNICALL Java_JyNI_JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 {
+	//puts("JyNI_loadModule...");
 	const char* utf_string;
 
 	//jboolean isCopy;
@@ -87,22 +88,22 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 	strcpy(mPath, utf_string);
 	(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
 
-	// puts("Module:");
-	// puts(mName);
+	//puts("Module:");
+	//puts(mName);
 	// printf("%i\n", strlen(mName));
 	// puts("");
-	// puts("Path:");
-	// puts(mPath);
+	//puts("Path:");
+	//puts(mPath);
 	// printf("%i\n", strlen(mPath));
 	FILE *fp;
 	fp = fopen(mPath, "r" PY_STDIOTEXTMODE);
 	if (fp == NULL)
 		//PyErr_SetFromErrno(PyExc_IOError);
 		puts("some error happened opening the file");
-	// puts("start loading");
+	//puts("start loading");
 	//PyObject* er = _PyImport_LoadDynamicModule(mName, mPath, fp);
 	jobject er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
-	// puts("loading done");
+	//puts("loading done");
 	if (fclose(fp))
 		puts("Some error occured on file close");
 	return er;
@@ -257,91 +258,242 @@ inline void initBuiltinTypes()
 		builtinTypes[i].jy_class = NULL;
 		builtinTypes[i].flags = 0;
 		builtinTypes[i].sync = NULL;
+		builtinTypes[i].truncate_trailing = 0;
 	}
 
-	builtinTypes[0].py_type = &PyType_Type;							builtinTypes[0].jy_class = pyTypeClass;				builtinTypes[0].flags = 0;
+	builtinTypes[0].py_type = &PyType_Type;
+	builtinTypes[0].jy_class = pyTypeClass;
+	builtinTypes[0].flags = 0;
+
 	builtinTypes[1].py_type = &PyNotImplemented_Type; //(_Py_NotImplementedStruct.ob_type);
-																	builtinTypes[1].jy_class = pyNotImplementedClass;	builtinTypes[1].flags = 0;
+	builtinTypes[1].jy_class = pyNotImplementedClass;
+	builtinTypes[1].flags = 0;
+
 	builtinTypes[2].py_type = &PyNone_Type;//(_Py_NoneStruct.ob_type);
-																	builtinTypes[2].jy_class = pyNoneClass;				builtinTypes[2].flags = 0;
-	builtinTypes[3].py_type = &PyFile_Type;							builtinTypes[3].jy_class = pyFileClass;				builtinTypes[3].flags = JY_TRUNCATE_FLAG_MASK;
-	builtinTypes[4].py_type = &PyModule_Type;						builtinTypes[4].jy_class = pyModuleClass;			builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK;
-	/*builtinTypes[5].py_type = &PyCell_Type;						builtinTypes[5].jy_class = pyCellClass;				builtinTypes[5].flags = 0;*/
-	builtinTypes[6].py_type = &PyClass_Type;						builtinTypes[6].jy_class = pyClassClass;			builtinTypes[6].flags = 0;
-	/*builtinTypes[7].py_type = &PyInstance_Type;					builtinTypes[7].jy_class = pyInstanceClass;		builtinTypes[7].flags = 0;
-	builtinTypes[8].py_type = &PyMethod_Type;						builtinTypes[8].jy_class = pyMethodClass;			builtinTypes[8].flags = 0;
-	builtinTypes[9].py_type = &PyFunction_Type;						builtinTypes[9].jy_class = pyFunctionClass;			builtinTypes[9].flags = 0;
-	builtinTypes[10].py_type = &PyClassMethod_Type;					builtinTypes[10].jy_class = pyClassMethodClass;		builtinTypes[10].flags = 0;
-	builtinTypes[11].py_type = &PyStaticMethod_Type;				builtinTypes[11].jy_class = pyStaticMethodClass;	builtinTypes[11].flags = 0;
-	builtinTypes[12].py_type = &PyMethodDescr_Type;					builtinTypes[12].jy_class = pyMethodDescrClass;		builtinTypes[12].flags = 0;
-	builtinTypes[13].py_type = &PyClassMethodDescr_Type;			builtinTypes[13].jy_class = pyClassMethodDescrClass;builtinTypes[13].flags = 0;
-	builtinTypes[14].py_type = &PyDictProxy_Type;					builtinTypes[14].jy_class = pyDictProxyClass;		builtinTypes[14].flags = 0;
-	builtinTypes[15].py_type = &PyProperty_Type;					builtinTypes[15].jy_class = pyPropertyClass;		builtinTypes[15].flags = 0;
-	builtinTypes[16].py_type = &PyBool_Type;						builtinTypes[16].jy_class = pyBooleanClass;			builtinTypes[16].flags = 0;*/
-	builtinTypes[17].py_type = &PyFloat_Type;						builtinTypes[17].jy_class = pyFloatClass;			builtinTypes[17].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[2].jy_class = pyNoneClass;
+	builtinTypes[2].flags = 0;
+
+	builtinTypes[3].py_type = &PyFile_Type;
+	builtinTypes[3].jy_class = pyFileClass;
+	builtinTypes[3].flags = JY_TRUNCATE_FLAG_MASK;
+
+	builtinTypes[4].py_type = &PyModule_Type;
+	builtinTypes[4].jy_class = pyModuleClass;
+	builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK;
+
+/*	builtinTypes[5].py_type = &PyCell_Type;
+	builtinTypes[5].jy_class = pyCellClass;
+	builtinTypes[5].flags = 0;*/
+
+	builtinTypes[6].py_type = &PyClass_Type;
+	builtinTypes[6].jy_class = pyClassClass;
+	builtinTypes[6].flags = 0;
+
+/*	builtinTypes[7].py_type = &PyInstance_Type;
+	builtinTypes[7].jy_class = pyInstanceClass;
+	builtinTypes[7].flags = 0;
+
+	builtinTypes[8].py_type = &PyMethod_Type;
+	builtinTypes[8].jy_class = pyMethodClass;
+	builtinTypes[8].flags = 0;
+
+	builtinTypes[9].py_type = &PyFunction_Type;
+	builtinTypes[9].jy_class = pyFunctionClass;
+	builtinTypes[9].flags = 0;
+
+	builtinTypes[10].py_type = &PyClassMethod_Type;
+	builtinTypes[10].jy_class = pyClassMethodClass;
+	builtinTypes[10].flags = 0;
+
+	builtinTypes[11].py_type = &PyStaticMethod_Type;
+	builtinTypes[11].jy_class = pyStaticMethodClass;
+	builtinTypes[11].flags = 0;
+
+	builtinTypes[12].py_type = &PyMethodDescr_Type;
+	builtinTypes[12].jy_class = pyMethodDescrClass;
+	builtinTypes[12].flags = 0;
+
+	builtinTypes[13].py_type = &PyClassMethodDescr_Type;
+	builtinTypes[13].jy_class = pyClassMethodDescrClass;
+	builtinTypes[13].flags = 0;
+
+	builtinTypes[14].py_type = &PyDictProxy_Type;
+	builtinTypes[14].jy_class = pyDictProxyClass;
+	builtinTypes[14].flags = 0;
+
+	builtinTypes[15].py_type = &PyProperty_Type;
+	builtinTypes[15].jy_class = pyPropertyClass;
+	builtinTypes[15].flags = 0;
+
+	builtinTypes[16].py_type = &PyBool_Type;
+	builtinTypes[16].jy_class = pyBooleanClass;
+	builtinTypes[16].flags = 0;*/
+
+	builtinTypes[17].py_type = &PyFloat_Type;
+	builtinTypes[17].jy_class = pyFloatClass;
+	builtinTypes[17].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[17].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[17].sync->jyInit = (jyInitSync) JySync_Init_JyFloat_From_PyFloat;
 	builtinTypes[17].sync->pyInit = (pyInitSync) JySync_Init_PyFloat_From_JyFloat;
-	builtinTypes[18].py_type = &PyInt_Type;							builtinTypes[18].jy_class = pyIntClass;				builtinTypes[18].flags = JySYNC_ON_INIT_FLAGS;
+
+	builtinTypes[18].py_type = &PyInt_Type;
+	builtinTypes[18].jy_class = pyIntClass;
+	builtinTypes[18].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[18].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[18].sync->jyInit = (jyInitSync) JySync_Init_JyInt_From_PyInt;
 	builtinTypes[18].sync->pyInit = (pyInitSync) JySync_Init_PyInt_From_JyInt;
+
 	//for computational efficiency we mirror PyLong, although it could also be wrappered
 	//later we are going to offer both options by a configuration-parameter in JyNI.
-	builtinTypes[19].py_type = &PyLong_Type;						builtinTypes[19].jy_class = pyLongClass;			builtinTypes[19].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[19].py_type = &PyLong_Type;
+	builtinTypes[19].jy_class = pyLongClass;
+	builtinTypes[19].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[19].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[19].sync->jyInit = (jyInitSync) JySync_Init_JyLong_From_PyLong;
 	builtinTypes[19].sync->pyInit = (pyInitSync) JySync_Init_PyLong_From_JyLong;
-	builtinTypes[20].py_type = &PyComplex_Type;						builtinTypes[20].jy_class = pyComplexClass;			builtinTypes[20].flags = JySYNC_ON_INIT_FLAGS;
+
+	builtinTypes[20].py_type = &PyComplex_Type;
+	builtinTypes[20].jy_class = pyComplexClass;
+	builtinTypes[20].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[20].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[20].sync->jyInit = (jyInitSync) JySync_Init_JyComplex_From_PyComplex;
 	builtinTypes[20].sync->pyInit = (pyInitSync) JySync_Init_PyComplex_From_JyComplex;
-	builtinTypes[21].py_type = &PyUnicode_Type;						builtinTypes[21].jy_class = pyUnicodeClass;			builtinTypes[21].flags = JySYNC_ON_INIT_FLAGS;
+
+	builtinTypes[21].py_type = &PyUnicode_Type;
+	builtinTypes[21].jy_class = pyUnicodeClass;
+	builtinTypes[21].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[21].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[21].sync->jyInit = (jyInitSync) JySync_Init_JyUnicode_From_PyUnicode;
 	builtinTypes[21].sync->pyInit = (pyInitSync) JySync_Init_PyUnicode_From_JyUnicode;
-	builtinTypes[22].py_type = &PyString_Type;						builtinTypes[22].jy_class = pyStringClass;			builtinTypes[22].flags = JySYNC_ON_INIT_FLAGS;
+
+	builtinTypes[22].py_type = &PyString_Type;
+	builtinTypes[22].jy_class = pyStringClass;
+	builtinTypes[22].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[22].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[22].sync->jyInit = (jyInitSync) JySync_Init_JyString_From_PyString;
 	builtinTypes[22].sync->pyInit = (pyInitSync) JySync_Init_PyString_From_JyString;
-	/*builtinTypes[23].py_type = &PyBaseString_Type;					builtinTypes[23].jy_class = pyBaseStringClass;		builtinTypes[23].flags = 0;
-	builtinTypes[24].py_type = &PySeqIter_Type;						builtinTypes[24].jy_class = pySequenceIterClass;	builtinTypes[24].flags = 0;
-	builtinTypes[25].py_type = &PyRange_Type;						builtinTypes[25].jy_class = pyXRangeClass;			builtinTypes[25].flags = 0;
+
+/*	builtinTypes[23].py_type = &PyBaseString_Type;
+	builtinTypes[23].jy_class = pyBaseStringClass;
+	builtinTypes[23].flags = 0;
+
+	builtinTypes[24].py_type = &PySeqIter_Type;
+	builtinTypes[24].jy_class = pySequenceIterClass;
+	builtinTypes[24].flags = 0;
+
+	builtinTypes[25].py_type = &PyRange_Type;
+	builtinTypes[25].jy_class = pyXRangeClass;
+	builtinTypes[25].flags = 0;
+
 	builtinTypes[26].py_type = &Pyrangeiter_Type; //jython uses PySequenceIter. Map this to PySeqIter_Typ
-																	builtinTypes[26].jy_class = pySequenceIterClass;	builtinTypes[26].flags = 0;*/
-	builtinTypes[27].py_type = &PyTuple_Type;						builtinTypes[27].jy_class = pyTupleClass;			builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[26].jy_class = pySequenceIterClass;
+	builtinTypes[26].flags = 0;*/
+
+	builtinTypes[27].py_type = &PyTuple_Type;
+	builtinTypes[27].jy_class = pyTupleClass;
+	builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[27].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[27].sync->jyInit = (jyInitSync) JySync_Init_JyTuple_From_PyTuple;
 	builtinTypes[27].sync->pyInit = (pyInitSync) JySync_Init_PyTuple_From_JyTuple;
+
 /*	builtinTypes[28].py_type = &PyTupleIter_Type; //jython uses PyFastSequenceIter. Map this to PySeqIter_Type
-																	builtinTypes[28].jy_class = pyFastSequenceIterClass;builtinTypes[28].flags = 0;*/
-	builtinTypes[29].py_type = &PyList_Type;						builtinTypes[29].jy_class = pyListClass;			builtinTypes[29].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[28].jy_class = pyFastSequenceIterClass;
+	builtinTypes[28].flags = 0;*/
+
+	builtinTypes[29].py_type = &PyList_Type;
+	builtinTypes[29].jy_class = pyListClass;
+	builtinTypes[29].flags = JySYNC_ON_INIT_FLAGS;
 	builtinTypes[29].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[29].sync->jyInit = (jyInitSync) JySync_Init_JyList_From_PyList;
 	builtinTypes[29].sync->pyInit = (pyInitSync) JySync_Init_PyList_From_JyList;
-	/*builtinTypes[30].py_type = &PyListIter_Type; //jython uses PyFastSequenceIter. Map this to PySeqIter_Type
-																	builtinTypes[30].jy_class = pyFastSequenceIterClass;builtinTypes[30].flags = 0;
+
+/*	builtinTypes[30].py_type = &PyListIter_Type; //jython uses PyFastSequenceIter. Map this to PySeqIter_Type
+	builtinTypes[30].jy_class = pyFastSequenceIterClass;
+	builtinTypes[30].flags = 0;
+
 	builtinTypes[31].py_type = &PyListRevIter_Type; //jython uses PyReversedIterator.
-																	builtinTypes[31].jy_class = pyReversedIteratorClass;builtinTypes[31].flags = 0;*/
-	builtinTypes[32].py_type = &PyDict_Type;						builtinTypes[32].jy_class = pyDictClass;			builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK;
-	/*builtinTypes[33].py_type = &PySet_Type;							builtinTypes[33].jy_class = pySetClass;				builtinTypes[33].flags = 0;
-	builtinTypes[34].py_type = &PySetIter_Type; //jython uses inline subclass of PyIterator. Map this to PySeqIter_Type for now
-																	builtinTypes[34].jy_class = pySequenceIterClass;	builtinTypes[34].flags = 0;
-	builtinTypes[35].py_type = &PyFrozenSet_Type;					builtinTypes[35].jy_class = pyFrozenSetClass;		builtinTypes[35].flags = 0;
-	builtinTypes[36].py_type = &PyEnum_Type;						builtinTypes[36].jy_class = pyEnumerationClass;		builtinTypes[36].flags = 0;*/
-	builtinTypes[37].py_type = &PySlice_Type;						builtinTypes[37].jy_class = pySliceClass;			builtinTypes[37].flags = JY_TRUNCATE_FLAG_MASK;
-	builtinTypes[38].py_type = &PyEllipsis_Type;					builtinTypes[38].jy_class = pyEllipsisClass;		builtinTypes[38].flags = 0;
-	/*builtinTypes[39].py_type = &PyGen_Type;							builtinTypes[39].jy_class = pyGeneratorClass;		builtinTypes[39].flags = 0;
-	builtinTypes[40].py_type = &PyCode_Type;						builtinTypes[40].jy_class = pyCodeClass;			builtinTypes[40].flags = 0;
-	builtinTypes[41].py_type = &PyCallIter_Type;					builtinTypes[41].jy_class = pyCallIterClass;		builtinTypes[41].flags = 0;
-	builtinTypes[42].py_type = &PyFrame_Type;						builtinTypes[42].jy_class = pyFrameClass;			builtinTypes[42].flags = 0;
-	builtinTypes[43].py_type = &PySuper_Type;						builtinTypes[43].jy_class = pySuperClass;			builtinTypes[43].flags = 0;*/
-	builtinTypes[44].py_type = (PyTypeObject*) PyExc_BaseException;	builtinTypes[44].jy_class = pyBaseExceptionClass;	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK;
-	builtinTypes[45].py_type = &PyTraceBack_Type;					builtinTypes[45].jy_class = pyTracebackClass;		builtinTypes[45].flags = JY_TRUNCATE_FLAG_MASK;
-	/*builtinTypes[46].py_type = &PyByteArray_Type;					builtinTypes[46].jy_class = pyByteArrayClass;		builtinTypes[46].flags = 0;
-	builtinTypes[47].py_type = &PyBuffer_Type;						builtinTypes[47].jy_class = pyBufferClass;			builtinTypes[47].flags = 0;
-	builtinTypes[48].py_type = &PyMemoryView_Type;					builtinTypes[48].jy_class = pyMemoryViewClass;		builtinTypes[48].flags = 0;
-	builtinTypes[49].py_type = &PyBaseObject_Type;					builtinTypes[49].jy_class = pyObjectClass;			builtinTypes[49].flags = 0;*/
+	builtinTypes[31].jy_class = pyReversedIteratorClass;
+	builtinTypes[31].flags = 0;*/
+
+	builtinTypes[32].py_type = &PyDict_Type;
+	builtinTypes[32].jy_class = pyDictClass;
+	builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK;
+
+	builtinTypes[33].py_type = &PySet_Type;
+	builtinTypes[33].jy_class = pySetClass;
+	builtinTypes[33].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS;
+	builtinTypes[33].truncate_trailing = sizeof(Py_ssize_t); //setObject.fill is covered by PyVarObject.ob_size. We add another sizeof(Py_ssize_t) to allocate space for setObject.used
+	builtinTypes[33].sync = malloc(sizeof(SyncFunctions));
+	builtinTypes[33].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JySet_From_PySet;
+	builtinTypes[33].sync->pyInit = (pyInitSync) JySync_Init_PySet_From_JySet;
+
+/*	builtinTypes[34].py_type = &PySetIter_Type; //jython uses inline subclass of PyIterator. Map this to PySeqIter_Type for now
+	builtinTypes[34].jy_class = pySequenceIterClass;
+	builtinTypes[34].flags = 0;*/
+
+	builtinTypes[35].py_type = &PyFrozenSet_Type;
+	builtinTypes[35].jy_class = pyFrozenSetClass;
+	builtinTypes[35].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS;
+	builtinTypes[35].truncate_trailing = sizeof(Py_ssize_t); //setObject.fill is covered by PyVarObject.ob_size. We add another sizeof(Py_ssize_t) to allocate space for setObject.used
+	builtinTypes[35].sync = malloc(sizeof(SyncFunctions));
+	builtinTypes[35].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFrozenSet_From_PyFrozenSet;
+	builtinTypes[35].sync->pyInit = (pyInitSync) JySync_Init_PyFrozenSet_From_JyFrozenSet;
+
+/*	builtinTypes[36].py_type = &PyEnum_Type;
+	builtinTypes[36].jy_class = pyEnumerationClass;
+	builtinTypes[36].flags = 0;*/
+
+	builtinTypes[37].py_type = &PySlice_Type;
+	builtinTypes[37].jy_class = pySliceClass;
+	builtinTypes[37].flags = JY_TRUNCATE_FLAG_MASK;
+
+	builtinTypes[38].py_type = &PyEllipsis_Type;
+	builtinTypes[38].jy_class = pyEllipsisClass;
+	builtinTypes[38].flags = 0;
+
+/*	builtinTypes[39].py_type = &PyGen_Type;
+	builtinTypes[39].jy_class = pyGeneratorClass;
+	builtinTypes[39].flags = 0;
+
+	builtinTypes[40].py_type = &PyCode_Type;
+	builtinTypes[40].jy_class = pyCodeClass;
+	builtinTypes[40].flags = 0;
+
+	builtinTypes[41].py_type = &PyCallIter_Type;
+	builtinTypes[41].jy_class = pyCallIterClass;
+	builtinTypes[41].flags = 0;
+
+	builtinTypes[42].py_type = &PyFrame_Type;
+	builtinTypes[42].jy_class = pyFrameClass;
+	builtinTypes[42].flags = 0;
+
+	builtinTypes[43].py_type = &PySuper_Type;
+	builtinTypes[43].jy_class = pySuperClass;
+	builtinTypes[43].flags = 0;*/
+
+	builtinTypes[44].py_type = (PyTypeObject*) PyExc_BaseException;
+	builtinTypes[44].jy_class = pyBaseExceptionClass;
+	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK;
+
+	builtinTypes[45].py_type = &PyTraceBack_Type;
+	builtinTypes[45].jy_class = pyTracebackClass;
+	builtinTypes[45].flags = JY_TRUNCATE_FLAG_MASK;
+
+/*	builtinTypes[46].py_type = &PyByteArray_Type;
+	builtinTypes[46].jy_class = pyByteArrayClass;
+	builtinTypes[46].flags = 0;
+
+	builtinTypes[47].py_type = &PyBuffer_Type;
+	builtinTypes[47].jy_class = pyBufferClass;
+	builtinTypes[47].flags = 0;
+
+	builtinTypes[48].py_type = &PyMemoryView_Type;
+	builtinTypes[48].jy_class = pyMemoryViewClass;
+	builtinTypes[48].flags = 0;
+
+	builtinTypes[49].py_type = &PyBaseObject_Type;
+	builtinTypes[49].jy_class = pyObjectClass;
+	builtinTypes[49].flags = 0;*/
 }
 
 inline void initBuiltinExceptions()
@@ -1037,9 +1189,11 @@ JavaVM* java;
 jobject JyNone;
 jobject JyNotImplemented;
 jobject JyEllipsis;
+jobject JyEmptyFrozenSet;
 //PyUnicodeObject* unicode_empty;
 PyObject* PyTrue;
 PyObject* PyFalse;
+jobject length0StringArray;
 
 jclass classClass;
 jmethodID classEquals;
@@ -1069,12 +1223,14 @@ jmethodID JyNIPyErr_WriteUnraisable;
 jmethodID JyNIGetDLVerbose;
 jmethodID JyNI_PyImport_FindExtension;
 jmethodID JyNIGetPyDictionary_Next;
+jmethodID JyNIGetPySet_Next;
 jmethodID JyNIPyImport_GetModuleDict;
 jmethodID JyNIPyImport_AddModule;
 jmethodID JyNIJyNI_GetModule;
 jmethodID JyNISlice_compare;
 jmethodID JyNIPrintPyLong;
 jmethodID JyNILookupNativeHandles;
+//jmethodID JyNIPySet_pop;
 
 jclass JyNIDictNextResultClass;
 jfieldID JyNIDictNextResultKeyField;
@@ -1083,9 +1239,18 @@ jfieldID JyNIDictNextResultNewIndexField;
 jfieldID JyNIDictNextResultKeyHandleField;
 jfieldID JyNIDictNextResultValueHandleField;
 
+jclass JyNISetNextResultClass;
+jfieldID JyNISetNextResultKeyField;
+jfieldID JyNISetNextResultNewIndexField;
+jfieldID JyNISetNextResultKeyHandleField;
+
 jclass JyListClass;
 jmethodID JyListFromBackendHandleConstructor;
 jmethodID JyListInstallToPyList;
+
+jclass JySetClass;
+jmethodID JySetFromBackendHandleConstructor;
+jmethodID JySetInstallToPySet;
 
 jclass pyCPeerClass;
 jmethodID pyCPeerConstructor;
@@ -1149,12 +1314,21 @@ jmethodID pyObject__getattr__;
 jmethodID pyObject__findattr__;
 jmethodID pyObject__setattr__;
 jmethodID pyObject__repr__;
+jmethodID pyObject__reduce__;
+jmethodID pyObject__and__;
+jmethodID pyObject__or__;
+jmethodID pyObject__sub__;
+jmethodID pyObject__xor__;
+jmethodID pyObject__isub__;
+jmethodID pyObjectHashCode;
 
 jclass pyThreadStateClass;
 jfieldID pyThreadStateExceptionField;
 jfieldID pyThreadStateRecursionDepth;
 jmethodID pyThreadStateEnterRecursiveCall;
 jmethodID pyThreadStateLeaveRecursiveCall;
+jmethodID pyThreadStateEnterRepr;
+jmethodID pyThreadStateExitRepr;
 
 jclass pyInstanceClass;
 jfieldID pyInstanceInstclassField;
@@ -1295,8 +1469,46 @@ jclass pyXRangeClass;
 jclass pySequenceIterClass;
 jclass pyFastSequenceIterClass;
 jclass pyReversedIteratorClass;
+
+jclass pyBaseSetClass;
+jmethodID pyBaseSetSize;
+//jmethodID pyBaseSetClear;
+//jmethodID pyBaseSetContains;
+//jmethodID pyBaseSetRemove;
+//jmethodID pyBaseSetAdd;
+jmethodID pyBaseSet_update;//+
+//jmethodID pyBaseSetbaseset_union;//-
+jmethodID pyBaseSetbaseset_issubset;//+
+jmethodID pyBaseSetbaseset_issuperset;//-
+jmethodID pyBaseSetbaseset_isdisjoint;//+
+jmethodID pyBaseSetbaseset_difference;//+
+jmethodID pyBaseSetbaseset_differenceMulti;//+
+jmethodID pyBaseSetbaseset_symmetric_difference;//-
+jmethodID pyBaseSetbaseset_intersection;//-
+//jmethodID pyBaseSetbaseset_copy;//-
+jmethodID pyBaseSetbaseset___contains__;//+
+//jmethodID pyBaseSetbaseset_difference_multi;
+//jmethodID pyBaseSetbaseset_intersection_multi;
+//jmethodID pyBaseSetbaseset___iter__;
+
 jclass pySetClass;
+jmethodID pySetFromIterableConstructor;
+jmethodID pySetset_pop;//+
+jmethodID pySetset_clear;//+
+//jmethodID pySetset_remove;
+jmethodID pySetset_discard;//+
+jmethodID pySetset_add;//+
+jmethodID pySetset_difference_update;//+
+jmethodID pySetset_intersection_update;//+
+jmethodID pySetset_symmetric_difference_update;//+
+//jmethodID pySetset___isub__;
+//jmethodID pySetset___iand__;
+//jmethodID pySetset___ixor__;
+
 jclass pyFrozenSetClass;
+jmethodID pyFrozenSetFromIterableConstructor;
+//jmethodID pyFrozenSetSize;
+
 jclass pyEnumerationClass;
 
 jclass pySliceClass;
@@ -1373,12 +1585,15 @@ inline jint initJyNI(JNIEnv *env)
 	JyNI_PyImport_FindExtension = (*env)->GetStaticMethodID(env, JyNIClass, "_PyImport_FindExtension", "(Ljava/lang/String;Ljava/lang/String;)Lorg/python/core/PyObject;");
 	JyNI_getNativeAvailableKeysAndValues = (*env)->GetStaticMethodID(env, JyNIClass, "getNativeAvailableKeysAndValues", "(Lorg/python/core/PyDictionary;)[J");
 	JyNIGetPyDictionary_Next = (*env)->GetStaticMethodID(env, JyNIClass, "getPyDictionary_Next", "(Lorg/python/core/PyDictionary;I)LJyNI/JyNIDictNextResult;");
+	JyNIGetPySet_Next = (*env)->GetStaticMethodID(env, JyNIClass, "getPySet_Next", "(Lorg/python/core/BaseSet;I)LJyNI/JyNISetNextResult;");
 	JyNIPyImport_GetModuleDict = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_GetModuleDict", "()Lorg/python/core/PyObject;");
 	JyNIPyImport_AddModule = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_AddModule", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	JyNIJyNI_GetModule = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_GetModule", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	JyNISlice_compare = (*env)->GetStaticMethodID(env, JyNIClass, "slice_compare", "(Lorg/python/core/PySlice;Lorg/python/core/PySlice;)I");
 	JyNIPrintPyLong = (*env)->GetStaticMethodID(env, JyNIClass, "printPyLong", "(Lorg/python/core/PyObject;)V");
 	JyNILookupNativeHandles = (*env)->GetStaticMethodID(env, JyNIClass, "lookupNativeHandles", "(Lorg/python/core/PyList;)[J");
+	//JyNIPySet_pop = (*env)->GetStaticMethodID(env, JyNIClass, "PySet_pop", "(Lorg/python/core/BaseSet;)Lorg/python/core/PyObject;");
+	//puts("  initJyNIClass done");
 
 	//Error stuff:
 	JyNIPyErr_Restore = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Restore", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
@@ -1393,6 +1608,7 @@ inline jint initJyNI(JNIEnv *env)
 	JyNIPyErr_WriteUnraisable = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_WriteUnraisable", "(Lorg/python/core/PyObject;)V");
 	JyNIExceptionByName = (*env)->GetStaticMethodID(env, JyNIClass, "exceptionByName", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	JyNIGetPyType = (*env)->GetStaticMethodID(env, JyNIClass, "getPyType", "(Ljava/lang/Class;)Lorg/python/core/PyType;");
+	//puts("  initJyNIClass error section done");
 
 	jclass JyNIDictNextResultClassLocal = (*env)->FindClass(env, "JyNI/JyNIDictNextResult");
 	JyNIDictNextResultClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNIDictNextResultClassLocal);
@@ -1402,12 +1618,33 @@ inline jint initJyNI(JNIEnv *env)
 	JyNIDictNextResultNewIndexField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "newIndex", "I");
 	JyNIDictNextResultKeyHandleField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "keyHandle", "J");
 	JyNIDictNextResultValueHandleField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "valueHandle", "J");
+	//puts("  initJyNIDict done");
+
+	jclass JyNISetNextResultClassLocal = (*env)->FindClass(env, "JyNI/JyNISetNextResult");
+	JyNISetNextResultClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNISetNextResultClassLocal);
+	(*env)->DeleteLocalRef(env, JyNISetNextResultClassLocal);
+	//puts("   JyNISetNextResultClass created");
+	JyNISetNextResultKeyField = (*env)->GetFieldID(env, JyNISetNextResultClass, "key", "Lorg/python/core/PyObject;");
+	//puts("   key done");
+	JyNISetNextResultNewIndexField = (*env)->GetFieldID(env, JyNISetNextResultClass, "newIndex", "I");
+	//puts("   newIndex done");
+	JyNISetNextResultKeyHandleField = (*env)->GetFieldID(env, JyNISetNextResultClass, "keyHandle", "J");
+	//puts("   keyHandle done");
+	//puts("  initJyNISet done");
 
 	jclass JyListClassLocal = (*env)->FindClass(env, "JyNI/JyList");
 	JyListClass = (jclass) (*env)->NewWeakGlobalRef(env, JyListClassLocal);
 	(*env)->DeleteLocalRef(env, JyListClassLocal);
 	JyListFromBackendHandleConstructor = (*env)->GetMethodID(env, JyListClass, "<init>", "(J)V");
 	JyListInstallToPyList = (*env)->GetMethodID(env, JyListClass, "installToPyList", "(Lorg/python/core/PyList;)V");
+	//puts("  initJyList done");
+
+	jclass JySetClassLocal = (*env)->FindClass(env, "JyNI/JySet");
+	JySetClass = (jclass) (*env)->NewWeakGlobalRef(env, JySetClassLocal);
+	(*env)->DeleteLocalRef(env, JySetClassLocal);
+	JySetFromBackendHandleConstructor = (*env)->GetMethodID(env, JySetClass, "<init>", "(J)V");
+	JySetInstallToPySet = (*env)->GetMethodID(env, JySetClass, "installToPySet", "(Lorg/python/core/BaseSet;)V");
+	//puts("  initJyNISet done");
 
 	//Peer stuff:
 	jclass pyCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyCPeer");
@@ -1422,6 +1659,7 @@ inline jint initJyNI(JNIEnv *env)
 	pyCPeerTypeConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>", "(J)V");
 	pyCPeerTypeObjectHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "objectHandle", "J");
 	pyCPeerTypeRefHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "refHandle", "J");
+	//puts("  initPyCPeer done");
 
 	return JNI_VERSION_1_2;
 }
@@ -1487,6 +1725,8 @@ inline jint initJythonSite(JNIEnv *env)
 	pyThreadStateRecursionDepth = (*env)->GetFieldID(env, pyThreadStateClass, "recursion_depth", "I");
 	pyThreadStateEnterRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "enterRecursiveCall", "(Ljava/lang/String;)V");
 	pyThreadStateLeaveRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "leaveRecursiveCall", "()V");
+	pyThreadStateEnterRepr = (*env)->GetMethodID(env, pyThreadStateClass, "enterRepr", "(Lorg/python/core/PyObject;)Z");
+	pyThreadStateExitRepr = (*env)->GetMethodID(env, pyThreadStateClass, "exitRepr", "(Lorg/python/core/PyObject;)V");
 	return JNI_VERSION_1_2;
 }
 
@@ -1511,6 +1751,13 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyObject__findattr__ = (*env)->GetMethodID(env, pyObjectClass, "__findattr__", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	pyObject__setattr__ = (*env)->GetMethodID(env, pyObjectClass, "__setattr__", "(Ljava/lang/String;Lorg/python/core/PyObject;)V");
 	pyObject__repr__ = (*env)->GetMethodID(env, pyObjectClass, "__repr__", "()Lorg/python/core/PyString;");
+	pyObject__reduce__ = (*env)->GetMethodID(env, pyObjectClass, "__reduce__", "()Lorg/python/core/PyObject;");
+	pyObject__and__ = (*env)->GetMethodID(env, pyObjectClass, "__and__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyObject__or__ = (*env)->GetMethodID(env, pyObjectClass, "__or__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyObject__sub__ = (*env)->GetMethodID(env, pyObjectClass, "__sub__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyObject__xor__ = (*env)->GetMethodID(env, pyObjectClass, "__xor__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyObject__isub__ = (*env)->GetMethodID(env, pyObjectClass, "__isub__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyObjectHashCode = (*env)->GetMethodID(env, pyObjectClass, "hashCode", "()I");
 
 	jclass pyInstanceClassLocal = (*env)->FindClass(env, "org/python/core/PyInstance");
 	if (pyInstanceClassLocal == NULL) { return JNI_ERR;}
@@ -1754,15 +2001,46 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyReversedIteratorClass = (jclass) (*env)->NewWeakGlobalRef(env, pyReversedIteratorClassLocal);
 	(*env)->DeleteLocalRef(env, pyReversedIteratorClassLocal);
 
+	jclass pyBaseSetClassLocal = (*env)->FindClass(env, "org/python/core/BaseSet");
+	if (pyBaseSetClassLocal == NULL) { return JNI_ERR;}
+	pyBaseSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseSetClassLocal);
+	(*env)->DeleteLocalRef(env, pyBaseSetClassLocal);
+	pyBaseSetSize = (*env)->GetMethodID(env, pyBaseSetClass, "size", "()I");
+//	pyBaseSetClear = (*env)->GetMethodID(env, pyBaseSetClass, "clear", "()V");
+//	pyBaseSetContains = (*env)->GetMethodID(env, pyBaseSetClass, "contains", "(Ljava/lang/Object;)Z");
+//	pyBaseSetRemove = (*env)->GetMethodID(env, pyBaseSetClass, "remove", "(Ljava/lang/Object;)Z");
+//	pyBaseSetAdd = (*env)->GetMethodID(env, pyBaseSetClass, "add", "(Ljava/lang/Object;)Z");
+	pyBaseSet_update = (*env)->GetMethodID(env, pyBaseSetClass, "_update", "(Lorg/python/core/PyObject;)V");
+	//pyBaseSetbaseset_union = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_union", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_issubset = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_issubset", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_issuperset = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_issuperset", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_isdisjoint = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_isdisjoint", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_difference = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_difference", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_differenceMulti = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_difference", "([Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_symmetric_difference = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_symmetric_difference", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyBaseSetbaseset_intersection = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_intersection", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	//pyBaseSetbaseset_copy = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_copy", "()Lorg/python/core/PyObject;");
+	pyBaseSetbaseset___contains__ = (*env)->GetMethodID(env, pyBaseSetClass, "baseset___contains__", "(Lorg/python/core/PyObject;)Z");
+
 	jclass pySetClassLocal = (*env)->FindClass(env, "org/python/core/PySet");
 	if (pySetClassLocal == NULL) { return JNI_ERR;}
 	pySetClass = (jclass) (*env)->NewWeakGlobalRef(env, pySetClassLocal);
 	(*env)->DeleteLocalRef(env, pySetClassLocal);
+	pySetFromIterableConstructor = (*env)->GetMethodID(env, pySetClass, "<init>", "(Lorg/python/core/PyObject;)V");
+	pySetset_pop = (*env)->GetMethodID(env, pySetClass, "set_pop", "()Lorg/python/core/PyObject;");
+	pySetset_clear = (*env)->GetMethodID(env, pySetClass, "set_clear", "()V");
+	pySetset_discard = (*env)->GetMethodID(env, pySetClass, "set_discard", "(Lorg/python/core/PyObject;)V");
+	pySetset_add = (*env)->GetMethodID(env, pySetClass, "set_add", "(Lorg/python/core/PyObject;)V");
+	pySetset_difference_update = (*env)->GetMethodID(env, pySetClass, "set_difference_update", "([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
+	pySetset_intersection_update = (*env)->GetMethodID(env, pySetClass, "set_intersection_update", "([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
+	pySetset_symmetric_difference_update = (*env)->GetMethodID(env, pySetClass, "set_symmetric_difference_update", "(Lorg/python/core/PyObject;)V");
 
 	jclass pyFrozenSetClassLocal = (*env)->FindClass(env, "org/python/core/PyFrozenSet");
 	if (pyFrozenSetClassLocal == NULL) { return JNI_ERR;}
 	pyFrozenSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFrozenSetClassLocal);
 	(*env)->DeleteLocalRef(env, pyFrozenSetClassLocal);
+	pyFrozenSetFromIterableConstructor = (*env)->GetMethodID(env, pyFrozenSetClass, "<init>", "(Lorg/python/core/PyObject;)V");
+	//pyFrozenSetSize = (*env)->GetMethodID(env, pyFrozenSetClass, "size", "()I");
 
 	jclass pyEnumerationClassLocal = (*env)->FindClass(env, "org/python/core/PyEnumerate");
 	if (pyEnumerationClassLocal == NULL) { return JNI_ERR;}
@@ -1847,6 +2125,9 @@ inline jint initSingletons(JNIEnv *env)
 	JyNotImplemented = (*env)->NewGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyNotImplemented));
 	jfieldID jyEllipsis = (*env)->GetStaticFieldID(env, pyPyClass, "Ellipsis", "Lorg/python/core/PyObject;");
 	JyEllipsis = (*env)->NewGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEllipsis));
+	jfieldID jyEmptyFrozenSet = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyFrozenSet", "Lorg/python/core/PyFrozenSet;");
+	JyEmptyFrozenSet = (*env)->NewGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyFrozenSet));
+	length0StringArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, stringClass, NULL));
 	return JNI_VERSION_1_2;
 }
 
@@ -1855,7 +2136,7 @@ inline jint initSingletons(JNIEnv *env)
 //JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 jint JyNI_init(JavaVM *jvm)
 {
-	// puts("JyNI_init");
+	//puts("JyNI_init");
 
 	//cout << "Hier OnLoad7!" << endl;
 	java = jvm; // cache the JavaVM pointer
@@ -1870,13 +2151,19 @@ jint JyNI_init(JavaVM *jvm)
 	}
 	//Py_Py3kWarningFlag
 	if (initJNI(env) == JNI_ERR) return JNI_ERR;
+	//puts("initJNI done");
 	if (initJyNI(env) == JNI_ERR) return JNI_ERR;
+	//puts("initJyNI done");
 	if (initJythonSite(env) == JNI_ERR) return JNI_ERR;
+	//puts("initJythonSite done");
 	if (initJythonObjects(env) == JNI_ERR) return JNI_ERR;
+	//puts("initJythonObjects done");
 	initBuiltinTypes();
+	//puts("initBuiltinTypes done");
 	initBuiltinExceptions();
+	//puts("initBuiltinExceptions done");
 	if (initSingletons(env) == JNI_ERR) return JNI_ERR;
-
+	//puts("initSingletons done");
 
 	//puts("characters-info:");
 	//characters[UCHAR_MAX + 1]
@@ -1887,7 +2174,7 @@ jint JyNI_init(JavaVM *jvm)
 
 	//init native objects where necessary:
 	_PyInt_Init();
-
+	//puts("_PyInt_Init done");
 	return JNI_VERSION_1_2;
 }
 
@@ -1899,6 +2186,7 @@ void JyNI_unload(JavaVM *jvm)
 	PyTuple_Fini();
 	PyDict_Fini();
 	PyCFunction_Fini();
+	PySet_Fini();
 
 
 	int i;
@@ -1911,4 +2199,6 @@ void JyNI_unload(JavaVM *jvm)
 	(*env)->DeleteGlobalRef(env, JyNone);
 	(*env)->DeleteGlobalRef(env, JyNotImplemented);
 	(*env)->DeleteGlobalRef(env, JyEllipsis);
+	(*env)->DeleteGlobalRef(env, JyEmptyFrozenSet);
+	(*env)->DeleteGlobalRef(env, length0StringArray);
 }

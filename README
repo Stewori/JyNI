@@ -31,7 +31,7 @@ a customized Jython-fork. That means, it is binary compatible with existing exte
 
 At the time when this is written, JyNI does not fully implement
 the Python C-API and we are in fact just capable to load and run simple examples
-that only invole most basic builtin-types.
+that only involve most basic builtin-types.
 
 The concept is rather complete though and our goal is to
 provide the C-API needed to load NumPy as soon as possible.
@@ -60,12 +60,13 @@ Exception-types are conceptually supported, but are currently not usable due to 
 More coming soon.
 
 
-JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit) yet.
+JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit) and
+Linux Mint 13, 64 bit yet. So it would almost surely also work on Ubuntu and Debian.
+For these tests, the bineries of JyNI 2.7-alpha.1 were used.
+If you try it on further distributions, feel free to report your results (see contact section).
 Theoretically, the current version should be buildable for systems with shlib.
 We have not yet developed auto-tools-scripts.
 So building/installing/testing JyNI can only be done by hand at the moment.
-If you get the provided LMDE-binaries working on another distribution, feel free
-to report your results (see contact section).
 Section 3 contains a brief description of the necessary steps.
 
 
@@ -132,7 +133,7 @@ Test-Example
 ............
 
 "DemoExtension" is a CPython-extension that demonstrates the
-already supported features of JyNI. It can be build like an
+already supported features of JyNI. It can be built like an
 ordinary Python-extension as described in the tutorial
 http://docs.python.org/2/extending/extending.html
 

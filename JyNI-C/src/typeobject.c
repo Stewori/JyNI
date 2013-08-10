@@ -794,20 +794,21 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 	PyObject *obj;
 	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
 	// note that we need to add one, for the sentinel
-
+	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
 	if (PyType_IS_GC(type))
 	{
 		size = _PyObject_VAR_SIZE(type, nitems+1);
-		obj = _PyObject_GC_Malloc(size);
+		//obj = _PyObject_GC_Malloc(size);
+		obj = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : size);
 		if (obj == NULL) return PyErr_NoMemory();
 	}
 	else
 	{
 		//obj = (PyObject *)PyObject_MALLOC(size);
-		TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
+		//TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
 		if (tme != NULL)
 		{
-			size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject) : _PyObject_VAR_SIZE(type, nitems+1));
+			size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(type, nitems+1));
 			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 			jy->jy = tme->jy_class;

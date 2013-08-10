@@ -966,17 +966,17 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 								  PyString_AS_STRING(arg), PyString_GET_SIZE(arg),
 								  1, 0);
 			}
-//#ifdef Py_USING_UNICODE
-//			else if (PyUnicode_Check(arg)) {
-//				uarg = UNICODE_DEFAULT_ENCODING(arg);
-//				if (uarg == NULL)
-//					return converterr(CONV_UNICODE,
-//									  arg, msgbuf, bufsize);
-//				PyBuffer_FillInfo(p, arg,
-//								  PyString_AS_STRING(uarg), PyString_GET_SIZE(uarg),
-//								  1, 0);
-//			}
-//#endif
+#ifdef Py_USING_UNICODE
+			else if (PyUnicode_Check(arg)) {
+				uarg = UNICODE_DEFAULT_ENCODING(arg);
+				if (uarg == NULL)
+					return converterr(CONV_UNICODE,
+									  arg, msgbuf, bufsize);
+				PyBuffer_FillInfo(p, arg,
+								  PyString_AS_STRING(uarg), PyString_GET_SIZE(uarg),
+								  1, 0);
+			}
+#endif
 			else { /* any buffer-like object */
 				char *buf;
 				if (getbuffer(arg, p, &buf) < 0)
@@ -1000,16 +1000,16 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 				*p = PyString_AS_STRING(arg);
 				STORE_SIZE(PyString_GET_SIZE(arg));
 			}
-//#ifdef Py_USING_UNICODE
-//			else if (PyUnicode_Check(arg)) {
-//				uarg = UNICODE_DEFAULT_ENCODING(arg);
-//				if (uarg == NULL)
-//					return converterr(CONV_UNICODE,
-//									  arg, msgbuf, bufsize);
-//				*p = PyString_AS_STRING(uarg);
-//				STORE_SIZE(PyString_GET_SIZE(uarg));
-//			}
-//#endif
+#ifdef Py_USING_UNICODE
+			else if (PyUnicode_Check(arg)) {
+				uarg = UNICODE_DEFAULT_ENCODING(arg);
+				if (uarg == NULL)
+					return converterr(CONV_UNICODE,
+									  arg, msgbuf, bufsize);
+				*p = PyString_AS_STRING(uarg);
+				STORE_SIZE(PyString_GET_SIZE(uarg));
+			}
+#endif
 			else { /* any buffer-like object */
 				char *buf;
 				Py_ssize_t count = convertbuffer(arg, p, &buf);

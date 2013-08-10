@@ -2,6 +2,7 @@
  * Copyright of JyNI:
  * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
  *
+ *
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
  * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
@@ -41,41 +42,22 @@
  * exception statement from your version.
  */
 
+
 /*
- * JySync.h
+ * JySet.h
  *
- *  Created on: 23.04.2013, 05:17:18
+ *  Created on: 02.08.2013, 07:29:20
  *      Author: Stefan Richthofer
  */
 
-#ifndef JYSYNC_H_
-#define JYSYNC_H_
+#ifndef JYSET_H_
+#define JYSET_H_
 
-PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src);
-jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src);
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JySet_putSize
+ * Signature: (JI)V
+ */
+void JySet_putSize(JNIEnv *env, jclass class, jlong handle, jint size);
 
-PyObject* JySync_Init_PyString_From_JyString(jobject src);
-jobject JySync_Init_JyString_From_PyString(PyObject* src);
-
-PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src);
-jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src);
-
-PyObject* JySync_Init_PyInt_From_JyInt(jobject src);
-jobject JySync_Init_JyInt_From_PyInt(PyObject* src);
-
-PyObject* JySync_Init_PyFloat_From_JyFloat(jobject src);
-jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src);
-
-PyObject* JySync_Init_PyComplex_From_JyComplex(jobject src);
-jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src);
-
-PyObject* JySync_Init_PyLong_From_JyLong(jobject src);
-jobject JySync_Init_JyLong_From_PyLong(PyObject* src);
-
-jobject JySync_Init_JyList_From_PyList(PyObject* src);
-PyObject* JySync_Init_PyList_From_JyList(jobject src);
-
-PyObject* JySync_Init_PySet_From_JySet(jobject src);
-PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src);
-
-#endif /* JYSYNC_H_ */
+#endif /* JYSET_H_ */

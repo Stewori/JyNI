@@ -167,14 +167,14 @@ public class JyNIImporter extends PyObject {
 	}
 
 	public PyObject load_module(String name) {
-		//System.out.println("000load module: "+name);
+		//System.out.println("JyNIImporter.load module: "+name);
 		JyNIModuleInfo inf = dynModules.get(name);
 		if (inf.module == null)
 			inf.module = JyNI.loadModule(name, inf.path);
 		//return JyNI.loadModule(name, "path");
-		//return inf.module;
+		return inf.module;
 		//System.out.println("000path: "+inf.path);
-		return Py.NotImplemented; //PySystemState.packageManager.lookupName(name.intern());
+		//return Py.NotImplemented; //PySystemState.packageManager.lookupName(name.intern());
 	}
 	
 	/**

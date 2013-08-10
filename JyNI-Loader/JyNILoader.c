@@ -91,6 +91,7 @@ jobject (*JyList_set)(JNIEnv*, jclass, jlong, jint, jobject, jlong);
 void (*JyList_add)(JNIEnv*, jclass, jlong, jint, jobject, jlong);
 jobject (*JyList_remove)(JNIEnv*, jclass, jlong, jint);
 
+void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
 //void JyNI_unload(JavaVM *jvm);
 
 
@@ -115,9 +116,9 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 {
 	//puts("initJyNI...");
 	//puts("path:");
-	jboolean isCopy;
+	//jboolean isCopy;
 
-	char* utf_string = (*env)->GetStringUTFChars(env, JyNILibPath, &isCopy);
+	char* utf_string = (*env)->GetStringUTFChars(env, JyNILibPath, NULL);//&isCopy);
 	//"+1" for 0-termination:
 	char mPath[strlen(utf_string)+1];
 	strcpy(mPath, utf_string);
@@ -159,11 +160,13 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyList_add) = dlsym(JyNIHandle, "JyList_add");
 	*(void **) (&JyList_remove) = dlsym(JyNIHandle, "JyList_remove");
 
+	*(void **) (&JySet_putSize) = dlsym(JyNIHandle, "JySet_putSize");
+
 	//puts("done");
 	jint result = (*JyNIInit)(java);
 	if (result != JNI_VERSION_1_2) puts("Init-result indicates error!");
-	//else puts("Init-result indicates success!");
-
+//	else puts("Init-result indicates success!");
+//	puts("return from init...");
 }
 
 /*
@@ -174,6 +177,7 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_loadModule
   (JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 {
+	//puts("JyNI-Loader: Java_JyNI_JyNI_loadModule...");
 	return (*JyNILoadModule)(env, class, moduleName, modulePath);
 }
 
@@ -297,4 +301,14 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JyList_1add(JNIEnv *env, jclass class, jlo
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove(JNIEnv *env, jclass class, jlong handle, jint index)
 {
 	return (*JyList_remove)(env, class, handle, index);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JySet_putSize
+ * Signature: (JI)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize(JNIEnv *env, jclass class, jlong handle, jint size)
+{
+	(*JySet_putSize)(env, class, handle, size);
 }

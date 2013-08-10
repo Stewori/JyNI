@@ -200,6 +200,10 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
  * "interned" cstring. Comparison is done via == (pointer-equal)
  * rather than strcmp. So for lookup one must pass the very same
  * char* as on declaration.
+ * JyAttributeElement can be used to chain var-length data into
+ * JyAttribute value pointer. Specify the JY_ATTR_VAR_SIZE-flag,
+ * which tells JyNI to tidy up everything in the end (i.e. call free
+ * for every element in the value-chain).
  * Currently the only possible attributes are the following:
  */
 extern const char* JyAttributePyChecksum;
@@ -208,12 +212,16 @@ extern const char* JyAttributeSyncFunctions;
 extern const char* JyAttributeModuleFile;
 extern const char* JyAttributeModuleName;
 extern const char* JyAttributeStringInterned;
-extern const char* JyAttributeTruncateSize;
+extern const char* JyAttributeSetEntry;
+//extern const char* JyAttributeTruncateSize;
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1
+#define JY_ATTR_VAR_SIZE_FLAG_MASK 2
 typedef struct JyAttribute JyAttribute; //Forward declaration
 struct JyAttribute { const char* name; void* value; char flags; JyAttribute* next;};
+typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
+struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jobject jy; unsigned short flags; JyAttribute* attr;} JyObject;
-typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync;} TypeMapEntry;
+typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing;} TypeMapEntry;
 
 #define JyObject_IS_GC(o) (((JyObject *) o)->flags & JY_GC_FLAG_MASK)
 #define JyObject_IS_INITIALIZED(o) (((JyObject *) o)->flags & JY_INITIALIZED_FLAG_MASK)
@@ -227,6 +235,7 @@ typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; S
 #define AS_JY(o) ((JyObject *)(  (PyObject_IS_GC(o)) ? _Py_AS_GC(o) : (o)  )-1)
 #define FROM_JY(o) ((JyObject_IS_GC(o)) ? JyNI_FROM_GC((((JyObject *)(o))+1)) : ((PyObject *)(((JyObject *)(o))+1)))
 #define GC_FROM_JY(o) (PyGC_Head*) (((JyObject *)(o))+1)
+#define FROM_JY_WITH_GC(o) (JyNI_FROM_GC((((JyObject *)(o))+1)))
 #define FROM_JY_NO_GC(o) ((PyObject *)(((JyObject *)(o))+1))
 #define AS_JY_WITH_GC(o) ((JyObject *)(_Py_AS_GC(o))-1)
 #define AS_JY_NO_GC(o) ((JyObject *)(o)-1)
@@ -322,6 +331,7 @@ void PyInt_Fini(void);
 void PyTuple_Fini(void);
 void PyDict_Fini(void);
 void PyCFunction_Fini(void);
+void PySet_Fini(void);
 
 /*
 inline void JyNI_SetUpJyObject(JyObject* type);
@@ -337,6 +347,7 @@ inline PyObject* JyNI_NewPyObject_FromJythonPyObject(jobject jythonPyObject);
 /* JyAttribute management: */
 inline void JyNI_ClearJyAttributes(JyObject* obj);
 inline void JyNI_ClearJyAttribute(JyObject* obj, const char* name);
+inline void JyNI_ClearJyAttributeValue(JyAttribute* att);
 inline void* JyNI_GetJyAttribute(JyObject* obj, const char* name);
 inline void JyNI_AddJyAttribute(JyObject* obj, const char* name, void* value);
 inline void JyNI_AddJyAttributeWithFlags(JyObject* obj, const char* name, void* value, char flags);
@@ -347,6 +358,7 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
 //JNI IDs for Jython-stuff:
 //singletons:
 extern JavaVM* java;
+extern jobject length0StringArray;
 
 extern jclass classClass;
 extern jmethodID classEquals;
@@ -380,12 +392,14 @@ extern jmethodID JyNI_PyImport_FindExtension;
 extern jmethodID JyNIGetPyType;
 extern jmethodID JyNI_getNativeAvailableKeysAndValues;
 extern jmethodID JyNIGetPyDictionary_Next;
+extern jmethodID JyNIGetPySet_Next;
 extern jmethodID JyNIPyImport_GetModuleDict;
 extern jmethodID JyNIPyImport_AddModule;
 extern jmethodID JyNIJyNI_GetModule;
 extern jmethodID JyNISlice_compare;
 extern jmethodID JyNIPrintPyLong;
 extern jmethodID JyNILookupNativeHandles;
+//extern jmethodID JyNIPySet_pop;
 
 extern jclass JyNIDictNextResultClass;
 extern jfieldID JyNIDictNextResultKeyField;
@@ -393,6 +407,11 @@ extern jfieldID JyNIDictNextResultValueField;
 extern jfieldID JyNIDictNextResultNewIndexField;
 extern jfieldID JyNIDictNextResultKeyHandleField;
 extern jfieldID JyNIDictNextResultValueHandleField;
+
+extern jclass JyNISetNextResultClass;
+extern jfieldID JyNISetNextResultKeyField;
+extern jfieldID JyNISetNextResultNewIndexField;
+extern jfieldID JyNISetNextResultKeyHandleField;
 
 extern jmethodID JyNIExceptionByName;
 extern jmethodID JyNIPyErr_Restore;
@@ -409,6 +428,10 @@ extern jmethodID JyNIPyErr_WriteUnraisable;
 extern jclass JyListClass;
 extern jmethodID JyListFromBackendHandleConstructor;
 extern jmethodID JyListInstallToPyList;
+
+extern jclass JySetClass;
+extern jmethodID JySetFromBackendHandleConstructor;
+extern jmethodID JySetInstallToPySet;
 
 extern jclass pyCPeerClass;
 extern jmethodID pyCPeerConstructor;

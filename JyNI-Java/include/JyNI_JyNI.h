@@ -137,6 +137,14 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JyList_1add
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove
   (JNIEnv *, jclass, jlong, jint);
 
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JySet_putSize
+ * Signature: (JI)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize
+  (JNIEnv *, jclass, jlong, jint);
+
 #ifdef __cplusplus
 }
 #endif

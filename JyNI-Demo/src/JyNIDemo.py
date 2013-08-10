@@ -9,6 +9,7 @@ import sys
 sys.path.append('/home/stefan/eclipseWorkspace/JyNI/DemoExtension/Debug')
 
 import DemoExtension
+
 print "--------Access Docstring----------"
 print DemoExtension.__doc__
 
@@ -58,10 +59,18 @@ l = ["Hello", "lovely", "world"]
 print "input: "+str(l)
 DemoExtension.listModifyTest(l, 2)
 print "output: "+str(l)
-
-# l.append("test")
-# print l
-# DemoExtension.listReadTest(l[1:])
+print ""
+print "--------Set testing----------"
+basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
+fruit = set(basket)
+#print fruit
+#DemoExtension.setTest(fruit);
+print fruit
+p = 2
+DemoExtension.setPopTest(fruit, p);
+print "after popping "+str(p)+" elements:"
+print fruit
 
 print ""
-print "========in JyNI-case expect native output after this line=========="
+print "============in JyNI-case expect native output after these lines=================="
+print "==(it is a JNI issue that native output is displayed after java output is done)=="

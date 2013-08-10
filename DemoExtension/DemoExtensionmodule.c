@@ -128,11 +128,47 @@ listModifyTest(PyObject* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+PyObject*
+setTest(PyObject* self, PyObject* args)
+{
+	char* plumText = "plum";
+	PyObject* set;
+	if (!PyArg_ParseTuple(args, "O!", &PySet_Type, &set)) return NULL;
+	puts("Set parsed!");
+	printf("length: %i\n", PySet_GET_SIZE(set));
+	PySet_Add(set, PyString_FromString(plumText));
+	printf("length after add: %i\n", PySet_GET_SIZE(set));
+	//PyList_SET_ITEM(list, i, PyString_FromString(modText));
+	//PyList_Append(list, PyString_FromString(appendText));
+	Py_RETURN_NONE;
+}
+
+PyObject*
+setPopTest(PyObject* self, PyObject* args)
+{
+	PyObject* set;
+	int i;
+	if (!PyArg_ParseTuple(args, "O!i", &PySet_Type, &set, &i)) return NULL;
+	printf("pop %i elements from the set...\n", i);
+	int j;
+	for (j = 0; j < i; ++j)
+	{
+		PyObject* pop = PySet_Pop(set);
+		if (pop != NULL)
+			puts(PyString_AS_STRING(pop));
+		else
+			puts("No more elements in the set!");
+	}
+	Py_RETURN_NONE;
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
 	{"listReadTest", listReadTest, METH_VARARGS, "Prints out the strings from a three-string sequence."},
 	{"listModifyTest", listModifyTest, METH_VARARGS, "Modifies a list."},
+	{"setTest", setTest, METH_VARARGS, "Performs some tests on a given PySet object."},
+	{"setPopTest", setPopTest, METH_VARARGS, "Pops the given number of elements from the set and prints them."},
 	{"printInt", printInt, METH_VARARGS, "Prints out the int and returns nothing."},
 	{"intSquare", intSquare, METH_VARARGS, "Returns the square of the given int."},
 	{"argCountToString", argCountToString, METH_VARARGS, "Returns number of arguments as string."},
