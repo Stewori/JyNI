@@ -932,314 +932,314 @@ PyObject_Type(PyObject *o)
 //           (o->ob_type->tp_as_number->nb_int ||
 //        o->ob_type->tp_as_number->nb_float);
 //}
-//
-///* Binary operators */
-//
-///* New style number protocol support */
-//
-//#define NB_SLOT(x) offsetof(PyNumberMethods, x)
-//#define NB_BINOP(nb_methods, slot) \
-//        (*(binaryfunc*)(& ((char*)nb_methods)[slot]))
-//#define NB_TERNOP(nb_methods, slot) \
-//        (*(ternaryfunc*)(& ((char*)nb_methods)[slot]))
-//
-///*
-//  Calling scheme used for binary operations:
-//
-//  v     w       Action
-//  -------------------------------------------------------------------
-//  new   new     w.op(v,w)[*], v.op(v,w), w.op(v,w)
-//  new   old     v.op(v,w), coerce(v,w), v.op(v,w)
-//  old   new     w.op(v,w), coerce(v,w), v.op(v,w)
-//  old   old     coerce(v,w), v.op(v,w)
-//
-//  [*] only when v->ob_type != w->ob_type && w->ob_type is a subclass of
-//      v->ob_type
-//
-//  Legend:
-//  -------
-//  * new == new style number
-//  * old == old style number
-//  * Action indicates the order in which operations are tried until either
-//    a valid result is produced or an error occurs.
-//
-// */
-//
-//static PyObject *
-//binary_op1(PyObject *v, PyObject *w, const int op_slot)
-//{
-//    PyObject *x;
-//    binaryfunc slotv = NULL;
-//    binaryfunc slotw = NULL;
-//
-//    if (v->ob_type->tp_as_number != NULL && NEW_STYLE_NUMBER(v))
-//        slotv = NB_BINOP(v->ob_type->tp_as_number, op_slot);
-//    if (w->ob_type != v->ob_type &&
-//        w->ob_type->tp_as_number != NULL && NEW_STYLE_NUMBER(w)) {
-//        slotw = NB_BINOP(w->ob_type->tp_as_number, op_slot);
-//        if (slotw == slotv)
-//            slotw = NULL;
-//    }
-//    if (slotv) {
-//        if (slotw && PyType_IsSubtype(w->ob_type, v->ob_type)) {
-//            x = slotw(v, w);
-//            if (x != Py_NotImplemented)
-//                return x;
-//            Py_DECREF(x); /* can't do it */
-//            slotw = NULL;
-//        }
-//        x = slotv(v, w);
-//        if (x != Py_NotImplemented)
-//            return x;
-//        Py_DECREF(x); /* can't do it */
-//    }
-//    if (slotw) {
-//        x = slotw(v, w);
-//        if (x != Py_NotImplemented)
-//            return x;
-//        Py_DECREF(x); /* can't do it */
-//    }
-//    if (!NEW_STYLE_NUMBER(v) || !NEW_STYLE_NUMBER(w)) {
-//        int err = PyNumber_CoerceEx(&v, &w);
-//        if (err < 0) {
-//            return NULL;
-//        }
-//        if (err == 0) {
-//            PyNumberMethods *mv = v->ob_type->tp_as_number;
-//            if (mv) {
-//                binaryfunc slot;
-//                slot = NB_BINOP(mv, op_slot);
-//                if (slot) {
-//                    x = slot(v, w);
-//                    Py_DECREF(v);
-//                    Py_DECREF(w);
-//                    return x;
-//                }
-//            }
-//            /* CoerceEx incremented the reference counts */
-//            Py_DECREF(v);
-//            Py_DECREF(w);
-//        }
-//    }
-//    Py_INCREF(Py_NotImplemented);
-//    return Py_NotImplemented;
-//}
-//
-//static PyObject *
-//binop_type_error(PyObject *v, PyObject *w, const char *op_name)
-//{
-//    PyErr_Format(PyExc_TypeError,
-//                 "unsupported operand type(s) for %.100s: "
-//                 "'%.100s' and '%.100s'",
-//                 op_name,
-//                 v->ob_type->tp_name,
-//                 w->ob_type->tp_name);
-//    return NULL;
-//}
-//
-//static PyObject *
-//binary_op(PyObject *v, PyObject *w, const int op_slot, const char *op_name)
-//{
-//    PyObject *result = binary_op1(v, w, op_slot);
-//    if (result == Py_NotImplemented) {
-//        Py_DECREF(result);
-//        return binop_type_error(v, w, op_name);
-//    }
-//    return result;
-//}
-//
-//
-///*
-//  Calling scheme used for ternary operations:
-//
-//  *** In some cases, w.op is called before v.op; see binary_op1. ***
-//
-//  v     w       z       Action
-//  -------------------------------------------------------------------
-//  new   new     new     v.op(v,w,z), w.op(v,w,z), z.op(v,w,z)
-//  new   old     new     v.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
-//  old   new     new     w.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
-//  old   old     new     z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
-//  new   new     old     v.op(v,w,z), w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
-//  new   old     old     v.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
-//  old   new     old     w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
-//  old   old     old     coerce(v,w,z), v.op(v,w,z)
-//
-//  Legend:
-//  -------
-//  * new == new style number
-//  * old == old style number
-//  * Action indicates the order in which operations are tried until either
-//    a valid result is produced or an error occurs.
-//  * coerce(v,w,z) actually does: coerce(v,w), coerce(v,z), coerce(w,z) and
-//    only if z != Py_None; if z == Py_None, then it is treated as absent
-//    variable and only coerce(v,w) is tried.
-//
-// */
-//
-//static PyObject *
-//ternary_op(PyObject *v,
-//           PyObject *w,
-//           PyObject *z,
-//           const int op_slot,
-//           const char *op_name)
-//{
-//    PyNumberMethods *mv, *mw, *mz;
-//    PyObject *x = NULL;
-//    ternaryfunc slotv = NULL;
-//    ternaryfunc slotw = NULL;
-//    ternaryfunc slotz = NULL;
-//
-//    mv = v->ob_type->tp_as_number;
-//    mw = w->ob_type->tp_as_number;
-//    if (mv != NULL && NEW_STYLE_NUMBER(v))
-//        slotv = NB_TERNOP(mv, op_slot);
-//    if (w->ob_type != v->ob_type &&
-//        mw != NULL && NEW_STYLE_NUMBER(w)) {
-//        slotw = NB_TERNOP(mw, op_slot);
-//        if (slotw == slotv)
-//            slotw = NULL;
-//    }
-//    if (slotv) {
-//        if (slotw && PyType_IsSubtype(w->ob_type, v->ob_type)) {
-//            x = slotw(v, w, z);
-//            if (x != Py_NotImplemented)
-//                return x;
-//            Py_DECREF(x); /* can't do it */
-//            slotw = NULL;
-//        }
-//        x = slotv(v, w, z);
-//        if (x != Py_NotImplemented)
-//            return x;
-//        Py_DECREF(x); /* can't do it */
-//    }
-//    if (slotw) {
-//        x = slotw(v, w, z);
-//        if (x != Py_NotImplemented)
-//            return x;
-//        Py_DECREF(x); /* can't do it */
-//    }
-//    mz = z->ob_type->tp_as_number;
-//    if (mz != NULL && NEW_STYLE_NUMBER(z)) {
-//        slotz = NB_TERNOP(mz, op_slot);
-//        if (slotz == slotv || slotz == slotw)
-//            slotz = NULL;
-//        if (slotz) {
-//            x = slotz(v, w, z);
-//            if (x != Py_NotImplemented)
-//                return x;
-//            Py_DECREF(x); /* can't do it */
-//        }
-//    }
-//
-//    if (!NEW_STYLE_NUMBER(v) || !NEW_STYLE_NUMBER(w) ||
-//                    (z != Py_None && !NEW_STYLE_NUMBER(z))) {
-//        /* we have an old style operand, coerce */
-//        PyObject *v1, *z1, *w2, *z2;
-//        int c;
-//
-//        c = PyNumber_Coerce(&v, &w);
-//        if (c != 0)
-//            goto error3;
-//
-//        /* Special case: if the third argument is None, it is
-//           treated as absent argument and not coerced. */
-//        if (z == Py_None) {
-//            if (v->ob_type->tp_as_number) {
-//                slotz = NB_TERNOP(v->ob_type->tp_as_number,
-//                                  op_slot);
-//                if (slotz)
-//                    x = slotz(v, w, z);
-//                else
-//                    c = -1;
-//            }
-//            else
-//                c = -1;
-//            goto error2;
-//        }
-//        v1 = v;
-//        z1 = z;
-//        c = PyNumber_Coerce(&v1, &z1);
-//        if (c != 0)
-//            goto error2;
-//        w2 = w;
-//        z2 = z1;
-//        c = PyNumber_Coerce(&w2, &z2);
-//        if (c != 0)
-//            goto error1;
-//
-//        if (v1->ob_type->tp_as_number != NULL) {
-//            slotv = NB_TERNOP(v1->ob_type->tp_as_number,
-//                              op_slot);
-//            if (slotv)
-//                x = slotv(v1, w2, z2);
-//            else
-//                c = -1;
-//        }
-//        else
-//            c = -1;
-//
-//        Py_DECREF(w2);
-//        Py_DECREF(z2);
-//    error1:
-//        Py_DECREF(v1);
-//        Py_DECREF(z1);
-//    error2:
-//        Py_DECREF(v);
-//        Py_DECREF(w);
-//    error3:
-//        if (c >= 0)
-//            return x;
-//    }
-//
-//    if (z == Py_None)
-//        PyErr_Format(
-//            PyExc_TypeError,
-//            "unsupported operand type(s) for ** or pow(): "
-//            "'%.100s' and '%.100s'",
-//            v->ob_type->tp_name,
-//            w->ob_type->tp_name);
-//    else
-//        PyErr_Format(
-//            PyExc_TypeError,
-//            "unsupported operand type(s) for pow(): "
-//            "'%.100s', '%.100s', '%.100s'",
-//            v->ob_type->tp_name,
-//            w->ob_type->tp_name,
-//            z->ob_type->tp_name);
-//    return NULL;
-//}
-//
-//#define BINARY_FUNC(func, op, op_name) \
-//    PyObject * \
-//    func(PyObject *v, PyObject *w) { \
-//        return binary_op(v, w, NB_SLOT(op), op_name); \
-//    }
-//
-//BINARY_FUNC(PyNumber_Or, nb_or, "|")
-//BINARY_FUNC(PyNumber_Xor, nb_xor, "^")
-//BINARY_FUNC(PyNumber_And, nb_and, "&")
-//BINARY_FUNC(PyNumber_Lshift, nb_lshift, "<<")
-//BINARY_FUNC(PyNumber_Rshift, nb_rshift, ">>")
-//BINARY_FUNC(PyNumber_Subtract, nb_subtract, "-")
-//BINARY_FUNC(PyNumber_Divide, nb_divide, "/")
-//BINARY_FUNC(PyNumber_Divmod, nb_divmod, "divmod()")
-//
-//PyObject *
-//PyNumber_Add(PyObject *v, PyObject *w)
-//{
-//    PyObject *result = binary_op1(v, w, NB_SLOT(nb_add));
-//    if (result == Py_NotImplemented) {
-//        PySequenceMethods *m = v->ob_type->tp_as_sequence;
-//        Py_DECREF(result);
-//        if (m && m->sq_concat) {
-//            return (*m->sq_concat)(v, w);
-//        }
-//        result = binop_type_error(v, w, "+");
-//    }
-//    return result;
-//}
-//
+
+/* Binary operators */
+
+/* New style number protocol support */
+
+#define NB_SLOT(x) offsetof(PyNumberMethods, x)
+#define NB_BINOP(nb_methods, slot) \
+        (*(binaryfunc*)(& ((char*)nb_methods)[slot]))
+#define NB_TERNOP(nb_methods, slot) \
+        (*(ternaryfunc*)(& ((char*)nb_methods)[slot]))
+
+/*
+  Calling scheme used for binary operations:
+
+  v     w       Action
+  -------------------------------------------------------------------
+  new   new     w.op(v,w)[*], v.op(v,w), w.op(v,w)
+  new   old     v.op(v,w), coerce(v,w), v.op(v,w)
+  old   new     w.op(v,w), coerce(v,w), v.op(v,w)
+  old   old     coerce(v,w), v.op(v,w)
+
+  [*] only when v->ob_type != w->ob_type && w->ob_type is a subclass of
+      v->ob_type
+
+  Legend:
+  -------
+  * new == new style number
+  * old == old style number
+  * Action indicates the order in which operations are tried until either
+    a valid result is produced or an error occurs.
+
+ */
+
+static PyObject *
+binary_op1(PyObject *v, PyObject *w, const int op_slot)
+{
+    PyObject *x;
+    binaryfunc slotv = NULL;
+    binaryfunc slotw = NULL;
+
+    if (v->ob_type->tp_as_number != NULL && NEW_STYLE_NUMBER(v))
+        slotv = NB_BINOP(v->ob_type->tp_as_number, op_slot);
+    if (w->ob_type != v->ob_type &&
+        w->ob_type->tp_as_number != NULL && NEW_STYLE_NUMBER(w)) {
+        slotw = NB_BINOP(w->ob_type->tp_as_number, op_slot);
+        if (slotw == slotv)
+            slotw = NULL;
+    }
+    if (slotv) {
+        if (slotw && PyType_IsSubtype(w->ob_type, v->ob_type)) {
+            x = slotw(v, w);
+            if (x != Py_NotImplemented)
+                return x;
+            Py_DECREF(x); /* can't do it */
+            slotw = NULL;
+        }
+        x = slotv(v, w);
+        if (x != Py_NotImplemented)
+            return x;
+        Py_DECREF(x); /* can't do it */
+    }
+    if (slotw) {
+        x = slotw(v, w);
+        if (x != Py_NotImplemented)
+            return x;
+        Py_DECREF(x); /* can't do it */
+    }
+    if (!NEW_STYLE_NUMBER(v) || !NEW_STYLE_NUMBER(w)) {
+        int err = PyNumber_CoerceEx(&v, &w);
+        if (err < 0) {
+            return NULL;
+        }
+        if (err == 0) {
+            PyNumberMethods *mv = v->ob_type->tp_as_number;
+            if (mv) {
+                binaryfunc slot;
+                slot = NB_BINOP(mv, op_slot);
+                if (slot) {
+                    x = slot(v, w);
+                    Py_DECREF(v);
+                    Py_DECREF(w);
+                    return x;
+                }
+            }
+            /* CoerceEx incremented the reference counts */
+            Py_DECREF(v);
+            Py_DECREF(w);
+        }
+    }
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+}
+
+static PyObject *
+binop_type_error(PyObject *v, PyObject *w, const char *op_name)
+{
+    PyErr_Format(PyExc_TypeError,
+                 "unsupported operand type(s) for %.100s: "
+                 "'%.100s' and '%.100s'",
+                 op_name,
+                 v->ob_type->tp_name,
+                 w->ob_type->tp_name);
+    return NULL;
+}
+
+static PyObject *
+binary_op(PyObject *v, PyObject *w, const int op_slot, const char *op_name)
+{
+    PyObject *result = binary_op1(v, w, op_slot);
+    if (result == Py_NotImplemented) {
+        Py_DECREF(result);
+        return binop_type_error(v, w, op_name);
+    }
+    return result;
+}
+
+
+/*
+  Calling scheme used for ternary operations:
+
+  *** In some cases, w.op is called before v.op; see binary_op1. ***
+
+  v     w       z       Action
+  -------------------------------------------------------------------
+  new   new     new     v.op(v,w,z), w.op(v,w,z), z.op(v,w,z)
+  new   old     new     v.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
+  old   new     new     w.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
+  old   old     new     z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
+  new   new     old     v.op(v,w,z), w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
+  new   old     old     v.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
+  old   new     old     w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)
+  old   old     old     coerce(v,w,z), v.op(v,w,z)
+
+  Legend:
+  -------
+  * new == new style number
+  * old == old style number
+  * Action indicates the order in which operations are tried until either
+    a valid result is produced or an error occurs.
+  * coerce(v,w,z) actually does: coerce(v,w), coerce(v,z), coerce(w,z) and
+    only if z != Py_None; if z == Py_None, then it is treated as absent
+    variable and only coerce(v,w) is tried.
+
+ */
+
+static PyObject *
+ternary_op(PyObject *v,
+           PyObject *w,
+           PyObject *z,
+           const int op_slot,
+           const char *op_name)
+{
+    PyNumberMethods *mv, *mw, *mz;
+    PyObject *x = NULL;
+    ternaryfunc slotv = NULL;
+    ternaryfunc slotw = NULL;
+    ternaryfunc slotz = NULL;
+
+    mv = v->ob_type->tp_as_number;
+    mw = w->ob_type->tp_as_number;
+    if (mv != NULL && NEW_STYLE_NUMBER(v))
+        slotv = NB_TERNOP(mv, op_slot);
+    if (w->ob_type != v->ob_type &&
+        mw != NULL && NEW_STYLE_NUMBER(w)) {
+        slotw = NB_TERNOP(mw, op_slot);
+        if (slotw == slotv)
+            slotw = NULL;
+    }
+    if (slotv) {
+        if (slotw && PyType_IsSubtype(w->ob_type, v->ob_type)) {
+            x = slotw(v, w, z);
+            if (x != Py_NotImplemented)
+                return x;
+            Py_DECREF(x); /* can't do it */
+            slotw = NULL;
+        }
+        x = slotv(v, w, z);
+        if (x != Py_NotImplemented)
+            return x;
+        Py_DECREF(x); /* can't do it */
+    }
+    if (slotw) {
+        x = slotw(v, w, z);
+        if (x != Py_NotImplemented)
+            return x;
+        Py_DECREF(x); /* can't do it */
+    }
+    mz = z->ob_type->tp_as_number;
+    if (mz != NULL && NEW_STYLE_NUMBER(z)) {
+        slotz = NB_TERNOP(mz, op_slot);
+        if (slotz == slotv || slotz == slotw)
+            slotz = NULL;
+        if (slotz) {
+            x = slotz(v, w, z);
+            if (x != Py_NotImplemented)
+                return x;
+            Py_DECREF(x); /* can't do it */
+        }
+    }
+
+    if (!NEW_STYLE_NUMBER(v) || !NEW_STYLE_NUMBER(w) ||
+                    (z != Py_None && !NEW_STYLE_NUMBER(z))) {
+        /* we have an old style operand, coerce */
+        PyObject *v1, *z1, *w2, *z2;
+        int c;
+
+        c = PyNumber_Coerce(&v, &w);
+        if (c != 0)
+            goto error3;
+
+        /* Special case: if the third argument is None, it is
+           treated as absent argument and not coerced. */
+        if (z == Py_None) {
+            if (v->ob_type->tp_as_number) {
+                slotz = NB_TERNOP(v->ob_type->tp_as_number,
+                                  op_slot);
+                if (slotz)
+                    x = slotz(v, w, z);
+                else
+                    c = -1;
+            }
+            else
+                c = -1;
+            goto error2;
+        }
+        v1 = v;
+        z1 = z;
+        c = PyNumber_Coerce(&v1, &z1);
+        if (c != 0)
+            goto error2;
+        w2 = w;
+        z2 = z1;
+        c = PyNumber_Coerce(&w2, &z2);
+        if (c != 0)
+            goto error1;
+
+        if (v1->ob_type->tp_as_number != NULL) {
+            slotv = NB_TERNOP(v1->ob_type->tp_as_number,
+                              op_slot);
+            if (slotv)
+                x = slotv(v1, w2, z2);
+            else
+                c = -1;
+        }
+        else
+            c = -1;
+
+        Py_DECREF(w2);
+        Py_DECREF(z2);
+    error1:
+        Py_DECREF(v1);
+        Py_DECREF(z1);
+    error2:
+        Py_DECREF(v);
+        Py_DECREF(w);
+    error3:
+        if (c >= 0)
+            return x;
+    }
+
+    if (z == Py_None)
+        PyErr_Format(
+            PyExc_TypeError,
+            "unsupported operand type(s) for ** or pow(): "
+            "'%.100s' and '%.100s'",
+            v->ob_type->tp_name,
+            w->ob_type->tp_name);
+    else
+        PyErr_Format(
+            PyExc_TypeError,
+            "unsupported operand type(s) for pow(): "
+            "'%.100s', '%.100s', '%.100s'",
+            v->ob_type->tp_name,
+            w->ob_type->tp_name,
+            z->ob_type->tp_name);
+    return NULL;
+}
+
+#define BINARY_FUNC(func, op, op_name) \
+    PyObject * \
+    func(PyObject *v, PyObject *w) { \
+        return binary_op(v, w, NB_SLOT(op), op_name); \
+    }
+
+BINARY_FUNC(PyNumber_Or, nb_or, "|")
+BINARY_FUNC(PyNumber_Xor, nb_xor, "^")
+BINARY_FUNC(PyNumber_And, nb_and, "&")
+BINARY_FUNC(PyNumber_Lshift, nb_lshift, "<<")
+BINARY_FUNC(PyNumber_Rshift, nb_rshift, ">>")
+BINARY_FUNC(PyNumber_Subtract, nb_subtract, "-")
+BINARY_FUNC(PyNumber_Divide, nb_divide, "/")
+BINARY_FUNC(PyNumber_Divmod, nb_divmod, "divmod()")
+
+PyObject *
+PyNumber_Add(PyObject *v, PyObject *w)
+{
+    PyObject *result = binary_op1(v, w, NB_SLOT(nb_add));
+    if (result == Py_NotImplemented) {
+        PySequenceMethods *m = v->ob_type->tp_as_sequence;
+        Py_DECREF(result);
+        if (m && m->sq_concat) {
+            return (*m->sq_concat)(v, w);
+        }
+        result = binop_type_error(v, w, "+");
+    }
+    return result;
+}
+
 //static PyObject *
 //sequence_repeat(ssizeargfunc repeatfunc, PyObject *seq, PyObject *n)
 //{
@@ -1255,68 +1255,68 @@ PyObject_Type(PyObject *o)
 //    }
 //    return (*repeatfunc)(seq, count);
 //}
-//
-//PyObject *
-//PyNumber_Multiply(PyObject *v, PyObject *w)
-//{
-//    PyObject *result = binary_op1(v, w, NB_SLOT(nb_multiply));
-//    if (result == Py_NotImplemented) {
-//        PySequenceMethods *mv = v->ob_type->tp_as_sequence;
-//        PySequenceMethods *mw = w->ob_type->tp_as_sequence;
-//        Py_DECREF(result);
-//        if  (mv && mv->sq_repeat) {
-//            return sequence_repeat(mv->sq_repeat, v, w);
-//        }
-//        else if (mw && mw->sq_repeat) {
-//            return sequence_repeat(mw->sq_repeat, w, v);
-//        }
-//        result = binop_type_error(v, w, "*");
-//    }
-//    return result;
-//}
-//
-//PyObject *
-//PyNumber_FloorDivide(PyObject *v, PyObject *w)
-//{
-//    /* XXX tp_flags test */
-//    return binary_op(v, w, NB_SLOT(nb_floor_divide), "//");
-//}
-//
-//PyObject *
-//PyNumber_TrueDivide(PyObject *v, PyObject *w)
-//{
-//    /* XXX tp_flags test */
-//    return binary_op(v, w, NB_SLOT(nb_true_divide), "/");
-//}
-//
-//PyObject *
-//PyNumber_Remainder(PyObject *v, PyObject *w)
-//{
-//    return binary_op(v, w, NB_SLOT(nb_remainder), "%");
-//}
-//
-//PyObject *
-//PyNumber_Power(PyObject *v, PyObject *w, PyObject *z)
-//{
-//    return ternary_op(v, w, z, NB_SLOT(nb_power), "** or pow()");
-//}
-//
-///* Binary in-place operators */
-//
-///* The in-place operators are defined to fall back to the 'normal',
-//   non in-place operations, if the in-place methods are not in place.
-//
-//   - If the left hand object has the appropriate struct members, and
-//     they are filled, call the appropriate function and return the
-//     result.  No coercion is done on the arguments; the left-hand object
-//     is the one the operation is performed on, and it's up to the
-//     function to deal with the right-hand object.
-//
-//   - Otherwise, in-place modification is not supported. Handle it exactly as
-//     a non in-place operation of the same kind.
-//
-//   */
-//
+
+PyObject *
+PyNumber_Multiply(PyObject *v, PyObject *w)
+{
+    PyObject *result = binary_op1(v, w, NB_SLOT(nb_multiply));
+    if (result == Py_NotImplemented) {
+        PySequenceMethods *mv = v->ob_type->tp_as_sequence;
+        PySequenceMethods *mw = w->ob_type->tp_as_sequence;
+        Py_DECREF(result);
+        if  (mv && mv->sq_repeat) {
+            return sequence_repeat(mv->sq_repeat, v, w);
+        }
+        else if (mw && mw->sq_repeat) {
+            return sequence_repeat(mw->sq_repeat, w, v);
+        }
+        result = binop_type_error(v, w, "*");
+    }
+    return result;
+}
+
+PyObject *
+PyNumber_FloorDivide(PyObject *v, PyObject *w)
+{
+    /* XXX tp_flags test */
+    return binary_op(v, w, NB_SLOT(nb_floor_divide), "//");
+}
+
+PyObject *
+PyNumber_TrueDivide(PyObject *v, PyObject *w)
+{
+    /* XXX tp_flags test */
+    return binary_op(v, w, NB_SLOT(nb_true_divide), "/");
+}
+
+PyObject *
+PyNumber_Remainder(PyObject *v, PyObject *w)
+{
+    return binary_op(v, w, NB_SLOT(nb_remainder), "%");
+}
+
+PyObject *
+PyNumber_Power(PyObject *v, PyObject *w, PyObject *z)
+{
+    return ternary_op(v, w, z, NB_SLOT(nb_power), "** or pow()");
+}
+
+/* Binary in-place operators */
+
+/* The in-place operators are defined to fall back to the 'normal',
+   non in-place operations, if the in-place methods are not in place.
+
+   - If the left hand object has the appropriate struct members, and
+     they are filled, call the appropriate function and return the
+     result.  No coercion is done on the arguments; the left-hand object
+     is the one the operation is performed on, and it's up to the
+     function to deal with the right-hand object.
+
+   - Otherwise, in-place modification is not supported. Handle it exactly as
+     a non in-place operation of the same kind.
+
+   */
+
 //#define HASINPLACE(t) \
 //    PyType_HasFeature((t)->ob_type, Py_TPFLAGS_HAVE_INPLACEOPS)
 //
@@ -1348,167 +1348,167 @@ PyObject_Type(PyObject *o)
 //    }
 //    return result;
 //}
-//
-//#define INPLACE_BINOP(func, iop, op, op_name) \
-//    PyObject * \
-//    func(PyObject *v, PyObject *w) { \
-//        return binary_iop(v, w, NB_SLOT(iop), NB_SLOT(op), op_name); \
-//    }
-//
-//INPLACE_BINOP(PyNumber_InPlaceOr, nb_inplace_or, nb_or, "|=")
-//INPLACE_BINOP(PyNumber_InPlaceXor, nb_inplace_xor, nb_xor, "^=")
-//INPLACE_BINOP(PyNumber_InPlaceAnd, nb_inplace_and, nb_and, "&=")
-//INPLACE_BINOP(PyNumber_InPlaceLshift, nb_inplace_lshift, nb_lshift, "<<=")
-//INPLACE_BINOP(PyNumber_InPlaceRshift, nb_inplace_rshift, nb_rshift, ">>=")
-//INPLACE_BINOP(PyNumber_InPlaceSubtract, nb_inplace_subtract, nb_subtract, "-=")
-//INPLACE_BINOP(PyNumber_InPlaceDivide, nb_inplace_divide, nb_divide, "/=")
-//
-//PyObject *
-//PyNumber_InPlaceFloorDivide(PyObject *v, PyObject *w)
-//{
-//    /* XXX tp_flags test */
-//    return binary_iop(v, w, NB_SLOT(nb_inplace_floor_divide),
-//                      NB_SLOT(nb_floor_divide), "//=");
-//}
-//
-//PyObject *
-//PyNumber_InPlaceTrueDivide(PyObject *v, PyObject *w)
-//{
-//    /* XXX tp_flags test */
-//    return binary_iop(v, w, NB_SLOT(nb_inplace_true_divide),
-//                      NB_SLOT(nb_true_divide), "/=");
-//}
-//
-//PyObject *
-//PyNumber_InPlaceAdd(PyObject *v, PyObject *w)
-//{
-//    PyObject *result = binary_iop1(v, w, NB_SLOT(nb_inplace_add),
-//                                   NB_SLOT(nb_add));
-//    if (result == Py_NotImplemented) {
-//        PySequenceMethods *m = v->ob_type->tp_as_sequence;
-//        Py_DECREF(result);
-//        if (m != NULL) {
-//            binaryfunc f = NULL;
-//            if (HASINPLACE(v))
-//                f = m->sq_inplace_concat;
-//            if (f == NULL)
-//                f = m->sq_concat;
-//            if (f != NULL)
-//                return (*f)(v, w);
-//        }
-//        result = binop_type_error(v, w, "+=");
-//    }
-//    return result;
-//}
-//
-//PyObject *
-//PyNumber_InPlaceMultiply(PyObject *v, PyObject *w)
-//{
-//    PyObject *result = binary_iop1(v, w, NB_SLOT(nb_inplace_multiply),
-//                                   NB_SLOT(nb_multiply));
-//    if (result == Py_NotImplemented) {
-//        ssizeargfunc f = NULL;
-//        PySequenceMethods *mv = v->ob_type->tp_as_sequence;
-//        PySequenceMethods *mw = w->ob_type->tp_as_sequence;
-//        Py_DECREF(result);
-//        if (mv != NULL) {
-//            if (HASINPLACE(v))
-//                f = mv->sq_inplace_repeat;
-//            if (f == NULL)
-//                f = mv->sq_repeat;
-//            if (f != NULL)
-//                return sequence_repeat(f, v, w);
-//        }
-//        else if (mw != NULL) {
-//            /* Note that the right hand operand should not be
-//             * mutated in this case so sq_inplace_repeat is not
-//             * used. */
-//            if (mw->sq_repeat)
-//                return sequence_repeat(mw->sq_repeat, w, v);
-//        }
-//        result = binop_type_error(v, w, "*=");
-//    }
-//    return result;
-//}
-//
-//PyObject *
-//PyNumber_InPlaceRemainder(PyObject *v, PyObject *w)
-//{
-//    return binary_iop(v, w, NB_SLOT(nb_inplace_remainder),
-//                            NB_SLOT(nb_remainder), "%=");
-//}
-//
-//PyObject *
-//PyNumber_InPlacePower(PyObject *v, PyObject *w, PyObject *z)
-//{
-//    if (HASINPLACE(v) && v->ob_type->tp_as_number &&
-//        v->ob_type->tp_as_number->nb_inplace_power != NULL) {
-//        return ternary_op(v, w, z, NB_SLOT(nb_inplace_power), "**=");
-//    }
-//    else {
-//        return ternary_op(v, w, z, NB_SLOT(nb_power), "**=");
-//    }
-//}
-//
-//
-///* Unary operators and functions */
-//
-//PyObject *
-//PyNumber_Negative(PyObject *o)
-//{
-//    PyNumberMethods *m;
-//
-//    if (o == NULL)
-//        return null_error();
-//    m = o->ob_type->tp_as_number;
-//    if (m && m->nb_negative)
-//        return (*m->nb_negative)(o);
-//
-//    return type_error("bad operand type for unary -: '%.200s'", o);
-//}
-//
-//PyObject *
-//PyNumber_Positive(PyObject *o)
-//{
-//    PyNumberMethods *m;
-//
-//    if (o == NULL)
-//        return null_error();
-//    m = o->ob_type->tp_as_number;
-//    if (m && m->nb_positive)
-//        return (*m->nb_positive)(o);
-//
-//    return type_error("bad operand type for unary +: '%.200s'", o);
-//}
-//
-//PyObject *
-//PyNumber_Invert(PyObject *o)
-//{
-//    PyNumberMethods *m;
-//
-//    if (o == NULL)
-//        return null_error();
-//    m = o->ob_type->tp_as_number;
-//    if (m && m->nb_invert)
-//        return (*m->nb_invert)(o);
-//
-//    return type_error("bad operand type for unary ~: '%.200s'", o);
-//}
-//
-//PyObject *
-//PyNumber_Absolute(PyObject *o)
-//{
-//    PyNumberMethods *m;
-//
-//    if (o == NULL)
-//        return null_error();
-//    m = o->ob_type->tp_as_number;
-//    if (m && m->nb_absolute)
-//        return m->nb_absolute(o);
-//
-//    return type_error("bad operand type for abs(): '%.200s'", o);
-//}
-//
+
+#define INPLACE_BINOP(func, iop, op, op_name) \
+    PyObject * \
+    func(PyObject *v, PyObject *w) { \
+        return binary_iop(v, w, NB_SLOT(iop), NB_SLOT(op), op_name); \
+    }
+
+INPLACE_BINOP(PyNumber_InPlaceOr, nb_inplace_or, nb_or, "|=")
+INPLACE_BINOP(PyNumber_InPlaceXor, nb_inplace_xor, nb_xor, "^=")
+INPLACE_BINOP(PyNumber_InPlaceAnd, nb_inplace_and, nb_and, "&=")
+INPLACE_BINOP(PyNumber_InPlaceLshift, nb_inplace_lshift, nb_lshift, "<<=")
+INPLACE_BINOP(PyNumber_InPlaceRshift, nb_inplace_rshift, nb_rshift, ">>=")
+INPLACE_BINOP(PyNumber_InPlaceSubtract, nb_inplace_subtract, nb_subtract, "-=")
+INPLACE_BINOP(PyNumber_InPlaceDivide, nb_inplace_divide, nb_divide, "/=")
+
+PyObject *
+PyNumber_InPlaceFloorDivide(PyObject *v, PyObject *w)
+{
+    /* XXX tp_flags test */
+    return binary_iop(v, w, NB_SLOT(nb_inplace_floor_divide),
+                      NB_SLOT(nb_floor_divide), "//=");
+}
+
+PyObject *
+PyNumber_InPlaceTrueDivide(PyObject *v, PyObject *w)
+{
+    /* XXX tp_flags test */
+    return binary_iop(v, w, NB_SLOT(nb_inplace_true_divide),
+                      NB_SLOT(nb_true_divide), "/=");
+}
+
+PyObject *
+PyNumber_InPlaceAdd(PyObject *v, PyObject *w)
+{
+    PyObject *result = binary_iop1(v, w, NB_SLOT(nb_inplace_add),
+                                   NB_SLOT(nb_add));
+    if (result == Py_NotImplemented) {
+        PySequenceMethods *m = v->ob_type->tp_as_sequence;
+        Py_DECREF(result);
+        if (m != NULL) {
+            binaryfunc f = NULL;
+            if (HASINPLACE(v))
+                f = m->sq_inplace_concat;
+            if (f == NULL)
+                f = m->sq_concat;
+            if (f != NULL)
+                return (*f)(v, w);
+        }
+        result = binop_type_error(v, w, "+=");
+    }
+    return result;
+}
+
+PyObject *
+PyNumber_InPlaceMultiply(PyObject *v, PyObject *w)
+{
+    PyObject *result = binary_iop1(v, w, NB_SLOT(nb_inplace_multiply),
+                                   NB_SLOT(nb_multiply));
+    if (result == Py_NotImplemented) {
+        ssizeargfunc f = NULL;
+        PySequenceMethods *mv = v->ob_type->tp_as_sequence;
+        PySequenceMethods *mw = w->ob_type->tp_as_sequence;
+        Py_DECREF(result);
+        if (mv != NULL) {
+            if (HASINPLACE(v))
+                f = mv->sq_inplace_repeat;
+            if (f == NULL)
+                f = mv->sq_repeat;
+            if (f != NULL)
+                return sequence_repeat(f, v, w);
+        }
+        else if (mw != NULL) {
+            /* Note that the right hand operand should not be
+             * mutated in this case so sq_inplace_repeat is not
+             * used. */
+            if (mw->sq_repeat)
+                return sequence_repeat(mw->sq_repeat, w, v);
+        }
+        result = binop_type_error(v, w, "*=");
+    }
+    return result;
+}
+
+PyObject *
+PyNumber_InPlaceRemainder(PyObject *v, PyObject *w)
+{
+    return binary_iop(v, w, NB_SLOT(nb_inplace_remainder),
+                            NB_SLOT(nb_remainder), "%=");
+}
+
+PyObject *
+PyNumber_InPlacePower(PyObject *v, PyObject *w, PyObject *z)
+{
+    if (HASINPLACE(v) && v->ob_type->tp_as_number &&
+        v->ob_type->tp_as_number->nb_inplace_power != NULL) {
+        return ternary_op(v, w, z, NB_SLOT(nb_inplace_power), "**=");
+    }
+    else {
+        return ternary_op(v, w, z, NB_SLOT(nb_power), "**=");
+    }
+}
+
+
+/* Unary operators and functions */
+
+PyObject *
+PyNumber_Negative(PyObject *o)
+{
+    PyNumberMethods *m;
+
+    if (o == NULL)
+        return null_error();
+    m = o->ob_type->tp_as_number;
+    if (m && m->nb_negative)
+        return (*m->nb_negative)(o);
+
+    return type_error("bad operand type for unary -: '%.200s'", o);
+}
+
+PyObject *
+PyNumber_Positive(PyObject *o)
+{
+    PyNumberMethods *m;
+
+    if (o == NULL)
+        return null_error();
+    m = o->ob_type->tp_as_number;
+    if (m && m->nb_positive)
+        return (*m->nb_positive)(o);
+
+    return type_error("bad operand type for unary +: '%.200s'", o);
+}
+
+PyObject *
+PyNumber_Invert(PyObject *o)
+{
+    PyNumberMethods *m;
+
+    if (o == NULL)
+        return null_error();
+    m = o->ob_type->tp_as_number;
+    if (m && m->nb_invert)
+        return (*m->nb_invert)(o);
+
+    return type_error("bad operand type for unary ~: '%.200s'", o);
+}
+
+PyObject *
+PyNumber_Absolute(PyObject *o)
+{
+    PyNumberMethods *m;
+
+    if (o == NULL)
+        return null_error();
+    m = o->ob_type->tp_as_number;
+    if (m && m->nb_absolute)
+        return m->nb_absolute(o);
+
+    return type_error("bad operand type for abs(): '%.200s'", o);
+}
+
 ///* Add a check for embedded NULL-bytes in the argument. */
 //static PyObject *
 //int_from_string(const char *s, Py_ssize_t len)
@@ -2552,39 +2552,63 @@ PySequence_Fast(PyObject *v, const char *m)
 //    PyErr_Clear();
 //    return 0;
 //}
-//
-///* Operations on callable objects */
-//
-///* XXX PyCallable_Check() is in object.c */
-//
-//PyObject *
-//PyObject_CallObject(PyObject *o, PyObject *a)
-//{
-//    return PyEval_CallObjectWithKeywords(o, a, NULL);
-//}
-//
-//PyObject *
-//PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
-//{
-//    ternaryfunc call;
-//
-//    if ((call = func->ob_type->tp_call) != NULL) {
-//        PyObject *result;
-//        if (Py_EnterRecursiveCall(" while calling a Python object"))
-//            return NULL;
-//        result = (*call)(func, arg, kw);
-//        Py_LeaveRecursiveCall();
-//        if (result == NULL && !PyErr_Occurred())
-//            PyErr_SetString(
-//                PyExc_SystemError,
-//                "NULL result without error in PyObject_Call");
-//        return result;
-//    }
-//    PyErr_Format(PyExc_TypeError, "'%.200s' object is not callable",
-//                 func->ob_type->tp_name);
-//    return NULL;
-//}
-//
+
+/* Operations on callable objects */
+
+/* XXX PyCallable_Check() is in object.c */
+
+PyObject *
+PyObject_CallObject(PyObject *o, PyObject *a)
+{
+    return PyEval_CallObjectWithKeywords(o, a, NULL);
+}
+
+PyObject *
+PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
+{
+	JyObject* jfunc = ASJY(func);
+	if (jfunc->flags & JY_CPEER_FLAG_MASK)
+	{
+		ternaryfunc call;
+
+		if ((call = func->ob_type->tp_call) != NULL) {
+			PyObject *result;
+//			if (Py_EnterRecursiveCall(" while calling a Python object"))
+//				return NULL;
+			env(NULL);
+			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
+			result = (*call)(func, arg, kw);
+//			Py_LeaveRecursiveCall();
+			Jy_LeaveRecursiveCall();
+			if (result == NULL && !PyErr_Occurred())
+				PyErr_SetString(
+					PyExc_SystemError,
+					"NULL result without error in PyObject_Call");
+			return result;
+		}
+		PyErr_Format(PyExc_TypeError, "'%.200s' object is not callable",
+					 func->ob_type->tp_name);
+		return NULL;
+	} else
+	{
+		env(NULL);
+		jobject jdict = JyNI_JythonPyObject_FromPyObject(kw);
+		jobject args = (*env)->NewObjectArray(env,
+			PyTuple_GET_SIZE(arg)
+			+(*env)->CallIntMethod(env, jdict, pyDictSize),
+			stringClass, NULL);
+		int i;
+		for (i = 0; i < PyTuple_GET_SIZE(arg); ++i)
+			(*env)->SetObjectArrayElement(env, args, i,
+				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(arg, i)));
+		jobject jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict);
+		jobject er = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(func),
+				pyObject__call__, args, jkw);
+		//maybe insert some exception check here...
+		return JyNI_PyObject_FromJythonPyObject(er);
+	}
+}
+
 //static PyObject*
 //call_function_tail(PyObject *callable, PyObject *args)
 //{

@@ -51,7 +51,7 @@
 #define FLAG_SIZE_T 1
 typedef double va_double;
 
-//static PyObject *va_build_value(const char *, va_list, int);
+static PyObject *va_build_value(const char *, va_list, int);
 
 // Package context -- the full module name for package imports
 char *_Py_PackageContext = NULL;
@@ -215,8 +215,8 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 	return JyNI_PyObject_FromJythonPyObject(m);
 }
 
-/*
-// Helper for mkvalue() to scan the length of a format
+
+/* Helper for mkvalue() to scan the length of a format */
 
 static int
 countformat(const char *format, int endchar)
@@ -259,8 +259,9 @@ countformat(const char *format, int endchar)
 }
 
 
-// Generic function to create a value -- the inverse of getargs()
-// After an original idea and first implementation by Steven Miale
+/* Generic function to create a value -- the inverse of getargs()
+ * After an original idea and first implementation by Steven Miale
+ */
 
 static PyObject *do_mktuple(const char**, va_list *, int, int, int);
 static PyObject *do_mklist(const char**, va_list *, int, int, int);
@@ -559,14 +560,15 @@ do_mkvalue(const char **p_format, va_list *p_va, int flags)
 					Py_INCREF(v);
 			}
 			else if (!PyErr_Occurred())
-//				 * If a NULL was passed
-//				 * because a call that should
-//				 * have constructed a value
-//				 * failed, that's OK, and we
-//				 * pass the error on; but if
-//				 * no error occurred it's not
-//				 * clear that the caller knew
-//				 * what she was doing.
+				/* If a NULL was passed
+				 * because a call that should
+				 * have constructed a value
+				 * failed, that's OK, and we
+				 * pass the error on; but if
+				 * no error occurred it's not
+				 * clear that the caller knew
+				 * what she was doing.
+				 */
 				PyErr_SetString(PyExc_SystemError,
 					"NULL object passed to Py_BuildValue");
 			return v;
@@ -700,7 +702,7 @@ PyEval_CallMethod(PyObject *obj, const char *methodname, const char *format, ...
 	Py_DECREF(args);
 
 	return res;
-}*/
+}
 
 int
 PyModule_AddObject(PyObject *m, const char *name, PyObject *o)
@@ -769,7 +771,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 	//Py_DECREF(o);
 	return 0;
 }
-/*
+
 int
 PyModule_AddIntConstant(PyObject *m, const char *name, long value)
 {
@@ -780,7 +782,7 @@ PyModule_AddIntConstant(PyObject *m, const char *name, long value)
 		return 0;
 	Py_DECREF(o);
 	return -1;
-}*/
+}
 
 inline int PyModule_AddStringConstantJy(jobject m, const char *name, const char *value)
 {

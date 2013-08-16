@@ -78,4 +78,13 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src);
 PyObject* JySync_Init_PySet_From_JySet(jobject src);
 PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src);
 
+jobject JySync_Init_JyClass_From_PyClass(PyObject* src);
+PyObject* JySync_Init_PyClass_From_JyClass(jobject src);
+
+jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src);
+PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src);
+
+jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src);
+PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src);
+
 #endif /* JYSYNC_H_ */

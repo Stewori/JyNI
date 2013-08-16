@@ -74,6 +74,8 @@ extern jmethodID pyObject__or__;
 extern jmethodID pyObject__sub__;
 extern jmethodID pyObject__xor__;
 extern jmethodID pyObject__isub__;
+extern jmethodID pyObject__call__;
+extern jmethodID pyObjectIsCallable;
 
 extern jclass pyFrameClass;
 
@@ -151,7 +153,9 @@ extern jmethodID pySequenceLen;
 extern jmethodID pySequenceGetItem;
 
 extern jclass pyInstanceClass;
+extern jmethodID pyInstanceConstructor;
 extern jfieldID pyInstanceInstclassField;
+extern jfieldID pyInstance__dict__;
 extern jmethodID pyInstanceIsSequenceType;
 
 extern jclass pyFileClass;
@@ -171,8 +175,19 @@ extern jmethodID pyModule__setattr__;
 extern jmethodID pyModule__delattr__;
 
 extern jclass pyCellClass;
+
 extern jclass pyClassClass;
+extern jmethodID pyClassClassobj___new__;
+extern jfieldID pyClass__bases__;
+extern jfieldID pyClass__dict__;
+extern jfieldID pyClass__name__;
+
 extern jclass pyMethodClass;
+extern jmethodID pyMethodConstructor;
+extern jfieldID pyMethod__func__;
+extern jfieldID pyMethod__self__;
+extern jfieldID pyMethodImClass;
+
 extern jclass pyFunctionClass;
 extern jclass pyClassMethodClass;
 extern jclass pyStaticMethodClass;

@@ -1789,8 +1789,7 @@ PyDict_Size(PyObject *mp)
 		return -1;
 	}
 	env(-1);
-	jobject j1 = JyNI_JythonPyObject_FromPyObject(mp);
-	return (Py_ssize_t) (*env)->CallIntMethod(env, j1, pyDictSize);
+	return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
 	//return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
 //	return ((PyDictObject *)mp)->ma_used;
 }

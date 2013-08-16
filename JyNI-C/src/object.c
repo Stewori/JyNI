@@ -586,17 +586,19 @@ _PyObject_Str(PyObject *v)
 	// It is possible for a type to have a tp_str representation that loops
 	// infinitely.
 	env(NULL);
-	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState);
-	//if (Py_EnterRecursiveCall(" while getting the str of an object")) return NULL;
-	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall);
-	if ((*env)->ExceptionCheck(env))
-	{
-		(*env)->ExceptionClear(env);
-		return NULL;
-	}
+	Jy_EnterRecursiveCall2(" while getting the str of an object", return NULL)
+//	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState);
+//	//if (Py_EnterRecursiveCall(" while getting the str of an object")) return NULL;
+//	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall);
+//	if ((*env)->ExceptionCheck(env))
+//	{
+//		(*env)->ExceptionClear(env);
+//		return NULL;
+//	}
 	res = (*Py_TYPE(v)->tp_str)(v);
 	//Py_LeaveRecursiveCall();
-	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall);
+//	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall);
+	Jy_LeaveRecursiveCall();
 	if (res == NULL)
 		 return NULL;
 	type_ok = PyString_Check(res);
@@ -1920,13 +1922,14 @@ PyObject_Not(PyObject *v)
 	return res == 0;
 }
 
-// Coerce two numeric types to the "larger" one.
-// Increment the reference count on each argument.
-// Return value:
-// -1 if an error occurred;
-// 0 if the coercion succeeded (and then the reference counts are increased);
-// 1 if no coercion is possible (and no error is raised).
-
+/*
+ * Coerce two numeric types to the "larger" one.
+ * Increment the reference count on each argument.
+ * Return value:
+ * -1 if an error occurred;
+ * 0 if the coercion succeeded (and then the reference counts are increased);
+ * 1 if no coercion is possible (and no error is raised).
+ */
 int
 PyNumber_CoerceEx(PyObject **pv, PyObject **pw)
 {
@@ -1971,9 +1974,9 @@ PyNumber_Coerce(PyObject **pv, PyObject **pw)
 }
 
 
-// Test whether an object can be called
+/* Test whether an object can be called */
 
-/*int
+int
 PyCallable_Check(PyObject *x)
 {
 	if (x == NULL)
@@ -2053,7 +2056,7 @@ merge_class_dict(PyObject* dict, PyObject* aclass)
 	}
 	return 0;
 }
-
+/*
 // Helper for PyObject_Dir.
 // If obj has an attr named attrname that's a list, merge its string
 // elements into keys of dict.

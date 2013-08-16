@@ -437,6 +437,24 @@ public class JyNI {
 		return er2;
 	}
 	
+	/**
+	 * Completes the given argument list argDest. For efficiency, arguments should be allocated
+	 * directly as one list. So argDest is expected to already contain the non-keyword arguments.
+	 */
+	public static String[] prepareKeywordArgs(PyObject[] argsDest, PyDictionary keywords)
+	{
+		String[] er = new String[keywords.size()];
+		int offset = argsDest.length-er.length;
+		Iterator<Map.Entry<PyObject, PyObject>> kw = keywords.getMap().entrySet().iterator();
+		Map.Entry<PyObject, PyObject> entry = kw.next();
+		for (int i = 0; i < er.length; ++i)
+		{
+			er[i] = ((PyString) entry.getKey()).asString();
+			argsDest[offset+i] = entry.getValue();
+		}
+		return er;
+	}
+	
 	protected static int lastDictIndex;
 	protected static PyDictionary lastDict;
 	protected static Iterator<Map.Entry<PyObject, PyObject>> dictIterator;

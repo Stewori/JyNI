@@ -17,9 +17,9 @@ print DemoExtension.__doc__
 # With these lines this demo becomes a program that neither Jython without JyNI,
 # nor ordinary CPython could run.
 
-# print "To prove that Jython is running, we make a java call:"
-# from  java.lang import System
-# print "System.currentTimeMillis: "+str(System.currentTimeMillis())
+print "To prove that Jython is running, we make a java call:"
+from  java.lang import System
+print "System.currentTimeMillis: "+str(System.currentTimeMillis())
 
 
 print ""

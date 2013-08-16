@@ -310,3 +310,63 @@ PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src) //needed because
 	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src); //maybe do this direct to have lesser security manager issues
 	return (PyObject*) so;
 }
+
+
+jobject JySync_Init_JyClass_From_PyClass(PyObject* src)
+{
+	PyClassObject* cls = (PyClassObject*) src;
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, pyClassClass, pyClassClassobj___new__,
+		JyNI_JythonPyObject_FromPyObject(cls->cl_name),
+		JyNI_JythonPyObject_FromPyObject(cls->cl_bases),
+		JyNI_JythonPyObject_FromPyObject(cls->cl_dict));
+}
+
+PyObject* JySync_Init_PyClass_From_JyClass(jobject src)
+{
+	env(NULL);
+	jstring nm = (*env)->GetObjectField(env, src, pyClass__name__);
+	cstr_from_jstring(cnm, nm);
+	return PyClass_New(
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass__bases__)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass__dict__)),
+		PyString_FromString(cnm));
+}
+
+
+jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src)
+{
+	PyInstanceObject* inst = (PyInstanceObject*) src;
+	env(NULL);
+	return (*env)->NewObject(env, pyInstanceClass, pyInstanceConstructor,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) inst->in_class),
+		JyNI_JythonPyObject_FromPyObject(inst->in_dict));
+}
+
+PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
+{
+	env(NULL);
+	return PyInstance_NewRaw(
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstanceInstclassField)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance__dict__)));
+}
+
+
+jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src)
+{
+	PyMethodObject* meth = (PyMethodObject*) src;
+	env(NULL);
+	return (*env)->NewObject(env, pyMethodClass, pyMethodConstructor,
+		JyNI_JythonPyObject_FromPyObject(meth->im_func),
+		JyNI_JythonPyObject_FromPyObject(meth->im_self),
+		JyNI_JythonPyObject_FromPyObject(meth->im_class));
+}
+
+PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
+{
+	env(NULL);
+	return PyMethod_New(
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__func__)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__self__)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethodImClass)));
+}

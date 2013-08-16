@@ -246,6 +246,64 @@ typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; S
 	(jyObj)->attr = NULL; \
 	(jyObj)->jy = NULL
 
+
+/* Replacement for Py_EnterRecursiveCall.
+ * Original usage: Py_EnterRecursiveCall(where) : fail?
+ * Example:
+ * if (Py_EnterRecursiveCall(" while doing blah"))
+ *  	return NULL;
+ *
+ * New version:
+ * Usage: Jy_EnterRecursiveCall(where) : void
+ * Result is placed in Jy_EnterRecursiveCallResult.
+ * Example:
+ * Jy_EnterRecursiveCall(" while doing blah");
+ * if (Jy_EnterRecursiveCallResult) return NULL;
+ *
+ * Alternative:
+ * Usage: Jy_EnterRecursiveCall2(where, doOnFail) : void
+ * Example:
+ * Jy_EnterRecursiveCall2(" while doing blah", return NULL);
+ *
+ * Warning: Can only be used once per block. For subsequent usage one
+ * needs to adopt this macro by hand and simply leave out the first line.
+ *
+ * Note that this macros are only usable after a call to env in the same block.
+ */
+#define Jy_EnterRecursiveCall(where) \
+	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
+	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
+	jboolean Jy_EnterRecursiveCallResult = JNI_FALSE; \
+	if ((*env)->ExceptionCheck(env)) \
+	{ \
+		(*env)->ExceptionClear(env); \
+		Jy_EnterRecursiveCallResult = JNI_TRUE; \
+	}
+
+#define Jy_EnterRecursiveCall2(where, doOnFail) \
+	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
+	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
+	if ((*env)->ExceptionCheck(env)) \
+	{ \
+		(*env)->ExceptionClear(env); \
+		doOnFail; \
+	}
+
+/* Replacement for Py_LeaveRecursiveCall.
+ * Original usage: Py_LeaveRecursiveCall()
+ * Example:
+ * Py_LeaveRecursiveCall();
+ *
+ * New version:
+ * Usage: Jy_LeaveRecursiveCall()
+ * i.e. usage did not change from original
+ *
+ * Note that this macro is only usable after a call to
+ * Jy_EnterRecursiveCall or Jy_EnterRecursiveCall2 in the same block.
+ */
+#define Jy_LeaveRecursiveCall() \
+	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall)
+
 /* Call-ins: */
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath);
 jint JyNI_init(JavaVM *jvm);
@@ -399,6 +457,7 @@ extern jmethodID JyNIJyNI_GetModule;
 extern jmethodID JyNISlice_compare;
 extern jmethodID JyNIPrintPyLong;
 extern jmethodID JyNILookupNativeHandles;
+extern jmethodID JyNI_prepareKeywordArgs;
 //extern jmethodID JyNIPySet_pop;
 
 extern jclass JyNIDictNextResultClass;
