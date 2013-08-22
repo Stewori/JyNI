@@ -62,7 +62,8 @@ const char* excPrefix = "exceptions.";
 TypeMapEntry builtinTypes[builtinTypeCount];
 
 #define builtinExceptionCount 50
-PyTypeObject* builtinExceptions[builtinExceptionCount];
+//PyTypeObject* builtinExceptions[builtinExceptionCount];
+ExceptionMapEntry builtinExceptions[builtinExceptionCount];
 
 /*
  * Class:	 JyNI_JyNI
@@ -502,67 +503,165 @@ inline void initBuiltinTypes()
 
 	builtinTypes[49].py_type = &PyBaseObject_Type;
 	builtinTypes[49].jy_class = pyObjectClass;
-	builtinTypes[49].flags = 0;*/
+	builtinTypes[49].flags = 0;
+	*/
 }
 
 inline void initBuiltinExceptions()
 {
-	builtinExceptions[0] = (PyTypeObject*) PyExc_BaseException;
-	builtinExceptions[1] = (PyTypeObject*) PyExc_Exception;
-	builtinExceptions[2] = (PyTypeObject*) PyExc_StandardError;
-	builtinExceptions[3] = (PyTypeObject*) PyExc_TypeError;
-	builtinExceptions[4] = (PyTypeObject*) PyExc_StopIteration;
-	builtinExceptions[5] = (PyTypeObject*) PyExc_GeneratorExit;
-	builtinExceptions[6] = NULL;//(PyTypeObject*) PyExc_SystemExit;
-	builtinExceptions[7] = (PyTypeObject*) PyExc_KeyboardInterrupt;
-	builtinExceptions[8] = (PyTypeObject*) PyExc_ImportError;
-	builtinExceptions[9] = NULL;//(PyTypeObject*) PyExc_EnvironmentError;
-	builtinExceptions[10] = NULL;//(PyTypeObject*) PyExc_IOError;
-	builtinExceptions[11] = NULL;//(PyTypeObject*) PyExc_OSError;
+	builtinExceptions[0].exc_type = (PyTypeObject*) PyExc_BaseException;
+	builtinExceptions[0].exc_factory = NULL;
+
+	builtinExceptions[1].exc_type = (PyTypeObject*) PyExc_Exception;
+	builtinExceptions[1].exc_factory = NULL;
+
+	builtinExceptions[2].exc_type = (PyTypeObject*) PyExc_StandardError;
+	builtinExceptions[2].exc_factory = NULL;
+
+	builtinExceptions[3].exc_type = (PyTypeObject*) PyExc_TypeError;
+	builtinExceptions[3].exc_factory = NULL;
+
+	builtinExceptions[4].exc_type = (PyTypeObject*) PyExc_StopIteration;
+	builtinExceptions[4].exc_factory = NULL;
+
+	builtinExceptions[5].exc_type = (PyTypeObject*) PyExc_GeneratorExit;
+	builtinExceptions[5].exc_factory = NULL;
+
+	builtinExceptions[6].exc_type = NULL;//(PyTypeObject*) PyExc_SystemExit;
+	builtinExceptions[6].exc_factory = NULL;
+
+	builtinExceptions[7].exc_type = (PyTypeObject*) PyExc_KeyboardInterrupt;
+	builtinExceptions[7].exc_factory = NULL;
+
+	builtinExceptions[8].exc_type = (PyTypeObject*) PyExc_ImportError;
+	builtinExceptions[8].exc_factory = NULL;
+
+	builtinExceptions[9].exc_type = NULL;//(PyTypeObject*) PyExc_EnvironmentError;
+	builtinExceptions[9].exc_factory = NULL;
+
+	builtinExceptions[10].exc_type = NULL;//(PyTypeObject*) PyExc_IOError;
+	builtinExceptions[10].exc_factory = NULL;
+
+	builtinExceptions[11].exc_type = NULL;//(PyTypeObject*) PyExc_OSError;
+	builtinExceptions[11].exc_factory = NULL;
+
 #ifdef MS_WINDOWS
-	builtinExceptions[12] = (PyTypeObject*) PyExc_WindowsError;
+	builtinExceptions[12].exc_type = (PyTypeObject*) PyExc_WindowsError;
+	builtinExceptions[12].exc_factory = NULL;
 #endif
 #ifdef __VMS
-	builtinExceptions[13] = (PyTypeObject*) PyExc_VMSError;
+	builtinExceptions[13].exc_type = (PyTypeObject*) PyExc_VMSError;
+	builtinExceptions[13].exc_factory = NULL;
 #endif
-	builtinExceptions[14] = (PyTypeObject*) PyExc_EOFError;
-	builtinExceptions[15] = (PyTypeObject*) PyExc_RuntimeError;
-	builtinExceptions[16] = (PyTypeObject*) PyExc_NotImplementedError;
-	builtinExceptions[17] = (PyTypeObject*) PyExc_NameError;
-	builtinExceptions[18] = (PyTypeObject*) PyExc_UnboundLocalError;
-	builtinExceptions[19] = (PyTypeObject*) PyExc_AttributeError;
-	builtinExceptions[20] = NULL;//(PyTypeObject*) PyExc_SyntaxError;
-	builtinExceptions[21] = NULL;//(PyTypeObject*) PyExc_IndentationError;
-	builtinExceptions[22] = NULL;//(PyTypeObject*) PyExc_TabError;
-	builtinExceptions[23] = (PyTypeObject*) PyExc_LookupError;
-	builtinExceptions[24] = (PyTypeObject*) PyExc_IndexError;
-	builtinExceptions[25] = NULL;//(PyTypeObject*) PyExc_KeyError;
-	builtinExceptions[26] = (PyTypeObject*) PyExc_ValueError;
-	builtinExceptions[27] = NULL;//(PyTypeObject*) PyExc_UnicodeError;
+	builtinExceptions[14].exc_type = (PyTypeObject*) PyExc_EOFError;
+	builtinExceptions[14].exc_factory = NULL;
+
+	builtinExceptions[15].exc_type = (PyTypeObject*) PyExc_RuntimeError;
+	builtinExceptions[15].exc_factory = NULL;
+
+	builtinExceptions[16].exc_type = (PyTypeObject*) PyExc_NotImplementedError;
+	builtinExceptions[16].exc_factory = NULL;
+
+	builtinExceptions[17].exc_type = (PyTypeObject*) PyExc_NameError;
+	builtinExceptions[17].exc_factory = NULL;
+
+	builtinExceptions[18].exc_type = (PyTypeObject*) PyExc_UnboundLocalError;
+	builtinExceptions[18].exc_factory = NULL;
+
+	builtinExceptions[19].exc_type = (PyTypeObject*) PyExc_AttributeError;
+	builtinExceptions[19].exc_factory = NULL;
+
+	builtinExceptions[20].exc_type = NULL;//(PyTypeObject*) PyExc_SyntaxError;
+	builtinExceptions[20].exc_factory = NULL;
+
+	builtinExceptions[21].exc_type = NULL;//(PyTypeObject*) PyExc_IndentationError;
+	builtinExceptions[21].exc_factory = NULL;
+
+	builtinExceptions[22].exc_type = NULL;//(PyTypeObject*) PyExc_TabError;
+	builtinExceptions[22].exc_factory = NULL;
+
+	builtinExceptions[23].exc_type = (PyTypeObject*) PyExc_LookupError;
+	builtinExceptions[23].exc_factory = NULL;
+
+	builtinExceptions[24].exc_type = (PyTypeObject*) PyExc_IndexError;
+	builtinExceptions[24].exc_factory = NULL;
+
+	builtinExceptions[25].exc_type = NULL;//(PyTypeObject*) PyExc_KeyError;
+	builtinExceptions[25].exc_factory = NULL;
+
+	builtinExceptions[26].exc_type = (PyTypeObject*) PyExc_ValueError;
+	builtinExceptions[26].exc_factory = NULL;
+
+	builtinExceptions[27].exc_type = NULL;//(PyTypeObject*) PyExc_UnicodeError;
+	builtinExceptions[27].exc_factory = NULL;
+
 #ifdef Py_USING_UNICODE
-	builtinExceptions[28] = NULL;//(PyTypeObject*) PyExc_UnicodeEncodeError;
-	builtinExceptions[29] = NULL;//(PyTypeObject*) PyExc_UnicodeDecodeError;
-	builtinExceptions[30] = NULL;//(PyTypeObject*) PyExc_UnicodeTranslateError;
+	builtinExceptions[28].exc_type = NULL;//(PyTypeObject*) PyExc_UnicodeEncodeError;
+	builtinExceptions[28].exc_factory = NULL;
+
+	builtinExceptions[29].exc_type = NULL;//(PyTypeObject*) PyExc_UnicodeDecodeError;
+	builtinExceptions[29].exc_factory = NULL;
+
+	builtinExceptions[30].exc_type = NULL;//(PyTypeObject*) PyExc_UnicodeTranslateError;
+	builtinExceptions[30].exc_factory = NULL;
 #endif
-	builtinExceptions[31] = (PyTypeObject*) PyExc_AssertionError;
-	builtinExceptions[32] = (PyTypeObject*) PyExc_ArithmeticError;
-	builtinExceptions[33] = (PyTypeObject*) PyExc_FloatingPointError;
-	builtinExceptions[34] = (PyTypeObject*) PyExc_OverflowError;
-	builtinExceptions[35] = (PyTypeObject*) PyExc_ZeroDivisionError;
-	builtinExceptions[36] = (PyTypeObject*) PyExc_SystemError;
-	builtinExceptions[37] = (PyTypeObject*) PyExc_ReferenceError;
-	builtinExceptions[38] = (PyTypeObject*) PyExc_MemoryError;
-	builtinExceptions[39] = (PyTypeObject*) PyExc_BufferError;
-	builtinExceptions[40] = (PyTypeObject*) PyExc_Warning;
-	builtinExceptions[41] = (PyTypeObject*) PyExc_UserWarning;
-	builtinExceptions[42] = (PyTypeObject*) PyExc_DeprecationWarning;
-	builtinExceptions[43] = (PyTypeObject*) PyExc_PendingDeprecationWarning;
-	builtinExceptions[44] = (PyTypeObject*) PyExc_SyntaxWarning;
-	builtinExceptions[45] = (PyTypeObject*) PyExc_RuntimeWarning;
-	builtinExceptions[46] = (PyTypeObject*) PyExc_FutureWarning;
-	builtinExceptions[47] = (PyTypeObject*) PyExc_ImportWarning;
-	builtinExceptions[48] = (PyTypeObject*) PyExc_UnicodeWarning;
-	builtinExceptions[49] = (PyTypeObject*) PyExc_BytesWarning;
+
+	builtinExceptions[31].exc_type = (PyTypeObject*) PyExc_AssertionError;
+	builtinExceptions[31].exc_factory = NULL;
+
+	builtinExceptions[32].exc_type = (PyTypeObject*) PyExc_ArithmeticError;
+	builtinExceptions[32].exc_factory = NULL;
+
+	builtinExceptions[33].exc_type = (PyTypeObject*) PyExc_FloatingPointError;
+	builtinExceptions[33].exc_factory = NULL;
+
+	builtinExceptions[34].exc_type = (PyTypeObject*) PyExc_OverflowError;
+	builtinExceptions[34].exc_factory = NULL;
+
+	builtinExceptions[35].exc_type = (PyTypeObject*) PyExc_ZeroDivisionError;
+	builtinExceptions[35].exc_factory = NULL;
+
+	builtinExceptions[36].exc_type = (PyTypeObject*) PyExc_SystemError;
+	builtinExceptions[36].exc_factory = NULL;
+
+	builtinExceptions[37].exc_type = (PyTypeObject*) PyExc_ReferenceError;
+	builtinExceptions[37].exc_factory = NULL;
+
+	builtinExceptions[38].exc_type = (PyTypeObject*) PyExc_MemoryError;
+	builtinExceptions[38].exc_factory = NULL;
+
+	builtinExceptions[39].exc_type = (PyTypeObject*) PyExc_BufferError;
+	builtinExceptions[39].exc_factory = NULL;
+
+	builtinExceptions[40].exc_type = (PyTypeObject*) PyExc_Warning;
+	builtinExceptions[40].exc_factory = NULL;
+
+	builtinExceptions[41].exc_type = (PyTypeObject*) PyExc_UserWarning;
+	builtinExceptions[41].exc_factory = NULL;
+
+	builtinExceptions[42].exc_type = (PyTypeObject*) PyExc_DeprecationWarning;
+	builtinExceptions[42].exc_factory = NULL;
+
+	builtinExceptions[43].exc_type = (PyTypeObject*) PyExc_PendingDeprecationWarning;
+	builtinExceptions[43].exc_factory = NULL;
+
+	builtinExceptions[44].exc_type = (PyTypeObject*) PyExc_SyntaxWarning;
+	builtinExceptions[44].exc_factory = NULL;
+
+	builtinExceptions[45].exc_type = (PyTypeObject*) PyExc_RuntimeWarning;
+	builtinExceptions[45].exc_factory = NULL;
+
+	builtinExceptions[46].exc_type = (PyTypeObject*) PyExc_FutureWarning;
+	builtinExceptions[46].exc_factory = NULL;
+
+	builtinExceptions[47].exc_type = (PyTypeObject*) PyExc_ImportWarning;
+	builtinExceptions[47].exc_factory = NULL;
+
+	builtinExceptions[48].exc_type = (PyTypeObject*) PyExc_UnicodeWarning;
+	builtinExceptions[48].exc_factory = NULL;
+
+	builtinExceptions[49].exc_type = (PyTypeObject*) PyExc_BytesWarning;
+	builtinExceptions[49].exc_factory = NULL;
 }
 
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type)
@@ -639,7 +738,8 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyType(jobject jythonPyType)
 inline jobject JyNI_JythonException_FromPyException(PyObject* exc)
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, ((PyTypeObject*) exc)->tp_name));
+	//return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, ((PyTypeObject*) exc)->tp_name));
+	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, PyExceptionClass_Name(exc)));
 }
 
 inline PyTypeObject* JyNI_PyException_FromJythonException(jobject exc)
@@ -656,7 +756,7 @@ inline PyTypeObject* JyNI_PyException_FromJythonException(jobject exc)
 	int i;
 	for (i = 0; i < builtinExceptionCount; ++i)
 	{
-		if (builtinExceptions[i] != NULL && strcmp(builtinExceptions[i]->tp_name, mName) == 0) return builtinExceptions[i];
+		if (builtinExceptions[i].exc_type != NULL && strcmp(builtinExceptions[i].exc_type->tp_name, mName) == 0) return builtinExceptions[i].exc_type;
 	}
 	return NULL;
 }
@@ -1331,6 +1431,7 @@ jmethodID pyObject__sub__;
 jmethodID pyObject__xor__;
 jmethodID pyObject__isub__;
 jmethodID pyObject__call__;
+jmethodID pyObject__str__;
 jmethodID pyObjectIsCallable;
 jmethodID pyObjectHashCode;
 
@@ -1549,7 +1650,12 @@ jclass pyGeneratorClass;
 jclass pyCodeClass;
 jclass pyCallIterClass;
 jclass pySuperClass;
+
 jclass pyBaseExceptionClass;
+//jfieldID pyBaseException__dict__;
+jmethodID pyBaseException__init__;
+
+
 jclass pyByteArrayClass;
 jclass pyBufferClass;
 jclass pyMemoryViewClass;
@@ -1784,6 +1890,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyObject__xor__ = (*env)->GetMethodID(env, pyObjectClass, "__xor__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyObject__isub__ = (*env)->GetMethodID(env, pyObjectClass, "__isub__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyObject__call__ = (*env)->GetMethodID(env, pyObjectClass, "__call__", "([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
+	pyObject__str__ = (*env)->GetMethodID(env, pyObjectClass, "__str__", "()Lorg/python/core/PyString;");
 	pyObjectIsCallable = (*env)->GetMethodID(env, pyObjectClass, "isCallable", "()Z");
 	pyObjectHashCode = (*env)->GetMethodID(env, pyObjectClass, "hashCode", "()I");
 
@@ -2124,6 +2231,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (pyBaseExceptionClassLocal == NULL) { return JNI_ERR;}
 	pyBaseExceptionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseExceptionClassLocal);
 	(*env)->DeleteLocalRef(env, pyBaseExceptionClassLocal);
+	pyBaseException__init__ = (*env)->GetMethodID(env, pyBaseExceptionClass, "__init__", "([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
 
 	jclass pyByteArrayClassLocal = (*env)->FindClass(env, "org/python/core/PyByteArray");
 	if (pyByteArrayClassLocal == NULL) { return JNI_ERR;}

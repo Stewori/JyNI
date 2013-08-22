@@ -157,6 +157,7 @@ typedef void (*py2jySync)(PyObject*, jobject);
 
 typedef jobject (*jyInitSync)(PyObject*);
 typedef PyObject* (*pyInitSync)(jobject);
+typedef jobject (*jyBuildException)();
 //typedef void (*jy2pyItemSync)(jobject, PyObject*, int index);
 //typedef void (*py2jyItemSync)(PyObject*, jobject, int index);
 typedef jlong (*pyChecksum)(PyObject*);
@@ -222,6 +223,7 @@ typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jobject jy; unsigned short flags; JyAttribute* attr;} JyObject;
 typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing;} TypeMapEntry;
+typedef struct { PyTypeObject* exc_type; jyBuildException exc_factory;} ExceptionMapEntry;
 
 #define JyObject_IS_GC(o) (((JyObject *) o)->flags & JY_GC_FLAG_MASK)
 #define JyObject_IS_INITIALIZED(o) (((JyObject *) o)->flags & JY_INITIALIZED_FLAG_MASK)
@@ -248,7 +250,7 @@ typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; S
 
 
 /* Replacement for Py_EnterRecursiveCall.
- * Original usage: Py_EnterRecursiveCall(where) : fail?
+ * Original usage: Py_EnterRecursiveCall(where) : fail (?)
  * Example:
  * if (Py_EnterRecursiveCall(" while doing blah"))
  *  	return NULL;
@@ -268,7 +270,7 @@ typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; S
  * Warning: Can only be used once per block. For subsequent usage one
  * needs to adopt this macro by hand and simply leave out the first line.
  *
- * Note that this macros are only usable after a call to env in the same block.
+ * Note that these macros are only usable after a call to the env-macro in the same block.
  */
 #define Jy_EnterRecursiveCall(where) \
 	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \

@@ -97,12 +97,14 @@ void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
+	//puts("JNI_OnLoad");
 	java = jvm; // cache the JavaVM pointer
 	return JNI_VERSION_1_2;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
+	puts("JNI_OnUnload");
 	(*JyNIUnload)(jvm);
 }
 

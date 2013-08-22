@@ -75,6 +75,7 @@ extern jmethodID pyObject__sub__;
 extern jmethodID pyObject__xor__;
 extern jmethodID pyObject__isub__;
 extern jmethodID pyObject__call__;
+extern jmethodID pyObject__str__;
 extern jmethodID pyObjectIsCallable;
 
 extern jclass pyFrameClass;
@@ -243,7 +244,10 @@ extern jclass pyGeneratorClass;
 extern jclass pyCodeClass;
 extern jclass pyCallIterClass;
 extern jclass pySuperClass;
+
 extern jclass pyBaseExceptionClass;
+extern jmethodID pyBaseException__init__;
+
 extern jclass pyByteArrayClass;
 extern jclass pyBufferClass;
 extern jclass pyMemoryViewClass;

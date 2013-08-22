@@ -4838,7 +4838,7 @@ PyString_InternInPlace(PyObject **p)
 		return;
 	} else
 	{
-		/*JYNI-Note:
+		/*JyNI-Note:
 		 * Maybe it's good to reflect intern-behavior to java-side.
 		 * We still don't want to init the python-string here,
 		 * since it might be never needed.

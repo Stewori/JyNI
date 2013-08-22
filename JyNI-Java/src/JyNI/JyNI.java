@@ -122,9 +122,9 @@ public class JyNI {
 			File libFile = new File(fileNames[i]);
 			if (libFile.exists())
 			{
-				System.out.println("initJyNI: "+fileNames[i]);
+				//System.out.println("initJyNI: "+fileNames[i]);
 				initJyNI(fileNames[i]);
-				System.out.println("initJyNI done");
+				//System.out.println("initJyNI done");
 				loaded = true;
 			}
 		}

@@ -137,7 +137,7 @@ PyType_Modified(PyTypeObject *type)
 	}
 	type->tp_flags &= ~Py_TPFLAGS_VALID_VERSION_TAG;
 }
-
+*/
 static void
 type_mro_modified(PyTypeObject *type, PyObject *bases) {
 
@@ -183,7 +183,7 @@ type_mro_modified(PyTypeObject *type, PyObject *bases) {
 		type->tp_flags &= ~(Py_TPFLAGS_HAVE_VERSION_TAG|
 							Py_TPFLAGS_VALID_VERSION_TAG);
 }
-
+/*
 static int
 assign_version_tag(PyTypeObject *type)
 {
@@ -791,6 +791,7 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 PyObject *
 PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 {
+	//JyNI-note: This method has been adjusted to alloc additional space for JyObject.
 	PyObject *obj;
 	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
 	// note that we need to add one, for the sentinel
@@ -1191,9 +1192,9 @@ subtype_dealloc(PyObject *self)
 //		  and bug 574207.
 
 }
-
-static PyTypeObject *solid_base(PyTypeObject *type);
 */
+static PyTypeObject *solid_base(PyTypeObject *type);
+
 // type test with subclassing support
 
 int
@@ -1227,7 +1228,7 @@ PyType_IsSubtype(PyTypeObject *a, PyTypeObject *b)
 		return b == &PyBaseObject_Type;
 	}
 }
-/*
+
 //   Internal routines to do a method lookup in the type
 //   without looking in the instance dictionary
 //   (so we can't use PyObject_GetAttr) but still binding
@@ -1280,7 +1281,7 @@ _PyObject_LookupSpecial(PyObject *self, char *attrstr, PyObject **attrobj)
 	assert(!PyInstance_Check(self));
 	return lookup_maybe(self, attrstr, attrobj);
 }
-
+/*
 // A variation of PyObject_CallMethod that uses lookup_method()
 // instead of PyObject_GetAttrString().  This uses the same convention
 // as lookup_method to cache the interned name string object.
@@ -1356,7 +1357,7 @@ call_maybe(PyObject *o, char *name, PyObject **nameobj, char *format, ...)
 
 	return retval;
 }
-
+*/
 static int
 fill_classic_mro(PyObject *mro, PyObject *cls)
 {
@@ -1741,7 +1742,7 @@ mro_internal(PyTypeObject *type)
 	return 0;
 }
 
-
+/*
 // Calculate the best base amongst multiple base classes.
 // This is the first one that's on the path to the "solid base".
 
@@ -1796,7 +1797,7 @@ best_base(PyObject *bases)
 			"a new-style class can't have only classic bases");
 	return base;
 }
-
+*/
 static int
 extra_ivars(PyTypeObject *type, PyTypeObject *base)
 {
@@ -1834,7 +1835,7 @@ solid_base(PyTypeObject *type)
 		return type;
 	else
 		return base;
-}*/
+}
 
 static void object_dealloc(PyObject *);
 /*static int object_init(PyObject *, PyObject *, PyObject *);
@@ -2739,13 +2740,13 @@ static PyMethodDef type_methods[] = {
 	{"__subclasscheck__", type___subclasscheck__, METH_O,
 	 PyDoc_STR("__subclasscheck__() -> bool\ncheck if a class is a subclass")},
 	{0}
-};
+};*/
 
 PyDoc_STRVAR(type_doc,
 "type(object) -> the object's type\n"
 "type(name, bases, dict) -> a new type");
 
-static int
+/*static int
 type_traverse(PyTypeObject *type, visitproc visit, void *arg)
 {
 	// Because of type_is_gc(), the collector only calls this
@@ -2805,14 +2806,21 @@ type_clear(PyTypeObject *type)
 
 	return 0;
 }
+*/
 
 static int
 type_is_gc(PyTypeObject *type)
 {
 	return type->tp_flags & Py_TPFLAGS_HEAPTYPE;
 }
-*/
 
+/*
+ * JyNI-note:
+ * PyTyp_Type functions seem to be hardly used by extensions and
+ * are on the other hand hard to implement JyNI-friendly. So we
+ * try live without them for now. We will implement them, but not
+ * with high priority, unless we discover that they are needed.
+ */
 PyTypeObject PyType_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"type",									 // tp_name
@@ -2835,7 +2843,7 @@ PyTypeObject PyType_Type = {
 	0,										  // tp_as_buffer
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
 		Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TYPE_SUBCLASS,		 // tp_flags
-	0,								   // tp_doc
+	type_doc,								   // tp_doc
 	0,				// tp_traverse
 	0,						// tp_clear
 	0,										   // tp_richcompare
@@ -2853,56 +2861,56 @@ PyTypeObject PyType_Type = {
 	0,								  // tp_init
 	0,										  // tp_alloc
 	0,								   // tp_new
-	0,							// tp_free
-	0,						// tp_is_gc
-};
-
-/*
-PyTypeObject PyType_Type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"type",									 // tp_name
-	sizeof(PyHeapTypeObject),				   // tp_basicsize
-	sizeof(PyMemberDef),						// tp_itemsize
-	(destructor)type_dealloc,				   // tp_dealloc
-	0,										  // tp_print
-	0,										  // tp_getattr
-	0,										  // tp_setattr
-	0,								  // tp_compare
-	(reprfunc)type_repr,						// tp_repr
-	0,										  // tp_as_number
-	0,										  // tp_as_sequence
-	0,										  // tp_as_mapping
-	(hashfunc)_Py_HashPointer,				  // tp_hash
-	(ternaryfunc)type_call,					 // tp_call
-	0,										  // tp_str
-	(getattrofunc)type_getattro,				// tp_getattro
-	(setattrofunc)type_setattro,				// tp_setattro
-	0,										  // tp_as_buffer
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
-		Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TYPE_SUBCLASS,		 // tp_flags
-	type_doc,								   // tp_doc
-	(traverseproc)type_traverse,				// tp_traverse
-	(inquiry)type_clear,						// tp_clear
-	type_richcompare,										   // tp_richcompare
-	offsetof(PyTypeObject, tp_weaklist),		// tp_weaklistoffset
-	0,										  // tp_iter
-	0,										  // tp_iternext
-	type_methods,							   // tp_methods
-	type_members,							   // tp_members
-	type_getsets,							   // tp_getset
-	0,										  // tp_base
-	0,										  // tp_dict
-	0,										  // tp_descr_get
-	0,										  // tp_descr_set
-	offsetof(PyTypeObject, tp_dict),			// tp_dictoffset
-	type_init,								  // tp_init
-	0,										  // tp_alloc
-	type_new,								   // tp_new
 	PyObject_GC_Del,							// tp_free
 	(inquiry)type_is_gc,						// tp_is_gc
 };
 
 
+//PyTypeObject PyType_Type = {
+//	PyVarObject_HEAD_INIT(&PyType_Type, 0)
+//	"type",									 // tp_name
+//	sizeof(PyHeapTypeObject),				   // tp_basicsize
+//	sizeof(PyMemberDef),						// tp_itemsize
+//	(destructor)type_dealloc,				   // tp_dealloc
+//	0,										  // tp_print
+//	0,										  // tp_getattr
+//	0,										  // tp_setattr
+//	0,								  // tp_compare
+//	(reprfunc)type_repr,						// tp_repr
+//	0,										  // tp_as_number
+//	0,										  // tp_as_sequence
+//	0,										  // tp_as_mapping
+//	(hashfunc)_Py_HashPointer,				  // tp_hash
+//	(ternaryfunc)type_call,					 // tp_call
+//	0,										  // tp_str
+//	(getattrofunc)type_getattro,				// tp_getattro
+//	(setattrofunc)type_setattro,				// tp_setattro
+//	0,										  // tp_as_buffer
+//	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+//		Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TYPE_SUBCLASS,		 // tp_flags
+//	type_doc,								   // tp_doc
+//	(traverseproc)type_traverse,				// tp_traverse
+//	(inquiry)type_clear,						// tp_clear
+//	type_richcompare,										   // tp_richcompare
+//	offsetof(PyTypeObject, tp_weaklist),		// tp_weaklistoffset
+//	0,										  // tp_iter
+//	0,										  // tp_iternext
+//	type_methods,							   // tp_methods
+//	type_members,							   // tp_members
+//	type_getsets,							   // tp_getset
+//	0,										  // tp_base
+//	0,										  // tp_dict
+//	0,										  // tp_descr_get
+//	0,										  // tp_descr_set
+//	offsetof(PyTypeObject, tp_dict),			// tp_dictoffset
+//	type_init,								  // tp_init
+//	0,										  // tp_alloc
+//	type_new,								   // tp_new
+//	PyObject_GC_Del,							// tp_free
+//	(inquiry)type_is_gc,						// tp_is_gc
+//};
+
+/*
 // The base type of all types (eventually)... except itself.
 
 //   You may wonder why object.__new__() only complains about arguments
@@ -3625,8 +3633,8 @@ PyTypeObject PyBaseObject_Type = {
 	0,//(hashfunc)_Py_HashPointer,				  // tp_hash
 	0,										  // tp_call
 	0,//object_str,								 // tp_str
-	0,//PyObject_GenericGetAttr,					// tp_getattro
-	0,//PyObject_GenericSetAttr,					// tp_setattro
+	PyObject_GenericGetAttr,					// tp_getattro
+	PyObject_GenericSetAttr,					// tp_setattro
 	0,										  // tp_as_buffer
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, // tp_flags
 	PyDoc_STR("The most base type"),			// tp_doc
@@ -3814,20 +3822,20 @@ inherit_special(PyTypeObject *type, PyTypeObject *base)
 		type->tp_flags |= Py_TPFLAGS_BASE_EXC_SUBCLASS;
 	else if (PyType_IsSubtype(base, &PyType_Type))
 		type->tp_flags |= Py_TPFLAGS_TYPE_SUBCLASS;
-//	else if (PyType_IsSubtype(base, &PyInt_Type))
-//		type->tp_flags |= Py_TPFLAGS_INT_SUBCLASS;
-//	else if (PyType_IsSubtype(base, &PyLong_Type))
-//		type->tp_flags |= Py_TPFLAGS_LONG_SUBCLASS;
+	else if (PyType_IsSubtype(base, &PyInt_Type))
+		type->tp_flags |= Py_TPFLAGS_INT_SUBCLASS;
+	else if (PyType_IsSubtype(base, &PyLong_Type))
+		type->tp_flags |= Py_TPFLAGS_LONG_SUBCLASS;
 	else if (PyType_IsSubtype(base, &PyString_Type))
 		type->tp_flags |= Py_TPFLAGS_STRING_SUBCLASS;
-//#ifdef Py_USING_UNICODE
-//	else if (PyType_IsSubtype(base, &PyUnicode_Type))
-//		type->tp_flags |= Py_TPFLAGS_UNICODE_SUBCLASS;
-//#endif
+#ifdef Py_USING_UNICODE
+	else if (PyType_IsSubtype(base, &PyUnicode_Type))
+		type->tp_flags |= Py_TPFLAGS_UNICODE_SUBCLASS;
+#endif
 	else if (PyType_IsSubtype(base, &PyTuple_Type))
 		type->tp_flags |= Py_TPFLAGS_TUPLE_SUBCLASS;
-//	else if (PyType_IsSubtype(base, &PyList_Type))
-//		type->tp_flags |= Py_TPFLAGS_LIST_SUBCLASS;
+	else if (PyType_IsSubtype(base, &PyList_Type))
+		type->tp_flags |= Py_TPFLAGS_LIST_SUBCLASS;
 	else if (PyType_IsSubtype(base, &PyDict_Type))
 		type->tp_flags |= Py_TPFLAGS_DICT_SUBCLASS;
 }
@@ -4134,24 +4142,24 @@ PyType_Ready(PyTypeObject *type)
 	}
 
 	// Calculate method resolution order
-//	if (mro_internal(type) < 0) {
-//		goto error;
-//	}
+	if (mro_internal(type) < 0) {
+		goto error;
+	}
 
 	// Inherit special flags from dominant base
 	if (type->tp_base != NULL)
 		inherit_special(type, type->tp_base);
 
 	// Initialize tp_dict properly
-//	bases = type->tp_mro;
-//	assert(bases != NULL);
-//	assert(PyTuple_Check(bases));
-//	n = PyTuple_GET_SIZE(bases);
-//	for (i = 1; i < n; i++) {
-//		PyObject *b = PyTuple_GET_ITEM(bases, i);
-//		if (PyType_Check(b))
-//			inherit_slots(type, (PyTypeObject *)b);
-//	}
+	bases = type->tp_mro;
+	assert(bases != NULL);
+	assert(PyTuple_Check(bases));
+	n = PyTuple_GET_SIZE(bases);
+	for (i = 1; i < n; i++) {
+		PyObject *b = PyTuple_GET_ITEM(bases, i);
+		if (PyType_Check(b))
+			inherit_slots(type, (PyTypeObject *)b);
+	}
 
 	// Sanity check for tp_free.
 	if (PyType_IS_GC(type) && (type->tp_flags & Py_TPFLAGS_BASETYPE) &&
@@ -4216,6 +4224,8 @@ PyType_Ready(PyTypeObject *type)
 	return -1;
 }
 
+//JyNI-note: Before we adopt the subclass stuff, we have to think about how weak references
+//go together with JyNI.
 /*
 static int
 add_subclass(PyTypeObject *base, PyTypeObject *type)
