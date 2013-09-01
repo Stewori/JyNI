@@ -51,7 +51,9 @@ print "Native square result of -19: "+str(DemoExtension.intSquare(19))
  
 print ""
 print "--------Native list access reading----------"
-DemoExtension.listReadTest(["Hello", "lovely", "world"])
+lst = ["Hello", "lovely", "world"]
+print lst.__class__
+DemoExtension.listReadTest(lst)
 print "(in JyNI-case see bottom for native outputs)"
 print ""
 print "--------Native list access writing----------"

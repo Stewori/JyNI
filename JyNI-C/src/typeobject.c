@@ -749,7 +749,7 @@ type_repr(PyTypeObject *type)
 	Py_XDECREF(mod);
 	Py_DECREF(name);
 	return rtn;
-}
+}*/
 
 static PyObject *
 type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -786,63 +786,105 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	}
 	return obj;
 }
-*/
+
 
 PyObject *
 PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 {
-	//JyNI-note: This method has been adjusted to alloc additional space for JyObject.
-	PyObject *obj;
-	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
-	// note that we need to add one, for the sentinel
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
-	if (PyType_IS_GC(type))
+	if (tme)
 	{
-		size = _PyObject_VAR_SIZE(type, nitems+1);
-		//obj = _PyObject_GC_Malloc(size);
-		obj = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : size);
-		if (obj == NULL) return PyErr_NoMemory();
-	}
-	else
+//		if (tme->py_type->tp_itemsize == 0) return JyNI_Alloc(tme);
+//		else return JyNI_AllocVar(tme, nitems);
+		return JyNI_AllocVar(tme, nitems);
+	} else
 	{
-		//obj = (PyObject *)PyObject_MALLOC(size);
-		//TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
-		if (tme != NULL)
+		if (PyExceptionClass_Check(type))
 		{
-			size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(type, nitems+1));
-			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
-			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
-			jy->jy = tme->jy_class;
-			jy->flags = tme->flags;
-			jy->attr = NULL;
-			obj = (PyObject*) FROM_JY_NO_GC(jy);
-		} else
-		{
-			size = _PyObject_VAR_SIZE(type, nitems+1);
-			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
-			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
-			jy->flags = JY_CPEER_FLAG_MASK;
-			jy->attr = NULL;
-			jy->jy = NULL;
-			obj = (PyObject*) FROM_JY_NO_GC(jy);
+			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(type);
+			if (eme != NULL) return JyNI_ExceptionAlloc(eme);
 		}
+//		if (tme->py_type->tp_itemsize == 0) return JyNI_AllocNative(type);
+//		else return JyNI_AllocNativeVar(type, nitems);
+		return JyNI_AllocNativeVar(type, nitems);
 	}
-
-	//if (obj == NULL) return PyErr_NoMemory();
-
-	memset(obj, '\0', size);
-
-	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
-		Py_INCREF(type);
-
-	if (type->tp_itemsize == 0)
-		PyObject_INIT(obj, type);
-	else
-		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
-
-	if (PyType_IS_GC(type))
-		_PyObject_GC_TRACK(obj);
-	return obj;
+//	//JyNI-note: This method has been adjusted to alloc additional space for JyObject.
+//	PyObject *obj;
+//	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
+//	// note that we need to add one, for the sentinel
+//	size_t truncate_trailing = 0;
+//	signed int truncate = 0;
+//	ExceptionMapEntry* eme = NULL;
+//	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
+//	if (tme)
+//	{
+//		truncate = tme->flags & JY_TRUNCATE_FLAG_MASK;
+//		truncate_trailing = tme->truncate_trailing;
+//	} else
+//	{
+//		//We don't have to take care of exception allocation at other places (hopefully)
+//		//because all exception types use this method for allocation.
+//		eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(type);
+//		if (eme)// != NULL)
+//		{
+//			truncate = 1;
+//		}
+//	}
+//	if (PyType_IS_GC(type))
+//	{
+//		size = _PyObject_VAR_SIZE(type, nitems+1);
+//		//obj = _PyObject_GC_Malloc(size);
+//		obj = _PyObject_GC_Malloc(truncate ? sizeof(PyVarObject)+truncate_trailing : size);
+//		if (obj == NULL) return PyErr_NoMemory();
+//	} else
+//	{
+//		//obj = (PyObject *)PyObject_MALLOC(size);
+//		//TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
+//		if (tme)// != NULL)
+//		{
+//			size = (truncate ? sizeof(PyVarObject)+truncate_trailing : _PyObject_VAR_SIZE(type, nitems+1));
+//			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+//			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+//			jy->jy = (jobject) tme; //tme->jy_class;
+//			jy->flags = tme->flags;
+//			jy->attr = NULL;
+//			obj = (PyObject*) FROM_JY_NO_GC(jy);
+//		} else if (eme)
+//		{
+//			size = (truncate ? sizeof(PyVarObject)+truncate_trailing : _PyObject_VAR_SIZE(type, nitems+1));
+//			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+//			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+//			jy->jy = NULL;//(jobject) eme;//JyNI_JythonExceptionType_FromPyExceptionType(type);
+//			jy->flags = JY_GC_FLAG_MASK | JY_TRUNCATE_FLAG_MASK;
+//			jy->attr = NULL;
+//			obj = (PyObject*) FROM_JY_NO_GC(jy);
+//		} else
+//		{
+//			size = _PyObject_VAR_SIZE(type, nitems+1);
+//			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+//			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+//			jy->flags = JY_CPEER_FLAG_MASK;
+//			jy->attr = NULL;
+//			jy->jy = NULL;
+//			obj = (PyObject*) FROM_JY_NO_GC(jy);
+//		}
+//	}
+//
+//	//if (obj == NULL) return PyErr_NoMemory();
+//
+//	memset(obj, '\0', size);
+//
+//	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
+//		Py_INCREF(type);
+//
+//	if (type->tp_itemsize == 0)
+//		PyObject_INIT(obj, type);
+//	else
+//		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
+//
+//	if (PyType_IS_GC(type))
+//		_PyObject_GC_TRACK(obj);
+//	return obj;
 }
 
 
@@ -2836,7 +2878,7 @@ PyTypeObject PyType_Type = {
 	0,										  // tp_as_sequence
 	0,										  // tp_as_mapping
 	0,				  // tp_hash
-	0,					 // tp_call
+	(ternaryfunc)type_call,					 // tp_call
 	0,										  // tp_str
 	0,				// tp_getattro
 	0,				// tp_setattro

@@ -87,4 +87,15 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src);
 jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src);
 PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src);
 
+//Exception factories:
+jobject JyExc_EnvironmentErrorFactory();
+jobject JyExc_SyntaxErrorFactory();
+
+#ifdef Py_USING_UNICODE
+jobject JyExc_UnicodeErrorFactory();
+jobject JyExc_UnicodeEncodeErrorFactory();
+jobject JyExc_UnicodeDecodeErrorFactory();
+jobject JyExc_UnicodeTranslateErrorFactory();
+#endif
+
 #endif /* JYSYNC_H_ */

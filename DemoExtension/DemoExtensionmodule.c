@@ -10,7 +10,7 @@
 PyObject *
 hello_world(PyObject *self, PyObject *args)
 {
-	puts("Hello World!");
+	puts("Hello Alvaro!");
 
 	//If nothing shall be returned, do:
 	//Py_INCREF(Py_None);

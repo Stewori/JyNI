@@ -537,21 +537,22 @@ inline void initBuiltinExceptions()
 	builtinExceptions[8].exc_factory = NULL;
 
 	builtinExceptions[9].exc_type = NULL;//(PyTypeObject*) PyExc_EnvironmentError;
-	builtinExceptions[9].exc_factory = NULL;
+	builtinExceptions[9].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
 
 	builtinExceptions[10].exc_type = NULL;//(PyTypeObject*) PyExc_IOError;
-	builtinExceptions[10].exc_factory = NULL;
+	builtinExceptions[10].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
 
 	builtinExceptions[11].exc_type = NULL;//(PyTypeObject*) PyExc_OSError;
-	builtinExceptions[11].exc_factory = NULL;
+	builtinExceptions[11].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
 
 #ifdef MS_WINDOWS
 	builtinExceptions[12].exc_type = (PyTypeObject*) PyExc_WindowsError;
-	builtinExceptions[12].exc_factory = NULL;
+	builtinExceptions[12].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
+	//JyNI-note: Would actually be WindowsError, but that seems to be not provided by Jython.
 #endif
 #ifdef __VMS
 	builtinExceptions[13].exc_type = (PyTypeObject*) PyExc_VMSError;
-	builtinExceptions[13].exc_factory = NULL;
+	builtinExceptions[13].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
 #endif
 	builtinExceptions[14].exc_type = (PyTypeObject*) PyExc_EOFError;
 	builtinExceptions[14].exc_factory = NULL;
@@ -572,13 +573,13 @@ inline void initBuiltinExceptions()
 	builtinExceptions[19].exc_factory = NULL;
 
 	builtinExceptions[20].exc_type = NULL;//(PyTypeObject*) PyExc_SyntaxError;
-	builtinExceptions[20].exc_factory = NULL;
+	builtinExceptions[20].exc_factory = (jyFactoryMethod) JyExc_SyntaxErrorFactory;
 
 	builtinExceptions[21].exc_type = NULL;//(PyTypeObject*) PyExc_IndentationError;
-	builtinExceptions[21].exc_factory = NULL;
+	builtinExceptions[21].exc_factory = (jyFactoryMethod) JyExc_SyntaxErrorFactory;
 
 	builtinExceptions[22].exc_type = NULL;//(PyTypeObject*) PyExc_TabError;
-	builtinExceptions[22].exc_factory = NULL;
+	builtinExceptions[22].exc_factory = (jyFactoryMethod) JyExc_SyntaxErrorFactory;
 
 	builtinExceptions[23].exc_type = (PyTypeObject*) PyExc_LookupError;
 	builtinExceptions[23].exc_factory = NULL;
@@ -735,14 +736,14 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyType(jobject jythonPyType)
 	return JyNI_JythonTypeEntry_FromJStringName((*env)->CallObjectMethod(env, jythonPyType, pyTypeGetName));
 }
 
-inline jobject JyNI_JythonException_FromPyException(PyObject* exc)
+inline jobject JyNI_JythonExceptionType_FromPyExceptionType(PyObject* exc)
 {
 	env(NULL);
 	//return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, ((PyTypeObject*) exc)->tp_name));
 	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, PyExceptionClass_Name(exc)));
 }
 
-inline PyTypeObject* JyNI_PyException_FromJythonException(jobject exc)
+inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc)
 {
 	env(NULL);
 	jboolean isCopy;
@@ -761,11 +762,258 @@ inline PyTypeObject* JyNI_PyException_FromJythonException(jobject exc)
 	return NULL;
 }
 
+inline ExceptionMapEntry* JyNI_PyExceptionMapEntry_FromPyExceptionType(PyTypeObject* excType)
+{
+	int i;
+	for (i = 0; i < builtinExceptionCount; ++i)
+	{
+		if (builtinExceptions[i].exc_type == excType) return &(builtinExceptions[i]);
+	}
+	return NULL;
+}
+
 inline void JyNI_SyncJy2Py(JyObject* jy, PyObject* op)
 {
 	//todo: take care of the other flags
 	SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(jy, JyAttributeSyncFunctions);
 	if (sync != NULL && sync->jy2py != NULL) sync->jy2py(jy->jy, op);
+}
+
+inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems)
+{
+	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
+	if (tme)
+	{
+		if (tme->py_type->tp_itemsize == 0) return JyNI_Alloc(tme);
+		else return JyNI_AllocVar(tme, nitems);
+	} else
+	{
+		//We don't have to take care of exception allocation at other places (hopefully)
+		//because all exception types use this method for allocation.
+		if (PyExceptionClass_Check(type))
+		{
+			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(type);
+			if (eme != NULL) return JyNI_ExceptionAlloc(eme);
+		}
+		if (tme->py_type->tp_itemsize == 0) return JyNI_AllocNative(type);
+		else return JyNI_AllocNativeVar(type, nitems);
+	}
+}
+
+/* Should do the same as JyNI_AllocVar with nitems = -1 */
+inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
+{
+	PyObject *obj;
+	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
+
+	if (PyType_IS_GC(tme->py_type))
+	{
+		size = _PyObject_SIZE(tme->py_type);
+		//obj = _PyObject_GC_Malloc(size);
+		obj = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : size);
+		if (obj == NULL) return PyErr_NoMemory();
+	} else
+	{
+		//obj = (PyObject *)PyObject_MALLOC(size);
+		size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_SIZE(tme->py_type));
+		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+		jy->jy = (jobject) tme; //tme->jy_class;
+		jy->flags = tme->flags;
+		jy->attr = NULL;
+		obj = (PyObject*) FROM_JY_NO_GC(jy);
+	}
+
+	//if (obj == NULL) return PyErr_NoMemory();
+
+	memset(obj, '\0', size);
+
+	if (tme->py_type->tp_flags & Py_TPFLAGS_HEAPTYPE)
+		Py_INCREF(tme->py_type);
+
+	//In contrast to var variant of this method, no decision needed here:
+	PyObject_INIT(obj, tme->py_type);
+
+	if (PyType_IS_GC(tme->py_type))
+		_PyObject_GC_TRACK(obj);
+	return obj;
+}
+
+inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
+{
+	PyObject *obj;
+	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
+	// note that we need to add one, for the sentinel
+
+	// JyNI note: What if the allocated object is not var size?
+	// At the end of this method happens a decision, whether to use
+	// PyObject_INIT(obj, tme->py_type);
+	// or
+	// (void) PyObject_INIT_VAR((PyVarObject *)obj, tme->py_type, nitems);
+	//
+	// This shows that the original method PyType_GenericAlloc was also
+	// intended for non var size objects. I suspect that nitems == 0 should
+	// indicate that an object is not var size; _PyObject_VAR_SIZE seems to
+	// behave like _PyObject_SIZE for nitems == 0. Unfortunately this sentinel
+	// thing adds 1 to nitems, also if nitems == 0. So nitems == -1 would in
+	// fact indicate a non var size object. I wonder whether this is intended
+	// or whether there should be a decision like nitems == 0 ? 0 : nitems + 1
+	// For now I keep it unchanged to stick to original behavior and implement
+	// JyNI_Alloc for fixed size objects.
+
+	if (PyType_IS_GC(tme->py_type))
+	{
+		size = _PyObject_VAR_SIZE(tme->py_type, nitems+1);
+		//obj = _PyObject_GC_Malloc(size);
+		obj = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : size);
+		if (obj == NULL) return PyErr_NoMemory();
+	} else
+	{
+		//obj = (PyObject *)PyObject_MALLOC(size);
+		size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(tme->py_type, nitems+1));
+		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+		jy->jy = (jobject) tme; //tme->jy_class;
+		jy->flags = tme->flags;
+		jy->attr = NULL;
+		obj = (PyObject*) FROM_JY_NO_GC(jy);
+	}
+
+	//if (obj == NULL) return PyErr_NoMemory();
+
+	memset(obj, '\0', size);
+
+	if (tme->py_type->tp_flags & Py_TPFLAGS_HEAPTYPE)
+		Py_INCREF(tme->py_type);
+
+	if (tme->py_type->tp_itemsize == 0)
+		PyObject_INIT(obj, tme->py_type);
+	else
+		(void) PyObject_INIT_VAR((PyVarObject *)obj, tme->py_type, nitems);
+
+	if (PyType_IS_GC(tme->py_type))
+		_PyObject_GC_TRACK(obj);
+	return obj;
+}
+
+inline PyObject* JyNI_AllocNative(PyTypeObject* type)
+{
+	PyObject *obj;
+	size_t size = _PyObject_SIZE(type);
+
+	if (PyType_IS_GC(type))
+	{
+		obj = _PyObject_GC_Malloc(size);
+		if (obj == NULL) return PyErr_NoMemory();
+		JyObject* jy = AS_JY_WITH_GC(obj);
+		jy->flags |= JY_CPEER_FLAG_MASK;
+	} else
+	{
+		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+		jy->flags = JY_CPEER_FLAG_MASK;
+		jy->attr = NULL;
+		jy->jy = NULL;
+		obj = (PyObject*) FROM_JY_NO_GC(jy);
+	}
+
+	//if (obj == NULL) return PyErr_NoMemory();
+
+	memset(obj, '\0', size);
+
+	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
+		Py_INCREF(type);
+
+	PyObject_INIT(obj, type);
+
+	if (PyType_IS_GC(type))
+		_PyObject_GC_TRACK(obj);
+	return obj;
+}
+
+inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
+{
+	PyObject *obj;
+	size_t size = _PyObject_VAR_SIZE(type, nitems+1);
+	// note that we need to add one, for the sentinel
+
+	if (PyType_IS_GC(type))
+	{
+		obj = _PyObject_GC_Malloc(size);
+		if (obj == NULL) return PyErr_NoMemory();
+		JyObject* jy = AS_JY_WITH_GC(obj);
+		jy->flags |= JY_CPEER_FLAG_MASK;
+	} else
+	{
+		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+		jy->flags = JY_CPEER_FLAG_MASK;
+		jy->attr = NULL;
+		jy->jy = NULL;
+		obj = (PyObject*) FROM_JY_NO_GC(jy);
+	}
+
+	//if (obj == NULL) return PyErr_NoMemory();
+
+	memset(obj, '\0', size);
+
+	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
+		Py_INCREF(type);
+
+	if (type->tp_itemsize == 0)
+		PyObject_INIT(obj, type);
+	else
+		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
+
+	if (PyType_IS_GC(type))
+		_PyObject_GC_TRACK(obj);
+	return obj;
+}
+
+inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
+{
+	PyObject *obj;
+	if (PyType_IS_GC(eme->exc_type))
+	{
+		obj = _PyObject_GC_Malloc(sizeof(PyVarObject));
+		//if (AS_JY_WITH_GC(obj) == NULL) return PyErr_NoMemory();
+		if (obj == NULL) return PyErr_NoMemory();
+	} else
+	{
+		JyObject* jy = (JyObject *) PyObject_RawMalloc(sizeof(PyVarObject)+sizeof(JyObject));
+		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+		jy->flags = JY_TRUNCATE_FLAG_MASK;
+		jy->attr = NULL;
+		obj = (PyObject*) FROM_JY_NO_GC(jy);
+	}
+
+	//if (obj == NULL) return PyErr_NoMemory();
+
+	memset(obj, '\0', sizeof(PyVarObject));
+
+	if (eme->exc_type->tp_flags & Py_TPFLAGS_HEAPTYPE)
+		Py_INCREF(eme->exc_type);
+
+	if (eme->exc_type->tp_itemsize == 0)
+		PyObject_INIT(obj, eme->exc_type);
+	else
+		(void) PyObject_INIT_VAR((PyVarObject *)obj, eme->exc_type, 0);//nitems);
+
+	if (PyType_IS_GC(eme->exc_type))
+		_PyObject_GC_TRACK(obj);
+	return obj;
+}
+
+inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
+{
+	PyObject* obj = JyNI_ExceptionAlloc(eme);
+	if (obj == NULL) return PyErr_NoMemory();
+	JyObject* jy = AS_JY(obj);
+	env(NULL);
+	jy->jy = (*env)->NewGlobalRef(env, src);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj);
+	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+	return obj;
 }
 
 inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
@@ -780,9 +1028,11 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 	{
 		//dest = PyObject_GC_New(tme->py_type);
 		//puts("InitPyObject by GC New");
-		dest = _JyObject_GC_New(tme->py_type, tme);
+
+		dest = JyNI_Alloc(tme);
+
 		//printf("PyObject-size: %u\n", (jlong) sizeof(PyObject));
-		PyObject_GC_Track(dest);
+		//PyObject_GC_Track(dest);
 		if (dest && tme->sync && tme->sync->jy2py)
 			tme->sync->jy2py(src, dest);
 		//else puts("no sync needed");
@@ -806,6 +1056,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
 		env(NULL);
 		jy->jy = (*env)->NewGlobalRef(env, src);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
 		//printf("dest-check for module2: %u\n", (int) PyModule_Check(dest));
 	}
@@ -832,10 +1083,11 @@ inline PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jbool
 	if (jythonPyObject == JyNotImplemented) return Py_NotImplemented;
 	if (jythonPyObject == JyEllipsis) return Py_Ellipsis;
 	env(NULL);
-	//todo: What about exceptions?
 	if (checkForType && (*env)->IsInstanceOf(env, jythonPyObject, pyTypeClass))
 	{
-		return (PyObject*) JyNI_PyTypeObject_FromJythonPyTypeObject(jythonPyObject);
+		PyObject* er = (PyObject*) JyNI_PyTypeObject_FromJythonPyTypeObject(jythonPyObject);
+		if (er) return er;
+		else return (PyObject*) JyNI_PyExceptionType_FromJythonExceptionType(jythonPyObject);
 	}
 	if (checkCPeer && (*env)->IsInstanceOf(env, jythonPyObject, pyCPeerClass))
 	{
@@ -866,9 +1118,21 @@ inline PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jbool
 	cstr_from_jstring(cName, tpName);
 	//puts(cName);
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
-	PyObject* er = JyNI_InitPyObject(tme, jythonPyObject);
-	//puts("handle initialized");
-	return er;
+	if (tme)
+	{
+		PyObject* er = JyNI_InitPyObject(tme, jythonPyObject);
+		//puts("handle initialized");
+		return er;
+	} else
+	{
+		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(jythonPyObject));
+		if (eme)
+		{
+			PyObject* er = JyNI_InitPyException(eme, jythonPyObject);
+			return er;
+		} else
+			return NULL;
+	}
 	//PyObject* result = JyNI_NewPyObject_FromJythonPyObject(jythonPyObject);
 	//Py_INCREF(result);
 	//return result;
@@ -933,9 +1197,37 @@ inline void JyNI_SyncPy2Jy(PyObject* op, JyObject* jy)
 	if (sync != NULL && sync->py2jy != NULL) sync->py2jy(op, jy->jy);
 }
 
+inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src, JyObject* srcJy)
+{
+	jobject dest = NULL;
+	env(NULL);
+	if (eme->exc_factory)
+	{
+		//Here, the actual values are not copied from src, since
+		//src is truncated and does not actually contain these.
+		//The tp_init method of the exception type is responsible
+		//to fill in this data.
+		dest = eme->exc_factory();
+	} else
+	{
+		//Create base exception...
+		jobject type = JyNI_JythonExceptionType_FromPyExceptionType(Py_TYPE(src));
+		if (type)
+			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseExceptionSubTypeConstructor, type);
+		else
+			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseExceptionEmptyConstructor);
+	}
+	if (!dest) return NULL;
+
+	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);
+	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
+	return srcJy->jy;
+}
+
 inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
 {
-	jobject dest;
+	jobject dest = NULL;
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
 		if (tme->sync && tme->sync->jyInit)
@@ -949,13 +1241,15 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			dest = (*env)->NewObject(env, tme->jy_class, cm);
 			if (tme->sync && tme->sync->py2jy)
 				tme->sync->py2jy(src, dest);
-		} else
-			dest = NULL;
+		} //else
+			//dest = NULL;
 	}
+	if (!dest) return NULL;
 	if (dest && (srcJy->flags & SYNC_NEEDED_MASK))
 		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);//, char flags)
 	env(NULL);
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
 	return srcJy->jy;
 }
@@ -969,7 +1263,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	if (PyExceptionClass_Check(op))
 	{
 		//puts("convert exception...");
-		jobject er = JyNI_JythonException_FromPyException(op);
+		jobject er = JyNI_JythonExceptionType_FromPyExceptionType(op);
 		if (er != NULL) return er;
 	}
 	if (PyType_Check(op))
@@ -990,31 +1284,37 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		if (jy->jy != NULL) tme = (TypeMapEntry*) jy->jy;
 		else tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 
-		if (tme != NULL)
+		if (tme)// != NULL
 			return JyNI_InitJythonPyObject(tme, op, jy);
 		else
 		{
-			//setup and return PyCPeer in this case...
-			env(NULL);
-			//The following lookup is not neccesary, because if there already was a PyCPeer,
-			//JyObject_IS_INITIALIZED would have evaluated true.
-			//jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerHandle, (jlong) op);
-			//if (er != NULL) return er;
-//			puts("creating PyCPeer for Type:");
-//			puts(Py_TYPE(op)->tp_name);
-//			printf("op-address: %u\n", (jlong) op);
-			//PyCPeer has to be created...
-			Py_INCREF(op);
-			//first obtain type:
-			jobject opType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(op));
-//			puts("opType-address:");
-//			printf("%u\n", (jlong) opType);
-			jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
-			jy->flags |= JY_INITIALIZED_FLAG_MASK;
-			jy->flags |= JY_CPEER_FLAG_MASK;
-			jy->jy = (*env)->NewWeakGlobalRef(env, er);
-			//(*env)->SetLongField(env, er, pyCPeerRefHandle, (jlong) ref);
-			return jy->jy;
+			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op));
+			if (eme)
+				return JyNI_InitJythonPyException(eme, op, jy);
+			else
+			{
+				//setup and return PyCPeer in this case...
+				env(NULL);
+				//The following lookup is not neccesary, because if there already was a PyCPeer,
+				//JyObject_IS_INITIALIZED would have evaluated true.
+				//jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerHandle, (jlong) op);
+				//if (er != NULL) return er;
+	//			puts("creating PyCPeer for Type:");
+	//			puts(Py_TYPE(op)->tp_name);
+	//			printf("op-address: %u\n", (jlong) op);
+				//PyCPeer has to be created...
+				Py_INCREF(op);
+				//first obtain type:
+				jobject opType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(op));
+	//			puts("opType-address:");
+	//			printf("%u\n", (jlong) opType);
+				jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
+				jy->flags |= JY_INITIALIZED_FLAG_MASK;
+				jy->flags |= JY_CPEER_FLAG_MASK;
+				jy->jy = (*env)->NewWeakGlobalRef(env, er);
+				//(*env)->SetLongField(env, er, pyCPeerRefHandle, (jlong) ref);
+				return jy->jy;
+			}
 		}
 	}
 }
@@ -1653,12 +1953,25 @@ jclass pySuperClass;
 
 jclass pyBaseExceptionClass;
 //jfieldID pyBaseException__dict__;
+jmethodID pyBaseExceptionEmptyConstructor;
+jmethodID pyBaseExceptionSubTypeConstructor;
 jmethodID pyBaseException__init__;
 
 
 jclass pyByteArrayClass;
 jclass pyBufferClass;
 jclass pyMemoryViewClass;
+
+jclass exceptionsClass;
+jmethodID exceptionsEnvironmentError;
+jmethodID exceptionsSyntaxError;
+
+#ifdef Py_USING_UNICODE
+jmethodID exceptionsUnicodeError;
+jmethodID exceptionsUnicodeEncodeError;
+jmethodID exceptionsUnicodeDecodeError;
+jmethodID exceptionsUnicodeTranslateError;
+#endif
 
 inline jint initJNI(JNIEnv *env)
 {
@@ -2231,6 +2544,8 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (pyBaseExceptionClassLocal == NULL) { return JNI_ERR;}
 	pyBaseExceptionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseExceptionClassLocal);
 	(*env)->DeleteLocalRef(env, pyBaseExceptionClassLocal);
+	pyBaseExceptionEmptyConstructor = (*env)->GetMethodID(env, pyBaseExceptionClass, "<init>", "()V");
+	pyBaseExceptionSubTypeConstructor = (*env)->GetMethodID(env, pyBaseExceptionClass, "<init>", "(Lorg/python/core/PyType;)V");
 	pyBaseException__init__ = (*env)->GetMethodID(env, pyBaseExceptionClass, "__init__", "([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
 
 	jclass pyByteArrayClassLocal = (*env)->FindClass(env, "org/python/core/PyByteArray");
@@ -2247,6 +2562,20 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (pyMemoryViewClassLocal == NULL) { return JNI_ERR;}
 	pyMemoryViewClass = (jclass) (*env)->NewWeakGlobalRef(env, pyMemoryViewClassLocal);
 	(*env)->DeleteLocalRef(env, pyMemoryViewClassLocal);
+
+	jclass exceptionsClassLocal = (*env)->FindClass(env, "org/python/core/exceptions");
+	if (exceptionsClassLocal == NULL) { return JNI_ERR;}
+	exceptionsClass = (jclass) (*env)->NewWeakGlobalRef(env, exceptionsClassLocal);
+	(*env)->DeleteLocalRef(env, exceptionsClassLocal);
+	exceptionsEnvironmentError = (*env)->GetStaticMethodID(env, exceptionsClass, "EnvironmentError", "()Lorg/python/core/PyObject;");
+	exceptionsSyntaxError = (*env)->GetStaticMethodID(env, exceptionsClass, "SyntaxError", "()Lorg/python/core/PyObject;");
+
+	#ifdef Py_USING_UNICODE
+	exceptionsUnicodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeError", "()Lorg/python/core/PyObject;");
+	exceptionsUnicodeEncodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeDecodeError", "()Lorg/python/core/PyObject;");
+	exceptionsUnicodeDecodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeEncodeError", "()Lorg/python/core/PyObject;");
+	exceptionsUnicodeTranslateError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeTranslateError", "()Lorg/python/core/PyObject;");
+	#endif
 
 	return JNI_VERSION_1_2;
 }

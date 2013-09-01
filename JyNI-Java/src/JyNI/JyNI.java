@@ -123,6 +123,7 @@ public class JyNI {
 			if (libFile.exists())
 			{
 				//System.out.println("initJyNI: "+fileNames[i]);
+				nativeHandles = new IdentityHashMap<PyObject, Long>();
 				initJyNI(fileNames[i]);
 				//System.out.println("initJyNI done");
 				loaded = true;
@@ -164,7 +165,7 @@ public class JyNI {
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
 	
 	//protected static HashMap<PyObject, JyObject> jyObjects = new HashMap();
-	//protected static HashMap<PyObject, Long> nativeHandles = new HashMap<PyObject, Long>();
+	protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
 	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
 	
 	public static native void initJyNI(String JyNILibPath);
@@ -288,14 +289,18 @@ public class JyNI {
 	
 	public static void setNativeHandle(PyObject object, long handle)
 	{
-		//no WeakReferences needed here, because clearNativeHandle is always calles
+		//no WeakReferences needed here, because clearNativeHandle is always called
 		//when a corresponding PyObject on C-Side is deallocated
 		//nativeHandles.put(object, handle);
-		if (!(object instanceof PyCPeer))
+		if (object instanceof PyCPeer)
+		{
+			((PyCPeer) object).objectHandle = handle;
+		} else
 		{
 			//PyCPeer peer = (PyCPeer) object.__getattr__(JyNIHandleAttr);
 			//if (peer == null)
-			object.__setattr__(JyNIHandleAttr, new PyCPeer(handle, object.getType()));
+			//object.__setattr__(JyNIHandleAttr, new PyCPeer(handle, object.getType()));
+			nativeHandles.put(object, Long.valueOf(handle));
 		}
 	}
 	
@@ -306,13 +311,18 @@ public class JyNI {
 		if (object == null) return 0;
 		if (object instanceof PyCPeer) return ((PyCPeer) object).objectHandle;
 		else {
+			Long er = nativeHandles.get(object);
+			return er == null ? 0 : er.longValue();
+			
 //			System.out.println("Exception before:");
 //			System.out.println(Py.getThreadState().exception);
-			PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
+			//We abuse PyCPeer as a dumb container for the native handle here.
+			//System.out.println("find handle...");
+			//PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
 //			System.out.println("Exception afterwards:");
 //			System.out.println(Py.getThreadState().exception);
 //			System.out.println("retrieved: "+peer);
-			return peer == null ? 0 : ((PyCPeer) peer).objectHandle;
+			//return peer == null ? 0 : ((PyCPeer) peer).objectHandle;
 		}
 		//Problem: When JyNI is initialized, nativeHandles have not been initialized...
 		/*try
@@ -337,13 +347,16 @@ public class JyNI {
 	
 	public static void clearNativeHandle(PyObject object)
 	{
-		//nativeHandles.remove(object);
-		PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
-		if (peer != null)
-		{
-			peer.objectHandle = 0;
-			object.__delattr__(JyNIHandleAttr);
-		}
+		if (object instanceof PyCPeer)
+			((PyCPeer) object).objectHandle = 0;
+		else
+			nativeHandles.remove(object);
+//		PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
+//		if (peer != null)
+//		{
+//			peer.objectHandle = 0;
+//			object.__delattr__(JyNIHandleAttr);
+//		}
 	}
 	
 //	public static PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name, PyObject self, PyObject... args)

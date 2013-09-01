@@ -246,10 +246,23 @@ extern jclass pyCallIterClass;
 extern jclass pySuperClass;
 
 extern jclass pyBaseExceptionClass;
+extern jmethodID pyBaseExceptionEmptyConstructor;
+extern jmethodID pyBaseExceptionSubTypeConstructor;
 extern jmethodID pyBaseException__init__;
 
 extern jclass pyByteArrayClass;
 extern jclass pyBufferClass;
 extern jclass pyMemoryViewClass;
+
+extern jclass exceptionsClass;
+extern jmethodID exceptionsEnvironmentError;
+extern jmethodID exceptionsSyntaxError;
+
+#ifdef Py_USING_UNICODE
+extern jmethodID exceptionsUnicodeError;
+extern jmethodID exceptionsUnicodeEncodeError;
+extern jmethodID exceptionsUnicodeDecodeError;
+extern jmethodID exceptionsUnicodeTranslateError;
+#endif
 
 #endif /* JYNIOBJECTS_H_ */

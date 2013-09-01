@@ -649,8 +649,6 @@ PyErr_Format(PyObject *exception, const char *format, ...)
 	return NULL;
 }
 
-/*
-
 PyObject *
 PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 {
@@ -701,7 +699,7 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	return result;
 }
 
-
+/*
 // Create an exception with docstring
 PyObject *
 PyErr_NewExceptionWithDoc(char *name, char *doc, PyObject *base, PyObject *dict)

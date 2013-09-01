@@ -157,7 +157,7 @@ typedef void (*py2jySync)(PyObject*, jobject);
 
 typedef jobject (*jyInitSync)(PyObject*);
 typedef PyObject* (*pyInitSync)(jobject);
-typedef jobject (*jyBuildException)();
+typedef jobject (*jyFactoryMethod)();
 //typedef void (*jy2pyItemSync)(jobject, PyObject*, int index);
 //typedef void (*py2jyItemSync)(PyObject*, jobject, int index);
 typedef jlong (*pyChecksum)(PyObject*);
@@ -223,7 +223,7 @@ typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jobject jy; unsigned short flags; JyAttribute* attr;} JyObject;
 typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing;} TypeMapEntry;
-typedef struct { PyTypeObject* exc_type; jyBuildException exc_factory;} ExceptionMapEntry;
+typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
 
 #define JyObject_IS_GC(o) (((JyObject *) o)->flags & JY_GC_FLAG_MASK)
 #define JyObject_IS_INITIALIZED(o) (((JyObject *) o)->flags & JY_INITIALIZED_FLAG_MASK)
@@ -343,6 +343,9 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromName(char* name);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyType(jobject jythonPyType);
+inline ExceptionMapEntry* JyNI_PyExceptionMapEntry_FromPyExceptionType(PyTypeObject* excType);
+inline jobject JyNI_JythonExceptionType_FromPyExceptionType(PyObject* exc);
+inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc);
 
 /* Conversion-Stuff: */
 inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op);
@@ -351,8 +354,6 @@ inline PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jbool
 inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type);
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls);
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject);
-inline jobject JyNI_JythonException_FromPyException(PyObject* exc);
-inline PyTypeObject* JyNI_PyException_FromJythonException(jobject exc);
 inline jstring JyNI_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 
@@ -364,6 +365,12 @@ inline int JyNI_JyErr_ExceptionMatches(jobject exc);
 inline PyObject* JyNI_JyErr_Format(jobject exception, const char *format, ...);
 
 /* JyNI-Stuff: */
+inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);
+inline PyObject* JyNI_Alloc(TypeMapEntry* tme);
+inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems);
+inline PyObject* JyNI_AllocNative(PyTypeObject* type);
+inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems);
+inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme);
 inline jint JyNI_GetDLOpenFlags();
 inline void JyNI_CleanUp_JyObject(JyObject* obj);
 inline jobject JyNI_GetJythonDelegate(PyObject* v);

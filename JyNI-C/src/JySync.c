@@ -370,3 +370,41 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__self__)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethodImClass)));
 }
+
+jobject JyExc_EnvironmentErrorFactory()
+{
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsEnvironmentError);
+}
+
+jobject JyExc_SyntaxErrorFactory()
+{
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsSyntaxError);
+}
+
+#ifdef Py_USING_UNICODE
+jobject JyExc_UnicodeErrorFactory()
+{
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeError);
+}
+
+jobject JyExc_UnicodeEncodeErrorFactory()
+{
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeEncodeError);
+}
+
+jobject JyExc_UnicodeDecodeErrorFactory()
+{
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeDecodeError);
+}
+
+jobject JyExc_UnicodeTranslateErrorFactory()
+{
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeTranslateError);
+}
+#endif
