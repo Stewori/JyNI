@@ -1628,7 +1628,8 @@ PyObject_GC_Del(void *op)
 		else
 			JyNI_CleanUpJyVarObject((JyVarObject*) op);
 	}*/
-	JyObject* jy = AS_JY(op);
+	//JyObject* jy = AS_JY(op);
+	JyObject* jy = AS_JY_WITH_GC(op);
 	JyNI_CleanUp_JyObject(jy);
 	PyGC_Head *g = AS_GC(op);
 	if (IS_TRACKED(op))
@@ -1636,7 +1637,8 @@ PyObject_GC_Del(void *op)
 	if (generations[0].count > 0) {
 		generations[0].count--;
 	}
-	PyObject_FREE(jy);
+	//PyObject_FREE(jy);
+	PyObject_RawFree(jy);
 }
 
 // for binary compatibility with 2.2

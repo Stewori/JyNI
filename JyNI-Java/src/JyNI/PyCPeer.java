@@ -112,7 +112,16 @@ public class PyCPeer extends PyObject {
 		//return super.__findattr_ex__(name);
 	}
 
+	public PyString __str__() {
+		//System.out.println("PyCPeer__str__");
+		//Object er = JyNI.PyObjectAsPyString(objectHandle);
+		//return (PyString) JyNI.repr(objectHandle);
+		PyString er = JyNI.PyObjectAsPyString(objectHandle);
+		return er == null ? (PyString) JyNI.repr(objectHandle) : er;
+	}
+	
 	public PyString __repr__() {
+		//System.out.println("PyCPeer__repr__");
 		return (PyString) JyNI.repr(objectHandle);
 	}
 

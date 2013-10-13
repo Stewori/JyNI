@@ -595,22 +595,23 @@ _PyObject_Str(PyObject *v)
 //		(*env)->ExceptionClear(env);
 //		return NULL;
 //	}
+//	puts("yyy");
 	res = (*Py_TYPE(v)->tp_str)(v);
+//	puts("result type10: ");
+//	puts(res->ob_type->tp_name);
 	//Py_LeaveRecursiveCall();
-//	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall);
 	Jy_LeaveRecursiveCall();
-	if (res == NULL)
-		 return NULL;
+	if (res == NULL) return NULL;
 	type_ok = PyString_Check(res);
 #ifdef Py_USING_UNICODE
 	type_ok = type_ok || PyUnicode_Check(res);
 #endif
 	if (!type_ok) {
-		 PyErr_Format(PyExc_TypeError,
+		PyErr_Format(PyExc_TypeError,
 							"__str__ returned non-string (type %.200s)",
 							Py_TYPE(res)->tp_name);
-		 Py_DECREF(res);
-		 return NULL;
+		Py_DECREF(res);
+		return NULL;
 	}
 	return res;
 }
@@ -1292,10 +1293,46 @@ PyObject_Hash(PyObject *v)
 }
 
 
+//PyObject *
+//PyObject_GetAttrString2(PyObject *v, const char *name)
+//{
+//	puts("PyObject_GetAttrString2");
+//
+//	jobject delegate = JyNI_GetJythonDelegate(v);
+//	if (delegate)
+//	{
+//		env(NULL);
+//		return JyNI_PyObject_FromJythonPyObject(
+//			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+//				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
+//	}
+//	puts("no delegate");
+//
+//	PyObject *w, *res;
+//
+//	if (Py_TYPE(v)->tp_getattr)// != NULL)
+//	{
+//		 return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
+//	}
+//	puts("tp_getattr is NULL");
+//	w = PyString_InternFromString(name);
+//	if (w == NULL)
+//		 return NULL;
+//	puts("try PyString-version");
+//
+//	res = PyObject_GetAttr(v, w);
+//	return NULL;
+////	Py_XDECREF(w);
+//////	puts("res null?");
+//////	if (res) puts("no");
+//////	else puts("yes");
+////	return res;
+//}
+
 PyObject *
 PyObject_GetAttrString(PyObject *v, const char *name)
 {
-	//puts("PyObject_GetAttrString");
+//	puts("PyObject_GetAttrString");
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
@@ -1304,7 +1341,7 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
 	}
-	//puts("no delegate");
+//	puts("no delegate");
 
 	PyObject *w, *res;
 
@@ -1312,13 +1349,16 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 	{
 		 return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
 	}
-	//puts("tp_getattr is NULL");
+//	puts("tp_getattr is NULL");
 	w = PyString_InternFromString(name);
 	if (w == NULL)
 		 return NULL;
-	//puts("try PyString-version");
+//	puts("try PyString-version");
 	res = PyObject_GetAttr(v, w);
 	Py_XDECREF(w);
+//	puts("res null?");
+//	if (res) puts("no");
+//	else puts("yes");
 	return res;
 }
 
@@ -1544,226 +1584,389 @@ _PyObject_NextNotImplemented(PyObject *self)
 	return NULL;
 }
 
-// Generic GetAttr functions - put these in your tp_[gs]etattro slot
+//PyObject *
+//_PyObject_GenericGetAttrWithDict2(PyObject *obj, PyObject *name, PyObject *dict)
+//{
+//	puts("_PyObject_GenericGetAttrWithDict2");
+//	puts(PyString_AS_STRING(name));
+//	if (!PyString_Check(name)) {
+//#ifdef Py_USING_UNICODE
+//		 // The Unicode to string conversion is done here because the
+//		 // existing tp_setattro slots expect a string object as name
+//		 // and we wouldn't want to break those.
+//		 if (PyUnicode_Check(name)) {
+//				name = PyUnicode_AsEncodedString(name, NULL, NULL);
+//				if (name == NULL)
+//					return NULL;
+//		 }
+//		 else
+//#endif
+//		 {
+//				PyErr_Format(PyExc_TypeError,
+//								"attribute name must be string, not '%.200s'",
+//								Py_TYPE(name)->tp_name);
+//				return NULL;
+//		 }
+//	}
+//	else
+//	{
+//		jobject delegate = JyNI_GetJythonDelegate(obj);
+//		if (delegate)
+//		{
+//			env(NULL);
+//			return JyNI_PyObject_FromJythonPyObject(
+//					(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+//					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
+//		} else
+//			Py_INCREF(name);
+//	}
+//
+//	/* JyNI:
+//	 * In the following, PyType_Ready will be called.
+//	 * Because we have not yet implemented List- and
+//	 * Sequence-stuff, we are currently unable to run
+//	 * PyType_Ready properly. Thus we don't get the dict
+//	 * and descr stuff initialised and cannot use it.
+//	 * We approach this issue by a temporary workaround:
+//	 * Do attr-lookup by hand:
+//	 * Try to retrieve attr via
+//	 *  tp_members, tp_getset, tp_methods
+//	 * in that order.
+//	 *
+//	 * Updated note: Now we implemented the stuff and also
+//	 * PyType_Ready. However, building this back is a remaining
+//	 * todo.
+//	 */
+//
+//	PyTypeObject *tp = Py_TYPE(obj);
+//	//puts("obtained tp");
+//	while (tp != NULL)
+//	{
+//		//puts("look for members...");
+//		if (tp->tp_members != NULL)
+//		{
+//			//PyObject* er = PyMember_Get((char*) obj, tp->tp_members, PyString_AS_STRING(name));
+//			PyMemberDef* memd = tp->tp_members;//[i++];
+//			while (memd->name)
+//			{
+//				//puts(memd->name);
+//				if (strcmp(memd->name, PyString_AS_STRING(name)) == 0)
+//				{
+//					return PyMember_GetOne((char*) obj, memd);
+//				}
+//				++memd;
+//			}
+//		}
+//		//puts("look for getset...");
+//		if (tp->tp_getset != NULL)
+//		{
+//			//int i = 0;
+//			PyGetSetDef* gsd = tp->tp_getset;//[i++];
+//			while (gsd->name)
+//			{
+//				if (gsd->get != NULL && strcmp(gsd->name, PyString_AS_STRING(name)) == 0)
+//				{
+//					return gsd->get(obj, NULL);
+//				}
+//				++gsd;// = tp->tp_getset[i++];
+//			}
+//		}
+//		//puts("look for methods...");
+//		if (tp->tp_methods != NULL)
+//		{
+//			//int i = 0;
+//			PyMethodDef* md = tp->tp_methods;//[i++];
+//			while (md->ml_name)
+//			{
+//				if (md->ml_meth != NULL && strcmp(md->ml_name, PyString_AS_STRING(name)) == 0)
+//				{
+//					return md->ml_meth;
+//				}
+//				++md;
+//			}
+//			// = tp->tp_methods[i++];
+//		}
+//		tp = tp->tp_base;
+//	}
+//	//puts("done");
+//
+//	//JyNI todo: Fix Exception-Stuff
+////	PyErr_Format(PyExc_AttributeError,
+////						 "'%.50s' object has no attribute '%.400s'",
+////						 tp->tp_name, PyString_AS_STRING(name));
+//	//puts("error done");
+//	return NULL;
+//
+////	PyObject *descr = NULL;
+////	PyObject *res = NULL;
+////	descrgetfunc f;
+////	Py_ssize_t dictoffset;
+////	PyObject **dictptr;
+////
+////	if (tp->tp_dict == NULL) {
+////		 if (PyType_Ready(tp) < 0)
+////				goto done;
+////	}
+////
+////#if 0 // XXX this is not quite _PyType_Lookup anymore
+////	// Inline _PyType_Lookup
+////	{
+////		 Py_ssize_t i, n;
+////		 PyObject *mro, *base, *dict;
+////
+////		 // Look in tp_dict of types in MRO
+////		 mro = tp->tp_mro;
+////		 assert(mro != NULL);
+////		 assert(PyTuple_Check(mro));
+////		 n = PyTuple_GET_SIZE(mro);
+////		 for (i = 0; i < n; i++) {
+////				base = PyTuple_GET_ITEM(mro, i);
+////				if (PyClass_Check(base))
+////					dict = ((PyClassObject *)base)->cl_dict;
+////				else {
+////					assert(PyType_Check(base));
+////					dict = ((PyTypeObject *)base)->tp_dict;
+////				}
+////				assert(dict && PyDict_Check(dict));
+////				descr = PyDict_GetItem(dict, name);
+////				if (descr != NULL)
+////					break;
+////		 }
+////	}
+////#else
+////	descr = _PyType_Lookup(tp, name);
+////#endif
+////
+////	Py_XINCREF(descr);
+////
+////	f = NULL;
+////	if (descr != NULL &&
+////		 PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
+////		 f = descr->ob_type->tp_descr_get;
+////		 if (f != NULL && PyDescr_IsData(descr)) {
+////				res = f(descr, obj, (PyObject *)obj->ob_type);
+////				Py_DECREF(descr);
+////				goto done;
+////		 }
+////	}
+////
+////	if (dict == NULL) {
+////		 // Inline _PyObject_GetDictPtr
+////		 dictoffset = tp->tp_dictoffset;
+////		 if (dictoffset != 0) {
+////				if (dictoffset < 0) {
+////					Py_ssize_t tsize;
+////					size_t size;
+////
+////					tsize = ((PyVarObject *)obj)->ob_size;
+////					if (tsize < 0)
+////						 tsize = -tsize;
+////					size = _PyObject_VAR_SIZE(tp, tsize);
+////
+////					dictoffset += (long)size;
+////					assert(dictoffset > 0);
+////					assert(dictoffset % SIZEOF_VOID_P == 0);
+////				}
+////				dictptr = (PyObject **) ((char *)obj + dictoffset);
+////				dict = *dictptr;
+////		 }
+////	}
+////	if (dict != NULL) {
+////		 Py_INCREF(dict);
+////		 res = PyDict_GetItem(dict, name);
+////		 if (res != NULL) {
+////				Py_INCREF(res);
+////				Py_XDECREF(descr);
+////				Py_DECREF(dict);
+////				goto done;
+////		 }
+////		 Py_DECREF(dict);
+////	}
+////
+////	if (f != NULL) {
+////		 res = f(descr, obj, (PyObject *)Py_TYPE(obj));
+////		 Py_DECREF(descr);
+////		 goto done;
+////	}
+////
+////	if (descr != NULL) {
+////		 res = descr;
+////		 // descr was already increfed above
+////		 goto done;
+////	}
+////
+////	PyErr_Format(PyExc_AttributeError,
+////					 "'%.50s' object has no attribute '%.400s'",
+////					 tp->tp_name, PyString_AS_STRING(name));
+////  done:
+////	Py_DECREF(name);
+////	return res;
+//}
+//
+//PyObject *
+//PyObject_GenericGetAttr2(PyObject *obj, PyObject *name)
+//{
+//	return _PyObject_GenericGetAttrWithDict2(obj, name, NULL);
+//}
+
+/* Generic GetAttr functions - put these in your tp_[gs]etattro slot */
 
 PyObject *
 _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 {
-	//puts("_PyObject_GenericGetAttrWithDict");
-	//puts(PyString_AS_STRING(name));
+//	puts("_PyObject_GenericGetAttrWithDict:");
+//	puts(PyString_AS_STRING(name));
+//	puts(obj->ob_type->tp_name);
+	PyTypeObject *tp = Py_TYPE(obj);
+	PyObject *descr = NULL;
+	PyObject *res = NULL;
+	descrgetfunc f;
+	Py_ssize_t dictoffset;
+	PyObject **dictptr;
 	if (!PyString_Check(name)){
 #ifdef Py_USING_UNICODE
-		 // The Unicode to string conversion is done here because the
-		 // existing tp_setattro slots expect a string object as name
-		 // and we wouldn't want to break those.
-		 if (PyUnicode_Check(name)) {
-				name = PyUnicode_AsEncodedString(name, NULL, NULL);
-				if (name == NULL)
-					return NULL;
-		 }
-		 else
-#endif
-		 {
-				PyErr_Format(PyExc_TypeError,
-								"attribute name must be string, not '%.200s'",
-								Py_TYPE(name)->tp_name);
+		/* The Unicode to string conversion is done here because the
+		   existing tp_setattro slots expect a string object as name
+		   and we wouldn't want to break those. */
+		if (PyUnicode_Check(name)) {
+			name = PyUnicode_AsEncodedString(name, NULL, NULL);
+			//JyNI-note: Check, why here is not incref(name).
+			//PyUnicode_AsEncodedString probably gives no borrowed ref.
+			if (name == NULL)
 				return NULL;
-		 }
+		}
+		else
+#endif
+		{
+			PyErr_Format(PyExc_TypeError,
+						 "attribute name must be string, not '%.200s'",
+						 Py_TYPE(name)->tp_name);
+			return NULL;
+		}
 	}
 	else
+		Py_INCREF(name);
+
+	jobject delegate = JyNI_GetJythonDelegate(obj);
+	if (delegate)
 	{
-		jobject delegate = JyNI_GetJythonDelegate(obj);
-		if (delegate)
-		{
-			env(NULL);
-			return JyNI_PyObject_FromJythonPyObject(
-					(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
-					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
-		} else
-			Py_INCREF(name);
+		env(NULL);
+		res = JyNI_PyObject_FromJythonPyObject(
+				(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
+		goto done;
+	}
+	if (tp->tp_dict == NULL) {
+		if (PyType_Ready(tp) < 0)
+			goto done;
+	}
+#if 0 /* XXX this is not quite _PyType_Lookup anymore */
+	/* Inline _PyType_Lookup */
+	{
+		Py_ssize_t i, n;
+		PyObject *mro, *base, *dict;
+
+		/* Look in tp_dict of types in MRO */
+		mro = tp->tp_mro;
+		assert(mro != NULL);
+		assert(PyTuple_Check(mro));
+		n = PyTuple_GET_SIZE(mro);
+		for (i = 0; i < n; i++) {
+			base = PyTuple_GET_ITEM(mro, i);
+			if (PyClass_Check(base))
+				dict = ((PyClassObject *)base)->cl_dict;
+			else {
+				assert(PyType_Check(base));
+				dict = ((PyTypeObject *)base)->tp_dict;
+			}
+			assert(dict && PyDict_Check(dict));
+			descr = PyDict_GetItem(dict, name);
+			if (descr != NULL)
+				break;
+		}
+	}
+#else
+	descr = _PyType_Lookup(tp, name);
+#endif
+	Py_XINCREF(descr);
+
+	f = NULL;
+	if (descr != NULL &&
+		PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
+		f = descr->ob_type->tp_descr_get;
+		if (f != NULL && PyDescr_IsData(descr)) {
+			res = f(descr, obj, (PyObject *)obj->ob_type);
+			Py_DECREF(descr);
+			goto done;
+		}
+	}
+	if (dict == NULL) {
+		/* Inline _PyObject_GetDictPtr */
+		dictoffset = tp->tp_dictoffset;
+		if (dictoffset != 0) {
+			if (dictoffset < 0) {
+				Py_ssize_t tsize;
+				size_t size;
+
+				tsize = ((PyVarObject *)obj)->ob_size;
+				if (tsize < 0)
+					tsize = -tsize;
+				size = _PyObject_VAR_SIZE(tp, tsize);
+
+				dictoffset += (long)size;
+				assert(dictoffset > 0);
+				assert(dictoffset % SIZEOF_VOID_P == 0);
+			}
+			dictptr = (PyObject **) ((char *)obj + dictoffset);
+			dict = *dictptr;
+		}
+	}
+	if (dict != NULL) {
+		Py_INCREF(dict);
+		res = PyDict_GetItem(dict, name);
+		if (res != NULL) {
+			Py_INCREF(res);
+			Py_XDECREF(descr);
+			Py_DECREF(dict);
+			goto done;
+		}
+		Py_DECREF(dict);
+	}
+	if (f != NULL) {
+		res = f(descr, obj, (PyObject *)Py_TYPE(obj));
+		Py_DECREF(descr);
+		goto done;
 	}
 
-	/* JyNI:
-	 * In the following, PyType_Ready will be called.
-	 * Because we have not yet implemented List- and
-	 * Sequence-stuff, we are currently unable to run
-	 * PyType_Ready properly. Thus we don't get the dict
-	 * and descr stuff initialised and cannot use it.
-	 * We aproach this issue by a temporary workaround:
-	 * Do attr-lookup by hand:
-	 * Try to retrive attr via
-	 *  tp_members, tp_getset, tp_methods
-	 * in that order.
-	 */
-
-	PyTypeObject *tp = Py_TYPE(obj);
-	//puts("obtained tp");
-	while (tp != NULL)
-	{
-		//puts("look for members...");
-		if (tp->tp_members != NULL)
-		{
-			//PyObject* er = PyMember_Get((char*) obj, tp->tp_members, PyString_AS_STRING(name));
-			PyMemberDef* memd = tp->tp_members;//[i++];
-			while (memd->name)
-			{
-				//puts(memd->name);
-				if (strcmp(memd->name, PyString_AS_STRING(name)) == 0)
-				{
-					return PyMember_GetOne((char*) obj, memd);
-				}
-				++memd;
-			}
-		}
-		//puts("look for getset...");
-		if (tp->tp_getset != NULL)
-		{
-			//int i = 0;
-			PyGetSetDef* gsd = tp->tp_getset;//[i++];
-			while (gsd->name)
-			{
-				if (gsd->get != NULL && strcmp(gsd->name, PyString_AS_STRING(name)) == 0)
-				{
-					return gsd->get(obj, NULL);
-				}
-				++gsd;// = tp->tp_getset[i++];
-			}
-		}
-		//puts("look for methods...");
-		if (tp->tp_methods != NULL)
-		{
-			//int i = 0;
-			PyMethodDef* md = tp->tp_methods;//[i++];
-			while (md->ml_name)
-			{
-				if (md->ml_meth != NULL && strcmp(md->ml_name, PyString_AS_STRING(name)) == 0)
-				{
-					return md->ml_meth;
-				}
-			}
-			++md;// = tp->tp_methods[i++];
-		}
-		tp = tp->tp_base;
+	if (descr != NULL) {
+		res = descr;
+		/* descr was already increfed above */
+		goto done;
 	}
-	//puts("done");
-
-	//JyNI todo: Fix Exception-Stuff
-//	PyErr_Format(PyExc_AttributeError,
-//						 "'%.50s' object has no attribute '%.400s'",
-//						 tp->tp_name, PyString_AS_STRING(name));
-	//puts("error done");
-	return NULL;
-
-//	PyObject *descr = NULL;
-//	PyObject *res = NULL;
-//	descrgetfunc f;
-//	Py_ssize_t dictoffset;
-//	PyObject **dictptr;
-//
-//	if (tp->tp_dict == NULL) {
-//		 if (PyType_Ready(tp) < 0)
-//				goto done;
-//	}
-//
-//#if 0 // XXX this is not quite _PyType_Lookup anymore
-//	// Inline _PyType_Lookup
-//	{
-//		 Py_ssize_t i, n;
-//		 PyObject *mro, *base, *dict;
-//
-//		 // Look in tp_dict of types in MRO
-//		 mro = tp->tp_mro;
-//		 assert(mro != NULL);
-//		 assert(PyTuple_Check(mro));
-//		 n = PyTuple_GET_SIZE(mro);
-//		 for (i = 0; i < n; i++) {
-//				base = PyTuple_GET_ITEM(mro, i);
-//				if (PyClass_Check(base))
-//					dict = ((PyClassObject *)base)->cl_dict;
-//				else {
-//					assert(PyType_Check(base));
-//					dict = ((PyTypeObject *)base)->tp_dict;
-//				}
-//				assert(dict && PyDict_Check(dict));
-//				descr = PyDict_GetItem(dict, name);
-//				if (descr != NULL)
-//					break;
-//		 }
-//	}
-//#else
-//	descr = _PyType_Lookup(tp, name);
-//#endif
-//
-//	Py_XINCREF(descr);
-//
-//	f = NULL;
-//	if (descr != NULL &&
-//		 PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
-//		 f = descr->ob_type->tp_descr_get;
-//		 if (f != NULL && PyDescr_IsData(descr)) {
-//				res = f(descr, obj, (PyObject *)obj->ob_type);
-//				Py_DECREF(descr);
-//				goto done;
-//		 }
-//	}
-//
-//	if (dict == NULL) {
-//		 // Inline _PyObject_GetDictPtr
-//		 dictoffset = tp->tp_dictoffset;
-//		 if (dictoffset != 0) {
-//				if (dictoffset < 0) {
-//					Py_ssize_t tsize;
-//					size_t size;
-//
-//					tsize = ((PyVarObject *)obj)->ob_size;
-//					if (tsize < 0)
-//						 tsize = -tsize;
-//					size = _PyObject_VAR_SIZE(tp, tsize);
-//
-//					dictoffset += (long)size;
-//					assert(dictoffset > 0);
-//					assert(dictoffset % SIZEOF_VOID_P == 0);
-//				}
-//				dictptr = (PyObject **) ((char *)obj + dictoffset);
-//				dict = *dictptr;
-//		 }
-//	}
-//	if (dict != NULL) {
-//		 Py_INCREF(dict);
-//		 res = PyDict_GetItem(dict, name);
-//		 if (res != NULL) {
-//				Py_INCREF(res);
-//				Py_XDECREF(descr);
-//				Py_DECREF(dict);
-//				goto done;
-//		 }
-//		 Py_DECREF(dict);
-//	}
-//
-//	if (f != NULL) {
-//		 res = f(descr, obj, (PyObject *)Py_TYPE(obj));
-//		 Py_DECREF(descr);
-//		 goto done;
-//	}
-//
-//	if (descr != NULL) {
-//		 res = descr;
-//		 // descr was already increfed above
-//		 goto done;
-//	}
-//
-//	PyErr_Format(PyExc_AttributeError,
-//					 "'%.50s' object has no attribute '%.400s'",
-//					 tp->tp_name, PyString_AS_STRING(name));
-//  done:
-//	Py_DECREF(name);
-//	return res;
+//	puts("file PyExc_AttributeError...");
+//	puts(((PyTypeObject*) PyExc_AttributeError)->tp_name);
+//	if (PyExc_AttributeError->ob_type == NULL)
+//		puts("type of PyExc_AttributeError is NULL");
+//	PyType_Ready(PyExc_AttributeError);
+//	puts("PyType_Ready done!");
+//	if (PyExc_AttributeError->ob_type == NULL)
+//			puts("type of PyExc_AttributeError is still NULL");
+	PyErr_Format(PyExc_AttributeError,
+				 "'%.50s' object has no attribute '%.400s'",
+				 tp->tp_name, PyString_AS_STRING(name));
+  done:
+	Py_DECREF(name);
+	return res;
 }
 
 PyObject *
 PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 {
-	return _PyObject_GenericGetAttrWithDict(obj, name, NULL);
+//	puts("PyObject_GenericGetAttr:");
+//	puts(PyString_AS_STRING(name));
+	PyObject* er = _PyObject_GenericGetAttrWithDict(obj, name, NULL);
+//	puts("PyObject_GenericGetAttr done");
+	return er;
 }
 
 int
@@ -1992,8 +2195,11 @@ PyCallable_Check(PyObject *x)
 		 Py_DECREF(call);
 		 return 1;
 	}
-	else {
-		 return x->ob_type->tp_call != NULL;
+	else
+	{
+//		puts("no instance");
+		PyTypeObject* tp = x->ob_type;
+		return tp->tp_call != NULL;
 	}
 }
 

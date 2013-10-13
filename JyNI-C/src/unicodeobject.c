@@ -425,7 +425,7 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 	/* XXX UNREF/NEWREF interface should be more symmetrical */
 	_Py_DEC_REFTOTAL;
 	_Py_ForgetReference((PyObject *)unicode);
-	JyNI_Del(unicode);//PyObject_Del(unicode);
+	PyObject_Free(unicode);//JyNI_Del(unicode);//PyObject_Del(unicode);
 	return NULL;
 }
 
@@ -8828,7 +8828,7 @@ unicode_subtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	pnew->str = (Py_UNICODE*) PyObject_MALLOC(sizeof(Py_UNICODE) * (n+1));
 	if (pnew->str == NULL) {
 		_Py_ForgetReference((PyObject *)pnew);
-		JyNI_Del(pnew);//PyObject_Del(pnew);
+		PyObject_Free(pnew);//JyNI_Del(pnew);//PyObject_Del(pnew);
 		Py_DECREF(tmp);
 		return PyErr_NoMemory();
 	}
@@ -8888,7 +8888,7 @@ PyTypeObject PyUnicode_Type = {
 	0,				  /* tp_init */
 	0,				  /* tp_alloc */
 	unicode_new,			/* tp_new */
-	JyNI_Del, //PyObject_Del,		   /* tp_free */
+	PyObject_Free,//JyNI_Del, //PyObject_Del,		   /* tp_free */
 };
 
 /* Initialize the Unicode implementation */
@@ -8945,7 +8945,7 @@ PyUnicode_ClearFreeList(void)
 		if (v->str)
 			PyObject_DEL(v->str);
 		Py_XDECREF(v->defenc);
-		JyNI_Del(v); //PyObject_Del(v);
+		PyObject_Free(v);//JyNI_Del(v); //PyObject_Del(v);
 		numfree--;
 	}
 	free_list = NULL;

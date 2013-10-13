@@ -1395,7 +1395,7 @@ PyTypeObject PyComplex_Type = {
 	0,										  /* tp_init */
 	PyType_GenericAlloc,						/* tp_alloc */
 	complex_new,								/* tp_new */
-	JyNI_Del,//PyObject_Del,					 /* tp_free */
+	PyObject_Free,//JyNI_Del,//PyObject_Del,					 /* tp_free */
 };
 
 #endif

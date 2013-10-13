@@ -43,10 +43,25 @@
  * exception statement from your version.
  */
 
+/*
+ * JyNI todo:
+ * Implement exception-handling according to this excerpt from
+ * http://docs.python.org/2/c-api/intro.html#exceptions:
+ *
+ * The full exception state consists of three objects (all of which can be NULL):
+ * the exception type, the corresponding exception value, and the traceback.
+ * These have the same meanings as the Python objects sys.exc_type, sys.exc_value,
+ * and sys.exc_traceback; however, they are not the same:
+ * the Python objects represent the last exception being handled by a Python
+ * try ... except statement, while the C level exception state only exists while
+ * an exception is being passed on between C functions until it reaches the Python
+ * bytecode interpreter’s main loop, which takes care of transferring it to
+ * sys.exc_type and friends.
+ */
+
 /* Error handling */
 
 #include "JyNI.h"
-/*
 #ifndef __STDC__
 #ifndef MS_WINDOWS
 extern char *strerror(int);
@@ -59,7 +74,7 @@ extern char *strerror(int);
 #endif
 
 #include <ctype.h>
-*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,281 +83,295 @@ extern "C" {
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
-	env();
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Restore, JyNI_JythonPyObject_FromPyObject(type), JyNI_JythonPyObject_FromPyObject(value), JyNI_JythonPyObject_FromPyObject(traceback));
-	//These references are managed by the JVM from now on, so we decrease their ref-counts,
-	//so their JyObjects can be garbage collected maybe.
-	Py_XDECREF(type);
-	Py_XDECREF(value);
-	Py_XDECREF(traceback);
-	/*
-	PyThreadState *tstate = PyThreadState_GET();
-	PyObject *oldtype, *oldvalue, *oldtraceback;
-
+//	puts("PyErr_Restore");
 	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
-		// XXX Should never happen -- fatal error instead?
-		// Well, it could be None.
+		/* XXX Should never happen -- fatal error instead? */
+		/* Well, it could be None. */
 		Py_DECREF(traceback);
 		traceback = NULL;
 	}
+	env();
+	jobject oldexc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyErr_GetCurExc, NULL);
+	jobject jv = JyNI_JythonPyObject_FromPyObject(value);
+	jobject jtb = JyNI_JythonPyObject_FromPyObject(traceback);
+	jobject jt = JyNI_JythonPyObject_FromPyObject(type);
+	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Restore,
+		jt,
+		jv,
+		jtb);
+	if (oldexc)
+	{
+		PyObject *oldtype, *oldvalue, *oldtraceback;
+		oldtype = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTypeField));
+		oldvalue = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionValueField));
+		oldtraceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTracebackField));
 
-	// Save these in locals to safeguard against recursive
-	// invocation through Py_XDECREF
-	oldtype = tstate->curexc_type;
-	oldvalue = tstate->curexc_value;
-	oldtraceback = tstate->curexc_traceback;
-
-	tstate->curexc_type = type;
-	tstate->curexc_value = value;
-	tstate->curexc_traceback = traceback;
-
-	Py_XDECREF(oldtype);
-	Py_XDECREF(oldvalue);
-	Py_XDECREF(oldtraceback);
-	*/
+		Py_XDECREF(oldtype);
+		Py_XDECREF(oldvalue);
+		Py_XDECREF(oldtraceback);
+	}
+//	PyThreadState *tstate = PyThreadState_GET();
+//	PyObject *oldtype, *oldvalue, *oldtraceback;
+//
+//	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
+//		/* XXX Should never happen -- fatal error instead? */
+//		/* Well, it could be None. */
+//		Py_DECREF(traceback);
+//		traceback = NULL;
+//	}
+//
+//	/* Save these in locals to safeguard against recursive
+//	   invocation through Py_XDECREF */
+//	oldtype = tstate->curexc_type;
+//	oldvalue = tstate->curexc_value;
+//	oldtraceback = tstate->curexc_traceback;
+//
+//	tstate->curexc_type = type;
+//	tstate->curexc_value = value;
+//	tstate->curexc_traceback = traceback;
+//
+//	Py_XDECREF(oldtype);
+//	Py_XDECREF(oldvalue);
+//	Py_XDECREF(oldtraceback);
 }
 
 void
 PyErr_SetObject(PyObject *exception, PyObject *value)
 {
-	//Py_XINCREF(exception);
-	//Py_XINCREF(value);
-	//PyErr_Restore(exception, value, (PyObject *)NULL);
-
-	puts("todo: implement PyErr_SetObject");
-	puts(value);
-	//env();
-	//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_SetObject, JyNI_JythonPyObject_FromPyObject(exception), JyNI_JythonPyObject_FromPyObject(value));
+	Py_XINCREF(exception);
+	Py_XINCREF(value);
+	PyErr_Restore(exception, value, (PyObject *)NULL);
 }
 
 void
 PyErr_SetNone(PyObject *exception)
 {
-	//PyErr_SetObject(exception, (PyObject *)NULL);
-	env();
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_SetNone, JyNI_JythonPyObject_FromPyObject(exception));
+	PyErr_SetObject(exception, (PyObject *)NULL);
 }
 
 void
 PyErr_SetString(PyObject *exception, const char *string)
 {
-	//PyObject *value = PyString_FromString(string);
-	//PyErr_SetObject(exception, value);
-	//Py_XDECREF(value);
-	env();
-	//todo: fix this!
-	puts("PyErr_SetString:");
-	puts(string);
-	//jobject excj = JyNI_JythonPyObject_FromPyObject(exception);
-	//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_SetString, excj, (*env)->NewStringUTF(env, string));
+	PyObject *value = PyString_FromString(string);
+	PyErr_SetObject(exception, value);
+	Py_XDECREF(value);
 }
+
 
 PyObject *
 PyErr_Occurred(void)
 {
-	//PyThreadState *tstate = PyThreadState_GET();
-
-	//return tstate->curexc_type;
-
 	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Occurred));
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Occurred));
+	//PyThreadState *tstate = PyThreadState_GET();
+	//return tstate->curexc_type;
 }
 
-/*
+
 int
 PyErr_GivenExceptionMatches(PyObject *err, PyObject *exc)
 {
 	if (err == NULL || exc == NULL) {
-		// maybe caused by "import exceptions" that failed early on
+		/* maybe caused by "import exceptions" that failed early on */
 		return 0;
 	}
-	if (PyTuple_Check(exc)) {
-		Py_ssize_t i, n;
-		n = PyTuple_Size(exc);
-		for (i = 0; i < n; i++) {
-			// Test recursively
-			 if (PyErr_GivenExceptionMatches(
-				 err, PyTuple_GET_ITEM(exc, i)))
-			 {
-				 return 1;
-			 }
-		}
-		return 0;
-	}
-	// err might be an instance, so check its class.
-	if (PyExceptionInstance_Check(err))
-		err = PyExceptionInstance_Class(err);
+	env(-1);
+	jobject pyExc = (*env)->NewObject(env, pyExceptionClass, pyExceptionTypeConstructor,
+		JyNI_JythonPyObject_FromPyObject(err));
+	return (*env)->CallBooleanMethod(env, pyExc, pyExceptionMatch,
+		JyNI_JythonPyObject_FromPyObject(exc));
 
-	if (PyExceptionClass_Check(err) && PyExceptionClass_Check(exc)) {
-		int res = 0, reclimit;
-		PyObject *exception, *value, *tb;
-		PyErr_Fetch(&exception, &value, &tb);
-		// Temporarily bump the recursion limit, so that in the most
-		// common case PyObject_IsSubclass will not raise a recursion
-		// error we have to ignore anyway.  Don't do it when the limit
-		// is already insanely high, to avoid overflow
-		reclimit = Py_GetRecursionLimit();
-		if (reclimit < (1 << 30))
-			Py_SetRecursionLimit(reclimit + 5);
-		res = PyObject_IsSubclass(err, exc);
-		Py_SetRecursionLimit(reclimit);
-		// This function must not fail, so print the error here
-		if (res == -1) {
-			PyErr_WriteUnraisable(err);
-			res = 0;
-		}
-		PyErr_Restore(exception, value, tb);
-		return res;
-	}
-
-	return err == exc;
+//	if (PyTuple_Check(exc)) {
+//		Py_ssize_t i, n;
+//		n = PyTuple_Size(exc);
+//		for (i = 0; i < n; i++) {
+//			/* Test recursively */
+//			 if (PyErr_GivenExceptionMatches(
+//				 err, PyTuple_GET_ITEM(exc, i)))
+//			 {
+//				 return 1;
+//			 }
+//		}
+//		return 0;
+//	}
+//	/* err might be an instance, so check its class. */
+//	if (PyExceptionInstance_Check(err))
+//		err = PyExceptionInstance_Class(err);
+//
+//	if (PyExceptionClass_Check(err) && PyExceptionClass_Check(exc)) {
+//		int res = 0, reclimit;
+//		PyObject *exception, *value, *tb;
+//		PyErr_Fetch(&exception, &value, &tb);
+//		/* Temporarily bump the recursion limit, so that in the most
+//		   common case PyObject_IsSubclass will not raise a recursion
+//		   error we have to ignore anyway.  Don't do it when the limit
+//		   is already insanely high, to avoid overflow */
+//		reclimit = Py_GetRecursionLimit();
+//		if (reclimit < (1 << 30))
+//			Py_SetRecursionLimit(reclimit + 5);
+//		res = PyObject_IsSubclass(err, exc);
+//		Py_SetRecursionLimit(reclimit);
+//		/* This function must not fail, so print the error here */
+//		if (res == -1) {
+//			PyErr_WriteUnraisable(err);
+//			res = 0;
+//		}
+//		PyErr_Restore(exception, value, tb);
+//		return res;
+//	}
+//
+//	return err == exc;
 }
-*/
+
 
 int
 PyErr_ExceptionMatches(PyObject *exc)
 {
-	env(0);
-	return (*env)->CallStaticBooleanMethod(env, JyNIClass, JyNIPyErr_ExceptionMatches, JyNI_JythonPyObject_FromPyObject(exc));
-
-	//return PyErr_GivenExceptionMatches(PyErr_Occurred(), exc);
+	env(-1);
+	return (*env)->CallStaticBooleanMethod(env, JyNIClass, JyNIPyErr_ExceptionMatches,
+		JyNI_JythonPyObject_FromPyObject(exc));
+//	return PyErr_GivenExceptionMatches(PyErr_Occurred(), exc);
 }
 
-/*
-// Used in many places to normalize a raised exception, including in
-// eval_code2(), do_raise(), and PyErr_Print()
 
+/* Used in many places to normalize a raised exception, including in
+   eval_code2(), do_raise(), and PyErr_Print()
+*/
 void
 PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 {
-	PyObject *type = *exc;
-	PyObject *value = *val;
-	PyObject *inclass = NULL;
-	PyObject *initial_tb = NULL;
-	PyThreadState *tstate = NULL;
-
-	if (type == NULL) {
-		// There was no exception, so nothing to do.
+	if (*exc == NULL) {
+		/* There was no exception, so nothing to do. */
 		return;
 	}
+	env();
+	jobject pyExc = (*env)->NewObject(env, pyExceptionClass, pyExceptionFullConstructor,
+		JyNI_JythonPyObject_FromPyObject(*exc),
+		JyNI_JythonPyObject_FromPyObject(*val),
+		JyNI_JythonPyObject_FromPyObject(*tb));
+	(*env)->CallVoidMethod(env, pyExc, pyExceptionNormalize);
+	*exc = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
+	*val = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
+	*tb = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
 
-	// If PyErr_SetNone() was used, the value will have been actually
-	// set to NULL.
-
-	if (!value) {
-		value = Py_None;
-		Py_INCREF(value);
-	}
-
-	if (PyExceptionInstance_Check(value))
-		inclass = PyExceptionInstance_Class(value);
-
-	// Normalize the exception so that if the type is a class, the
-	// value will be an instance.
-
-	if (PyExceptionClass_Check(type)) {
-		// if the value was not an instance, or is not an instance
-		// whose class is (or is derived from) type, then use the
-		// value as an argument to instantiation of the type
-		// class.
-
-		if (!inclass || !PyObject_IsSubclass(inclass, type)) {
-			PyObject *args, *res;
-
-			if (value == Py_None)
-				args = PyTuple_New(0);
-			else if (PyTuple_Check(value)) {
-				Py_INCREF(value);
-				args = value;
-			}
-			else
-				args = PyTuple_Pack(1, value);
-
-			if (args == NULL)
-				goto finally;
-			res = PyEval_CallObject(type, args);
-			Py_DECREF(args);
-			if (res == NULL)
-				goto finally;
-			Py_DECREF(value);
-			value = res;
-		}
-		// if the class of the instance doesn't exactly match the
-		// class of the type, believe the instance
-
-		else if (inclass != type) {
-			Py_DECREF(type);
-			type = inclass;
-			Py_INCREF(type);
-		}
-	}
-	*exc = type;
-	*val = value;
-	return;
-finally:
-	Py_DECREF(type);
-	Py_DECREF(value);
-	// If the new exception doesn't set a traceback and the old
-	// exception had a traceback, use the old traceback for the
-	// new exception.  It's better than nothing.
-
-	initial_tb = *tb;
-	PyErr_Fetch(exc, val, tb);
-	if (initial_tb != NULL) {
-		if (*tb == NULL)
-			*tb = initial_tb;
-		else
-			Py_DECREF(initial_tb);
-	}
-	// normalize recursively
-	tstate = PyThreadState_GET();
-	if (++tstate->recursion_depth > Py_GetRecursionLimit()) {
-		--tstate->recursion_depth;
-		// throw away the old exception...
-		Py_DECREF(*exc);
-		Py_DECREF(*val);
-		// ... and use the recursion error instead
-		*exc = PyExc_RuntimeError;
-		*val = PyExc_RecursionErrorInst;
-		Py_INCREF(*exc);
-		Py_INCREF(*val);
-		// just keeping the old traceback
-		return;
-	}
-	PyErr_NormalizeException(exc, val, tb);
-	--tstate->recursion_depth;
+//	PyObject *type = *exc;
+//	PyObject *value = *val;
+//	PyObject *inclass = NULL;
+//	PyObject *initial_tb = NULL;
+//	PyThreadState *tstate = NULL;
+//
+//	if (type == NULL) {
+//		/* There was no exception, so nothing to do. */
+//		return;
+//	}
+//
+//	/* If PyErr_SetNone() was used, the value will have been actually
+//	   set to NULL.
+//	*/
+//	if (!value) {
+//		value = Py_None;
+//		Py_INCREF(value);
+//	}
+//
+//	if (PyExceptionInstance_Check(value))
+//		inclass = PyExceptionInstance_Class(value);
+//
+//	/* Normalize the exception so that if the type is a class, the
+//	   value will be an instance.
+//	*/
+//	if (PyExceptionClass_Check(type)) {
+//		/* if the value was not an instance, or is not an instance
+//		   whose class is (or is derived from) type, then use the
+//		   value as an argument to instantiation of the type
+//		   class.
+//		*/
+//		if (!inclass || !PyObject_IsSubclass(inclass, type)) {
+//			PyObject *args, *res;
+//
+//			if (value == Py_None)
+//				args = PyTuple_New(0);
+//			else if (PyTuple_Check(value)) {
+//				Py_INCREF(value);
+//				args = value;
+//			}
+//			else
+//				args = PyTuple_Pack(1, value);
+//
+//			if (args == NULL)
+//				goto finally;
+//			res = PyEval_CallObject(type, args);
+//			Py_DECREF(args);
+//			if (res == NULL)
+//				goto finally;
+//			Py_DECREF(value);
+//			value = res;
+//		}
+//		/* if the class of the instance doesn't exactly match the
+//		   class of the type, believe the instance
+//		*/
+//		else if (inclass != type) {
+//			Py_DECREF(type);
+//			type = inclass;
+//			Py_INCREF(type);
+//		}
+//	}
+//	*exc = type;
+//	*val = value;
+//	return;
+//finally:
+//	Py_DECREF(type);
+//	Py_DECREF(value);
+//	/* If the new exception doesn't set a traceback and the old
+//	   exception had a traceback, use the old traceback for the
+//	   new exception.  It's better than nothing.
+//	*/
+//	initial_tb = *tb;
+//	PyErr_Fetch(exc, val, tb);
+//	if (initial_tb != NULL) {
+//		if (*tb == NULL)
+//			*tb = initial_tb;
+//		else
+//			Py_DECREF(initial_tb);
+//	}
+//	/* normalize recursively */
+//	tstate = PyThreadState_GET();
+//	if (++tstate->recursion_depth > Py_GetRecursionLimit()) {
+//		--tstate->recursion_depth;
+//		/* throw away the old exception... */
+//		Py_DECREF(*exc);
+//		Py_DECREF(*val);
+//		/* ... and use the recursion error instead */
+//		*exc = PyExc_RuntimeError;
+//		*val = PyExc_RecursionErrorInst;
+//		Py_INCREF(*exc);
+//		Py_INCREF(*val);
+//		/* just keeping the old traceback */
+//		return;
+//	}
+//	PyErr_NormalizeException(exc, val, tb);
+//	--tstate->recursion_depth;
 }
-*/
+
 
 void
 PyErr_Fetch(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 {
 	env();
-	jobject ex = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Fetch);
-	if (ex != NULL)
-	{
-		jobject type = (*env)->GetObjectField(env, ex, pyExceptionTypeField);
-		jobject val = (*env)->GetObjectField(env, ex, pyExceptionValueField);
-		jobject traceback = (*env)->GetObjectField(env, ex, pyExceptionTracebackField);
-		*p_type = JyNI_PyObject_FromJythonPyObject(type);
-		*p_value = JyNI_PyObject_FromJythonPyObject(val);
-		*p_traceback = JyNI_PyObject_FromJythonPyObject(traceback);
-	} else
-	{
-		*p_type = NULL;
-		*p_value = NULL;
-		*p_traceback = NULL;
-	}
+	jobject pyExc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Fetch);
+	*p_type = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
+	*p_value = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
+	*p_traceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
 
-	/*PyThreadState *tstate = PyThreadState_GET();
-
-	*p_type = tstate->curexc_type;
-	*p_value = tstate->curexc_value;
-	*p_traceback = tstate->curexc_traceback;
-
-	tstate->curexc_type = NULL;
-	tstate->curexc_value = NULL;
-	tstate->curexc_traceback = NULL;*/
+//	PyThreadState *tstate = PyThreadState_GET();
+//
+//	*p_type = tstate->curexc_type;
+//	*p_value = tstate->curexc_value;
+//	*p_traceback = tstate->curexc_traceback;
+//
+//	tstate->curexc_type = NULL;
+//	tstate->curexc_value = NULL;
+//	tstate->curexc_traceback = NULL;
 }
 
 void
@@ -352,8 +381,8 @@ PyErr_Clear(void)
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Clear);
 	//PyErr_Restore(NULL, NULL, NULL);
 }
-/*
-// Convenience functions to set a type error exception and return 0
+
+/* Convenience functions to set a type error exception and return 0 */
 
 int
 PyErr_BadArgument(void)
@@ -362,252 +391,251 @@ PyErr_BadArgument(void)
 					"bad argument type for built-in operation");
 	return 0;
 }
-*/
+
 PyObject *
 PyErr_NoMemory(void)
 {
 	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_NoMemory));
-
-	/*
-	if (PyErr_ExceptionMatches(PyExc_MemoryError))
-		// already current
-		return NULL;
-
-	// raise the pre-allocated instance if it still exists
-	if (PyExc_MemoryErrorInst)
-		PyErr_SetObject(PyExc_MemoryError, PyExc_MemoryErrorInst);
-	else
-		// this will probably fail since there's no memory and hee,
-		// hee, we have to instantiate this class
-
-		PyErr_SetNone(PyExc_MemoryError);
-
-	return NULL;*/
-}
-/*
-PyObject *
-PyErr_SetFromErrnoWithFilenameObject(PyObject *exc, PyObject *filenameObject)
-{
-	PyObject *v;
-	char *s;
-	int i = errno;
-#ifdef PLAN9
-	char errbuf[ERRMAX];
-#endif
-#ifdef MS_WINDOWS
-	char *s_buf = NULL;
-	char s_small_buf[28]; // Room for "Windows Error 0xFFFFFFFF"
-#endif
-#ifdef EINTR
-	if (i == EINTR && PyErr_CheckSignals())
-		return NULL;
-#endif
-#ifdef PLAN9
-	rerrstr(errbuf, sizeof errbuf);
-	s = errbuf;
-#else
-	if (i == 0)
-		s = "Error"; // Sometimes errno didn't get set
-	else
-#ifndef MS_WINDOWS
-		s = strerror(i);
-#else
-	{
-		// Note that the Win32 errors do not lineup with the
-		// errno error.  So if the error is in the MSVC error
-		// table, we use it, otherwise we assume it really _is_
-		// a Win32 error code
-
-		if (i > 0 && i < _sys_nerr) {
-			s = _sys_errlist[i];
-		}
-		else {
-			int len = FormatMessage(
-				FORMAT_MESSAGE_ALLOCATE_BUFFER |
-				FORMAT_MESSAGE_FROM_SYSTEM |
-				FORMAT_MESSAGE_IGNORE_INSERTS,
-				NULL,				   // no message source
-				i,
-				MAKELANGID(LANG_NEUTRAL,
-						   SUBLANG_DEFAULT),
-						   // Default language
-				(LPTSTR) &s_buf,
-				0,					  // size not used
-				NULL);				  // no args
-			if (len==0) {
-				// Only ever seen this in out-of-mem
-				// situations
-				sprintf(s_small_buf, "Windows Error 0x%X", i);
-				s = s_small_buf;
-				s_buf = NULL;
-			} else {
-				s = s_buf;
-				// remove trailing cr/lf and dots
-				while (len > 0 && (s[len-1] <= ' ' || s[len-1] == '.'))
-					s[--len] = '\0';
-			}
-		}
-	}
-#endif // Unix/Windows
-#endif // PLAN 9
-	if (filenameObject != NULL)
-		v = Py_BuildValue("(isO)", i, s, filenameObject);
-	else
-		v = Py_BuildValue("(is)", i, s);
-	if (v != NULL) {
-		PyErr_SetObject(exc, v);
-		Py_DECREF(v);
-	}
-#ifdef MS_WINDOWS
-	LocalFree(s_buf);
-#endif
-	return NULL;
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_NoMemory);
+	return NULL; /*the above always returns NULL anyway, so no need to bother the conversion function*/
+//	if (PyErr_ExceptionMatches(PyExc_MemoryError))
+//		/* already current */
+//		return NULL;
+//
+//	/* raise the pre-allocated instance if it still exists */
+//	if (PyExc_MemoryErrorInst)
+//		PyErr_SetObject(PyExc_MemoryError, PyExc_MemoryErrorInst);
+//	else
+//		/* this will probably fail since there's no memory and hee,
+//		   hee, we have to instantiate this class
+//		*/
+//		PyErr_SetNone(PyExc_MemoryError);
+//
+//	return NULL;
 }
 
+//PyObject *
+//PyErr_SetFromErrnoWithFilenameObject(PyObject *exc, PyObject *filenameObject)
+//{
+//	PyObject *v;
+//	char *s;
+//	int i = errno;
+//#ifdef PLAN9
+//	char errbuf[ERRMAX];
+//#endif
+//#ifdef MS_WINDOWS
+//	char *s_buf = NULL;
+//	char s_small_buf[28]; /* Room for "Windows Error 0xFFFFFFFF" */
+//#endif
+//#ifdef EINTR
+//	if (i == EINTR && PyErr_CheckSignals())
+//		return NULL;
+//#endif
+//#ifdef PLAN9
+//	rerrstr(errbuf, sizeof errbuf);
+//	s = errbuf;
+//#else
+//	if (i == 0)
+//		s = "Error"; /* Sometimes errno didn't get set */
+//	else
+//#ifndef MS_WINDOWS
+//		s = strerror(i);
+//#else
+//	{
+//		/* Note that the Win32 errors do not lineup with the
+//		   errno error.  So if the error is in the MSVC error
+//		   table, we use it, otherwise we assume it really _is_
+//		   a Win32 error code
+//		*/
+//		if (i > 0 && i < _sys_nerr) {
+//			s = _sys_errlist[i];
+//		}
+//		else {
+//			int len = FormatMessage(
+//				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+//				FORMAT_MESSAGE_FROM_SYSTEM |
+//				FORMAT_MESSAGE_IGNORE_INSERTS,
+//				NULL,				   /* no message source */
+//				i,
+//				MAKELANGID(LANG_NEUTRAL,
+//						   SUBLANG_DEFAULT),
+//						   /* Default language */
+//				(LPTSTR) &s_buf,
+//				0,					  /* size not used */
+//				NULL);				  /* no args */
+//			if (len==0) {
+//				/* Only ever seen this in out-of-mem
+//				   situations */
+//				sprintf(s_small_buf, "Windows Error 0x%X", i);
+//				s = s_small_buf;
+//				s_buf = NULL;
+//			} else {
+//				s = s_buf;
+//				/* remove trailing cr/lf and dots */
+//				while (len > 0 && (s[len-1] <= ' ' || s[len-1] == '.'))
+//					s[--len] = '\0';
+//			}
+//		}
+//	}
+//#endif /* Unix/Windows */
+//#endif /* PLAN 9*/
+//	if (filenameObject != NULL)
+//		v = Py_BuildValue("(isO)", i, s, filenameObject);
+//	else
+//		v = Py_BuildValue("(is)", i, s);
+//	if (v != NULL) {
+//		PyErr_SetObject(exc, v);
+//		Py_DECREF(v);
+//	}
+//#ifdef MS_WINDOWS
+//	LocalFree(s_buf);
+//#endif
+//	return NULL;
+//}
+//
+//
+//PyObject *
+//PyErr_SetFromErrnoWithFilename(PyObject *exc, const char *filename)
+//{
+//	PyObject *name = filename ? PyString_FromString(filename) : NULL;
+//	PyObject *result = PyErr_SetFromErrnoWithFilenameObject(exc, name);
+//	Py_XDECREF(name);
+//	return result;
+//}
 
-PyObject *
-PyErr_SetFromErrnoWithFilename(PyObject *exc, const char *filename)
-{
-	PyObject *name = filename ? PyString_FromString(filename) : NULL;
-	PyObject *result = PyErr_SetFromErrnoWithFilenameObject(exc, name);
-	Py_XDECREF(name);
-	return result;
-}
+//#ifdef MS_WINDOWS
+//PyObject *
+//PyErr_SetFromErrnoWithUnicodeFilename(PyObject *exc, const Py_UNICODE *filename)
+//{
+//	PyObject *name = filename ?
+//					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
+//			 NULL;
+//	PyObject *result = PyErr_SetFromErrnoWithFilenameObject(exc, name);
+//	Py_XDECREF(name);
+//	return result;
+//}
+//#endif /* MS_WINDOWS */
+//
+//PyObject *
+//PyErr_SetFromErrno(PyObject *exc)
+//{
+//	return PyErr_SetFromErrnoWithFilenameObject(exc, NULL);
+//}
+//
+//#ifdef MS_WINDOWS
+///* Windows specific error code handling */
+//PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
+//	PyObject *exc,
+//	int ierr,
+//	PyObject *filenameObject)
+//{
+//	int len;
+//	char *s;
+//	char *s_buf = NULL; /* Free via LocalFree */
+//	char s_small_buf[28]; /* Room for "Windows Error 0xFFFFFFFF" */
+//	PyObject *v;
+//	DWORD err = (DWORD)ierr;
+//	if (err==0) err = GetLastError();
+//	len = FormatMessage(
+//		/* Error API error */
+//		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+//		FORMAT_MESSAGE_FROM_SYSTEM |
+//		FORMAT_MESSAGE_IGNORE_INSERTS,
+//		NULL,		   /* no message source */
+//		err,
+//		MAKELANGID(LANG_NEUTRAL,
+//		SUBLANG_DEFAULT), /* Default language */
+//		(LPTSTR) &s_buf,
+//		0,			  /* size not used */
+//		NULL);		  /* no args */
+//	if (len==0) {
+//		/* Only seen this in out of mem situations */
+//		sprintf(s_small_buf, "Windows Error 0x%X", err);
+//		s = s_small_buf;
+//		s_buf = NULL;
+//	} else {
+//		s = s_buf;
+//		/* remove trailing cr/lf and dots */
+//		while (len > 0 && (s[len-1] <= ' ' || s[len-1] == '.'))
+//			s[--len] = '\0';
+//	}
+//	if (filenameObject != NULL)
+//		v = Py_BuildValue("(isO)", err, s, filenameObject);
+//	else
+//		v = Py_BuildValue("(is)", err, s);
+//	if (v != NULL) {
+//		PyErr_SetObject(exc, v);
+//		Py_DECREF(v);
+//	}
+//	LocalFree(s_buf);
+//	return NULL;
+//}
+//
+//PyObject *PyErr_SetExcFromWindowsErrWithFilename(
+//	PyObject *exc,
+//	int ierr,
+//	const char *filename)
+//{
+//	PyObject *name = filename ? PyString_FromString(filename) : NULL;
+//	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
+//																 ierr,
+//																 name);
+//	Py_XDECREF(name);
+//	return ret;
+//}
+//
+//PyObject *PyErr_SetExcFromWindowsErrWithUnicodeFilename(
+//	PyObject *exc,
+//	int ierr,
+//	const Py_UNICODE *filename)
+//{
+//	PyObject *name = filename ?
+//					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
+//			 NULL;
+//	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
+//																 ierr,
+//																 name);
+//	Py_XDECREF(name);
+//	return ret;
+//}
+//
+//PyObject *PyErr_SetExcFromWindowsErr(PyObject *exc, int ierr)
+//{
+//	return PyErr_SetExcFromWindowsErrWithFilename(exc, ierr, NULL);
+//}
+//
+//PyObject *PyErr_SetFromWindowsErr(int ierr)
+//{
+//	return PyErr_SetExcFromWindowsErrWithFilename(PyExc_WindowsError,
+//												  ierr, NULL);
+//}
+//PyObject *PyErr_SetFromWindowsErrWithFilename(
+//	int ierr,
+//	const char *filename)
+//{
+//	PyObject *name = filename ? PyString_FromString(filename) : NULL;
+//	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
+//												  PyExc_WindowsError,
+//												  ierr, name);
+//	Py_XDECREF(name);
+//	return result;
+//}
+//
+//PyObject *PyErr_SetFromWindowsErrWithUnicodeFilename(
+//	int ierr,
+//	const Py_UNICODE *filename)
+//{
+//	PyObject *name = filename ?
+//					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
+//			 NULL;
+//	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
+//												  PyExc_WindowsError,
+//												  ierr, name);
+//	Py_XDECREF(name);
+//	return result;
+//}
+//#endif /* MS_WINDOWS */
 
-#ifdef MS_WINDOWS
-PyObject *
-PyErr_SetFromErrnoWithUnicodeFilename(PyObject *exc, const Py_UNICODE *filename)
-{
-	PyObject *name = filename ?
-					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
-			 NULL;
-	PyObject *result = PyErr_SetFromErrnoWithFilenameObject(exc, name);
-	Py_XDECREF(name);
-	return result;
-}
-#endif // MS_WINDOWS
-
-PyObject *
-PyErr_SetFromErrno(PyObject *exc)
-{
-	return PyErr_SetFromErrnoWithFilenameObject(exc, NULL);
-}
-
-#ifdef MS_WINDOWS
-// Windows specific error code handling
-PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
-	PyObject *exc,
-	int ierr,
-	PyObject *filenameObject)
-{
-	int len;
-	char *s;
-	char *s_buf = NULL; // Free via LocalFree
-	char s_small_buf[28]; // Room for "Windows Error 0xFFFFFFFF"
-	PyObject *v;
-	DWORD err = (DWORD)ierr;
-	if (err==0) err = GetLastError();
-	len = FormatMessage(
-		// Error API error
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,		   // no message source
-		err,
-		MAKELANGID(LANG_NEUTRAL,
-		SUBLANG_DEFAULT), // Default language
-		(LPTSTR) &s_buf,
-		0,			  // size not used
-		NULL);		  // no args
-	if (len==0) {
-		// Only seen this in out of mem situations
-		sprintf(s_small_buf, "Windows Error 0x%X", err);
-		s = s_small_buf;
-		s_buf = NULL;
-	} else {
-		s = s_buf;
-		// remove trailing cr/lf and dots
-		while (len > 0 && (s[len-1] <= ' ' || s[len-1] == '.'))
-			s[--len] = '\0';
-	}
-	if (filenameObject != NULL)
-		v = Py_BuildValue("(isO)", err, s, filenameObject);
-	else
-		v = Py_BuildValue("(is)", err, s);
-	if (v != NULL) {
-		PyErr_SetObject(exc, v);
-		Py_DECREF(v);
-	}
-	LocalFree(s_buf);
-	return NULL;
-}
-
-PyObject *PyErr_SetExcFromWindowsErrWithFilename(
-	PyObject *exc,
-	int ierr,
-	const char *filename)
-{
-	PyObject *name = filename ? PyString_FromString(filename) : NULL;
-	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
-																 ierr,
-																 name);
-	Py_XDECREF(name);
-	return ret;
-}
-
-PyObject *PyErr_SetExcFromWindowsErrWithUnicodeFilename(
-	PyObject *exc,
-	int ierr,
-	const Py_UNICODE *filename)
-{
-	PyObject *name = filename ?
-					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
-			 NULL;
-	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
-																 ierr,
-																 name);
-	Py_XDECREF(name);
-	return ret;
-}
-
-PyObject *PyErr_SetExcFromWindowsErr(PyObject *exc, int ierr)
-{
-	return PyErr_SetExcFromWindowsErrWithFilename(exc, ierr, NULL);
-}
-
-PyObject *PyErr_SetFromWindowsErr(int ierr)
-{
-	return PyErr_SetExcFromWindowsErrWithFilename(PyExc_WindowsError,
-												  ierr, NULL);
-}
-PyObject *PyErr_SetFromWindowsErrWithFilename(
-	int ierr,
-	const char *filename)
-{
-	PyObject *name = filename ? PyString_FromString(filename) : NULL;
-	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
-												  PyExc_WindowsError,
-												  ierr, name);
-	Py_XDECREF(name);
-	return result;
-}
-
-PyObject *PyErr_SetFromWindowsErrWithUnicodeFilename(
-	int ierr,
-	const Py_UNICODE *filename)
-{
-	PyObject *name = filename ?
-					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
-			 NULL;
-	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
-												  PyExc_WindowsError,
-												  ierr, name);
-	Py_XDECREF(name);
-	return result;
-}
-#endif // MS_WINDOWS
-*/
 void
 _PyErr_BadInternalCall(char *filename, int lineno)
 {
@@ -616,8 +644,8 @@ _PyErr_BadInternalCall(char *filename, int lineno)
 				 filename, lineno);
 }
 
-// Remove the preprocessor macro for PyErr_BadInternalCall() so that we can
-// export the entry point for existing object code:
+/* Remove the preprocessor macro for PyErr_BadInternalCall() so that we can
+   export the entry point for existing object code: */
 #undef PyErr_BadInternalCall
 void
 PyErr_BadInternalCall(void)
@@ -627,9 +655,13 @@ PyErr_BadInternalCall(void)
 }
 #define PyErr_BadInternalCall() _PyErr_BadInternalCall(__FILE__, __LINE__)
 
+
+
 PyObject *
 PyErr_Format(PyObject *exception, const char *format, ...)
 {
+//	puts("PyErr_Format");
+//	puts(format);
 	va_list vargs;
 	PyObject* string;
 
@@ -638,16 +670,16 @@ PyErr_Format(PyObject *exception, const char *format, ...)
 #else
 	va_start(vargs);
 #endif
-	//puts("b20");
+
 	string = PyString_FromFormatV(format, vargs);
-	//puts("b21");
-	//puts(string);
+//	puts(PyString_AS_STRING(string));
 	PyErr_SetObject(exception, string);
-	//puts("b22");
 	Py_XDECREF(string);
 	va_end(vargs);
 	return NULL;
 }
+
+
 
 PyObject *
 PyErr_NewException(char *name, PyObject *base, PyObject *dict)
@@ -681,14 +713,14 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	}
 	if (PyTuple_Check(base)) {
 		bases = base;
-		// INCREF as we create a new ref in the else branch
+		/* INCREF as we create a new ref in the else branch */
 		Py_INCREF(bases);
 	} else {
 		bases = PyTuple_Pack(1, base);
 		if (bases == NULL)
 			goto failure;
 	}
-	// Create a real new-style class.
+	/* Create a real new-style class. */
 	result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO",
 								   dot+1, bases, dict);
   failure:
@@ -699,14 +731,14 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	return result;
 }
 
-/*
-// Create an exception with docstring
+
+/* Create an exception with docstring */
 PyObject *
 PyErr_NewExceptionWithDoc(char *name, char *doc, PyObject *base, PyObject *dict)
 {
 	int result;
 	PyObject *ret = NULL;
-	PyObject *mydict = NULL; // points to the dict only if we create it
+	PyObject *mydict = NULL; /* points to the dict only if we create it */
 	PyObject *docobj;
 
 	if (dict == NULL) {
@@ -731,81 +763,81 @@ PyErr_NewExceptionWithDoc(char *name, char *doc, PyObject *base, PyObject *dict)
 	Py_XDECREF(mydict);
 	return ret;
 }
-*/
 
-// Call when an exception has occurred but there is no way for Python
-// to handle it.  Examples: exception in __del__ or during GC.
+
+/* Call when an exception has occurred but there is no way for Python
+   to handle it.  Examples: exception in __del__ or during GC. */
 void
 PyErr_WriteUnraisable(PyObject *obj)
 {
 	env();
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_WriteUnraisable, JyNI_JythonObject_FromPyObject(obj));
-
-	/*PyObject *f, *t, *v, *tb;
-	PyErr_Fetch(&t, &v, &tb);
-	f = PySys_GetObject("stderr");
-	if (f != NULL) {
-		PyFile_WriteString("Exception ", f);
-		if (t) {
-			PyObject* moduleName;
-			char* className;
-			assert(PyExceptionClass_Check(t));
-			className = PyExceptionClass_Name(t);
-			if (className != NULL) {
-				char *dot = strrchr(className, '.');
-				if (dot != NULL)
-					className = dot+1;
-			}
-
-			moduleName = PyObject_GetAttrString(t, "__module__");
-			if (moduleName == NULL)
-				PyFile_WriteString("<unknown>", f);
-			else {
-				char* modstr = PyString_AsString(moduleName);
-				if (modstr &&
-					strcmp(modstr, "exceptions") != 0)
-				{
-					PyFile_WriteString(modstr, f);
-					PyFile_WriteString(".", f);
-				}
-			}
-			if (className == NULL)
-				PyFile_WriteString("<unknown>", f);
-			else
-				PyFile_WriteString(className, f);
-			if (v && v != Py_None) {
-				PyFile_WriteString(": ", f);
-				PyFile_WriteObject(v, f, 0);
-			}
-			Py_XDECREF(moduleName);
-		}
-		PyFile_WriteString(" in ", f);
-		PyFile_WriteObject(obj, f, 0);
-		PyFile_WriteString(" ignored\n", f);
-		PyErr_Clear(); // Just in case
-	}
-	Py_XDECREF(t);
-	Py_XDECREF(v);
-	Py_XDECREF(tb);*/
+	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_WriteUnraisable,
+		JyNI_JythonPyObject_FromPyObject(obj));
+//	PyObject *f, *t, *v, *tb;
+//	PyErr_Fetch(&t, &v, &tb);
+//	f = PySys_GetObject("stderr");
+//	if (f != NULL) {
+//		PyFile_WriteString("Exception ", f);
+//		if (t) {
+//			PyObject* moduleName;
+//			char* className;
+//			assert(PyExceptionClass_Check(t));
+//			className = PyExceptionClass_Name(t);
+//			if (className != NULL) {
+//				char *dot = strrchr(className, '.');
+//				if (dot != NULL)
+//					className = dot+1;
+//			}
+//
+//			moduleName = PyObject_GetAttrString(t, "__module__");
+//			if (moduleName == NULL)
+//				PyFile_WriteString("<unknown>", f);
+//			else {
+//				char* modstr = PyString_AsString(moduleName);
+//				if (modstr &&
+//					strcmp(modstr, "exceptions") != 0)
+//				{
+//					PyFile_WriteString(modstr, f);
+//					PyFile_WriteString(".", f);
+//				}
+//			}
+//			if (className == NULL)
+//				PyFile_WriteString("<unknown>", f);
+//			else
+//				PyFile_WriteString(className, f);
+//			if (v && v != Py_None) {
+//				PyFile_WriteString(": ", f);
+//				PyFile_WriteObject(v, f, 0);
+//			}
+//			Py_XDECREF(moduleName);
+//		}
+//		PyFile_WriteString(" in ", f);
+//		PyFile_WriteObject(obj, f, 0);
+//		PyFile_WriteString(" ignored\n", f);
+//		PyErr_Clear(); /* Just in case */
+//	}
+//	Py_XDECREF(t);
+//	Py_XDECREF(v);
+//	Py_XDECREF(tb);
 }
-/*
+
 extern PyObject *PyModule_GetWarningsModule(void);
 
 
-// Set file and line information for the current exception.
-// If the exception is not a SyntaxError, also sets additional attributes
-// to make printing of exceptions believe it is a syntax error.
+/* Set file and line information for the current exception.
+   If the exception is not a SyntaxError, also sets additional attributes
+   to make printing of exceptions believe it is a syntax error. */
 
 void
 PyErr_SyntaxLocation(const char *filename, int lineno)
 {
 	PyObject *exc, *v, *tb, *tmp;
 
-	// add attributes for the line number and filename for the error
+	/* add attributes for the line number and filename for the error */
 	PyErr_Fetch(&exc, &v, &tb);
 	PyErr_NormalizeException(&exc, &v, &tb);
-	// XXX check that it is, indeed, a syntax error. It might not
-	// be, though.
+	/* XXX check that it is, indeed, a syntax error. It might not
+	 * be, though. */
 	tmp = PyInt_FromLong(lineno);
 	if (tmp == NULL)
 		PyErr_Clear();
@@ -854,13 +886,13 @@ PyErr_SyntaxLocation(const char *filename, int lineno)
 	PyErr_Restore(exc, v, tb);
 }
 
-// com_fetch_program_text will attempt to load the line of text that
-// the exception refers to.  If it fails, it will return NULL but will
-// not set an exception.
+/* com_fetch_program_text will attempt to load the line of text that
+   the exception refers to.  If it fails, it will return NULL but will
+   not set an exception.
 
-// XXX The functionality of this function is quite similar to the
-// functionality in tb_displayline() in traceback.c.
-
+   XXX The functionality of this function is quite similar to the
+   functionality in tb_displayline() in traceback.c.
+*/
 
 PyObject *
 PyErr_ProgramText(const char *filename, int lineno)
@@ -880,11 +912,11 @@ PyErr_ProgramText(const char *filename, int lineno)
 			*pLastChar = '\0';
 			if (Py_UniversalNewlineFgets(linebuf, sizeof linebuf, fp, NULL) == NULL)
 				break;
-			// fgets read *something*; if it didn't get as
-			// far as pLastChar, it must have found a newline
-			// or hit the end of the file; if pLastChar is \n,
-			// it obviously found a newline; else we haven't
-			// yet seen a newline, so must continue
+			/* fgets read *something*; if it didn't get as
+			   far as pLastChar, it must have found a newline
+			   or hit the end of the file; if pLastChar is \n,
+			   it obviously found a newline; else we haven't
+			   yet seen a newline, so must continue */
 		} while (*pLastChar != '\0' && *pLastChar != '\n');
 	}
 	fclose(fp);
@@ -896,22 +928,7 @@ PyErr_ProgramText(const char *filename, int lineno)
 	}
 	return NULL;
 }
-*/
-
-//This is usually suited in pythonrun.c; but we don't need
-//pythonrun.c for any other purpose, so we don't include it
-//in JyNI, but take only the Py_FatalError function from it.
-//errors.c appeared as the most natural place to settle it.
-
-// Print fatal error message and abort
-void
-Py_FatalError(const char *msg)
-{
-	fprintf(stderr, "Fatal Python error: %s\n", msg);
-	fflush(stderr); // it helps in Windows debug build
-}
 
 #ifdef __cplusplus
 }
 #endif
-

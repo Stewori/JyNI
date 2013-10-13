@@ -11,6 +11,7 @@ sys.path.append('/home/stefan/eclipseWorkspace/JyNI/DemoExtension/Debug')
 import DemoExtension
 
 print "--------Access Docstring----------"
+#print DemoExtension
 print DemoExtension.__doc__
 
 # If you run this via Jython, you can uncomment the following lines to prove that Jython is running.

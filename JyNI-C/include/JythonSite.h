@@ -118,7 +118,9 @@ extern jfieldID pyExceptionValueField;
 extern jfieldID pyExceptionTracebackField;
 extern jmethodID pyExceptionFullConstructor;
 extern jmethodID pyExceptionTypeValueConstructor;
+extern jmethodID pyExceptionTypeConstructor;
 extern jmethodID pyExceptionNormalize;
+extern jmethodID pyExceptionMatch;
 extern jmethodID pyExceptionIsExceptionClass;
 extern jmethodID pyExceptionIsExceptionInstance;
 

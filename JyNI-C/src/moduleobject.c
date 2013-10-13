@@ -58,6 +58,10 @@ typedef struct {
 //    {"__dict__", T_OBJECT, offsetof(PyModuleObject, md_dict), READONLY},
 //    {0}
 //};
+static PyGetSetDef module_getsets[] = {
+	{"__dict__", (getter)PyModule_GetDict},
+	{NULL},
+};
 
 PyObject *
 PyModule_New(const char *name)
@@ -285,21 +289,24 @@ PyModule_GetFilename(PyObject *m)
 //        return -1;
 //    return 0;
 //}
-//
-//static void
-//module_dealloc(PyModuleObject *m)
-//{
-//    PyObject_GC_UnTrack(m);
+
+static void
+module_dealloc(PyModuleObject *m)
+{
+    PyObject_GC_UnTrack(m);
 //    if (m->md_dict != NULL) {
 //        _PyModule_Clear((PyObject *)m);
 //        Py_DECREF(m->md_dict);
 //    }
-//    Py_TYPE(m)->tp_free((PyObject *)m);
-//}
-//
-//static PyObject *
-//module_repr(PyModuleObject *m)
-//{
+    Py_TYPE(m)->tp_free((PyObject *)m);
+}
+
+static PyObject *
+module_repr(PyModuleObject *m)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) m), pyObject__repr__));
 //    char *name;
 //    char *filename;
 //
@@ -314,8 +321,8 @@ PyModule_GetFilename(PyObject *m)
 //        return PyString_FromFormat("<module '%s' (built-in)>", name);
 //    }
 //    return PyString_FromFormat("<module '%s' from '%s'>", name, filename);
-//}
-//
+}
+
 ////   We only need a traverse function, no clear function: If the module
 ////   is in a cycle, md_dict will be cleared as well, which will break
 ////   the cycle.
@@ -337,20 +344,20 @@ PyTypeObject PyModule_Type = {
     "module",                                   // tp_name
     sizeof(PyModuleObject),                     // tp_size
     0,                                          // tp_itemsize
-    0,//(destructor)module_dealloc,                 // tp_dealloc
+    (destructor)module_dealloc,                 // tp_dealloc
     0,                                          // tp_print
     0,                                          // tp_getattr
     0,                                          // tp_setattr
     0,                                          // tp_compare
-    0,//(reprfunc)module_repr,                      // tp_repr
+    (reprfunc)module_repr,                      // tp_repr
     0,                                          // tp_as_number
     0,                                          // tp_as_sequence
     0,                                          // tp_as_mapping
     0,                                          // tp_hash
     0,                                          // tp_call
     0,                                          // tp_str
-    0,//PyObject_GenericGetAttr,                    // tp_getattro
-    0,//PyObject_GenericSetAttr,                    // tp_setattro
+    PyObject_GenericGetAttr,                    // tp_getattro
+    PyObject_GenericSetAttr,                    // tp_setattro
     0,                                          // tp_as_buffer
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,                    // tp_flags
@@ -362,15 +369,15 @@ PyTypeObject PyModule_Type = {
     0,                                          // tp_iter
     0,                                          // tp_iternext
     0,                                          // tp_methods
-    0,//module_members,                             // tp_members
-    0,                                          // tp_getset
+    0,//module_members,                         // tp_members
+    module_getsets,                             // tp_getset
     0,                                          // tp_base
     0,                                          // tp_dict
     0,                                          // tp_descr_get
     0,                                          // tp_descr_set
-    0,//offsetof(PyModuleObject, md_dict),          // tp_dictoffset
-    0,//(initproc)module_init,                      // tp_init
+    0,//offsetof(PyModuleObject, md_dict),      // tp_dictoffset
+    0,//(initproc)module_init,                  // tp_init
     PyType_GenericAlloc,                        // tp_alloc
     PyType_GenericNew,                          // tp_new
-    JyNI_Del,//PyObject_GC_Del,                            // tp_free
+    PyObject_GC_Del,                            // tp_free
 };

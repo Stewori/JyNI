@@ -76,6 +76,10 @@ extern jmethodID pyObject__xor__;
 extern jmethodID pyObject__isub__;
 extern jmethodID pyObject__call__;
 extern jmethodID pyObject__str__;
+extern jmethodID pyObject__getitem__;
+extern jmethodID pyObject__getslice__;
+extern jmethodID pyObjectGetDict;
+extern jmethodID pyObjectSetDict;
 extern jmethodID pyObjectIsCallable;
 
 extern jclass pyFrameClass;
@@ -249,20 +253,55 @@ extern jclass pyBaseExceptionClass;
 extern jmethodID pyBaseExceptionEmptyConstructor;
 extern jmethodID pyBaseExceptionSubTypeConstructor;
 extern jmethodID pyBaseException__init__;
+extern jmethodID pyBaseException__setstate__;
+extern jmethodID pyBaseException__unicode__;
+extern jfieldID pyBaseExceptionArgs;
+extern jmethodID pyBaseExceptionSetArgs;
+extern jmethodID pyBaseExceptionGetMessage;
+extern jmethodID pyBaseExceptionSetMessage;
 
 extern jclass pyByteArrayClass;
 extern jclass pyBufferClass;
 extern jclass pyMemoryViewClass;
 
-extern jclass exceptionsClass;
-extern jmethodID exceptionsEnvironmentError;
-extern jmethodID exceptionsSyntaxError;
+extern jclass __builtin__Class;
+extern jmethodID __builtin__Import;
+extern jmethodID __builtin__ImportLevel;
 
-#ifdef Py_USING_UNICODE
+extern jclass threadStateCurExcInfoClass;
+extern jfieldID threadStateCurExcInfo_curexc_type;
+extern jfieldID threadStateCurExcInfo_curexc_value;
+extern jfieldID threadStateCurExcInfo_curexc_traceback;
+
+extern jclass exceptionsClass;
+extern jmethodID exceptionsKeyError;
+extern jmethodID exceptionsKeyError__str__;
+extern jmethodID exceptionsEnvironmentError;
+extern jmethodID exceptionsEnvironmentError__init__;
+extern jmethodID exceptionsEnvironmentError__str__;
+extern jmethodID exceptionsEnvironmentError__reduce__;
+extern jmethodID exceptionsSyntaxError;
+extern jmethodID exceptionsSyntaxError__init__;
+extern jmethodID exceptionsSyntaxError__str__;
+extern jmethodID exceptionsSystemExit;
+extern jmethodID exceptionsSystemExit__init__;
+
 extern jmethodID exceptionsUnicodeError;
+#ifdef Py_USING_UNICODE
+extern jmethodID exceptionsGetStart;
+extern jmethodID exceptionsGetEnd;
+extern jmethodID exceptionsGetString;
+extern jmethodID exceptionsGetUnicode;
+extern jmethodID exceptionsUnicodeError__init__;
 extern jmethodID exceptionsUnicodeEncodeError;
+extern jmethodID exceptionsUnicodeEncodeError__init__;
+extern jmethodID exceptionsUnicodeEncodeError__str__;
 extern jmethodID exceptionsUnicodeDecodeError;
+extern jmethodID exceptionsUnicodeDecodeError__init__;
+extern jmethodID exceptionsUnicodeDecodeError__str__;
 extern jmethodID exceptionsUnicodeTranslateError;
+extern jmethodID exceptionsUnicodeTranslateError__init__;
+extern jmethodID exceptionsUnicodeTranslateError__str__;
 #endif
 
 #endif /* JYNIOBJECTS_H_ */

@@ -92,17 +92,18 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 		packagecontext = name;
 		shortname = lastdot+1;
 	}
+	//PyErr_Clear(); //added temporarily by JyNI to focus on further development until the exception thing is solved.
 	p = _PyImport_GetDynLoadFunc(name, shortname, pathname, fp);
 	//puts("got dyn load func");
 	if (PyErr_Occurred())
 	{
-		puts("PyErrOccured");
-		//return NULL;
+		//puts("PyErrOccured00");
+		return NULL;
 	}
 	//puts("error check done");
 	env(NULL);
 	if (p == NULL) {
-		puts("no init function");
+		//puts("no init function");
 		JyNI_JyErr_Format((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError),
 		   "dynamic module does not define init function (init%.200s)",
 					 shortname);
@@ -114,7 +115,10 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	(*p)();
 	_Py_PackageContext = oldcontext;
 	if (PyErr_Occurred())
+	{
+		//puts("return NULL because PyErr_Occurred");
 		return NULL;
+	}
 
 	//m = PyDict_GetItemString(PyImport_GetModuleDict(), name);
 	//puts("retrieving module...");

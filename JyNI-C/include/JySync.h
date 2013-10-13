@@ -88,11 +88,14 @@ jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src);
 PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src);
 
 //Exception factories:
+jobject JyExc_KeyErrorFactory();
+jobject JyExc_SystemExitFactory();
 jobject JyExc_EnvironmentErrorFactory();
 jobject JyExc_SyntaxErrorFactory();
 
-#ifdef Py_USING_UNICODE
 jobject JyExc_UnicodeErrorFactory();
+
+#ifdef Py_USING_UNICODE
 jobject JyExc_UnicodeEncodeErrorFactory();
 jobject JyExc_UnicodeDecodeErrorFactory();
 jobject JyExc_UnicodeTranslateErrorFactory();

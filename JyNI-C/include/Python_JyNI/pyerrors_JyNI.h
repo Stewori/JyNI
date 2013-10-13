@@ -195,19 +195,13 @@ PyAPI_DATA(PyObject *) PyExc_SystemError;
 PyAPI_DATA(PyObject *) PyExc_SystemExit;
 PyAPI_DATA(PyObject *) PyExc_TypeError;
 PyAPI_DATA(PyObject *) PyExc_UnboundLocalError;
-/*
- * JyNI: It seems easier to not implement the unicode errors,
- * since they are probably never thrown anywhere but in PyUnicode
- * or maybe stringlib. We replace the lines when these errors are
- * thrown with direct JNI calls to Jython code that generates these
- * errors and throws them on Jython-side.
- * If there appear to be extensions that use these errors for good reasons,
- * we can still add wrappers for them to JyNI.
- */
-//PyAPI_DATA(PyObject *) PyExc_UnicodeError;
-//PyAPI_DATA(PyObject *) PyExc_UnicodeEncodeError;
-//PyAPI_DATA(PyObject *) PyExc_UnicodeDecodeError;
-//PyAPI_DATA(PyObject *) PyExc_UnicodeTranslateError;
+
+PyAPI_DATA(PyObject *) PyExc_UnicodeError;
+#ifdef Py_USING_UNICODE
+PyAPI_DATA(PyObject *) PyExc_UnicodeEncodeError;
+PyAPI_DATA(PyObject *) PyExc_UnicodeDecodeError;
+PyAPI_DATA(PyObject *) PyExc_UnicodeTranslateError;
+#endif
 PyAPI_DATA(PyObject *) PyExc_ValueError;
 PyAPI_DATA(PyObject *) PyExc_ZeroDivisionError;
 #ifdef MS_WINDOWS

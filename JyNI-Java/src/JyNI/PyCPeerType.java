@@ -44,6 +44,12 @@
 
 package JyNI;
 
+import java.util.HashMap;
+
+import org.python.core.Py;
+import org.python.core.PyDictionary;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyObject;
 
@@ -135,12 +141,70 @@ public class PyCPeerType extends PyType {
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
 	
-	public String getName()
+//	public String getName()
+//	{
+//		String er = super.getName();
+//		//return "PyCPeer";
+//		System.out.println("PyCPeerTypeGetName: "+er);
+//		return er;
+//	}
+	
+	public PyObject __call__(PyObject[] args, String[] keywords)
 	{
-		String er = super.getName();
-		//return "PyCPeer";
-		System.out.println("PyCPeerTypeGetName: "+er);
-		return er;
+		//System.out.println("CPeer called...");
+		//System.out.println("args: "+args);
+		//System.out.println("arg count: "+args.length);
+		//if (keywords !=)
+		/*System.out.println("PeerCall kw: "+keywords.length);
+		for(int i = 0; i < keywords.length; ++i)
+			System.out.println(keywords[i]);
+		System.out.println("PeerCall args: "+args.length);
+		for(int i = 0; i < args.length; ++i)
+			System.out.println(args[i]);*/
+		//PyObject er =
+		if (keywords.length == 0)
+			return JyNI.callPyCPeer(objectHandle,
+				args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null);//Py.None);
+		else {
+			//todo: Use PyStringMap here... much work needs to be done to make the peer dictobject accept this
+			HashMap<PyObject, PyObject> back = new HashMap<PyObject, PyObject>(keywords.length);
+			for (int i = 0; i < keywords.length; ++i)
+			{
+				back.put(Py.newString(keywords[i]), args[args.length-keywords.length+i]);
+			}
+			
+			if (args.length > keywords.length)
+			{
+				PyObject[] args2 = new PyObject[args.length - keywords.length];
+				System.arraycopy(args, 0, args2, 0, args2.length);
+				return JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false), new PyDictionary(back));
+			} else
+				return JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back));
+		}
+		
+		/*System.out.println("Call er:");
+		System.out.println(er);
+		System.out.println(er.getClass().getName());
+		System.out.println(er.getType().getName());*/
+		//return er;
+	}
+
+	public PyObject __findattr_ex__(String name)
+	{
+		//System.out.println("Look for attribute "+name+" in PyCPeerType");
+		PyObject er = JyNI.getAttrString(objectHandle, name);
+		return er != null ? er : Py.None;
+		//return super.__findattr_ex__(name);
+	}
+
+	public PyString __repr__() {
+		//System.out.println("PyCPeerType__repr__");
+		return (PyString) JyNI.repr(objectHandle);
+	}
+
+	public String toString()
+	{
+		return JyNI.PyObjectAsString(objectHandle);
 	}
 	
 	/**

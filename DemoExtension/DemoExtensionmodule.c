@@ -5,12 +5,12 @@
  *	  Author: Stefan Richthofer
  */
 
-#include <Python.h>
+#include <Python_JyNI.h>
 
 PyObject *
 hello_world(PyObject *self, PyObject *args)
 {
-	puts("Hello Alvaro!");
+	puts("Hello World!");
 
 	//If nothing shall be returned, do:
 	//Py_INCREF(Py_None);
@@ -162,6 +162,17 @@ setPopTest(PyObject* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+PyObject*
+exceptionTest(PyObject* self, PyObject* args)
+{
+	puts("exceptionTest:");
+	if (PyErr_Occurred()) puts("Error present");
+	else  puts("no Error present");
+	if (Py_IgnoreEnvironmentFlag) puts("ignore");
+	else puts("not ignore");
+	Py_RETURN_NONE;
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
@@ -174,11 +185,17 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"argCountToString", argCountToString, METH_VARARGS, "Returns number of arguments as string."},
 	{"concatFirstWithLastString", concatFirstWithLastString, METH_VARARGS, "Concatenates first with last element. Returns empty string, if less than two args are available."},
 	{"keywordTest", keywordTest, METH_VARARGS | METH_KEYWORDS, "Tests working with keywords."},
+	{"exceptionTest", exceptionTest, METH_NOARGS, "Part of experiments to find out details about CPythons exception handling behavior."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 
 PyMODINIT_FUNC
 initDemoExtension(void)
 {
+//	puts("initDemoExtension:");
+//	if (PyErr_Occurred()) puts("Error present0");
+//	else  puts("no Error present0");
 	(void) Py_InitModule3("DemoExtension", DemoExtensionMethods, "This is a pure demo extension.");
+//	if (PyErr_Occurred()) puts("Error present1");
+//	else  puts("no Error present1");
 }

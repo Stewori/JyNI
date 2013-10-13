@@ -240,6 +240,10 @@ PyCapsule_SetContext(PyObject *o, void *context)
 void *
 PyCapsule_Import(const char *name, int no_block)
 {
+	puts("PyCapsule_Import:");
+	puts(name);
+	if (no_block) puts("no block");
+	else puts("block");
 	PyObject *object = NULL;
 	void *return_value = NULL;
 	char *trace;
@@ -251,9 +255,11 @@ PyCapsule_Import(const char *name, int no_block)
 	}
 
 	memcpy(name_dup, name, name_length);
-
+	puts("aa");
 	trace = name_dup;
 	while (trace) {
+		puts("Trace:");
+		puts(trace);
 		char *dot = strchr(trace, '.');
 		if (dot) {
 			*dot++ = '\0';
@@ -261,17 +267,36 @@ PyCapsule_Import(const char *name, int no_block)
 
 		if (object == NULL) {
 			if (no_block) {
+				puts("aa no_block");
 				object = PyImport_ImportModuleNoBlock(trace);
+				puts("aa...done");
 			} else {
+				puts("aa block");
 				object = PyImport_ImportModule(trace);
+				puts("aa...done");
 				if (!object) {
+					puts("PyCapsule_Import could not import module");
 					PyErr_Format(PyExc_ImportError, "PyCapsule_Import could not import module \"%s\"", trace);
 				}
 			}
 		} else {
+			puts("bb1");
 			PyObject *object2 = PyObject_GetAttrString(object, trace);
+			puts("bb2");
+			if (object) puts(object->ob_type->tp_name);
+			else puts("object NULL");
 			Py_DECREF(object);
+			//do {
+//				if (--object->ob_refcnt != 0);
+//				else
+//					object->ob_type->tp_dealloc(object);
+			//} while (0)
+
+			puts("bb3");
 			object = object2;
+			puts("bb4");
+			if (object) puts(object->ob_type->tp_name);
+			else puts("object2 NULL");
 		}
 		if (!object) {
 			goto EXIT;
@@ -279,18 +304,22 @@ PyCapsule_Import(const char *name, int no_block)
 
 		trace = dot;
 	}
-
+	puts("cc");
 	/* compare attribute name to module.name by hand */
 	if (PyCapsule_IsValid(object, name)) {
+		puts("valid!");
 		PyCapsule *capsule = (PyCapsule *)object;
 		return_value = capsule->pointer;
 	} else {
+		puts("PyCapsule_Import is not valid:");
+		puts(name);
 		PyErr_Format(PyExc_AttributeError,
 			"PyCapsule_Import \"%s\" is not valid",
 			name);
 	}
 
 EXIT:
+	puts("exitt");
 	Py_XDECREF(object);
 	if (name_dup) {
 		PyMem_FREE(name_dup);

@@ -493,6 +493,7 @@ PyAPI_DATA(PyTypeObject) PySuper_Type; /* built-in 'super' */
 #define PyType_CheckExact(op) (Py_TYPE(op) == &PyType_Type)
 
 PyAPI_FUNC(int) PyType_Ready(PyTypeObject *);
+//PyAPI_FUNC(int) PyType_ReadyDebug(PyTypeObject *); //added temporarily by JyNI
 PyAPI_FUNC(PyObject *) PyType_GenericAlloc(PyTypeObject *, Py_ssize_t);
 PyAPI_FUNC(PyObject *) PyType_GenericNew(PyTypeObject *,
                                                PyObject *, PyObject *);
@@ -524,6 +525,7 @@ PyAPI_FUNC(PyObject **) _PyObject_GetDictPtr(PyObject *);
 PyAPI_FUNC(PyObject *) PyObject_SelfIter(PyObject *);
 PyAPI_FUNC(PyObject *) _PyObject_NextNotImplemented(PyObject *);
 PyAPI_FUNC(PyObject *) PyObject_GenericGetAttr(PyObject *, PyObject *);
+//PyAPI_FUNC(PyObject *) PyObject_GenericGetAttr2(PyObject *, PyObject *);
 PyAPI_FUNC(int) PyObject_GenericSetAttr(PyObject *,
                                               PyObject *, PyObject *);
 PyAPI_FUNC(long) PyObject_Hash(PyObject *);

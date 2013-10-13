@@ -76,8 +76,8 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-	// puts("Py_InitModule4 called with name:");
-	// puts(name);
+	puts("Py_InitModule4 called with name:");
+	puts(name);
 	//puts("doing nothing for now...");
 
 	/*puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_name);
@@ -132,7 +132,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			_Py_PackageContext = NULL;
 		}
 	}
-	//puts("ready to add module...");
+	puts("ready to add module...");
 	//return NULL;
 	//if ((m = PyImport_AddModule(name)) == NULL)
 	env(NULL);
@@ -188,13 +188,14 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 				Py_DECREF(n);
 				return NULL;
 			}*/
-			//puts("add method:");
-			//puts(ml->ml_name);
+//			puts("add method:");
+//			puts(ml->ml_name);
 			(*env)->CallVoidMethod(env, d, pyDict__setitem__,
 					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
 					JyNI_JythonPyObject_FromPyObject(v));
 			Py_DECREF(v);
 		}
+		//puts("methods added");
 		Py_DECREF(n);
 	}
 	//puts("add doc...");
@@ -211,7 +212,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		PyModule_AddStringConstantJy(m, "__doc__", doc);
 		//Py_DECREF(v);
 	}
-	//puts("initModule4 done");
+	puts("initModule4 done");
 	return JyNI_PyObject_FromJythonPyObject(m);
 }
 
@@ -707,6 +708,8 @@ PyEval_CallMethod(PyObject *obj, const char *methodname, const char *format, ...
 int
 PyModule_AddObject(PyObject *m, const char *name, PyObject *o)
 {
+	//puts("PyModule_AddObject");
+	//puts(name);
 	if (PyModule_AddObjectJy(JyNI_JythonPyObject_FromPyObject(m), name, JyNI_JythonPyObject_FromPyObject(o)))
 		return -1;
 	/*PyObject *dict;
@@ -769,6 +772,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, name)),
 			o);
 	//Py_DECREF(o);
+	//puts("done");
 	return 0;
 }
 

@@ -52,87 +52,102 @@ import java.io.File;
 
 public class JyNI {
 	static {
-		//To make configuration easier, we not only search in the library path for the libs,
-		//but also in the classpath and some additional typical places.
-		//We currently don't look inside jar files.
-		String classpath = System.getProperty("java.class.path");
-		String libpath = System.getProperty("java.library.path");
-		//System.out.println("lp: "+libpath);
-		String[] commonPositions = (libpath+File.pathSeparator+classpath).split(File.pathSeparator);
-		for (int i = 0; i < commonPositions.length; ++i)
-		{
-			if (commonPositions[i].endsWith(".jar"))
+		try {
+			//To make configuration easier, we not only search in the library path for the libs,
+			//but also in the classpath and some additional typical places.
+			//We currently don't look inside jar files.
+			String classpath = System.getProperty("java.class.path");
+			String libpath = System.getProperty("java.library.path");
+			//System.out.println("lp: "+libpath);
+			String[] commonPositions = (libpath+File.pathSeparator+classpath).split(File.pathSeparator);
+			int idx;
+			for (int i = 0; i < commonPositions.length; ++i)
 			{
-				commonPositions[i] = commonPositions[i].substring(0, commonPositions[i].lastIndexOf("/"));
+				if (commonPositions[i].endsWith(".jar"))
+				{
+					idx = commonPositions[i].lastIndexOf('/');
+					//System.out.println("com: "+commonPositions[i]);
+					if (idx > -1)
+						commonPositions[i] = commonPositions[i].substring(0, idx);
+					else
+						commonPositions[i] = System.getProperty("user.dir");
+				}
+				//System.out.println(commonPositions[i]);
 			}
-			//System.out.println(commonPositions[i]);
-		}
-		//these are relative paths to typical positions where IDEs place their build-results:
-		String[] loaderPositions = {".", "bin", "../JyNI-Loader/Release", "../JyNI-Loader/Debug"};
-		String[] libPositions = {".", "bin", "../JyNI-C/Release", "../JyNI-C/Debug"};
-		String loader = "libJyNI-Loader.so";
-		String lib = "libJyNI.so";
-		
-		boolean loaded = false;
-		String dir = System.getProperty("user.dir");
-		dir = dir.substring(0, dir.lastIndexOf('/'));
-		String[] fileNames = new String[commonPositions.length+loaderPositions.length];
-		int pos = 0;
-		for (int i = 0; i < commonPositions.length; ++i)
-		{
-			fileNames[pos++] = commonPositions[i]+"/"+loader;
-		}
-		for (int i = 0; i < loaderPositions.length; ++i)
-		{
-			fileNames[pos++] = dir+"/"+loaderPositions[i]+"/"+loader;
-		}
-		
-		
-		for (int i = 0; !loaded && i < fileNames.length; ++i)
-		{
-			File loaderFile = new File(fileNames[i]);
-			if (loaderFile.exists())
+			//these are relative paths to typical positions where IDEs place their build-results:
+			String[] loaderPositions = {".", "bin", "../JyNI-Loader/Release", "../JyNI-Loader/Debug"};
+			String[] libPositions = {".", "bin", "../JyNI-C/Release", "../JyNI-C/Debug"};
+			String loader = "libJyNI-Loader.so";
+			String lib = "libJyNI.so";
+			
+			boolean loaded = false;
+			String dir = System.getProperty("user.dir");
+			//System.out.println("user.dir: "+dir);
+			idx = dir.lastIndexOf('/');
+			if (idx >= 0) dir = dir.substring(0, idx);
+			else dir = System.getProperty("user.dir");
+			String[] fileNames = new String[commonPositions.length+loaderPositions.length];
+			int pos = 0;
+			for (int i = 0; i < commonPositions.length; ++i)
 			{
-				System.load(fileNames[i]);
-				loaded = true;
-			} //else
-				//System.out.println("not found: "+loaderFile.getPath());
-		}
-		if (!loaded)
-		{
-			System.err.print("Can't find library file: "+loader);
-			System.exit(1);
-		}
-		
-		
-		fileNames = new String[commonPositions.length+libPositions.length];
-		pos = 0;
-		for (int i = 0; i < commonPositions.length; ++i)
-		{
-			fileNames[pos++] = commonPositions[i]+"/"+lib;
-		}
-		for (int i = 0; i < libPositions.length; ++i)
-		{
-			fileNames[pos++] = dir+"/"+libPositions[i]+"/"+lib;
-		}
-		
-		loaded = false;
-		for (int i = 0; !loaded && i < fileNames.length; ++i)
-		{
-			File libFile = new File(fileNames[i]);
-			if (libFile.exists())
-			{
-				//System.out.println("initJyNI: "+fileNames[i]);
-				nativeHandles = new IdentityHashMap<PyObject, Long>();
-				initJyNI(fileNames[i]);
-				//System.out.println("initJyNI done");
-				loaded = true;
+				fileNames[pos++] = commonPositions[i]+"/"+loader;
 			}
-		}
-		if (!loaded)
+			for (int i = 0; i < loaderPositions.length; ++i)
+			{
+				fileNames[pos++] = dir+"/"+loaderPositions[i]+"/"+loader;
+			}
+			
+			
+			for (int i = 0; !loaded && i < fileNames.length; ++i)
+			{
+				File loaderFile = new File(fileNames[i]);
+				if (loaderFile.exists())
+				{
+					System.load(fileNames[i]);
+					loaded = true;
+				} //else
+					//System.out.println("not found: "+loaderFile.getPath());
+			}
+			if (!loaded)
+			{
+				System.err.print("Can't find library file: "+loader);
+				System.exit(1);
+			}
+			
+			
+			fileNames = new String[commonPositions.length+libPositions.length];
+			pos = 0;
+			for (int i = 0; i < commonPositions.length; ++i)
+			{
+				fileNames[pos++] = commonPositions[i]+"/"+lib;
+			}
+			for (int i = 0; i < libPositions.length; ++i)
+			{
+				fileNames[pos++] = dir+"/"+libPositions[i]+"/"+lib;
+			}
+			
+			loaded = false;
+			for (int i = 0; !loaded && i < fileNames.length; ++i)
+			{
+				File libFile = new File(fileNames[i]);
+				if (libFile.exists())
+				{
+					//System.out.println("initJyNI: "+fileNames[i]);
+					nativeHandles = new IdentityHashMap<PyObject, Long>();
+					cur_excLookup = new IdentityHashMap<ThreadState, PyException>(5);
+					initJyNI(fileNames[i]);
+					//System.out.println("initJyNI done");
+					loaded = true;
+				}
+			}
+			if (!loaded)
+			{
+				System.err.print("Can't find library file: "+lib);
+				System.exit(1);
+			}
+		} catch (Exception ex)
 		{
-			System.err.print("Can't find library file: "+lib);
-			System.exit(1);
+			System.out.println("Ex in initializer: "+ex);
 		}
 	}
 	
@@ -166,6 +181,7 @@ public class JyNI {
 	
 	//protected static HashMap<PyObject, JyObject> jyObjects = new HashMap();
 	protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
+	protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
 	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
 	
 	public static native void initJyNI(String JyNILibPath);
@@ -693,16 +709,16 @@ public class JyNI {
 	//--------------errors-section-----------------
 	public static PyObject exceptionByName(String name)
 	{
-		System.out.println("look for exception: "+name);
+//		System.out.println("look for exception: "+name);
 		String rawName = name;
 		int pin = name.indexOf('.');
 		if (pin != -1) rawName = rawName.substring(pin+1);
-		System.out.println("rawName: "+rawName);
+//		System.out.println("rawName: "+rawName);
 		try {
 			Field exc = Py.class.getField(rawName);
 			PyObject er = (PyObject) exc.get(null);
-			System.out.println("return "+er);
-			System.out.println("class: "+er.getClass());
+//			System.out.println("return "+er);
+//			System.out.println("class: "+er.getClass());
 			return er;
 		} catch (Exception e)
 		{
@@ -712,42 +728,83 @@ public class JyNI {
 		}
 	}
 	
-	public static void PyErr_Restore(PyObject type, PyObject value, PyObject traceback)
+	public static void JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
 	{
-		ThreadState tstate = Py.getThreadState();
-		tstate.exception = traceback instanceof PyTraceback ? new PyException(type, value, (PyTraceback) traceback) : new PyException(type, value);
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		PyException curexc = cur_excLookup.get(tstate0);
+		if (curexc == null)
+		{
+			curexc = new PyException(type, value, traceback);
+			cur_excLookup.put(tstate0, curexc);
+		} else
+		{
+			curexc.type = type;
+			curexc.value = value;
+			curexc.traceback = traceback;
+		}
+	}
+	
+	public static PyException JyErr_GetCurExc(ThreadState tstate)
+	{
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		return cur_excLookup.get(tstate0);
+	}
+	
+	public static void JyErr_InsertCurExc(ThreadState tstate)
+	{
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		PyException cur_exc = cur_excLookup.remove(tstate0);
+		if (cur_exc != null)
+		{
+			tstate0.exception = cur_exc;
+			//System.out.println("abc "+cur_exc);
+		}
+	}
+	
+	public static void PyErr_Restore(PyObject type, PyObject value, PyTraceback traceback)
+	{
+		//ThreadState tstate = ;
+		//tstate.exception = traceback instanceof PyTraceback ? new PyException(type, value, (PyTraceback) traceback) : new PyException(type, value);
+		JyErr_SetCurExc(Py.getThreadState(), type, value, traceback);
 	}
 	
 	public static void PyErr_Clear()
 	{
-		ThreadState tstate = Py.getThreadState();
-		tstate.exception = null;
+		//ThreadState tstate = Py.getThreadState();
+		//tstate.exception = null;
+		cur_excLookup.remove(Py.getThreadState());
 	}
 	
 	public static PyException PyErr_Fetch()
 	{
-		ThreadState tstate = Py.getThreadState();
-
-		PyException er = tstate.exception;
-		PyErr_Clear();
+		//ThreadState tstate = Py.getThreadState();
+		//PyException er = tstate.exception;
+		PyException er = cur_excLookup.remove(Py.getThreadState());
+		//PyErr_Clear();
 		return er;
 	}
 	
 	public static PyObject PyErr_Occurred()
 	{
-		ThreadState tstate = Py.getThreadState();
-		/*if (tstate.exception != null)
+		PyException er = cur_excLookup.get(Py.getThreadState());
+		return er == null ? null : er.type;
+		/*ThreadState tstate = Py.getThreadState();
+		if (tstate.exception != null)
 		{
 			System.out.println("PyErr_Occurred: "+tstate.exception.getMessage());
+			System.out.println(tstate.exception);
+			System.out.println("value "+tstate.exception.value);
 			System.out.println("type "+tstate.exception.type);
-		}*/
-		return tstate.exception == null ? null : tstate.exception.type;
+		}
+		return tstate.exception == null ? null : tstate.exception.type;*/
 	}
 	
 	public static boolean PyErr_ExceptionMatches(PyObject exc)
 	{
-		ThreadState tstate = Py.getThreadState();
-		return tstate.exception == null ? exc == null : tstate.exception.match(exc);
+		PyException cur_exc = cur_excLookup.get(Py.getThreadState());
+		return cur_exc == null ? exc == null : cur_exc.match(exc);
+//		ThreadState tstate = Py.getThreadState();
+//		return tstate.exception == null ? exc == null : tstate.exception.match(exc);
 	}
 	
 	public static void PyErr_SetObject(PyObject exception, PyObject value)

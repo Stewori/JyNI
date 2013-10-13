@@ -4388,7 +4388,7 @@ PyTypeObject PyLong_Type = {
 	0,										  /* tp_init */
 	0,										  /* tp_alloc */
 	long_new,								   /* tp_new */
-	JyNI_Del,//PyObject_Del,							   /* tp_free */
+	PyObject_Free,//JyNI_Del,//PyObject_Del,							   /* tp_free */
 };
 
 static PyTypeObject Long_InfoType;

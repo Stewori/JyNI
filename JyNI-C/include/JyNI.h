@@ -375,7 +375,8 @@ inline jint JyNI_GetDLOpenFlags();
 inline void JyNI_CleanUp_JyObject(JyObject* obj);
 inline jobject JyNI_GetJythonDelegate(PyObject* v);
 //Should be used as replacement for PyObject_Del, taking care of JyObjects:
-void JyNI_Del(void * obj);
+//void JyNI_Del(void * obj);
+inline void JyNI_Py_CLEAR(jobject obj);
 //inline char* PyLongToJavaSideString(PyObject* pl);
 
 /* To save lookups: */
@@ -426,6 +427,7 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
 //singletons:
 extern JavaVM* java;
 extern jobject length0StringArray;
+extern jobject length0PyObjectArray;
 
 extern jclass classClass;
 extern jmethodID classEquals;
@@ -482,6 +484,9 @@ extern jfieldID JyNISetNextResultNewIndexField;
 extern jfieldID JyNISetNextResultKeyHandleField;
 
 extern jmethodID JyNIExceptionByName;
+extern jmethodID JyErr_SetCurExc;
+extern jmethodID JyErr_GetCurExc;
+extern jmethodID JyErr_InsertCurExc;
 extern jmethodID JyNIPyErr_Restore;
 extern jmethodID JyNIPyErr_Clear;
 extern jmethodID JyNIPyErr_Occurred;

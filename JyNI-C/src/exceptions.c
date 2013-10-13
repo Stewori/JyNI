@@ -177,11 +177,14 @@ BaseException_str(PyBaseExceptionObject *self)
 //
 //	return out;
 }
-//
-//#ifdef Py_USING_UNICODE
-//static PyObject *
-//BaseException_unicode(PyBaseExceptionObject *self)
-//{
+
+#ifdef Py_USING_UNICODE
+static PyObject *
+BaseException_unicode(PyBaseExceptionObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self), pyBaseException__unicode__));
 //	PyObject *out;
 //
 //	/* issue6108: if __str__ has been overridden in the subclass, unicode()
@@ -212,12 +215,15 @@ BaseException_str(PyBaseExceptionObject *self)
 //	}
 //
 //	return out;
-//}
-//#endif
-//
-//static PyObject *
-//BaseException_repr(PyBaseExceptionObject *self)
-//{
+}
+#endif
+
+static PyObject *
+BaseException_repr(PyBaseExceptionObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) self), pyObject__repr__));
 //	PyObject *repr_suffix;
 //	PyObject *repr;
 //	char *name;
@@ -239,26 +245,33 @@ BaseException_str(PyBaseExceptionObject *self)
 //
 //	PyString_ConcatAndDel(&repr, repr_suffix);
 //	return repr;
-//}
-//
-///* Pickling support */
-//static PyObject *
-//BaseException_reduce(PyBaseExceptionObject *self)
-//{
+}
+
+/* Pickling support */
+static PyObject *
+BaseException_reduce(PyBaseExceptionObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) self), pyObject__reduce__));
 //	if (self->args && self->dict)
 //		return PyTuple_Pack(3, Py_TYPE(self), self->args, self->dict);
 //	else
 //		return PyTuple_Pack(2, Py_TYPE(self), self->args);
-//}
-//
-///*
-// * Needed for backward compatibility, since exceptions used to store
-// * all their attributes in the __dict__. Code is taken from cPickle's
-// * load_build function.
-// */
-//static PyObject *
-//BaseException_setstate(PyObject *self, PyObject *state)
-//{
+}
+
+/*
+ * Needed for backward compatibility, since exceptions used to store
+ * all their attributes in the __dict__. Code is taken from cPickle's
+ * load_build function.
+ */
+static PyObject *
+BaseException_setstate(PyObject *self, PyObject *state)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(self), pyBaseException__setstate__,
+		JyNI_JythonPyObject_FromPyObject(state)));
 //	PyObject *d_key, *d_value;
 //	Py_ssize_t i = 0;
 //
@@ -273,55 +286,70 @@ BaseException_str(PyBaseExceptionObject *self)
 //		}
 //	}
 //	Py_RETURN_NONE;
-//}
-//
-//
-//static PyMethodDef BaseException_methods[] = {
-//   {"__reduce__", (PyCFunction)BaseException_reduce, METH_NOARGS },
-//   {"__setstate__", (PyCFunction)BaseException_setstate, METH_O },
-//#ifdef Py_USING_UNICODE
-//   {"__unicode__", (PyCFunction)BaseException_unicode, METH_NOARGS },
-//#endif
-//   {NULL, NULL, 0, NULL},
-//};
-//
-//
-//
-//static PyObject *
-//BaseException_getitem(PyBaseExceptionObject *self, Py_ssize_t index)
-//{
+}
+
+
+static PyMethodDef BaseException_methods[] = {
+   {"__reduce__", (PyCFunction)BaseException_reduce, METH_NOARGS },
+   {"__setstate__", (PyCFunction)BaseException_setstate, METH_O },
+#ifdef Py_USING_UNICODE
+   {"__unicode__", (PyCFunction)BaseException_unicode, METH_NOARGS },
+#endif
+   {NULL, NULL, 0, NULL},
+};
+
+
+
+static PyObject *
+BaseException_getitem(PyBaseExceptionObject *self, Py_ssize_t index)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self),
+		pyObject__getitem__,
+		JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(index))));
 //	if (PyErr_WarnPy3k("__getitem__ not supported for exception "
 //					   "classes in 3.x; use args attribute", 1) < 0)
 //		return NULL;
 //	return PySequence_GetItem(self->args, index);
-//}
-//
-//static PyObject *
-//BaseException_getslice(PyBaseExceptionObject *self,
-//						Py_ssize_t start, Py_ssize_t stop)
-//{
+}
+
+static PyObject *
+BaseException_getslice(PyBaseExceptionObject *self,
+						Py_ssize_t start, Py_ssize_t stop)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self),
+		pyObject__getslice__,
+		JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(start)),
+		JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(stop))));
 //	if (PyErr_WarnPy3k("__getslice__ not supported for exception "
 //					   "classes in 3.x; use args attribute", 1) < 0)
 //		return NULL;
 //	return PySequence_GetSlice(self->args, start, stop);
-//}
-//
-//static PySequenceMethods BaseException_as_sequence = {
-//	0,					  /* sq_length; */
-//	0,					  /* sq_concat; */
-//	0,					  /* sq_repeat; */
-//	(ssizeargfunc)BaseException_getitem,  /* sq_item; */
-//	(ssizessizeargfunc)BaseException_getslice,  /* sq_slice; */
-//	0,					  /* sq_ass_item; */
-//	0,					  /* sq_ass_slice; */
-//	0,					  /* sq_contains; */
-//	0,					  /* sq_inplace_concat; */
-//	0					   /* sq_inplace_repeat; */
-//};
-//
-//static PyObject *
-//BaseException_get_dict(PyBaseExceptionObject *self)
-//{
+}
+
+static PySequenceMethods BaseException_as_sequence = {
+	0,					  /* sq_length; */
+	0,					  /* sq_concat; */
+	0,					  /* sq_repeat; */
+	(ssizeargfunc)BaseException_getitem,  /* sq_item; */
+	(ssizessizeargfunc)BaseException_getslice,  /* sq_slice; */
+	0,					  /* sq_ass_item; */
+	0,					  /* sq_ass_slice; */
+	0,					  /* sq_contains; */
+	0,					  /* sq_inplace_concat; */
+	0					   /* sq_inplace_repeat; */
+};
+
+static PyObject *
+BaseException_get_dict(PyBaseExceptionObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self),
+		pyObjectGetDict));
 //	if (self->dict == NULL) {
 //		self->dict = PyDict_New();
 //		if (!self->dict)
@@ -329,55 +357,91 @@ BaseException_str(PyBaseExceptionObject *self)
 //	}
 //	Py_INCREF(self->dict);
 //	return self->dict;
-//}
-//
-//static int
-//BaseException_set_dict(PyBaseExceptionObject *self, PyObject *val)
-//{
-//	if (val == NULL) {
-//		PyErr_SetString(PyExc_TypeError, "__dict__ may not be deleted");
-//		return -1;
-//	}
-//	if (!PyDict_Check(val)) {
-//		PyErr_SetString(PyExc_TypeError, "__dict__ must be a dictionary");
-//		return -1;
-//	}
+}
+
+static int
+BaseException_set_dict(PyBaseExceptionObject *self, PyObject *val)
+{
+	if (val == NULL) {
+		PyErr_SetString(PyExc_TypeError, "__dict__ may not be deleted");
+		return -1;
+	}
+	if (!PyDict_Check(val)) {
+		PyErr_SetString(PyExc_TypeError, "__dict__ must be a dictionary");
+		return -1;
+	}
+	env(NULL);
+	(*env)->CallVoidMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self),
+		pyObjectSetDict, JyNI_JythonPyObject_FromPyObject(val));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
 //	Py_CLEAR(self->dict);
 //	Py_INCREF(val);
 //	self->dict = val;
-//	return 0;
-//}
-//
-//static PyObject *
-//BaseException_get_args(PyBaseExceptionObject *self)
-//{
+	return 0;
+}
+
+static PyObject *
+BaseException_get_args(PyBaseExceptionObject *self)
+{
+	env(NULL);
+	jobject jargs = (*env)->GetObjectField(env, JyNI_JythonPyObject_FromPyObject((PyObject*) self),
+			pyBaseExceptionArgs);
+	if (jargs == NULL) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	PyObject* args = JyNI_PyObject_FromJythonPyObject(jargs);
+	Py_INCREF(args); //JyNI todo: Check, whether incref is needed here
+	return args;
 //	if (self->args == NULL) {
 //		Py_INCREF(Py_None);
 //		return Py_None;
 //	}
 //	Py_INCREF(self->args);
 //	return self->args;
-//}
-//
-//static int
-//BaseException_set_args(PyBaseExceptionObject *self, PyObject *val)
-//{
+}
+
+static int
+BaseException_set_args(PyBaseExceptionObject *self, PyObject *val)
+{
+	env(-1);
+	if (val == NULL) {
+		PyErr_SetString(PyExc_TypeError, "args may not be deleted");
+		return -1;
+	}
+	jobject jself = JyNI_JythonPyObject_FromPyObject((PyObject*) self);
+	JyNI_Py_CLEAR((*env)->GetObjectField(env, jself, pyBaseExceptionArgs)); //JyNI todo: Check whether Py_Clear would be needed here
+	(*env)->CallVoidMethod(env, jself,
+		pyBaseExceptionSetArgs, JyNI_JythonPyObject_FromPyObject(val));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+
 //	PyObject *seq;
-//	if (val == NULL) {
-//		PyErr_SetString(PyExc_TypeError, "args may not be deleted");
-//		return -1;
-//	}
 //	seq = PySequence_Tuple(val);
 //	if (!seq)
 //		return -1;
 //	Py_CLEAR(self->args);
 //	self->args = seq;
-//	return 0;
-//}
-//
-//static PyObject *
-//BaseException_get_message(PyBaseExceptionObject *self)
-//{
+	return 0;
+}
+
+static PyObject *
+BaseException_get_message(PyBaseExceptionObject *self)
+{
+	env(NULL);
+	PyObject* msg = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self), pyBaseExceptionGetMessage));
+	Py_INCREF(msg);
+	return msg;
+
 //	PyObject *msg;
 //
 //	/* if "message" is in self->dict, accessing a user-set message attribute */
@@ -400,11 +464,23 @@ BaseException_str(PyBaseExceptionObject *self)
 //
 //	Py_INCREF(self->message);
 //	return self->message;
-//}
-//
-//static int
-//BaseException_set_message(PyBaseExceptionObject *self, PyObject *val)
-//{
+}
+
+static int
+BaseException_set_message(PyBaseExceptionObject *self, PyObject *val)
+{
+	env(-1);
+	jobject jself = JyNI_JythonPyObject_FromPyObject((PyObject*) self);
+	jobject msg = (*env)->CallObjectMethod(env, jself, pyBaseExceptionGetMessage);
+	if (msg) JyNI_Py_CLEAR(msg); //JyNI todo: Check whether Py_Clear would be needed here
+	(*env)->CallVoidMethod(env, jself,
+			pyBaseExceptionSetMessage, JyNI_JythonPyObject_FromPyObject(val));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	/* if val is NULL, delete the message attribute */
 //	if (val == NULL) {
 //		if (self->dict && PyDict_GetItemString(self->dict, "message")) {
@@ -422,17 +498,17 @@ BaseException_str(PyBaseExceptionObject *self)
 //			return -1;
 //	}
 //	return PyDict_SetItemString(self->dict, "message", val);
-//}
-//
-//static PyGetSetDef BaseException_getset[] = {
-//	{"__dict__", (getter)BaseException_get_dict, (setter)BaseException_set_dict},
-//	{"args", (getter)BaseException_get_args, (setter)BaseException_set_args},
-//	{"message", (getter)BaseException_get_message,
-//			(setter)BaseException_set_message},
-//	{NULL},
-//};
-//
-//
+}
+
+static PyGetSetDef BaseException_getset[] = {
+	{"__dict__", (getter)BaseException_get_dict, (setter)BaseException_set_dict},
+	{"args", (getter)BaseException_get_args, (setter)BaseException_set_args},
+	{"message", (getter)BaseException_get_message,
+			(setter)BaseException_set_message},
+	{NULL},
+};
+
+
 static PyTypeObject _PyExc_BaseException = {
 	PyObject_HEAD_INIT(NULL)
 	0,						  /*ob_size*/
@@ -444,13 +520,13 @@ static PyTypeObject _PyExc_BaseException = {
 	0,						  /*tp_getattr*/
 	0,						  /*tp_setattr*/
 	0,						  /* tp_compare; */
-	0,//(reprfunc)BaseException_repr, /*tp_repr*/
+	(reprfunc)BaseException_repr, /*tp_repr*/
 	0,						  /*tp_as_number*/
-	0,//&BaseException_as_sequence, /*tp_as_sequence*/
+	&BaseException_as_sequence, /*tp_as_sequence*/
 	0,						  /*tp_as_mapping*/
 	0,						  /*tp_hash */
 	0,						  /*tp_call*/
-	0,//(reprfunc)BaseException_str,  /*tp_str*/
+	(reprfunc)BaseException_str,  /*tp_str*/
 	PyObject_GenericGetAttr,	/*tp_getattro*/
 	PyObject_GenericSetAttr,	/*tp_setattro*/
 	0,						  /*tp_as_buffer*/
@@ -463,9 +539,9 @@ static PyTypeObject _PyExc_BaseException = {
 	0,						  /* tp_weaklistoffset */
 	0,						  /* tp_iter */
 	0,						  /* tp_iternext */
-	0,//BaseException_methods,	  /* tp_methods */
+	BaseException_methods,	  /* tp_methods */
 	0,						  /* tp_members */
-	0,//BaseException_getset,	   /* tp_getset */
+	BaseException_getset,	   /* tp_getset */
 	0,						  /* tp_base */
 	0,						  /* tp_dict */
 	0,						  /* tp_descr_get */
@@ -476,7 +552,7 @@ static PyTypeObject _PyExc_BaseException = {
 	BaseException_new,		  /* tp_new */
 };
 /* the CPython API expects exceptions to be (PyObject *) - both a hold-over
-from the previous implmentation and also allowing Python objects to be used
+from the previous implementation and also allowing Python objects to be used
 in the API */
 PyObject *PyExc_BaseException = (PyObject *)&_PyExc_BaseException;
 
@@ -532,6 +608,23 @@ static PyTypeObject _PyExc_ ## EXCNAME = { \
 }; \
 PyObject *PyExc_ ## EXCNAME = (PyObject *)&_PyExc_ ## EXCNAME
 
+//Added for JyNI (uses EXCGETSET instead of EXCMEMBERS):
+#define ComplexExtendsException2(EXCBASE, EXCNAME, EXCSTORE, EXCDEALLOC, EXCMETHODS, EXCGETSETS, EXCSTR, EXCDOC) \
+static PyTypeObject _PyExc_ ## EXCNAME = { \
+	PyObject_HEAD_INIT(NULL) \
+	0, \
+	EXC_MODULE_NAME # EXCNAME, \
+	sizeof(Py ## EXCSTORE ## Object), 0, \
+	(destructor)EXCSTORE ## _dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+	(reprfunc)EXCSTR, 0, 0, 0, \
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, \
+	PyDoc_STR(EXCDOC), 0 /*(traverseproc)EXCSTORE ## _traverse*/, \
+	(inquiry)EXCSTORE ## _clear, 0, 0, 0, 0, EXCMETHODS, \
+	/*EXCMEMBERS*/ 0, EXCGETSETS, &_ ## EXCBASE, \
+	0, 0, 0, offsetof(Py ## EXCSTORE ## Object, dict), \
+	(initproc)EXCSTORE ## _init, 0, BaseException_new,\
+}; \
+PyObject *PyExc_ ## EXCNAME = (PyObject *)&_PyExc_ ## EXCNAME
 
 /*
  *	Exception extends BaseException
@@ -572,10 +665,30 @@ SimpleExtendsException(PyExc_BaseException, GeneratorExit,
 /*
  *	SystemExit extends BaseException
  */
+static int
+SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
+{
+	env(-1);
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jobject jargs = (*env)->NewObjectArray(env,
+		PyTuple_GET_SIZE(args)+dictSize,
+		stringClass, NULL);
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+		(*env)->SetObjectArrayElement(env, jargs, i,
+			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+	jobject jkw;
+	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+	else jkw = length0StringArray;
+	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+			exceptionsSystemExit__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
 
-//static int
-//SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
-//{
 //	Py_ssize_t size = PyTuple_GET_SIZE(args);
 //
 //	if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
@@ -589,40 +702,71 @@ SimpleExtendsException(PyExc_BaseException, GeneratorExit,
 //	else if (size > 1)
 //		self->code = args;
 //	Py_INCREF(self->code);
-//	return 0;
-//}
-//
-//static int
-//SystemExit_clear(PySystemExitObject *self)
-//{
-//	Py_CLEAR(self->code);
-//	return BaseException_clear((PyBaseExceptionObject *)self);
-//}
-//
-//static void
-//SystemExit_dealloc(PySystemExitObject *self)
-//{
-//	_PyObject_GC_UNTRACK(self);
-//	SystemExit_clear(self);
-//	Py_TYPE(self)->tp_free((PyObject *)self);
-//}
-//
+	return 0;
+}
+
+static int
+SystemExit_clear(PySystemExitObject *self)
+{
+	//Py_CLEAR(self->code);
+	return BaseException_clear((PyBaseExceptionObject *)self);
+}
+
+static void
+SystemExit_dealloc(PySystemExitObject *self)
+{
+	_PyObject_GC_UNTRACK(self);
+	SystemExit_clear(self);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
 //static int
 //SystemExit_traverse(PySystemExitObject *self, visitproc visit, void *arg)
 //{
 //	Py_VISIT(self->code);
 //	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 //}
-//
+
 //static PyMemberDef SystemExit_members[] = {
-//	{"code", T_OBJECT, offsetof(PySystemExitObject, code), 0,
-//		PyDoc_STR("exception code")},
+//	{"code", T_OBJECT, offsetof(PySystemExitObject, code), 0, PyDoc_STR("exception code")},
 //	{NULL}  /* Sentinel */
 //};
-//
+
+//Written for JyNI to provide the "code"-member as getset (since members are only possible in mirror mode)
+static PyObject *
+SystemExit_get_code(PySystemExitObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "code")));
+}
+
+static int
+SystemExit_set_code(PySystemExitObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "code"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyGetSetDef SystemExit_getsets [] = {
+	{"code", (getter)SystemExit_get_code, (setter)SystemExit_set_code, PyDoc_STR("exception code")},
+	{NULL} /* Sentinel */
+};
+
 //ComplexExtendsException(PyExc_BaseException, SystemExit, SystemExit,
-//						SystemExit_dealloc, 0, SystemExit_members, 0,
+//						SystemExit_dealloc, 0, /*SystemExit_members*/ 0, 0,
 //						"Request to exit from the interpreter.");
+ComplexExtendsException2(PyExc_BaseException, SystemExit, SystemExit,
+						SystemExit_dealloc, 0, SystemExit_getsets, 0,
+						"Request to exit from the interpreter.");
 
 /*
  *	KeyboardInterrupt extends BaseException
@@ -653,10 +797,30 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
  * means we need our own __str__() which prints out the filename
  * when it was supplied.
  */
-//static int
-//EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args,
-//	PyObject *kwds)
-//{
+static int
+EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *kwds)
+{
+	env(-1);
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jobject jargs = (*env)->NewObjectArray(env,
+		PyTuple_GET_SIZE(args)
+		+dictSize,
+		stringClass, NULL);
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+		(*env)->SetObjectArrayElement(env, jargs, i,
+			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+	jobject jkw;
+	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+	else jkw = length0StringArray;
+	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+			exceptionsEnvironmentError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
 //	PyObject *myerrno = NULL, *strerror = NULL, *filename = NULL;
 //	PyObject *subslice = NULL;
 //
@@ -692,26 +856,26 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //		Py_DECREF(self->args);  /* replacing args */
 //		self->args = subslice;
 //	}
-//	return 0;
-//}
-//
-//static int
-//EnvironmentError_clear(PyEnvironmentErrorObject *self)
-//{
+	return 0;
+}
+
+static int
+EnvironmentError_clear(PyEnvironmentErrorObject *self)
+{
 //	Py_CLEAR(self->myerrno);
 //	Py_CLEAR(self->strerror);
 //	Py_CLEAR(self->filename);
-//	return BaseException_clear((PyBaseExceptionObject *)self);
-//}
-//
-//static void
-//EnvironmentError_dealloc(PyEnvironmentErrorObject *self)
-//{
-//	_PyObject_GC_UNTRACK(self);
-//	EnvironmentError_clear(self);
-//	Py_TYPE(self)->tp_free((PyObject *)self);
-//}
-//
+	return BaseException_clear((PyBaseExceptionObject *)self);
+}
+
+static void
+EnvironmentError_dealloc(PyEnvironmentErrorObject *self)
+{
+	_PyObject_GC_UNTRACK(self);
+	EnvironmentError_clear(self);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
 //static int
 //EnvironmentError_traverse(PyEnvironmentErrorObject *self, visitproc visit,
 //		void *arg)
@@ -721,10 +885,14 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //	Py_VISIT(self->filename);
 //	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 //}
-//
-//static PyObject *
-//EnvironmentError_str(PyEnvironmentErrorObject *self)
-//{
+
+static PyObject *
+EnvironmentError_str(PyEnvironmentErrorObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsEnvironmentError__str__,
+				JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
 //	PyObject *rtnval = NULL;
 //
 //	if (self->filename) {
@@ -812,8 +980,8 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //		rtnval = BaseException_str((PyBaseExceptionObject *)self);
 //
 //	return rtnval;
-//}
-//
+}
+
 //static PyMemberDef EnvironmentError_members[] = {
 //	{"errno", T_OBJECT, offsetof(PyEnvironmentErrorObject, myerrno), 0,
 //		PyDoc_STR("exception errno")},
@@ -823,11 +991,91 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //		PyDoc_STR("exception filename")},
 //	{NULL}  /* Sentinel */
 //};
-//
-//
-//static PyObject *
-//EnvironmentError_reduce(PyEnvironmentErrorObject *self)
-//{
+
+//Written for JyNI to provide the "code"-member as getset (since members are only possible in mirror mode)
+static PyObject *
+EnvironmentError_get_errno(PyEnvironmentErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "errno")));
+}
+
+static int
+EnvironmentError_set_errno(PyEnvironmentErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "errno"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+EnvironmentError_get_strerror(PyEnvironmentErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "strerror")));
+}
+
+static int
+EnvironmentError_set_strerror(PyEnvironmentErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "strerror"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+EnvironmentError_get_filename(PyEnvironmentErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "filename")));
+}
+
+static int
+EnvironmentError_set_filename(PyEnvironmentErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "filename"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyGetSetDef EnvironmentError_getsets [] = {
+	{"errno", (getter)EnvironmentError_get_errno, (setter)EnvironmentError_set_errno, PyDoc_STR("exception errno")},
+	{"strerror", (getter)EnvironmentError_get_strerror, (setter)EnvironmentError_set_strerror, PyDoc_STR("exception strerror")},
+	{"filename", (getter)EnvironmentError_get_filename, (setter)EnvironmentError_set_filename, PyDoc_STR("exception filename")},
+	{NULL} /* Sentinel */
+};
+
+static PyObject *
+EnvironmentError_reduce(PyEnvironmentErrorObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsEnvironmentError__reduce__,
+		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
 //	PyObject *args = self->args;
 //	PyObject *res = NULL, *tmp;
 //
@@ -857,48 +1105,51 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //		res = PyTuple_Pack(2, Py_TYPE(self), args);
 //	Py_DECREF(args);
 //	return res;
-//}
-//
-//
-//static PyMethodDef EnvironmentError_methods[] = {
-//	{"__reduce__", (PyCFunction)EnvironmentError_reduce, METH_NOARGS},
-//	{NULL}
-//};
-//
+}
+
+static PyMethodDef EnvironmentError_methods[] = {
+	{"__reduce__", (PyCFunction)EnvironmentError_reduce, METH_NOARGS},
+	{NULL}
+};
+
 //ComplexExtendsException(PyExc_StandardError, EnvironmentError,
 //						EnvironmentError, EnvironmentError_dealloc,
-//						EnvironmentError_methods, EnvironmentError_members,
+//						EnvironmentError_methods, 0 /*EnvironmentError_members*/,
 //						EnvironmentError_str,
 //						"Base class for I/O related errors.");
-//
-//
-///*
-// *	IOError extends EnvironmentError
-// */
-//MiddlingExtendsException(PyExc_EnvironmentError, IOError,
-//						 EnvironmentError, "I/O operation failed.");
-//
-//
-///*
-// *	OSError extends EnvironmentError
-// */
-//MiddlingExtendsException(PyExc_EnvironmentError, OSError,
-//						 EnvironmentError, "OS system call failed.");
-//
-//
-///*
-// *	WindowsError extends OSError
-// */
+ComplexExtendsException2(PyExc_StandardError, EnvironmentError,
+						EnvironmentError, EnvironmentError_dealloc,
+						EnvironmentError_methods, EnvironmentError_getsets,
+						EnvironmentError_str,
+						"Base class for I/O related errors.");
+
+/*
+ *	IOError extends EnvironmentError
+ */
+MiddlingExtendsException(PyExc_EnvironmentError, IOError,
+						 EnvironmentError, "I/O operation failed.");
+
+
+/*
+ *	OSError extends EnvironmentError
+ */
+MiddlingExtendsException(PyExc_EnvironmentError, OSError,
+						 EnvironmentError, "OS system call failed.");
+
+
+/*
+ *	WindowsError extends OSError
+ */
 //#ifdef MS_WINDOWS
 //#include "errmap.h"
 //
 //static int
 //WindowsError_clear(PyWindowsErrorObject *self)
 //{
-//	Py_CLEAR(self->myerrno);
-//	Py_CLEAR(self->strerror);
-//	Py_CLEAR(self->filename);
-//	Py_CLEAR(self->winerror);
+////	Py_CLEAR(self->myerrno);
+////	Py_CLEAR(self->strerror);
+////	Py_CLEAR(self->filename);
+////	Py_CLEAR(self->winerror);
 //	return BaseException_clear((PyBaseExceptionObject *)self);
 //}
 //
@@ -909,7 +1160,7 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //	WindowsError_clear(self);
 //	Py_TYPE(self)->tp_free((PyObject *)self);
 //}
-//
+
 //static int
 //WindowsError_traverse(PyWindowsErrorObject *self, visitproc visit, void *arg)
 //{
@@ -1063,15 +1314,15 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 //						WindowsError_str, "MS-Windows OS system call failed.");
 //
 //#endif /* MS_WINDOWS */
-//
-//
-///*
-// *	VMSError extends OSError (I think)
-// */
-//#ifdef __VMS
-//MiddlingExtendsException(PyExc_OSError, VMSError, EnvironmentError,
-//						 "OpenVMS OS system call failed.");
-//#endif
+
+
+/*
+ *	VMSError extends OSError (I think)
+ */
+#ifdef __VMS
+MiddlingExtendsException(PyExc_OSError, VMSError, EnvironmentError,
+						 "OpenVMS OS system call failed.");
+#endif
 
 
 /*
@@ -1117,9 +1368,30 @@ SimpleExtendsException(PyExc_StandardError, AttributeError,
  *	SyntaxError extends StandardError
  */
 
-//static int
-//SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
-//{
+static int
+SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
+{
+	env(-1);
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jobject jargs = (*env)->NewObjectArray(env,
+		PyTuple_GET_SIZE(args)
+		+dictSize,
+		stringClass, NULL);
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+		(*env)->SetObjectArrayElement(env, jargs, i,
+			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+	jobject jkw;
+	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+	else jkw = length0StringArray;
+	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+			exceptionsSyntaxError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
 //	PyObject *info = NULL;
 //	Py_ssize_t lenargs = PyTuple_GET_SIZE(args);
 //
@@ -1162,29 +1434,29 @@ SimpleExtendsException(PyExc_StandardError, AttributeError,
 //
 //		Py_DECREF(info);
 //	}
-//	return 0;
-//}
-//
-//static int
-//SyntaxError_clear(PySyntaxErrorObject *self)
-//{
+	return 0;
+}
+
+static int
+SyntaxError_clear(PySyntaxErrorObject *self)
+{
 //	Py_CLEAR(self->msg);
 //	Py_CLEAR(self->filename);
 //	Py_CLEAR(self->lineno);
 //	Py_CLEAR(self->offset);
 //	Py_CLEAR(self->text);
 //	Py_CLEAR(self->print_file_and_line);
-//	return BaseException_clear((PyBaseExceptionObject *)self);
-//}
-//
-//static void
-//SyntaxError_dealloc(PySyntaxErrorObject *self)
-//{
-//	_PyObject_GC_UNTRACK(self);
-//	SyntaxError_clear(self);
-//	Py_TYPE(self)->tp_free((PyObject *)self);
-//}
-//
+	return BaseException_clear((PyBaseExceptionObject *)self);
+}
+
+static void
+SyntaxError_dealloc(PySyntaxErrorObject *self)
+{
+	_PyObject_GC_UNTRACK(self);
+	SyntaxError_clear(self);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
 //static int
 //SyntaxError_traverse(PySyntaxErrorObject *self, visitproc visit, void *arg)
 //{
@@ -1196,30 +1468,35 @@ SimpleExtendsException(PyExc_StandardError, AttributeError,
 //	Py_VISIT(self->print_file_and_line);
 //	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 //}
-//
-///* This is called "my_basename" instead of just "basename" to avoid name
-//   conflicts with glibc; basename is already prototyped if _GNU_SOURCE is
-//   defined, and Python does define that. */
-//static char *
-//my_basename(char *name)
-//{
-//	char *cp = name;
-//	char *result = name;
-//
-//	if (name == NULL)
-//		return "???";
-//	while (*cp != '\0') {
-//		if (*cp == SEP)
-//			result = cp + 1;
-//		++cp;
-//	}
-//	return result;
-//}
-//
-//
-//static PyObject *
-//SyntaxError_str(PySyntaxErrorObject *self)
-//{
+
+//JyNI note: No reason to rewrite this one - would only cause additional work and less performance
+/* This is called "my_basename" instead of just "basename" to avoid name
+   conflicts with glibc; basename is already prototyped if _GNU_SOURCE is
+   defined, and Python does define that. */
+static char *
+my_basename(char *name)
+{
+	char *cp = name;
+	char *result = name;
+
+	if (name == NULL)
+		return "???";
+	while (*cp != '\0') {
+		if (*cp == SEP)
+			result = cp + 1;
+		++cp;
+	}
+	return result;
+}
+
+
+static PyObject *
+SyntaxError_str(PySyntaxErrorObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsSyntaxError__str__,
+		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
 //	PyObject *str;
 //	PyObject *result;
 //	int have_filename = 0;
@@ -1277,8 +1554,8 @@ SimpleExtendsException(PyExc_StandardError, AttributeError,
 //	else
 //		Py_DECREF(str);
 //	return result;
-//}
-//
+}
+
 //static PyMemberDef SyntaxError_members[] = {
 //	{"msg", T_OBJECT, offsetof(PySyntaxErrorObject, msg), 0,
 //		PyDoc_STR("exception msg")},
@@ -1295,24 +1572,174 @@ SimpleExtendsException(PyExc_StandardError, AttributeError,
 //		PyDoc_STR("exception print_file_and_line")},
 //	{NULL}  /* Sentinel */
 //};
-//
+
+static PyObject *
+SyntaxError_get_msg(PySyntaxErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "msg")));
+}
+
+static int
+SyntaxError_set_msg(PySyntaxErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "msg"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+SyntaxError_get_filename(PySyntaxErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "filename")));
+}
+
+static int
+SyntaxError_set_filename(PySyntaxErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "filename"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+SyntaxError_get_lineno(PySyntaxErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "lineno")));
+}
+
+static int
+SyntaxError_set_lineno(PySyntaxErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "lineno"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+SyntaxError_get_offset(PySyntaxErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "offset")));
+}
+
+static int
+SyntaxError_set_offset(PySyntaxErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "offset"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+SyntaxError_get_text(PySyntaxErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "text")));
+}
+
+static int
+SyntaxError_set_text(PySyntaxErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "text"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+SyntaxError_get_print_file_and_line(PySyntaxErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "print_file_and_line")));
+}
+
+static int
+SyntaxError_set_print_file_and_line(PySyntaxErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "print_file_and_line"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyGetSetDef SyntaxError_getsets [] = {
+	{"msg", (getter)SyntaxError_get_msg, (setter)SyntaxError_set_msg, PyDoc_STR("exception msg")},
+	{"filename", (getter)SyntaxError_get_filename, (setter)SyntaxError_set_filename, PyDoc_STR("exception filename")},
+	{"lineno", (getter)SyntaxError_get_lineno, (setter)SyntaxError_set_lineno, PyDoc_STR("exception lineno")},
+	{"offset", (getter)SyntaxError_get_offset, (setter)SyntaxError_set_offset, PyDoc_STR("exception offset")},
+	{"text", (getter)SyntaxError_get_text, (setter)SyntaxError_set_text, PyDoc_STR("exception text")},
+	{"print_file_and_line", (getter)SyntaxError_get_print_file_and_line, (setter)SyntaxError_set_print_file_and_line, PyDoc_STR("exception print_file_and_line")},
+	{NULL} /* Sentinel */
+};
+
 //ComplexExtendsException(PyExc_StandardError, SyntaxError, SyntaxError,
-//						SyntaxError_dealloc, 0, SyntaxError_members,
+//						SyntaxError_dealloc, 0, 0 /*SyntaxError_members*/,
 //						SyntaxError_str, "Invalid syntax.");
-//
-//
-///*
-// *	IndentationError extends SyntaxError
-// */
-//MiddlingExtendsException(PyExc_SyntaxError, IndentationError, SyntaxError,
-//						 "Improper indentation.");
-//
-//
-///*
-// *	TabError extends IndentationError
-// */
-//MiddlingExtendsException(PyExc_IndentationError, TabError, SyntaxError,
-//						 "Improper mixture of spaces and tabs.");
+ComplexExtendsException2(PyExc_StandardError, SyntaxError, SyntaxError,
+						SyntaxError_dealloc, 0, SyntaxError_getsets,
+						SyntaxError_str, "Invalid syntax.");
+
+/*
+ *	IndentationError extends SyntaxError
+ */
+MiddlingExtendsException(PyExc_SyntaxError, IndentationError, SyntaxError,
+						 "Improper indentation.");
+
+
+/*
+ *	TabError extends IndentationError
+ */
+MiddlingExtendsException(PyExc_IndentationError, TabError, SyntaxError,
+						 "Improper mixture of spaces and tabs.");
 
 
 /*
@@ -1335,19 +1762,23 @@ SimpleExtendsException(PyExc_LookupError, IndexError,
 static PyObject *
 KeyError_str(PyBaseExceptionObject *self)
 {
-	/* If args is a tuple of exactly one item, apply repr to args[0].
-	   This is done so that e.g. the exception raised by {}[''] prints
-		 KeyError: ''
-	   rather than the confusing
-		 KeyError
-	   alone.  The downside is that if KeyError is raised with an explanatory
-	   string, that string will be displayed in quotes.  Too bad.
-	   If args is anything else, use the default BaseException__str__().
-	*/
-	if (PyTuple_GET_SIZE(self->args) == 1) {
-		return PyObject_Repr(PyTuple_GET_ITEM(self->args, 0));
-	}
-	return BaseException_str(self);
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsKeyError__str__,
+		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
+//	/* If args is a tuple of exactly one item, apply repr to args[0].
+//	   This is done so that e.g. the exception raised by {}[''] prints
+//		 KeyError: ''
+//	   rather than the confusing
+//		 KeyError
+//	   alone.  The downside is that if KeyError is raised with an explanatory
+//	   string, that string will be displayed in quotes.  Too bad.
+//	   If args is anything else, use the default BaseException__str__().
+//	*/
+//	if (PyTuple_GET_SIZE(self->args) == 1) {
+//		return PyObject_Repr(PyTuple_GET_ITEM(self->args, 0));
+//	}
+//	return BaseException_str(self);
 }
 
 ComplexExtendsException(PyExc_LookupError, KeyError, BaseException,
@@ -1367,86 +1798,125 @@ SimpleExtendsException(PyExc_StandardError, ValueError,
 SimpleExtendsException(PyExc_ValueError, UnicodeError,
 					   "Unicode related error.");
 
-//#ifdef Py_USING_UNICODE
-//static PyObject *
-//get_string(PyObject *attr, const char *name)
-//{
-//	if (!attr) {
-//		PyErr_Format(PyExc_TypeError, "%.200s attribute not set", name);
-//		return NULL;
-//	}
-//
-//	if (!PyString_Check(attr)) {
-//		PyErr_Format(PyExc_TypeError, "%.200s attribute must be str", name);
-//		return NULL;
-//	}
-//	Py_INCREF(attr);
-//	return attr;
-//}
-//
-//
-//static int
-//set_string(PyObject **attr, const char *value)
-//{
-//	PyObject *obj = PyString_FromString(value);
-//	if (!obj)
-//		return -1;
-//	Py_CLEAR(*attr);
-//	*attr = obj;
-//	return 0;
-//}
-//
-//
-//static PyObject *
-//get_unicode(PyObject *attr, const char *name)
-//{
-//	if (!attr) {
-//		PyErr_Format(PyExc_TypeError, "%.200s attribute not set", name);
-//		return NULL;
-//	}
-//
-//	if (!PyUnicode_Check(attr)) {
-//		PyErr_Format(PyExc_TypeError,
-//					 "%.200s attribute must be unicode", name);
-//		return NULL;
-//	}
-//	Py_INCREF(attr);
-//	return attr;
-//}
-//
-//PyObject *
-//PyUnicodeEncodeError_GetEncoding(PyObject *exc)
-//{
+#ifdef Py_USING_UNICODE
+//JyNI-note: Delegating this to Jython is not necessary.
+static PyObject *
+get_string(PyObject *attr, const char *name)
+{
+//	env(NULL);
+//	return JyNI_PyObject_FromJythonPyObject(
+//		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsGetString,
+//		JyNI_JythonPyObject_FromPyObject(attr), (*env)->NewStringUTF(env, name)));
+	if (!attr) {
+		PyErr_Format(PyExc_TypeError, "%.200s attribute not set", name);
+		return NULL;
+	}
+
+	if (!PyString_Check(attr)) {
+		PyErr_Format(PyExc_TypeError, "%.200s attribute must be str", name);
+		return NULL;
+	}
+	Py_INCREF(attr);
+	return attr;
+}
+
+
+static int
+set_string(PyObject **attr, const char *value)
+{
+	PyObject *obj = PyString_FromString(value);
+	if (!obj)
+		return -1;
+	Py_CLEAR(*attr);
+	*attr = obj;
+	return 0;
+}
+
+
+static PyObject *
+get_unicode(PyObject *attr, const char *name)
+{
+//	env(NULL);
+//	return JyNI_PyObject_FromJythonPyObject(
+//		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsGetUnicode,
+//		JyNI_JythonPyObject_FromPyObject(attr), (*env)->NewStringUTF(env, name)));
+	if (!attr) {
+		PyErr_Format(PyExc_TypeError, "%.200s attribute not set", name);
+		return NULL;
+	}
+
+	if (!PyUnicode_Check(attr)) {
+		PyErr_Format(PyExc_TypeError,
+					 "%.200s attribute must be unicode", name);
+		return NULL;
+	}
+	Py_INCREF(attr);
+	return attr;
+}
+
+PyObject *
+PyUnicodeEncodeError_GetEncoding(PyObject *exc)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "encoding")));
 //	return get_string(((PyUnicodeErrorObject *)exc)->encoding, "encoding");
-//}
-//
-//PyObject *
-//PyUnicodeDecodeError_GetEncoding(PyObject *exc)
-//{
+}
+
+PyObject *
+PyUnicodeDecodeError_GetEncoding(PyObject *exc)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "encoding")));
 //	return get_string(((PyUnicodeErrorObject *)exc)->encoding, "encoding");
-//}
-//
-//PyObject *
-//PyUnicodeEncodeError_GetObject(PyObject *exc)
-//{
+}
+
+PyObject *
+PyUnicodeEncodeError_GetObject(PyObject *exc)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "object")));
 //	return get_unicode(((PyUnicodeErrorObject *)exc)->object, "object");
-//}
-//
-//PyObject *
-//PyUnicodeDecodeError_GetObject(PyObject *exc)
-//{
+}
+
+PyObject *
+PyUnicodeDecodeError_GetObject(PyObject *exc)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "object")));
 //	return get_string(((PyUnicodeErrorObject *)exc)->object, "object");
-//}
-//
-//PyObject *
-//PyUnicodeTranslateError_GetObject(PyObject *exc)
-//{
+}
+
+PyObject *
+PyUnicodeTranslateError_GetObject(PyObject *exc)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "object")));
 //	return get_unicode(((PyUnicodeErrorObject *)exc)->object, "object");
-//}
-//
-//int
-//PyUnicodeEncodeError_GetStart(PyObject *exc, Py_ssize_t *start)
-//{
+}
+
+int
+PyUnicodeEncodeError_GetStart(PyObject *exc, Py_ssize_t *start)
+{
+	env(NULL);
+	jint tmp = (*env)->CallStaticIntMethod(env, exceptionsClass, exceptionsGetStart,
+			JyNI_JythonPyObject_FromPyObject(exc), JNI_TRUE);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	*start = tmp;
+	return 0;
 //	Py_ssize_t size;
 //	PyObject *obj = get_unicode(((PyUnicodeErrorObject *)exc)->object,
 //								"object");
@@ -1460,12 +1930,22 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //		*start = size-1;
 //	Py_DECREF(obj);
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeDecodeError_GetStart(PyObject *exc, Py_ssize_t *start)
-//{
+}
+
+
+int
+PyUnicodeDecodeError_GetStart(PyObject *exc, Py_ssize_t *start)
+{
+	env(NULL);
+	jint tmp = (*env)->CallStaticIntMethod(env, exceptionsClass, exceptionsGetStart,
+		JyNI_JythonPyObject_FromPyObject(exc), JNI_FALSE);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	*start = tmp;
+	return 0;
 //	Py_ssize_t size;
 //	PyObject *obj = get_string(((PyUnicodeErrorObject *)exc)->object,
 //							   "object");
@@ -1479,43 +1959,80 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //		*start = size-1;
 //	Py_DECREF(obj);
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeTranslateError_GetStart(PyObject *exc, Py_ssize_t *start)
-//{
-//	return PyUnicodeEncodeError_GetStart(exc, start);
-//}
-//
-//
-//int
-//PyUnicodeEncodeError_SetStart(PyObject *exc, Py_ssize_t start)
-//{
+}
+
+
+int
+PyUnicodeTranslateError_GetStart(PyObject *exc, Py_ssize_t *start)
+{
+	return PyUnicodeEncodeError_GetStart(exc, start);
+}
+
+
+int
+PyUnicodeEncodeError_SetStart(PyObject *exc, Py_ssize_t start)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "start"), JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(start)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	((PyUnicodeErrorObject *)exc)->start = start;
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeDecodeError_SetStart(PyObject *exc, Py_ssize_t start)
-//{
+}
+
+
+int
+PyUnicodeDecodeError_SetStart(PyObject *exc, Py_ssize_t start)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "start"), JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(start)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	((PyUnicodeErrorObject *)exc)->start = start;
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeTranslateError_SetStart(PyObject *exc, Py_ssize_t start)
-//{
+}
+
+
+int
+PyUnicodeTranslateError_SetStart(PyObject *exc, Py_ssize_t start)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "start"), JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(start)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	((PyUnicodeErrorObject *)exc)->start = start;
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeEncodeError_GetEnd(PyObject *exc, Py_ssize_t *end)
-//{
+}
+
+
+int
+PyUnicodeEncodeError_GetEnd(PyObject *exc, Py_ssize_t *end)
+{
+	env(NULL);
+	jint tmp = (*env)->CallStaticIntMethod(env, exceptionsClass, exceptionsGetEnd,
+		JyNI_JythonPyObject_FromPyObject(exc), JNI_TRUE);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	*end = tmp;
+	return 0;
 //	Py_ssize_t size;
 //	PyObject *obj = get_unicode(((PyUnicodeErrorObject *)exc)->object,
 //								"object");
@@ -1529,12 +2046,22 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //		*end = size;
 //	Py_DECREF(obj);
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeDecodeError_GetEnd(PyObject *exc, Py_ssize_t *end)
-//{
+}
+
+
+int
+PyUnicodeDecodeError_GetEnd(PyObject *exc, Py_ssize_t *end)
+{
+	env(NULL);
+	jint tmp = (*env)->CallStaticIntMethod(env, exceptionsClass, exceptionsGetEnd,
+		JyNI_JythonPyObject_FromPyObject(exc), JNI_FALSE);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	*end = tmp;
+	return 0;
 //	Py_ssize_t size;
 //	PyObject *obj = get_string(((PyUnicodeErrorObject *)exc)->object,
 //							   "object");
@@ -1548,123 +2075,209 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //		*end = size;
 //	Py_DECREF(obj);
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeTranslateError_GetEnd(PyObject *exc, Py_ssize_t *start)
-//{
-//	return PyUnicodeEncodeError_GetEnd(exc, start);
-//}
-//
-//
-//int
-//PyUnicodeEncodeError_SetEnd(PyObject *exc, Py_ssize_t end)
-//{
+}
+
+
+int
+PyUnicodeTranslateError_GetEnd(PyObject *exc, Py_ssize_t *start)
+{
+	return PyUnicodeEncodeError_GetEnd(exc, start);
+}
+
+
+int
+PyUnicodeEncodeError_SetEnd(PyObject *exc, Py_ssize_t end)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "end"), JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(end)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	((PyUnicodeErrorObject *)exc)->end = end;
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeDecodeError_SetEnd(PyObject *exc, Py_ssize_t end)
-//{
+}
+
+
+int
+PyUnicodeDecodeError_SetEnd(PyObject *exc, Py_ssize_t end)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "end"), JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(end)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	((PyUnicodeErrorObject *)exc)->end = end;
 //	return 0;
-//}
-//
-//
-//int
-//PyUnicodeTranslateError_SetEnd(PyObject *exc, Py_ssize_t end)
-//{
+}
+
+
+int
+PyUnicodeTranslateError_SetEnd(PyObject *exc, Py_ssize_t end)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "end"), JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(end)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	((PyUnicodeErrorObject *)exc)->end = end;
 //	return 0;
-//}
-//
-//PyObject *
-//PyUnicodeEncodeError_GetReason(PyObject *exc)
-//{
+}
+
+PyObject *
+PyUnicodeEncodeError_GetReason(PyObject *exc)
+{
+	env(NULL);
+	return get_string(JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "reason"))), "reason");
+	//return get_string(((PyUnicodeErrorObject *)exc)->reason, "reason");
+}
+
+
+PyObject *
+PyUnicodeDecodeError_GetReason(PyObject *exc)
+{
+	env(NULL);
+	return get_string(JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "reason"))), "reason");
 //	return get_string(((PyUnicodeErrorObject *)exc)->reason, "reason");
-//}
-//
-//
-//PyObject *
-//PyUnicodeDecodeError_GetReason(PyObject *exc)
-//{
+}
+
+
+PyObject *
+PyUnicodeTranslateError_GetReason(PyObject *exc)
+{
+	env(NULL);
+	return get_string(JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "reason"))), "reason");
 //	return get_string(((PyUnicodeErrorObject *)exc)->reason, "reason");
-//}
-//
-//
-//PyObject *
-//PyUnicodeTranslateError_GetReason(PyObject *exc)
-//{
-//	return get_string(((PyUnicodeErrorObject *)exc)->reason, "reason");
-//}
-//
-//
-//int
-//PyUnicodeEncodeError_SetReason(PyObject *exc, const char *reason)
-//{
+}
+
+
+int
+PyUnicodeEncodeError_SetReason(PyObject *exc, const char *reason)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "reason"), (*env)->NewStringUTF(env, reason));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	return set_string(&((PyUnicodeErrorObject *)exc)->reason, reason);
-//}
-//
-//
-//int
-//PyUnicodeDecodeError_SetReason(PyObject *exc, const char *reason)
-//{
+}
+
+
+int
+PyUnicodeDecodeError_SetReason(PyObject *exc, const char *reason)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "reason"), (*env)->NewStringUTF(env, reason));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	return set_string(&((PyUnicodeErrorObject *)exc)->reason, reason);
-//}
-//
-//
-//int
-//PyUnicodeTranslateError_SetReason(PyObject *exc, const char *reason)
-//{
+}
+
+
+int
+PyUnicodeTranslateError_SetReason(PyObject *exc, const char *reason)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(exc), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "reason"), (*env)->NewStringUTF(env, reason));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	return set_string(&((PyUnicodeErrorObject *)exc)->reason, reason);
-//}
-//
-//
+}
+
+
 //static int
 //UnicodeError_init(PyUnicodeErrorObject *self, PyObject *args, PyObject *kwds,
 //				  PyTypeObject *objecttype)
 //{
-//	Py_CLEAR(self->encoding);
-//	Py_CLEAR(self->object);
-//	Py_CLEAR(self->reason);
-//
-//	if (!PyArg_ParseTuple(args, "O!O!nnO!",
-//		&PyString_Type, &self->encoding,
-//		objecttype, &self->object,
-//		&self->start,
-//		&self->end,
-//		&PyString_Type, &self->reason)) {
-//		self->encoding = self->object = self->reason = NULL;
+//	env(-1);
+//	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+//	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+//	jobject jargs = (*env)->NewObjectArray(env,
+//		PyTuple_GET_SIZE(args)
+//		+dictSize,
+//		stringClass, NULL);
+//	int i;
+//	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+//		(*env)->SetObjectArrayElement(env, jargs, i,
+//			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+//	jobject jkw;
+//	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+//	else jkw = length0StringArray;
+//	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+//			exceptionsUnicodeError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+//	if ((*env)->ExceptionCheck(env))
+//	{
+//		(*env)->ExceptionClear(env);
 //		return -1;
 //	}
-//
-//	Py_INCREF(self->encoding);
-//	Py_INCREF(self->object);
-//	Py_INCREF(self->reason);
-//
+////	Py_CLEAR(self->encoding);
+////	Py_CLEAR(self->object);
+////	Py_CLEAR(self->reason);
+////
+////	if (!PyArg_ParseTuple(args, "O!O!nnO!",
+////		&PyString_Type, &self->encoding,
+////		objecttype, &self->object,
+////		&self->start,
+////		&self->end,
+////		&PyString_Type, &self->reason)) {
+////		self->encoding = self->object = self->reason = NULL;
+////		return -1;
+////	}
+////
+////	Py_INCREF(self->encoding);
+////	Py_INCREF(self->object);
+////	Py_INCREF(self->reason);
 //	return 0;
 //}
-//
-//static int
-//UnicodeError_clear(PyUnicodeErrorObject *self)
-//{
+
+static int
+UnicodeError_clear(PyUnicodeErrorObject *self)
+{
 //	Py_CLEAR(self->encoding);
 //	Py_CLEAR(self->object);
 //	Py_CLEAR(self->reason);
-//	return BaseException_clear((PyBaseExceptionObject *)self);
-//}
-//
-//static void
-//UnicodeError_dealloc(PyUnicodeErrorObject *self)
-//{
-//	_PyObject_GC_UNTRACK(self);
-//	UnicodeError_clear(self);
-//	Py_TYPE(self)->tp_free((PyObject *)self);
-//}
-//
+	return BaseException_clear((PyBaseExceptionObject *)self);
+}
+
+static void
+UnicodeError_dealloc(PyUnicodeErrorObject *self)
+{
+	_PyObject_GC_UNTRACK(self);
+	UnicodeError_clear(self);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
 //static int
 //UnicodeError_traverse(PyUnicodeErrorObject *self, visitproc visit, void *arg)
 //{
@@ -1673,7 +2286,7 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //	Py_VISIT(self->reason);
 //	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 //}
-//
+
 //static PyMemberDef UnicodeError_members[] = {
 //	{"encoding", T_OBJECT, offsetof(PyUnicodeErrorObject, encoding), 0,
 //		PyDoc_STR("exception encoding")},
@@ -1687,24 +2300,175 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //		PyDoc_STR("exception reason")},
 //	{NULL}  /* Sentinel */
 //};
-//
-//
-///*
-// *	UnicodeEncodeError extends UnicodeError
-// */
-//
-//static int
-//UnicodeEncodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
-//{
+
+
+static PyObject *
+PyUnicodeError_get_encoding(PyUnicodeErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "encoding")));
+}
+
+static int
+PyUnicodeError_set_encoding(PyUnicodeErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "encoding"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+PyUnicodeError_get_object(PyUnicodeErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "object")));
+}
+
+static int
+PyUnicodeError_set_object(PyUnicodeErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "object"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+PyUnicodeError_get_start(PyUnicodeErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "start")));
+}
+
+static int
+PyUnicodeError_set_start(PyUnicodeErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "start"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+PyUnicodeError_get_end(PyUnicodeErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "end")));
+}
+
+static int
+PyUnicodeError_set_end(PyUnicodeErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "end"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *
+PyUnicodeError_get_reason(PyUnicodeErrorObject *obj)//, void *closure)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__getattr__,
+		(*env)->NewStringUTF(env, "reason")));
+}
+
+static int
+PyUnicodeError_set_reason(PyUnicodeErrorObject *obj, PyObject* value)//, void *closure)
+{
+	env(-1);
+	(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) obj), pyObject__setattr__,
+		(*env)->NewStringUTF(env, "reason"), JyNI_JythonPyObject_FromPyObject(value));
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
+}
+
+static PyGetSetDef UnicodeError_getsets [] = {
+	{"encoding", (getter)PyUnicodeError_get_encoding, (setter)PyUnicodeError_set_encoding, PyDoc_STR("exception encoding")},
+	{"object", (getter)PyUnicodeError_get_object, (setter)PyUnicodeError_set_object, PyDoc_STR("exception object")},
+	{"start", (getter)PyUnicodeError_get_start, (setter)PyUnicodeError_set_start, PyDoc_STR("exception start")},
+	{"end", (getter)PyUnicodeError_get_end, (setter)PyUnicodeError_set_end, PyDoc_STR("exception end")},
+	{"reason", (getter)PyUnicodeError_get_reason, (setter)PyUnicodeError_set_reason, PyDoc_STR("exception reason")},
+	{NULL} /* Sentinel */
+};
+
+/*
+ *	UnicodeEncodeError extends UnicodeError
+ */
+//JyNI-note: It probably would have been sufficient to keep the original
+//implementation.
+static int
+UnicodeEncodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	env(-1);
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jobject jargs = (*env)->NewObjectArray(env,
+		PyTuple_GET_SIZE(args)
+		+dictSize,
+		stringClass, NULL);
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+		(*env)->SetObjectArrayElement(env, jargs, i,
+			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+	jobject jkw;
+	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+	else jkw = length0StringArray;
+	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+			exceptionsUnicodeEncodeError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
 //		return -1;
 //	return UnicodeError_init((PyUnicodeErrorObject *)self, args,
 //							 kwds, &PyUnicode_Type);
-//}
-//
-//static PyObject *
-//UnicodeEncodeError_str(PyObject *self)
-//{
+}
+
+static PyObject *
+UnicodeEncodeError_str(PyObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeEncodeError__str__,
+		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
 //	PyUnicodeErrorObject *uself = (PyUnicodeErrorObject *)self;
 //	PyObject *result = NULL;
 //	PyObject *reason_str = NULL;
@@ -1747,49 +2511,75 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //	Py_XDECREF(reason_str);
 //	Py_XDECREF(encoding_str);
 //	return result;
-//}
-//
-//static PyTypeObject _PyExc_UnicodeEncodeError = {
-//	PyObject_HEAD_INIT(NULL)
-//	0,
-//	EXC_MODULE_NAME "UnicodeEncodeError",
-//	sizeof(PyUnicodeErrorObject), 0,
-//	(destructor)UnicodeError_dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//	(reprfunc)UnicodeEncodeError_str, 0, 0, 0,
-//	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
-//	PyDoc_STR("Unicode encoding error."), (traverseproc)UnicodeError_traverse,
-//	(inquiry)UnicodeError_clear, 0, 0, 0, 0, 0, UnicodeError_members,
-//	0, &_PyExc_UnicodeError, 0, 0, 0, offsetof(PyUnicodeErrorObject, dict),
-//	(initproc)UnicodeEncodeError_init, 0, BaseException_new,
-//};
-//PyObject *PyExc_UnicodeEncodeError = (PyObject *)&_PyExc_UnicodeEncodeError;
-//
-//PyObject *
-//PyUnicodeEncodeError_Create(
-//	const char *encoding, const Py_UNICODE *object, Py_ssize_t length,
-//	Py_ssize_t start, Py_ssize_t end, const char *reason)
-//{
-//	return PyObject_CallFunction(PyExc_UnicodeEncodeError, "su#nns",
-//								 encoding, object, length, start, end, reason);
-//}
-//
-//
-///*
-// *	UnicodeDecodeError extends UnicodeError
-// */
-//
-//static int
-//UnicodeDecodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
-//{
+}
+
+static PyTypeObject _PyExc_UnicodeEncodeError = {
+	PyObject_HEAD_INIT(NULL)
+	0,
+	EXC_MODULE_NAME "UnicodeEncodeError",
+	sizeof(PyUnicodeErrorObject), 0,
+	(destructor)UnicodeError_dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	(reprfunc)UnicodeEncodeError_str, 0, 0, 0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	PyDoc_STR("Unicode encoding error."), 0 /*(traverseproc)UnicodeError_traverse*/,
+	(inquiry)UnicodeError_clear, 0, 0, 0, 0, 0, 0 /*UnicodeError_members*/,
+	UnicodeError_getsets, &_PyExc_UnicodeError, 0, 0, 0, offsetof(PyUnicodeErrorObject, dict),
+	(initproc)UnicodeEncodeError_init, 0, BaseException_new,
+};
+PyObject *PyExc_UnicodeEncodeError = (PyObject *)&_PyExc_UnicodeEncodeError;
+
+PyObject *
+PyUnicodeEncodeError_Create(
+	const char *encoding, const Py_UNICODE *object, Py_ssize_t length,
+	Py_ssize_t start, Py_ssize_t end, const char *reason)
+{
+	return PyObject_CallFunction(PyExc_UnicodeEncodeError, "su#nns",
+								 encoding, object, length, start, end, reason);
+}
+
+
+/*
+ *	UnicodeDecodeError extends UnicodeError
+ */
+
+static int
+UnicodeDecodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	env(-1);
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jobject jargs = (*env)->NewObjectArray(env,
+		PyTuple_GET_SIZE(args)
+		+dictSize,
+		stringClass, NULL);
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+		(*env)->SetObjectArrayElement(env, jargs, i,
+			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+	jobject jkw;
+	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+	else jkw = length0StringArray;
+	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+			exceptionsUnicodeDecodeError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return 0;
 //	if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
 //		return -1;
 //	return UnicodeError_init((PyUnicodeErrorObject *)self, args,
 //							 kwds, &PyString_Type);
-//}
-//
-//static PyObject *
-//UnicodeDecodeError_str(PyObject *self)
-//{
+}
+
+static PyObject *
+UnicodeDecodeError_str(PyObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeDecodeError__str__,
+		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
 //	PyUnicodeErrorObject *uself = (PyUnicodeErrorObject *)self;
 //	PyObject *result = NULL;
 //	PyObject *reason_str = NULL;
@@ -1828,41 +2618,61 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //	Py_XDECREF(reason_str);
 //	Py_XDECREF(encoding_str);
 //	return result;
-//}
-//
-//static PyTypeObject _PyExc_UnicodeDecodeError = {
-//	PyObject_HEAD_INIT(NULL)
-//	0,
-//	EXC_MODULE_NAME "UnicodeDecodeError",
-//	sizeof(PyUnicodeErrorObject), 0,
-//	(destructor)UnicodeError_dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//	(reprfunc)UnicodeDecodeError_str, 0, 0, 0,
-//	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
-//	PyDoc_STR("Unicode decoding error."), (traverseproc)UnicodeError_traverse,
-//	(inquiry)UnicodeError_clear, 0, 0, 0, 0, 0, UnicodeError_members,
-//	0, &_PyExc_UnicodeError, 0, 0, 0, offsetof(PyUnicodeErrorObject, dict),
-//	(initproc)UnicodeDecodeError_init, 0, BaseException_new,
-//};
-//PyObject *PyExc_UnicodeDecodeError = (PyObject *)&_PyExc_UnicodeDecodeError;
-//
-//PyObject *
-//PyUnicodeDecodeError_Create(
-//	const char *encoding, const char *object, Py_ssize_t length,
-//	Py_ssize_t start, Py_ssize_t end, const char *reason)
-//{
-//	return PyObject_CallFunction(PyExc_UnicodeDecodeError, "ss#nns",
-//								 encoding, object, length, start, end, reason);
-//}
-//
-//
-///*
-// *	UnicodeTranslateError extends UnicodeError
-// */
-//
-//static int
-//UnicodeTranslateError_init(PyUnicodeErrorObject *self, PyObject *args,
-//						   PyObject *kwds)
-//{
+}
+
+static PyTypeObject _PyExc_UnicodeDecodeError = {
+	PyObject_HEAD_INIT(NULL)
+	0,
+	EXC_MODULE_NAME "UnicodeDecodeError",
+	sizeof(PyUnicodeErrorObject), 0,
+	(destructor)UnicodeError_dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	(reprfunc)UnicodeDecodeError_str, 0, 0, 0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	PyDoc_STR("Unicode decoding error."), 0 /*(traverseproc)UnicodeError_traverse*/,
+	(inquiry)UnicodeError_clear, 0, 0, 0, 0, 0, 0 /*UnicodeError_members*/,
+	UnicodeError_getsets, &_PyExc_UnicodeError, 0, 0, 0, offsetof(PyUnicodeErrorObject, dict),
+	(initproc)UnicodeDecodeError_init, 0, BaseException_new,
+};
+PyObject *PyExc_UnicodeDecodeError = (PyObject *)&_PyExc_UnicodeDecodeError;
+
+PyObject *
+PyUnicodeDecodeError_Create(
+	const char *encoding, const char *object, Py_ssize_t length,
+	Py_ssize_t start, Py_ssize_t end, const char *reason)
+{
+	return PyObject_CallFunction(PyExc_UnicodeDecodeError, "ss#nns",
+								 encoding, object, length, start, end, reason);
+}
+
+
+/*
+ *	UnicodeTranslateError extends UnicodeError
+ */
+
+static int
+UnicodeTranslateError_init(PyUnicodeErrorObject *self, PyObject *args, PyObject *kwds)
+{
+	env(-1);
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jobject jargs = (*env)->NewObjectArray(env,
+		PyTuple_GET_SIZE(args)
+		+dictSize,
+		stringClass, NULL);
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
+		(*env)->SetObjectArrayElement(env, jargs, i,
+			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
+	jobject jkw;
+	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
+	else jkw = length0StringArray;
+	(*env)->CallStaticVoidMethod(env, exceptionsClass,
+			exceptionsUnicodeTranslateError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+	if ((*env)->ExceptionCheck(env))
+	{
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
 //	if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
 //		return -1;
 //
@@ -1880,14 +2690,17 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //
 //	Py_INCREF(self->object);
 //	Py_INCREF(self->reason);
-//
-//	return 0;
-//}
-//
-//
-//static PyObject *
-//UnicodeTranslateError_str(PyObject *self)
-//{
+	return 0;
+}
+
+
+static PyObject *
+UnicodeTranslateError_str(PyObject *self)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeTranslateError__str__,
+		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
 //	PyUnicodeErrorObject *uself = (PyUnicodeErrorObject *)self;
 //	PyObject *result = NULL;
 //	PyObject *reason_str = NULL;
@@ -1922,32 +2735,32 @@ SimpleExtendsException(PyExc_ValueError, UnicodeError,
 //done:
 //	Py_XDECREF(reason_str);
 //	return result;
-//}
-//
-//static PyTypeObject _PyExc_UnicodeTranslateError = {
-//	PyObject_HEAD_INIT(NULL)
-//	0,
-//	EXC_MODULE_NAME "UnicodeTranslateError",
-//	sizeof(PyUnicodeErrorObject), 0,
-//	(destructor)UnicodeError_dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//	(reprfunc)UnicodeTranslateError_str, 0, 0, 0,
-//	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
-//	PyDoc_STR("Unicode translation error."), (traverseproc)UnicodeError_traverse,
-//	(inquiry)UnicodeError_clear, 0, 0, 0, 0, 0, UnicodeError_members,
-//	0, &_PyExc_UnicodeError, 0, 0, 0, offsetof(PyUnicodeErrorObject, dict),
-//	(initproc)UnicodeTranslateError_init, 0, BaseException_new,
-//};
-//PyObject *PyExc_UnicodeTranslateError = (PyObject *)&_PyExc_UnicodeTranslateError;
-//
-//PyObject *
-//PyUnicodeTranslateError_Create(
-//	const Py_UNICODE *object, Py_ssize_t length,
-//	Py_ssize_t start, Py_ssize_t end, const char *reason)
-//{
-//	return PyObject_CallFunction(PyExc_UnicodeTranslateError, "u#nns",
-//								 object, length, start, end, reason);
-//}
-//#endif
+}
+
+static PyTypeObject _PyExc_UnicodeTranslateError = {
+	PyObject_HEAD_INIT(NULL)
+	0,
+	EXC_MODULE_NAME "UnicodeTranslateError",
+	sizeof(PyUnicodeErrorObject), 0,
+	(destructor)UnicodeError_dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	(reprfunc)UnicodeTranslateError_str, 0, 0, 0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	PyDoc_STR("Unicode translation error."), 0 /*(traverseproc)UnicodeError_traverse*/,
+	(inquiry)UnicodeError_clear, 0, 0, 0, 0, 0, 0 /*UnicodeError_members*/,
+	UnicodeError_getsets, &_PyExc_UnicodeError, 0, 0, 0, offsetof(PyUnicodeErrorObject, dict),
+	(initproc)UnicodeTranslateError_init, 0, BaseException_new,
+};
+PyObject *PyExc_UnicodeTranslateError = (PyObject *)&_PyExc_UnicodeTranslateError;
+
+PyObject *
+PyUnicodeTranslateError_Create(
+	const Py_UNICODE *object, Py_ssize_t length,
+	Py_ssize_t start, Py_ssize_t end, const char *reason)
+{
+	return PyObject_CallFunction(PyExc_UnicodeTranslateError, "u#nns",
+								 object, length, start, end, reason);
+}
+#endif
 
 
 /*
@@ -2086,6 +2899,11 @@ SimpleExtendsException(PyExc_Warning, UnicodeWarning,
 SimpleExtendsException(PyExc_Warning, BytesWarning,
 	"Base class for warnings about bytes and buffer related problems, mostly\n"
 	"related to conversion from str or comparing to str.");
+
+/*JyNI-note: The rest is stuff to register the methods in this file as a module.
+ * This is not wise for Jython, since it provides the module on java-side.
+ * So we exclude everything following this comment from JyNI.
+ */
 
 /* Pre-computed MemoryError instance.  Best to create this as early as
  * possible and not wait until a MemoryError is actually raised!

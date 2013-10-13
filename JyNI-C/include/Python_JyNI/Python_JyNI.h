@@ -162,7 +162,7 @@
 #include "funcobject_JyNI.h"
 #include "classobject_JyNI.h"
 #include "fileobject_JyNI.h"
-//#include "cobject_JyNI.h"
+#include "cobject_JyNI.h"
 #include "pycapsule_JyNI.h"
 #include "traceback_JyNI.h"
 #include "sliceobject_JyNI.h"

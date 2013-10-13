@@ -924,7 +924,7 @@ PyTypeObject PyStaticMethod_Type = {
     sm_init,                                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    JyNI_Del, //PyObject_GC_Del,                            /* tp_free */
+    PyObject_Free,//JyNI_Del, //PyObject_GC_Del,                            /* tp_free */
 };
 
 PyObject *
