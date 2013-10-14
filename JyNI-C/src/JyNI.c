@@ -73,8 +73,8 @@ ExceptionMapEntry builtinExceptions[builtinExceptionCount];
 //JNIEXPORT jobject JNICALL Java_JyNI_JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
 {
-	puts("JyNI_loadModule...");
-	if (PyErr_Occurred()) puts("PyErrOccured01 (beginning of JyNI_loadModule)");
+	//puts("JyNI_loadModule...");
+	if (PyErr_Occurred()) puts("PyErrOccured01 (beginning of JyNI_loadModule)");//this should never happen!
 	const char* utf_string;
 
 	//jboolean isCopy;
@@ -107,7 +107,7 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 	jobject er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
 	//puts("loading done");
 	if (fclose(fp))
-		puts("Some error occured on file close");
+		puts("Some error occurred on file close");
 	if (PyErr_Occurred())
 	{
 		puts("error finally occurred! (JyNI_loadModule)");

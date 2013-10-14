@@ -76,9 +76,8 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-	puts("Py_InitModule4 called with name:");
-	puts(name);
-	//puts("doing nothing for now...");
+//	puts("Py_InitModule4 called with name:");
+//	puts(name);
 
 	/*puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_name);
 	puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_base->tp_name);
@@ -132,7 +131,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			_Py_PackageContext = NULL;
 		}
 	}
-	puts("ready to add module...");
+//	puts("ready to add module...");
 	//return NULL;
 	//if ((m = PyImport_AddModule(name)) == NULL)
 	env(NULL);
@@ -212,7 +211,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		PyModule_AddStringConstantJy(m, "__doc__", doc);
 		//Py_DECREF(v);
 	}
-	puts("initModule4 done");
+	//puts("initModule4 done");
 	return JyNI_PyObject_FromJythonPyObject(m);
 }
 
