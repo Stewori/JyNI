@@ -2,6 +2,13 @@ If not yet done, make sure to visit our project homepage at
 
 www.jyni.org
 
+The readme is currently outdated - give me some days for this.
+
+Main unmentioned new feature is full exception support.
+An important milestone is that JyNI is now able to use the
+original CPython datetime module. This is an important step
+towards NumPY, because NumPy uses datetime C-API that is not
+provided by Jython's datetime module.
 
 
 Table of contents
@@ -122,7 +129,7 @@ The libraries
 - libJyNI-Loader.so
 - libJyNI.so
 should be on the java library path. However, we implemented a wider
-search and also look on the calsspath (but not inside jars) and in
+search and also look on the classpath (but not inside jars) and in
 typical places where IDEs place their build-results
 (such as JyNI-Loader/Release, JyNI-Loader/Debug,
 JyNI-C/Release, JyNI-C/Debug).
