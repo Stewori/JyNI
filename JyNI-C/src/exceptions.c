@@ -682,7 +682,7 @@ SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = length0StringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
-			exceptionsSystemExit__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+			exceptionsSystemExit__init__, JyNI_JythonPyObject_FromPyObject((PyObject*) self), jargs, jkw);
 	if ((*env)->ExceptionCheck(env))
 	{
 		(*env)->ExceptionClear(env);
@@ -815,7 +815,7 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = length0StringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
-			exceptionsEnvironmentError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+			exceptionsEnvironmentError__init__, JyNI_JythonPyObject_FromPyObject((PyObject*) self), jargs, jkw);
 	if ((*env)->ExceptionCheck(env))
 	{
 		(*env)->ExceptionClear(env);
@@ -892,7 +892,7 @@ EnvironmentError_str(PyEnvironmentErrorObject *self)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsEnvironmentError__str__,
-				JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
+				JyNI_JythonPyObject_FromPyObject((PyObject*) self), length0PyObjectArray, length0StringArray));
 //	PyObject *rtnval = NULL;
 //
 //	if (self->filename) {
@@ -1075,7 +1075,7 @@ EnvironmentError_reduce(PyEnvironmentErrorObject *self)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsEnvironmentError__reduce__,
-		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self), length0PyObjectArray, length0StringArray));
 //	PyObject *args = self->args;
 //	PyObject *res = NULL, *tmp;
 //
@@ -1386,7 +1386,7 @@ SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = length0StringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
-			exceptionsSyntaxError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+			exceptionsSyntaxError__init__, JyNI_JythonPyObject_FromPyObject((PyObject*) self), jargs, jkw);
 	if ((*env)->ExceptionCheck(env))
 	{
 		(*env)->ExceptionClear(env);
@@ -1496,7 +1496,7 @@ SyntaxError_str(PySyntaxErrorObject *self)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsSyntaxError__str__,
-		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self), length0PyObjectArray, length0StringArray));
 //	PyObject *str;
 //	PyObject *result;
 //	int have_filename = 0;
@@ -1765,7 +1765,7 @@ KeyError_str(PyBaseExceptionObject *self)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsKeyError__str__,
-		JyNI_JythonPyObject_FromPyObject(self), length0PyObjectArray, length0StringArray));
+		JyNI_JythonPyObject_FromPyObject((PyObject*) self), length0PyObjectArray, length0StringArray));
 //	/* If args is a tuple of exactly one item, apply repr to args[0].
 //	   This is done so that e.g. the exception raised by {}[''] prints
 //		 KeyError: ''
@@ -2667,7 +2667,7 @@ UnicodeTranslateError_init(PyUnicodeErrorObject *self, PyObject *args, PyObject 
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = length0StringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
-			exceptionsUnicodeTranslateError__init__, JyNI_JythonPyObject_FromPyObject(self), jargs, jkw);
+			exceptionsUnicodeTranslateError__init__, JyNI_JythonPyObject_FromPyObject((PyObject*) self), jargs, jkw);
 	if ((*env)->ExceptionCheck(env))
 	{
 		(*env)->ExceptionClear(env);

@@ -3988,7 +3988,8 @@ _PyString_Resize(PyObject **pv, Py_ssize_t newsize)
 	//if (*pv == NULL) {
 	if (jy == NULL) {
 		//PyObject_Del(v);
-		PyObject_Del(jy);
+		//PyObject_Del(jy);
+		PyObject_RawFree(jy);
 		PyErr_NoMemory();
 		return -1;
 	}

@@ -1317,37 +1317,37 @@ PyNumber_Power(PyObject *v, PyObject *w, PyObject *z)
 
    */
 
-//#define HASINPLACE(t) \
-//	PyType_HasFeature((t)->ob_type, Py_TPFLAGS_HAVE_INPLACEOPS)
-//
-//static PyObject *
-//binary_iop1(PyObject *v, PyObject *w, const int iop_slot, const int op_slot)
-//{
-//	PyNumberMethods *mv = v->ob_type->tp_as_number;
-//	if (mv != NULL && HASINPLACE(v)) {
-//		binaryfunc slot = NB_BINOP(mv, iop_slot);
-//		if (slot) {
-//			PyObject *x = (slot)(v, w);
-//			if (x != Py_NotImplemented) {
-//				return x;
-//			}
-//			Py_DECREF(x);
-//		}
-//	}
-//	return binary_op1(v, w, op_slot);
-//}
-//
-//static PyObject *
-//binary_iop(PyObject *v, PyObject *w, const int iop_slot, const int op_slot,
-//				const char *op_name)
-//{
-//	PyObject *result = binary_iop1(v, w, iop_slot, op_slot);
-//	if (result == Py_NotImplemented) {
-//		Py_DECREF(result);
-//		return binop_type_error(v, w, op_name);
-//	}
-//	return result;
-//}
+#define HASINPLACE(t) \
+	PyType_HasFeature((t)->ob_type, Py_TPFLAGS_HAVE_INPLACEOPS)
+
+static PyObject *
+binary_iop1(PyObject *v, PyObject *w, const int iop_slot, const int op_slot)
+{
+	PyNumberMethods *mv = v->ob_type->tp_as_number;
+	if (mv != NULL && HASINPLACE(v)) {
+		binaryfunc slot = NB_BINOP(mv, iop_slot);
+		if (slot) {
+			PyObject *x = (slot)(v, w);
+			if (x != Py_NotImplemented) {
+				return x;
+			}
+			Py_DECREF(x);
+		}
+	}
+	return binary_op1(v, w, op_slot);
+}
+
+static PyObject *
+binary_iop(PyObject *v, PyObject *w, const int iop_slot, const int op_slot,
+				const char *op_name)
+{
+	PyObject *result = binary_iop1(v, w, iop_slot, op_slot);
+	if (result == Py_NotImplemented) {
+		Py_DECREF(result);
+		return binop_type_error(v, w, op_name);
+	}
+	return result;
+}
 
 #define INPLACE_BINOP(func, iop, op, op_name) \
 	PyObject * \

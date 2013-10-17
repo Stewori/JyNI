@@ -313,7 +313,8 @@ slice_dealloc(PySliceObject *r)
 //		PyObject_Del(r);
 	}
 	JyNI_CleanUp_JyObject(jy);
-	PyObject_Del(jy);
+	//PyObject_Del(jy);
+	PyObject_RawFree(jy);
 }
 
 static PyObject *

@@ -87,8 +87,8 @@ inline void JyNI_ClearJyAttributeValue(JyAttribute* att)
 			{
 				JyAttributeElement* tmp = elem;
 				elem = elem->next;
-				free(elem->value);
-				free(elem);
+				free(tmp->value);
+				free(tmp);
 			}
 		} else
 			free(att->value);

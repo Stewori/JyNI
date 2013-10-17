@@ -750,40 +750,40 @@ buffer_ass_subscript(PyBufferObject *self, PyObject *item, PyObject *value)
 			i += selfsize;
 		return buffer_ass_item(self, i, value);
 	}
-//	else if (PySlice_Check(item)) {
-//		Py_ssize_t start, stop, step, slicelength;
-//
-//		if (PySlice_GetIndicesEx((PySliceObject *)item, selfsize,
-//						&start, &stop, &step, &slicelength) < 0)
-//			return -1;
-//
-//		if ((othersize = (*pb->bf_getreadbuffer)(value, 0, &ptr2)) < 0)
-//			return -1;
-//
-//		if (othersize != slicelength) {
-//			PyErr_SetString(
-//				PyExc_TypeError,
-//				"right operand length must match slice length");
-//			return -1;
-//		}
-//
-//		if (slicelength == 0)
-//			return 0;
-//		else if (step == 1) {
-//			memcpy((char *)ptr1 + start, ptr2, slicelength);
-//			return 0;
-//		}
-//		else {
-//			Py_ssize_t cur, i;
-//
-//			for (cur = start, i = 0; i < slicelength;
-//				 cur += step, i++) {
-//				((char *)ptr1)[cur] = ((char *)ptr2)[i];
-//			}
-//
-//			return 0;
-//		}
-//	}
+	else if (PySlice_Check(item)) {
+		Py_ssize_t start, stop, step, slicelength;
+
+		if (PySlice_GetIndicesEx((PySliceObject *)item, selfsize,
+						&start, &stop, &step, &slicelength) < 0)
+			return -1;
+
+		if ((othersize = (*pb->bf_getreadbuffer)(value, 0, &ptr2)) < 0)
+			return -1;
+
+		if (othersize != slicelength) {
+			PyErr_SetString(
+				PyExc_TypeError,
+				"right operand length must match slice length");
+			return -1;
+		}
+
+		if (slicelength == 0)
+			return 0;
+		else if (step == 1) {
+			memcpy((char *)ptr1 + start, ptr2, slicelength);
+			return 0;
+		}
+		else {
+			Py_ssize_t cur, i;
+
+			for (cur = start, i = 0; i < slicelength;
+				 cur += step, i++) {
+				((char *)ptr1)[cur] = ((char *)ptr2)[i];
+			}
+
+			return 0;
+		}
+	}
 	else {
 		PyErr_SetString(PyExc_TypeError,
 						"buffer indices must be integers");

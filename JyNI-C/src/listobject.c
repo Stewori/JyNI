@@ -1925,6 +1925,7 @@ merge_compute_minrun(Py_ssize_t n)
    unchanged.  Also, if a custom comparison function is used, it will only see
    the key instead of a full record. */
 
+//JyNI todo: Cover the sortwrapperobject
 typedef struct {
 	PyObject_HEAD
 	PyObject *key;

@@ -50,28 +50,28 @@
 
 #include "structmember_JyNI.h"
 
-//static PyObject *
-//listmembers(struct memberlist *mlist)
-//{
-//    int i, n;
-//    PyObject *v;
-//    for (n = 0; mlist[n].name != NULL; n++)
-//        ;
-//    v = PyList_New(n);
-//    if (v != NULL) {
-//        for (i = 0; i < n; i++)
-//            PyList_SetItem(v, i,
-//                           PyString_FromString(mlist[i].name));
-//        if (PyErr_Occurred()) {
-//            Py_DECREF(v);
-//            v = NULL;
-//        }
-//        else {
-//            PyList_Sort(v);
-//        }
-//    }
-//    return v;
-//}
+static PyObject *
+listmembers(struct memberlist *mlist)
+{
+    int i, n;
+    PyObject *v;
+    for (n = 0; mlist[n].name != NULL; n++)
+        ;
+    v = PyList_New(n);
+    if (v != NULL) {
+        for (i = 0; i < n; i++)
+            PyList_SetItem(v, i,
+                           PyString_FromString(mlist[i].name));
+        if (PyErr_Occurred()) {
+            Py_DECREF(v);
+            v = NULL;
+        }
+        else {
+            PyList_Sort(v);
+        }
+    }
+    return v;
+}
 
 PyObject *
 PyMember_Get(const char *addr, struct memberlist *mlist, const char *name)

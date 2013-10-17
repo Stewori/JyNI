@@ -2111,6 +2111,7 @@ PyObject_IsTrue(PyObject *v)
 	// if it is negative, it should be either -1 or -2
 	return (res > 0) ? 1 : Py_SAFE_DOWNCAST(res, Py_ssize_t, int);
 }
+ */
 
 // equivalent of 'not v'
 // Return -1 if an error occurred

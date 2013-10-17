@@ -1067,7 +1067,7 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 
 inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 {
-	PyObject* dest;
+	PyObject* dest = NULL;
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
 		//puts("InitPyObject sync-construct");
@@ -1648,7 +1648,7 @@ inline void JyNI_INCREF(jobject obj)
 	env();
 	PyObject* handle = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNILookupNativeHandle, obj);
 	if (handle == NULL) return;
-	INCREF(handle);
+	Py_INCREF(handle);
 }
 
 inline void JyNI_DECREF(jobject obj)
@@ -1656,7 +1656,7 @@ inline void JyNI_DECREF(jobject obj)
 	env();
 	PyObject* handle = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNILookupNativeHandle, obj);
 	if (handle == NULL) return;
-	DECREF(handle);
+	Py_DECREF(handle);
 }
 
 inline void JyNI_Py_CLEAR(jobject obj)
