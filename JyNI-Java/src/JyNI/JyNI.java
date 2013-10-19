@@ -103,7 +103,7 @@ public class JyNI {
 				File loaderFile = new File(fileNames[i]);
 				if (loaderFile.exists())
 				{
-					System.load(fileNames[i]);
+					System.load(loaderFile.getAbsolutePath());
 					loaded = true;
 				} //else
 					//System.out.println("not found: "+loaderFile.getPath());
@@ -135,7 +135,7 @@ public class JyNI {
 					//System.out.println("initJyNI: "+fileNames[i]);
 					nativeHandles = new IdentityHashMap<PyObject, Long>();
 					cur_excLookup = new IdentityHashMap<ThreadState, PyException>(5);
-					initJyNI(fileNames[i]);
+					initJyNI(libFile.getAbsolutePath());
 					//System.out.println("initJyNI done");
 					loaded = true;
 				}

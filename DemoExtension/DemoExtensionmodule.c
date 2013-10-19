@@ -5,7 +5,7 @@
  *	  Author: Stefan Richthofer
  */
 
-#include <Python_JyNI.h>
+#include <Python.h>
 
 PyObject *
 hello_world(PyObject *self, PyObject *args)

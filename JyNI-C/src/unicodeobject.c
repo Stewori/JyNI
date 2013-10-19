@@ -1198,7 +1198,7 @@ PyObject *PyUnicode_FromEncodedObject(register PyObject *obj,
 		s = PyString_AS_STRING(obj);
 		len = PyString_GET_SIZE(obj);
 	}
-//JyNI: exclude this as long as PyByteArray is not supported yet
+//JyNI: exclude this as long as PyByteArray (and thus PyByteArray_Check) is not supported yet
 //	else if (PyByteArray_Check(obj)) {
 //		/* Python 2.x specific */
 //		PyErr_Format(PyExc_TypeError,
@@ -1447,87 +1447,87 @@ int PyUnicode_SetDefaultEncoding(const char *encoding)
    return 0 on success, -1 on error
 */
 
-//static
-//int unicode_decode_call_errorhandler(const char *errors, PyObject **errorHandler,
-//									 const char *encoding, const char *reason,
-//									 const char *input, Py_ssize_t insize, Py_ssize_t *startinpos,
-//									 Py_ssize_t *endinpos, PyObject **exceptionObject, const char **inptr,
-//									 PyUnicodeObject **output, Py_ssize_t *outpos, Py_UNICODE **outptr)
-//{
-//	static char *argparse = "O!n;decoding error handler must return (unicode, int) tuple";
-//
-//	PyObject *restuple = NULL;
-//	PyObject *repunicode = NULL;
-//	Py_ssize_t outsize = PyUnicode_GET_SIZE(*output);
-//	Py_ssize_t requiredsize;
-//	Py_ssize_t newpos;
-//	Py_UNICODE *repptr;
-//	Py_ssize_t repsize;
-//	int res = -1;
-//
-//	if (*errorHandler == NULL) {
-//		*errorHandler = PyCodec_LookupError(errors);
-//		if (*errorHandler == NULL)
-//			goto onError;
-//	}
-//
-//	if (*exceptionObject == NULL) {
-//		*exceptionObject = PyUnicodeDecodeError_Create(
-//			encoding, input, insize, *startinpos, *endinpos, reason);
-//		if (*exceptionObject == NULL)
-//			goto onError;
-//	}
-//	else {
-//		if (PyUnicodeDecodeError_SetStart(*exceptionObject, *startinpos))
-//			goto onError;
-//		if (PyUnicodeDecodeError_SetEnd(*exceptionObject, *endinpos))
-//			goto onError;
-//		if (PyUnicodeDecodeError_SetReason(*exceptionObject, reason))
-//			goto onError;
-//	}
-//
-//	restuple = PyObject_CallFunctionObjArgs(*errorHandler, *exceptionObject, NULL);
-//	if (restuple == NULL)
-//		goto onError;
-//	if (!PyTuple_Check(restuple)) {
-//		PyErr_SetString(PyExc_TypeError, &argparse[4]);
-//		goto onError;
-//	}
-//	if (!PyArg_ParseTuple(restuple, argparse, &PyUnicode_Type, &repunicode, &newpos))
-//		goto onError;
-//	if (newpos<0)
-//		newpos = insize+newpos;
-//	if (newpos<0 || newpos>insize) {
-//		PyErr_Format(PyExc_IndexError, "position %zd from error handler out of bounds", newpos);
-//		goto onError;
-//	}
-//
-//	/* need more space? (at least enough for what we
-//	   have+the replacement+the rest of the string (starting
-//	   at the new input position), so we won't have to check space
-//	   when there are no errors in the rest of the string) */
-//	repptr = PyUnicode_AS_UNICODE(repunicode);
-//	repsize = PyUnicode_GET_SIZE(repunicode);
-//	requiredsize = *outpos + repsize + insize-newpos;
-//	if (requiredsize > outsize) {
-//		if (requiredsize<2*outsize)
-//			requiredsize = 2*outsize;
-//		if (_PyUnicode_Resize(output, requiredsize) < 0)
-//			goto onError;
-//		*outptr = PyUnicode_AS_UNICODE(*output) + *outpos;
-//	}
-//	*endinpos = newpos;
-//	*inptr = input + newpos;
-//	Py_UNICODE_COPY(*outptr, repptr, repsize);
-//	*outptr += repsize;
-//	*outpos += repsize;
-//	/* we made it! */
-//	res = 0;
-//
-//  onError:
-//	Py_XDECREF(restuple);
-//	return res;
-//}
+static
+int unicode_decode_call_errorhandler(const char *errors, PyObject **errorHandler,
+									 const char *encoding, const char *reason,
+									 const char *input, Py_ssize_t insize, Py_ssize_t *startinpos,
+									 Py_ssize_t *endinpos, PyObject **exceptionObject, const char **inptr,
+									 PyUnicodeObject **output, Py_ssize_t *outpos, Py_UNICODE **outptr)
+{
+	static char *argparse = "O!n;decoding error handler must return (unicode, int) tuple";
+
+	PyObject *restuple = NULL;
+	PyObject *repunicode = NULL;
+	Py_ssize_t outsize = PyUnicode_GET_SIZE(*output);
+	Py_ssize_t requiredsize;
+	Py_ssize_t newpos;
+	Py_UNICODE *repptr;
+	Py_ssize_t repsize;
+	int res = -1;
+
+	if (*errorHandler == NULL) {
+		*errorHandler = PyCodec_LookupError(errors);
+		if (*errorHandler == NULL)
+			goto onError;
+	}
+
+	if (*exceptionObject == NULL) {
+		*exceptionObject = PyUnicodeDecodeError_Create(
+			encoding, input, insize, *startinpos, *endinpos, reason);
+		if (*exceptionObject == NULL)
+			goto onError;
+	}
+	else {
+		if (PyUnicodeDecodeError_SetStart(*exceptionObject, *startinpos))
+			goto onError;
+		if (PyUnicodeDecodeError_SetEnd(*exceptionObject, *endinpos))
+			goto onError;
+		if (PyUnicodeDecodeError_SetReason(*exceptionObject, reason))
+			goto onError;
+	}
+
+	restuple = PyObject_CallFunctionObjArgs(*errorHandler, *exceptionObject, NULL);
+	if (restuple == NULL)
+		goto onError;
+	if (!PyTuple_Check(restuple)) {
+		PyErr_SetString(PyExc_TypeError, &argparse[4]);
+		goto onError;
+	}
+	if (!PyArg_ParseTuple(restuple, argparse, &PyUnicode_Type, &repunicode, &newpos))
+		goto onError;
+	if (newpos<0)
+		newpos = insize+newpos;
+	if (newpos<0 || newpos>insize) {
+		PyErr_Format(PyExc_IndexError, "position %zd from error handler out of bounds", newpos);
+		goto onError;
+	}
+
+	/* need more space? (at least enough for what we
+	   have+the replacement+the rest of the string (starting
+	   at the new input position), so we won't have to check space
+	   when there are no errors in the rest of the string) */
+	repptr = PyUnicode_AS_UNICODE(repunicode);
+	repsize = PyUnicode_GET_SIZE(repunicode);
+	requiredsize = *outpos + repsize + insize-newpos;
+	if (requiredsize > outsize) {
+		if (requiredsize<2*outsize)
+			requiredsize = 2*outsize;
+		if (_PyUnicode_Resize(output, requiredsize) < 0)
+			goto onError;
+		*outptr = PyUnicode_AS_UNICODE(*output) + *outpos;
+	}
+	*endinpos = newpos;
+	*inptr = input + newpos;
+	Py_UNICODE_COPY(*outptr, repptr, repsize);
+	*outptr += repsize;
+	*outpos += repsize;
+	/* we made it! */
+	res = 0;
+
+  onError:
+	Py_XDECREF(restuple);
+	return res;
+}
 
 /* --- UTF-7 Codec -------------------------------------------------------- */
 
@@ -2972,10 +2972,10 @@ PyObject *PyUnicode_DecodeUnicodeEscape(const char *s,
 	return (PyObject *)v;
 
   ucnhashError:
-//	PyErr_SetString(
-//		PyExc_UnicodeError,
-//		"\\N escapes not supported (can't load unicodedata module)"
-//		);
+	PyErr_SetString(
+		PyExc_UnicodeError,
+		"\\N escapes not supported (can't load unicodedata module)"
+		);
   {
 	env(NULL);
 	JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeError)
@@ -3502,29 +3502,29 @@ PyObject *PyUnicode_DecodeLatin1(const char *s,
 }
 
 /* create or adjust a UnicodeEncodeError */
-//static void make_encode_exception(PyObject **exceptionObject,
-//								  const char *encoding,
-//								  const Py_UNICODE *unicode, Py_ssize_t size,
-//								  Py_ssize_t startpos, Py_ssize_t endpos,
-//								  const char *reason)
-//{
-//	if (*exceptionObject == NULL) {
-//		*exceptionObject = PyUnicodeEncodeError_Create(
-//			encoding, unicode, size, startpos, endpos, reason);
-//	}
-//	else {
-//		if (PyUnicodeEncodeError_SetStart(*exceptionObject, startpos))
-//			goto onError;
-//		if (PyUnicodeEncodeError_SetEnd(*exceptionObject, endpos))
-//			goto onError;
-//		if (PyUnicodeEncodeError_SetReason(*exceptionObject, reason))
-//			goto onError;
-//		return;
-//	  onError:
-//		Py_DECREF(*exceptionObject);
-//		*exceptionObject = NULL;
-//	}
-//}
+static void make_encode_exception(PyObject **exceptionObject,
+								  const char *encoding,
+								  const Py_UNICODE *unicode, Py_ssize_t size,
+								  Py_ssize_t startpos, Py_ssize_t endpos,
+								  const char *reason)
+{
+	if (*exceptionObject == NULL) {
+		*exceptionObject = PyUnicodeEncodeError_Create(
+			encoding, unicode, size, startpos, endpos, reason);
+	}
+	else {
+		if (PyUnicodeEncodeError_SetStart(*exceptionObject, startpos))
+			goto onError;
+		if (PyUnicodeEncodeError_SetEnd(*exceptionObject, endpos))
+			goto onError;
+		if (PyUnicodeEncodeError_SetReason(*exceptionObject, reason))
+			goto onError;
+		return;
+	  onError:
+		Py_DECREF(*exceptionObject);
+		*exceptionObject = NULL;
+	}
+}
 
 /* raises a UnicodeEncodeError */
 static void raise_encode_exception(PyObject **exceptionObject,
@@ -4299,6 +4299,7 @@ encoding_map_dealloc(PyObject* o)
 	PyObject_FREE(o);
 }
 
+//JyNI-todo: Check how to deal with this type. Is there a Jython equivalent?
 static PyTypeObject EncodingMapType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"EncodingMap",		  /*tp_name*/
@@ -4803,28 +4804,28 @@ PyObject *PyUnicode_AsCharmapString(PyObject *unicode,
 }
 
 /* create or adjust a UnicodeTranslateError */
-//static void make_translate_exception(PyObject **exceptionObject,
-//									 const Py_UNICODE *unicode, Py_ssize_t size,
-//									 Py_ssize_t startpos, Py_ssize_t endpos,
-//									 const char *reason)
-//{
-//	if (*exceptionObject == NULL) {
-//		*exceptionObject = PyUnicodeTranslateError_Create(
-//			unicode, size, startpos, endpos, reason);
-//	}
-//	else {
-//		if (PyUnicodeTranslateError_SetStart(*exceptionObject, startpos))
-//			goto onError;
-//		if (PyUnicodeTranslateError_SetEnd(*exceptionObject, endpos))
-//			goto onError;
-//		if (PyUnicodeTranslateError_SetReason(*exceptionObject, reason))
-//			goto onError;
-//		return;
-//	  onError:
-//		Py_DECREF(*exceptionObject);
-//		*exceptionObject = NULL;
-//	}
-//}
+static void make_translate_exception(PyObject **exceptionObject,
+									 const Py_UNICODE *unicode, Py_ssize_t size,
+									 Py_ssize_t startpos, Py_ssize_t endpos,
+									 const char *reason)
+{
+	if (*exceptionObject == NULL) {
+		*exceptionObject = PyUnicodeTranslateError_Create(
+			unicode, size, startpos, endpos, reason);
+	}
+	else {
+		if (PyUnicodeTranslateError_SetStart(*exceptionObject, startpos))
+			goto onError;
+		if (PyUnicodeTranslateError_SetEnd(*exceptionObject, endpos))
+			goto onError;
+		if (PyUnicodeTranslateError_SetReason(*exceptionObject, reason))
+			goto onError;
+		return;
+	  onError:
+		Py_DECREF(*exceptionObject);
+		*exceptionObject = NULL;
+	}
+}
 
 /* raises a UnicodeTranslateError */
 static void raise_translate_exception(PyObject **exceptionObject,
@@ -6266,7 +6267,7 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 	   and instead turn it into a PyErr_UnicodeWarning.
 
 	*/
-	//if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) return NULL;
+	if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) return NULL;
 	env(NULL);
 	if (!JyNI_JyErr_ExceptionMatches((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeDecodeError))) return NULL;
 	PyErr_Clear();
@@ -6283,16 +6284,16 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 		(*env)->ExceptionClear(env);
 		return NULL;
 	}
-//	if (PyErr_Warn(PyExc_UnicodeWarning,
-//				   (op == Py_EQ) ?
-//				   "Unicode equal comparison "
-//				   "failed to convert both arguments to Unicode - "
-//				   "interpreting them as being unequal" :
-//				   "Unicode unequal comparison "
-//				   "failed to convert both arguments to Unicode - "
-//				   "interpreting them as being unequal"
-//			) < 0)
-//		return NULL;
+	if (PyErr_Warn(PyExc_UnicodeWarning,
+				   (op == Py_EQ) ?
+				   "Unicode equal comparison "
+				   "failed to convert both arguments to Unicode - "
+				   "interpreting them as being unequal" :
+				   "Unicode unequal comparison "
+				   "failed to convert both arguments to Unicode - "
+				   "interpreting them as being unequal"
+			) < 0)
+		return NULL;
 	result = (op == Py_NE);
 	return PyBool_FromLong(result);
 }
