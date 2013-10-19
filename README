@@ -7,7 +7,7 @@ The readme is currently outdated - give me some days for this.
 Main unmentioned new feature is full exception support.
 An important milestone is that JyNI is now able to use the
 original CPython datetime module. This is an important step
-towards NumPY, because NumPy uses datetime C-API that is not
+towards NumPy, because NumPy uses datetime C-API that is not
 provided by Jython's datetime module.
 
 
