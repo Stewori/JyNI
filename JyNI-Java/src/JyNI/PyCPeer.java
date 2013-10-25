@@ -78,9 +78,11 @@ public class PyCPeer extends PyObject {
 			System.out.println(args[i]);*/
 		//PyObject er =
 		if (keywords.length == 0)
-			return JyNI.callPyCPeer(objectHandle,
-				args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null);//Py.None);
-		else {
+		{
+			return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
+				args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null));//Py.None);
+		} else {
+			//System.out.println("xyy2");
 			//todo: Use PyStringMap here... much work needs to be done to make the peer dictobject accept this
 			HashMap<PyObject, PyObject> back = new HashMap<PyObject, PyObject>(keywords.length);
 			for (int i = 0; i < keywords.length; ++i)
@@ -92,9 +94,9 @@ public class PyCPeer extends PyObject {
 			{
 				PyObject[] args2 = new PyObject[args.length - keywords.length];
 				System.arraycopy(args, 0, args2, 0, args2.length);
-				return JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false), new PyDictionary(back));
+				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false), new PyDictionary(back)));
 			} else
-				return JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back));
+				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back)));
 		}
 		
 		/*System.out.println("Call er:");
@@ -122,7 +124,7 @@ public class PyCPeer extends PyObject {
 	
 	public PyString __repr__() {
 		//System.out.println("PyCPeer__repr__");
-		return (PyString) JyNI.repr(objectHandle);
+		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle));
 	}
 
 	public String toString()

@@ -110,7 +110,7 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 		puts("Some error occurred on file close");
 	if (PyErr_Occurred())
 	{
-		puts("error finally occurred! (JyNI_loadModule)");
+		//puts("error finally occurred! (JyNI_loadModule)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -157,7 +157,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 		));
 	if (PyErr_Occurred())
 	{
-		puts("error finally occurred! (JyNI_callPyCPeer)");
+		//puts("error finally occurred! (JyNI_callPyCPeer)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -185,7 +185,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 	jobject er = JyNI_JythonPyObject_FromPyObject(attr);
 	if (PyErr_Occurred())
 	{
-		puts("error finally occurred! (JyNI_getAttrString)");
+		//puts("error finally occurred! (JyNI_getAttrString)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -203,7 +203,7 @@ jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, j
 	jint er = PyObject_SetAttrString((PyObject*) handle, cName, JyNI_PyObject_FromJythonPyObject(value));
 	if (PyErr_Occurred())
 	{
-		puts("error finally occurred! (JyNI_setAttrString)");
+		//puts("error finally occurred! (JyNI_setAttrString)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -236,7 +236,7 @@ jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle)
 	jstring er = JyNI_jstring_FromPyStringObject(env, (PyStringObject*) PyObject_Str((PyObject*) handle));
 	if (PyErr_Occurred())
 	{
-		puts("error finally occurred! (JyNI_PyObjectAsString)");
+		//puts("error finally occurred! (JyNI_PyObjectAsString)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -254,7 +254,7 @@ jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle)
 	jobject er = JyNI_JythonPyObject_FromPyObject(er0);
 	if (PyErr_Occurred())
 	{
-		puts("error finally occurred! (JyNI_PyObjectAsPyString)");
+		//puts("error finally occurred! (JyNI_PyObjectAsPyString)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;

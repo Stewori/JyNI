@@ -2,13 +2,6 @@ If not yet done, make sure to visit our project homepage at
 
 www.jyni.org
 
-The readme is currently outdated - give me some days for this.
-
-Main unmentioned new feature is full exception support.
-An important milestone is that JyNI is now able to use the
-original CPython datetime module. This is an important step
-towards NumPy, because NumPy uses datetime C-API that is not
-provided by Jython's datetime module.
 
 
 Table of contents
@@ -59,28 +52,28 @@ After that we will focus on SciPy and others.
 We are currently able to load a C-extension into Jython, call methods and access attributes,
 provided that the extension uses only CPython-API we have already implemented.
 
-The parse- and build-functions PyArg_ParseTuple(), PyArg_ParseTupleAndKeywords(), PyArg_Parse(), Py_BuildValue and related only work with format-strings as long as the corresponding builtin-types
-are already supported. Alternatively, supported builtin types can be accessed via their c-api-functions
+The parse- and build-functions PyArg_ParseTuple(), PyArg_ParseTupleAndKeywords(), PyArg_Parse(), Py_BuildValue
+and related only work with format-strings as long as the corresponding builtin-types
+are already supported. Alternatively, supported builtin types can be accessed via their C-API-functions
 and even returned to Jython. Keywords work as well.
 
 
-Builtin types already supported:
+The following built-in types are already supported:
 
-PyDict, PyTuple, PyString, PyInteger, PyLong, PyFloat, PyBoolean, PyList, PyComplex, PyModule, PySlice, PyCFunction, PyCapsule are almost fully supported.
-PyType is supported as far as currently needed and possible.
-Exception-types are conceptually supported, but are currently not usable due to bugs.
-
-More coming soon.
+* Number types PyInt, PyLong, PyFloat, PyComplex
+* Sequence types PyTuple, PyList, PySlice
+* Data structure types PyDict, PySet, PyFrozenSet
+* Operational types PyModule, PyClass, PyInstance, PyMethod
+* Singleton types PyNone, PyNotImplemented, PyEllipsis
+* Miscellaneous types PyBool, PyString, PyUnicode
+* Natively defined types (you cannot subclass them (yet) in Jython)
+* Exception types
 
 
 JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit) and
 Linux Mint 13, 64 bit yet. So it would almost surely also work on Ubuntu and Debian.
-For these tests, the bineries of JyNI 2.7-alpha.1 were used.
 If you try it on further distributions, feel free to report your results (see contact section).
 Theoretically, the current version should be buildable for systems with shlib.
-We have not yet developed auto-tools-scripts.
-So building/installing/testing JyNI can only be done by hand at the moment.
-Section 3 contains a brief description of the necessary steps.
 
 
 
@@ -88,58 +81,34 @@ Section 3 contains a brief description of the necessary steps.
 3. Building and testing
 -----------------------
 
-Easiest way to build JyNI is to setup C-, and Java-projects with an IDE of choice.
-3 Projects are needed: JyNI-C, JyNI-Java and JyNI-Loader (and optionally JyNI-DemoExtension).
+* Download the sources from the latest release or by cloning the github repository.
+
+* Provide Jython: You have two ways to provide Jython. Either, you simply copy jython.jar into the
+JyNI base directory, or you edit makefile and adjust the JYTHON-variable such that it points to
+jython.jar. Be sure to use Jython 2.7 (beta) or newer. If you want to use JyNIDemo.sh, you need to
+adjust the Jython-path in that file too.
+
+* If not yet done, install the dev-package of Python 2.7. JyNI only needs pyconfig.h from that package.
+Alternatively (if you know, what you're doing), you can provide your own pyconfig.h. In that case you
+have to adjust the include path in the makefile.
+
+* Build JyNI: Open a terminal and enter the JyNI base directory. Type "make".
+
+To run Jython with JyNI support, call (from JyNI base dir)
+
+java -cp jython.jar:build/JyNI.jar org.python.util.jython someFile.py
+
+Alternatively, one can use Jython's start-script (if you also copied it to the JyNI base dir):
+
+jython -J-cp build/JyNI.jar
 
 
+To run it from a different place, you just need adjust the paths for JyNI and Jython in the above commands.
+Note that
 
-C-section
-.........
+java -cp JyNI.jar -jar jython.jar
 
-JyNI-C and JyNI-Loader are C-projects and must be enabled to include some header
-directories via gcc-option -I.
-
-For JyNI-Loader:
-- JNI
-(usually located in /usr/lib/jvm/java-[version]-openjdk-[architecture]/include)
-- "include"-subfolder from JyNI-Java
-
-For JyNI-C:
-- JNI (like above)
-- its own "include"-subfolder and all subfolders within
-- some folder with an appropriate pyconfig.h for the current system
-(if python-dev for 2.7.x is installed, /usr/include/python2.7 is sufficient for this)
-
-Don't forget to use the fPIC-option.
-Finally link JyNI-C and JyNI-Loader to following dynamic libraries:
-
-libJyNI.so (JyNI-C)
-libJyNI-Loader.so (JyNI-Loader)
-
-Linking is said to require -ldl, though I observed it to work without.
-
-
-
-Java-Section
-............
-
-JyNI-Java needs to have Jython 2.7 beta on its build-time classpath.
-
-The libraries
-- libJyNI-Loader.so
-- libJyNI.so
-should be on the java library path. However, we implemented a wider
-search and also look on the classpath (but not inside jars) and in
-typical places where IDEs place their build-results
-(such as JyNI-Loader/Release, JyNI-Loader/Debug,
-JyNI-C/Release, JyNI-C/Debug).
-
-To run Jython with JyNI, the built class files must be on the
-classpath along with the JyNI-Java subfolder "META-INF".
-If you want to make a jar-file (JyNI.jar) from the resulting
-class-files, don't forget to include the mentioned JyNI-Java
-subfolder "META-INF" into it.
-
+is NOT suitable to run Jython with JyNI support. It does not pass the provided classpath to Jython for some reason.
 
 
 Test-Example
@@ -150,10 +119,22 @@ already supported features of JyNI. It can be built like an
 ordinary Python-extension as described in the tutorial
 http://docs.python.org/2/extending/extending.html
 
+Enter the folder DemoExtension and type "python setup.py build".
+
 JyNI-Demo/src/JyNIDemo.py demonstrates the use of DemoExtension from Python-side.
 It should run perfectly with either CPython 2.7.x or Jython+JyNI.
-To run it with Jython use the newest release of version 2.7
-(currently beta) and be sure to have JyNI.jar on the run-time classpath.
+To run it, type
+
+java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDemo.py
+
+To ease running this example, we provide that line in JyNIDemo.sh, so you can
+alternatively type
+
+sh JyNIDemo.sh
+
+To see a basic demonstration that JyNI is capable of using the original datetime module, type
+
+java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDatetimeTest.py
 
 
 
@@ -161,14 +142,7 @@ To run it with Jython use the newest release of version 2.7
 4. Roadmap
 ----------
 
-Support some more builtin types, at least:
-- PyUnicode
-- PySet
-- PyInstance if possible
-
 Further steps:
-- fix exception, error and warning support
-- implement parameter access and object calls more cleanly
 - fix garbage collection
 - fix pydoc interoperation
 - focus on numpy-specific needs

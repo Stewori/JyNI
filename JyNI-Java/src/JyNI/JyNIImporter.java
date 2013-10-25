@@ -140,7 +140,7 @@ public class JyNIImporter extends PyObject {
 			Py.writeComment("import", "'" + name + "' as java package");
 			return this;
 		}*/
-		//String suf = "."+getSystemDependendDynamicLibraryExtension();
+		String suf = "."+getSystemDependendDynamicLibraryExtension();
 		for (String s : libPaths)
 		{
 			File fl = new File(s);
@@ -151,7 +151,7 @@ public class JyNIImporter extends PyObject {
 				for (String m : ch)
 				{
 					//if (m.equals(name+suf))
-					if (m.startsWith(name+"."))
+					if (m.startsWith(name+".") && m.endsWith(suf))
 					{
 						//System.out.println("CPythonExtensionImporter found extension "+name);
 						//System.out.println("Extension-Path: "+s+File.separatorChar+m);

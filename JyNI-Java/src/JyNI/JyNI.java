@@ -750,6 +750,12 @@ public class JyNI {
 		return cur_excLookup.get(tstate0);
 	}
 	
+	protected static PyObject maybeExc(PyObject obj) throws PyException
+	{
+		if (obj == null) throw Py.getThreadState().exception;
+		else return obj;
+	}
+	
 	public static void JyErr_InsertCurExc(ThreadState tstate)
 	{
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;

@@ -165,11 +165,12 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 //		return NULL; // JNI version not supported
 //	}
 	env(NULL);
-	if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNIGetDLVerbose))
-	{
-		PySys_WriteStderr("dlopen(\"%s\", %x);\n", pathname,
-						  dlopenflags);
-	}
+	//JyNI todo: fix verbose mode; it currently segfaults if active
+	//if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNIGetDLVerbose))
+//	{
+//		PySys_WriteStderr("dlopen(\"%s\", %x);\n", pathname, dlopenflags);
+//	}
+	//printf("dlopen(\"%s\", %x);\n", pathname, dlopenflags);
 #ifdef __VMS
 	/* VMS currently don't allow a pathname, use a logical name instead */
 	/* Concatenate 'python_module_' and shortname */
@@ -186,9 +187,10 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 		const char *error = dlerror();
 		if (error == NULL)
 			error = "unknown dlopen() error";
-		puts("dlopen-error:");
-		puts(error);
-		//PyErr_SetString(PyExc_ImportError, error);
+//		puts("dlopen-error:");
+//		puts(error);
+//		puts(pathname);
+		PyErr_SetString(PyExc_ImportError, error);
 		JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError), error);
 		return NULL;
 	}

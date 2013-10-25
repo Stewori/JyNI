@@ -165,12 +165,14 @@ setPopTest(PyObject* self, PyObject* args)
 PyObject*
 exceptionTest(PyObject* self, PyObject* args)
 {
-	puts("exceptionTest:");
-	if (PyErr_Occurred()) puts("Error present");
-	else  puts("no Error present");
-	if (Py_IgnoreEnvironmentFlag) puts("ignore");
-	else puts("not ignore");
-	Py_RETURN_NONE;
+//	puts("exceptionTest:");
+//	if (PyErr_Occurred()) puts("Error present");
+//	else  puts("no Error present");
+//	if (Py_IgnoreEnvironmentFlag) puts("ignore");
+//	else puts("not ignore");
+	PyErr_SetString(PyExc_SystemError, "This is a test exception message for JyNI.");
+	//Py_RETURN_NONE;
+	return NULL;
 }
 
 PyMethodDef DemoExtensionMethods[] = {
@@ -185,7 +187,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"argCountToString", argCountToString, METH_VARARGS, "Returns number of arguments as string."},
 	{"concatFirstWithLastString", concatFirstWithLastString, METH_VARARGS, "Concatenates first with last element. Returns empty string, if less than two args are available."},
 	{"keywordTest", keywordTest, METH_VARARGS | METH_KEYWORDS, "Tests working with keywords."},
-	{"exceptionTest", exceptionTest, METH_NOARGS, "Part of experiments to find out details about CPythons exception handling behavior."},
+	{"exceptionTest", exceptionTest, METH_NOARGS, "Raise an exception to test JyNI's exception support."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

@@ -44,7 +44,7 @@
  */
 
 /*
- * JyNI todo:
+ * JyNI note:
  * Implement exception-handling according to this excerpt from
  * http://docs.python.org/2/c-api/intro.html#exceptions:
  *
