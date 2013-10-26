@@ -155,7 +155,8 @@ Further steps:
 5. Binary compatibility
 -----------------------
 
-CPython-extensions must be compiled with the flag WITH_PYMALLOC activated. Otherwise they may not use
+CPython-extensions must be compiled with the flag WITH_PYMALLOC activated
+(which is actually the default anyway). Otherwise they must not use
 the macros PyObject_MALLOC, PyObject_REALLOC and PyObject_FREE directly.
 If they use these macros with WITH_PYMALLOC not activated, JyNI will most likely produce segmantation
 faults. This is because without the flag, these macros directly map to the systems malloc-function
