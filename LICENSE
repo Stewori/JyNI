@@ -24,8 +24,8 @@ in the file "COPYING".  If you do not have the source code, it is available at:
   exception statement from your version.
 
 
-JyNI is partly based on source-files from CPython 2.7.3 and 2.7.4.
-As such, it includes the common license of CPython 2.7.3, 2.7.4
+JyNI is partly based on source-files from CPython 2.7.3, 2.7.4 and 2.7.5.
+As such, it includes the common license of CPython 2.7.3, 2.7.4, 2.7.5
 and Jython in the file "PSF-LICENSE-2". Whether a source-file
 is directly based on CPython source-code is documented at the
 beginning of each file.

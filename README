@@ -25,15 +25,16 @@ Table of contents
 1. What is JyNI?
 ----------------
 
-One well known current drawback of Jython is that it does not support native extensions written for CPython like NumPy and Scipy.
-Since most scientific Python-code fundamentally depends on exactly such native extensions, it usually cannot be run with Jython.
-JyNI aims to close this gap. It is a layer that enables Jython-users to 
-load native CPython-extensions and access them from Jython
-the same way as they would do in CPython. In order to leverage
-the JyNI functionality, you just have to put it on the
-java-classpath when Jython is launched.
-It neither requires you to recompile the extension-code, nor to build
-a customized Jython-fork. That means, it is binary compatible with existing extension-builds.
+One well known current drawback of Jython is that it does not support native
+extensions written for CPython like NumPy and Scipy. Since most scientific
+Python-code fundamentally depends on exactly such native extensions, it
+usually cannot be run with Jython. JyNI aims to close this gap. It is a
+layer that enables Jython-users to load native CPython-extensions and access
+them from Jython the same way as they would do in CPython. In order to
+leverage the JyNI functionality, you just have to put it on the
+java-classpath when Jython is launched. It neither requires you to recompile
+the extension-code, nor to build a customized Jython-fork. That means, it is
+binary compatible with existing extension-builds.
 
 At the time when this is written, JyNI does not fully implement
 the Python C-API and we are in fact just capable to load and run simple examples
@@ -49,13 +50,15 @@ After that we will focus on SciPy and others.
 2. Current state
 ----------------
 
-We are currently able to load a C-extension into Jython, call methods and access attributes,
-provided that the extension uses only CPython-API we have already implemented.
+We are currently able to load a C-extension into Jython, call methods and access
+attributes, provided that the extension uses only CPython-API we have already
+implemented.
 
-The parse- and build-functions PyArg_ParseTuple(), PyArg_ParseTupleAndKeywords(), PyArg_Parse(), Py_BuildValue
-and related only work with format-strings as long as the corresponding builtin-types
-are already supported. Alternatively, supported builtin types can be accessed via their C-API-functions
-and even returned to Jython. Keywords work as well.
+The parse- and build-functions PyArg_ParseTuple(), PyArg_ParseTupleAndKeywords(),
+PyArg_Parse(), Py_BuildValue and related only work with format-strings as long
+as the corresponding builtin-types are already supported. Alternatively, supported
+builtin types can be accessed via their C-API-functions and even returned to
+Jython. Keywords work as well.
 
 
 The following built-in types are already supported:
@@ -70,10 +73,11 @@ The following built-in types are already supported:
 * Exception types
 
 
-JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit) and
-Linux Mint 13, 64 bit yet. So it would almost surely also work on Ubuntu and Debian.
-If you try it on further distributions, feel free to report your results (see contact section).
-Theoretically, the current version should be buildable for systems with shlib.
+JyNI has only been tested on Linux Mint Debian edition (LMDE) (32 bit and 64 bit)
+and Linux Mint 13, 64 bit yet. So it would almost surely also work on Ubuntu and
+Debian. If you try it on further distributions, feel free to report your results
+(see contact section). Theoretically, the current version should be buildable
+for systems with shlib.
 
 
 
@@ -83,14 +87,16 @@ Theoretically, the current version should be buildable for systems with shlib.
 
 * Download the sources from the latest release or by cloning the github repository.
 
-* Provide Jython: You have two ways to provide Jython. Either, you simply copy jython.jar into the
-JyNI base directory, or you edit makefile and adjust the JYTHON-variable such that it points to
-jython.jar. Be sure to use Jython 2.7 (beta) or newer. If you want to use JyNIDemo.sh, you need to
-adjust the Jython-path in that file too.
+* Provide Jython: You have two ways to provide Jython. Either, you simply
+copy jython.jar into the JyNI base directory, or you edit makefile and adjust
+the JYTHON-variable such that it points to jython.jar. Be sure to use
+Jython 2.7 (beta) or newer. If you want to use JyNIDemo.sh, you need to adjust
+the Jython-path in that file too.
 
-* If not yet done, install the dev-package of Python 2.7. JyNI only needs pyconfig.h from that package.
-Alternatively (if you know, what you're doing), you can provide your own pyconfig.h. In that case you
-have to adjust the include path in the makefile.
+* If not yet done, install the dev-package of Python 2.7. JyNI only needs
+pyconfig.h from that package. Alternatively (if you know, what you're doing),
+you can provide your own pyconfig.h. In that case you have to adjust the
+include path in the makefile.
 
 * Build JyNI: Open a terminal and enter the JyNI base directory. Type "make".
 
@@ -98,17 +104,20 @@ To run Jython with JyNI support, call (from JyNI base dir)
 
 java -cp jython.jar:build/JyNI.jar org.python.util.jython someFile.py
 
-Alternatively, one can use Jython's start-script (if you also copied it to the JyNI base dir):
+Alternatively, one can use Jython's start-script
+(if you also copied it to the JyNI base dir):
 
 jython -J-cp build/JyNI.jar
 
 
-To run it from a different place, you just need adjust the paths for JyNI and Jython in the above commands.
+To run it from a different place, you just need adjust the paths for
+JyNI and Jython in the above commands.
 Note that
 
 java -cp JyNI.jar -jar jython.jar
 
-is NOT suitable to run Jython with JyNI support. It does not pass the provided classpath to Jython for some reason.
+is NOT suitable to run Jython with JyNI support. It does not pass the
+provided classpath to Jython for some reason.
 
 
 Test-Example
@@ -158,15 +167,18 @@ Further steps:
 CPython-extensions must be compiled with the flag WITH_PYMALLOC activated
 (which is actually the default anyway). Otherwise they must not use
 the macros PyObject_MALLOC, PyObject_REALLOC and PyObject_FREE directly.
-If they use these macros with WITH_PYMALLOC not activated, JyNI will most likely produce segmantation
-faults. This is because without the flag, these macros directly map to the systems malloc-function
-family. In that case JyNI would not be able to prepare the JyObject-header in every case.
-However, it would be easy to recompile such extensions for JyNI. Simply add the WITH_PYMALLOC-definition
-at compile-time or replace the macros by their corresponding function-calls.
+If they use these macros with WITH_PYMALLOC not activated, JyNI will most
+likely produce segmantation faults. This is because without the flag, these
+macros directly map to the systems malloc-function family. In that case
+JyNI would not be able to prepare the JyObject-header in every case.
+However, it would be easy to recompile such extensions for JyNI. Simply add
+the WITH_PYMALLOC-definition at compile-time or replace the macros by their
+corresponding function-calls.
 
-In general, the less an extension hacks with CPython-specific internals, the greater the chance it will
-run with JyNI. Especially allocation/deallocation should not be done by hand, since JyNI must be able to
-setup the JyObject-headers.
+In general, the less an extension hacks with CPython-specific internals,
+the greater the chance it will run with JyNI. Especially
+allocation/deallocation should not be done by hand, since JyNI must be able
+to setup the JyObject-headers.
 
 We hope, extensions that suffer from this issue are very rare or not existent.
 
@@ -176,16 +188,34 @@ We hope, extensions that suffer from this issue are very rare or not existent.
 6. Summary of changes to Python-code
 ------------------------------------
 
-Briefly speaking, we took the python files crucial for loading native C-extensions and modified them to perform the explained purpose of JyNI.
-Mainly we changed alloc and dealloc behaviour of PyObjects consequently, also when occuring inline like in stringobject.c or intobject.c. The new allocation behaviour adds a header called JyObject before the PyObject header or even in front of PyGC_Head if present. This header contains information that allows to wrap or mirror a corresponding Jython jobject in a seamless way.
+Briefly speaking, we took the python files crucial for loading native C-extensions
+and modified them to perform the explained purpose of JyNI.
+Mainly we changed alloc and dealloc behaviour of PyObjects consequently, also when
+occuring inline like in stringobject.c or intobject.c. The new allocation
+behaviour adds a header called JyObject before the PyObject header or even in
+front of PyGC_Head if present. This header contains information that allows to
+wrap or mirror a corresponding Jython jobject in a seamless way.
 
-Mirror mode is used for builtin types that allow access to their data-structure via macros. To keep these accesses valid, the data structure mirrors the actual Jython jobject. Syncing is not an issue for immutable objects and can be done initially for each object. One mutable builtin object needing mirror-mode is PyList. We perform sync from java by inserting a special java.util.List implementation as a backend into the corresponding Jython PyList.
-A bit more tricky is PyByteArray, which also features a direct-access-macro, namely PyByteArray_AS_STRING.
-However a fix for this has low priority, as this macro is not used by NumPy. Nevertheless, we can say a bit
-about this issue. As PyByteArray in Jython uses a primitive byte[]-array as backend, we can't replace the backend by a subclass. Our most promising idea to solve the issue anyway, is to insert a custom implementation of SequenceIndexDelegate as delegator (PyByteArray is a subclass of PySequence and thus offers a delegator-field, which allows to customize the indexed access-behaviour).
+Mirror mode is used for builtin types that allow access to their data-structure
+via macros. To keep these accesses valid, the data structure mirrors the actual
+Jython jobject. Syncing is not an issue for immutable objects and can be done
+initially for each object. One mutable builtin object needing mirror-mode is
+PyList. We perform sync from java by inserting a special java.util.List
+implementation as a backend into the corresponding Jython PyList.
+A bit more tricky is PyByteArray, which also features a direct-access-macro,
+namely PyByteArray_AS_STRING. However a fix for this has low priority, as this
+macro is not used by NumPy. Nevertheless, we can say a bit about this issue. As
+PyByteArray in Jython uses a primitive byte[]-array as backend, we can't replace
+the backend by a subclass. Our most promising idea to solve the issue anyway, is
+to insert a custom implementation of SequenceIndexDelegate as delegator
+(PyByteArray is a subclass of PySequence and thus offers a delegator-field,
+which allows to customize the indexed access-behaviour).
 
-Builtins that don't provide access via macros can be wrappered. That means, the original CPython data structure is not used and not even allocated. All functions of such objects are rewritten to delegate their calls to Jython.
-However, also in these cases, we usually don't rewrite everything. Functions that access the data only via other functions are mostly kept unchanged.
+Builtins that don't provide access via macros can be wrappered. That means, the
+original CPython data structure is not used and not even allocated. All functions
+of such objects are rewritten to delegate their calls to Jython.
+However, also in these cases, we usually don't rewrite everything. Functions
+that access the data only via other functions are mostly kept unchanged.
 
 
 
