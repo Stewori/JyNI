@@ -33,9 +33,9 @@ print DemoExtension.__doc__
 # With these lines this demo becomes a program that neither Jython without JyNI,
 # nor ordinary CPython could run.
 
-print "To prove that Jython is running, we make a java call:"
-from  java.lang import System
-print "System.currentTimeMillis: "+str(System.currentTimeMillis())
+#print "To prove that Jython is running, we make a java call:"
+#from  java.lang import System
+#print "System.currentTimeMillis: "+str(System.currentTimeMillis())
 
 
 print ""
@@ -90,5 +90,9 @@ print "after popping "+str(p)+" elements:"
 print fruit
 
 print ""
-print "============in JyNI-case expect native output after these lines=================="
-print "==(it is a JNI issue that native output is displayed after java output is done)=="
+print "=================================================="
+print "On some consoles, Java displays native output from"
+print "JNI extensions after the last non-native output."
+print "This usually also affects JyNI output. So expect"
+print "native output after these lines on such consoles."
+print "=================================================="
