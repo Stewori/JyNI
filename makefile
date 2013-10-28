@@ -16,6 +16,9 @@ JYTHON = ./jython.jar
 # Adjust the two paths below to match your system, if not yet appropriate
 PY_INCLUDE = /usr/include/python2.7
 JAVA_HOME = /usr/lib/jvm/default-java
+#The symlink "default-java" does not exist on every system. If gnumake tells you that the header
+#jni.h is missing, please adjust JAVA_HOME appropriately. Example for Java 7, 64 bit:
+#JAVA_HOME = /usr/lib/jvm/java-7-openjdk-amd64
 
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
