@@ -1,9 +1,8 @@
 import sys
+
+#Include native Tkinter:
 sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
-#sys.path.insert(0, '../../../Tkinter/Tkinter-C/Debug')
-#import _tkinter
 sys.path.insert(0, '/usr/lib/python2.7/lib-tk')
-#sys.path.insert(0, '../../../Tkinter/Tkinter-Python')
 
 from Tkinter import *
 
@@ -22,10 +21,11 @@ Label(root, text = "Welcome to JyNI Tkinter-Demo!").pack()
 Button(root, text="print \"test\"", command=printTest).pack()
 Button(root, text="print timestamp", command=printTimeStamp).pack()
 Button(root, text="print \"test2\"", command=printTest2).pack()
-# #Button(root, text="Quit", command=lambda root=root:quit(root)).pack()
 Button(root, text="Quit", command=root.destroy).pack()
 
 root.mainloop()
+
+print ""
 print "===="
 print "exit"
 print "===="
