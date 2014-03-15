@@ -72,7 +72,7 @@ The following built-in types are already supported:
 * Native types PyCFunction, PyCapsule, PyCObject
 * Natively defined custom-types
 * Exception types
-* PyType as static type or heap type (partly - as far as needed)
+* PyType as static type or heap type
 
 
 JyNI has been tested on
