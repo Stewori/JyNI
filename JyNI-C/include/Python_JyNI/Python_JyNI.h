@@ -1,12 +1,12 @@
 /* This File is based on Python.h from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -51,7 +51,7 @@
  * We still keep the differences to the original headers as small as possible.
  * Using RTLD_LAZY for dynamic loading gives us a fail-late behavior if
  * extensions need any symbols excluded from our header versions. This way we
- * are able to test partly implemented protocols and builtin types, converging
+ * are able to test partly implemented protocols and built-in types, converging
  * to a full implementation over time.
  */
 #ifndef Py_PYTHON_H
@@ -166,7 +166,7 @@
 #include "pycapsule_JyNI.h"
 #include "traceback_JyNI.h"
 #include "sliceobject_JyNI.h"
-//#include "cellobject_JyNI.h"
+#include "cellobject_JyNI.h"
 //#include "iterobject_JyNI.h"
 //#include "genobject_JyNI.h"
 #include "descrobject_JyNI.h"
@@ -176,11 +176,11 @@
 #include "codecs_JyNI.h"
 #include "pyerrors_JyNI.h"
 
-//#include "pystate_JyNI.h"
+#include "pystate_JyNI.h"
 
 //#include "pyarena_JyNI.h"
 #include "modsupport_JyNI.h"
-//#include "pythonrun_JyNI.h"
+#include "pythonrun_JyNI.h"
 #include "ceval_JyNI.h"
 #include "sysmodule_JyNI.h"
 //#include "intrcheck_JyNI.h"

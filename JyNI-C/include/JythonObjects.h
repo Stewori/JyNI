@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -67,7 +67,7 @@ extern jmethodID pyObject__getattr__;
 extern jmethodID pyObject__findattr__;
 extern jmethodID pyObject__setattr__;
 extern jmethodID pyObject__repr__;
-extern jmethodID pyObjectHashCode;
+extern jmethodID pyObject__cmp__;
 extern jmethodID pyObject__reduce__;
 extern jmethodID pyObject__and__;
 extern jmethodID pyObject__or__;
@@ -76,11 +76,17 @@ extern jmethodID pyObject__xor__;
 extern jmethodID pyObject__isub__;
 extern jmethodID pyObject__call__;
 extern jmethodID pyObject__str__;
-extern jmethodID pyObject__getitem__;
+extern jmethodID pyObject__finditem__;
+//extern jmethodID pyObject__getitem__;
+extern jmethodID pyObject__setitem__;
+extern jmethodID pyObject__delitem__;
+extern jmethodID pyObject__len__;
 extern jmethodID pyObject__getslice__;
 extern jmethodID pyObjectGetDict;
+extern jmethodID pyObjectFastGetDict;
 extern jmethodID pyObjectSetDict;
 extern jmethodID pyObjectIsCallable;
+extern jmethodID pyObjectHashCode;
 
 extern jclass pyFrameClass;
 
@@ -110,12 +116,15 @@ extern jmethodID pyListGetArray;
 extern jclass pyDictClass;
 extern jmethodID pyDictConstructor;
 extern jmethodID pyDictByPyObjectArrayConstructor;
-extern jmethodID pyDictGet_PyObject;
-extern jmethodID pyDictGet_PyObjectWithDefault;
-extern jmethodID pyDict__setitem__;
-extern jmethodID pyDict__delitem__;
-extern jmethodID pyDictClear;
-extern jmethodID pyDictSize;
+//extern jmethodID pyDictGet_PyObject;
+//extern jmethodID pyDictGet_PyObjectWithDefault;
+//extern jmethodID pyDict__setitem__;
+//extern jmethodID pyDict__delitem__;
+//extern jmethodID pyDictClear;
+//extern jmethodID pyDictSize;
+
+extern jclass pyStringMapClass;
+//extern jmethodID pyStringMapClear;
 
 extern jclass pyIntClass;
 extern jmethodID pyIntConstructor;
@@ -151,6 +160,10 @@ extern jfieldID pyComplexImagField;
 
 extern jclass pyTypeClass;
 extern jmethodID pyTypeGetName;
+extern jmethodID pyTypeSetName;
+extern jmethodID pyTypeGetBase;
+extern jmethodID pyTypeGetBases;
+//extern jmethodID pyTypeGetMro;
 extern jmethodID pyTypeIsSubType;
 
 extern jclass pySequenceClass;
@@ -180,6 +193,8 @@ extern jmethodID pyModule__setattr__;
 extern jmethodID pyModule__delattr__;
 
 extern jclass pyCellClass;
+extern jmethodID pyCellConstructor;
+extern jfieldID pyCell_ob_ref;
 
 extern jclass pyClassClass;
 extern jmethodID pyClassClassobj___new__;
@@ -194,6 +209,17 @@ extern jfieldID pyMethod__self__;
 extern jfieldID pyMethodImClass;
 
 extern jclass pyFunctionClass;
+extern jmethodID pyFunctionConstructor;
+extern jfieldID pyFunction__code__;
+extern jmethodID pyFunctionSetCode;
+extern jmethodID pyFunctionGetFuncGlobals;
+extern jfieldID pyFunction__module__;
+extern jmethodID pyFunctionGetFuncDefaults;
+extern jmethodID pyFunctionSetFuncDefaults;
+extern jfieldID pyFunctionFuncClosure;
+extern jfieldID pyFunction__doc__;
+extern jfieldID pyFunction__name__;
+
 extern jclass pyClassMethodClass;
 extern jclass pyStaticMethodClass;
 extern jclass pyMethodDescrClass;
@@ -245,7 +271,31 @@ extern jmethodID pySliceIndicesEx;
 
 extern jclass pyEllipsisClass;
 extern jclass pyGeneratorClass;
-extern jclass pyCodeClass;
+
+//extern jclass pyCodeClass;
+extern jfieldID pyCode_co_name;
+
+//extern jclass pyBaseCodeClass;
+extern jfieldID pyBaseCode_co_argcount;
+extern jfieldID pyBaseCode_co_cellvars;
+extern jfieldID pyBaseCode_co_filename;
+extern jfieldID pyBaseCode_co_firstlineno;
+//extern jfieldID pyBaseCode_co_flags;
+extern jfieldID pyBaseCode_co_freevars;
+extern jfieldID pyBaseCode_co_nlocals;
+extern jfieldID pyBaseCode_co_varnames;
+
+extern jclass pyBytecodeClass;
+extern jmethodID pyBytecodeConstructor;
+//extern jfieldID pyBytecode_co_code;
+extern jfieldID pyBytecode_co_consts;
+//extern jfieldID pyBytecode_co_lnotab;
+extern jfieldID pyBytecode_co_names;
+extern jfieldID pyBytecode_co_stacksize;
+
+extern jclass pyTableCodeClass;
+//extern jfieldID pyTableCode_co_code;
+
 extern jclass pyCallIterClass;
 extern jclass pySuperClass;
 

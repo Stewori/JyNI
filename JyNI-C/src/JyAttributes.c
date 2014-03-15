@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -54,6 +54,7 @@ const char* JyAttributeJyChecksum = "jyCs";
 const char* JyAttributeSyncFunctions = "sync";
 const char* JyAttributeModuleFile = "modf";
 const char* JyAttributeModuleName = "modn";
+const char* JyAttributeTypeName = "typn";
 const char* JyAttributeStringInterned = "strI";
 const char* JyAttributeSetEntry = "setE";
 
@@ -171,10 +172,12 @@ inline void JyNI_AddOrSetJyAttribute(JyObject* obj, const char* name, void* valu
 	{
 		if (nxt->name == name)
 		{
-			if ((nxt->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt->value))
-				free(nxt->value);
+			JyNI_ClearJyAttributeValue(nxt);
+//			if ((nxt->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt->value))
+//				free(nxt->value);
 			nxt->value = value;
 			nxt->flags = 0;
+			return;
 		}
 		else
 			nxt = nxt->next;
@@ -189,10 +192,12 @@ inline void JyNI_AddOrSetJyAttributeWithFlags(JyObject* obj, const char* name, v
 	{
 		if (nxt->name == name)
 		{
-			if ((nxt->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt->value))
-				free(nxt->value);
+			JyNI_ClearJyAttributeValue(nxt);
+//			if ((nxt->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt->value))
+//				free(nxt->value);
 			nxt->value = value;
 			nxt->flags = flags;
+			return;
 		}
 		else
 			nxt = nxt->next;

@@ -1,12 +1,12 @@
 /* This File is based on tupleobject.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -255,28 +255,29 @@ PyTuple_Pack(Py_ssize_t n, ...)
 static void
 tupledealloc(register PyTupleObject *op)
 {
-	 register Py_ssize_t i;
-	 register Py_ssize_t len =  Py_SIZE(op);
-	 PyObject_GC_UnTrack(op);
-	 Py_TRASHCAN_SAFE_BEGIN(op)
-	 if (len > 0) {
-		  i = len;
-		  while (--i >= 0)
-				Py_XDECREF(op->ob_item[i]);
+	register Py_ssize_t i;
+	register Py_ssize_t len =  Py_SIZE(op);
+	PyObject_GC_UnTrack(op);
+	Py_TRASHCAN_SAFE_BEGIN(op)
+	if (len > 0) {
+		i = len;
+		while (--i >= 0)
+			Py_XDECREF(op->ob_item[i]);
+
 #if PyTuple_MAXSAVESIZE > 0
-		  if (len < PyTuple_MAXSAVESIZE &&
-				numfree[len] < PyTuple_MAXFREELIST &&
-				Py_TYPE(op) == &PyTuple_Type)
-		  {
-		  	JyNI_CleanUp_JyObject(AS_JY_WITH_GC(op));
-				op->ob_item[0] = (PyObject *) free_list[len];
-				numfree[len]++;
-				free_list[len] = op;
-				goto done; /* return */
-		  }
+		if (len < PyTuple_MAXSAVESIZE &&
+			numfree[len] < PyTuple_MAXFREELIST &&
+			Py_TYPE(op) == &PyTuple_Type)
+		{
+			JyNI_CleanUp_JyObject(AS_JY_WITH_GC(op));
+			op->ob_item[0] = (PyObject *) free_list[len];
+			numfree[len]++;
+			free_list[len] = op;
+			goto done; /* return */
+		}
 #endif
-	 }
-	 Py_TYPE(op)->tp_free((PyObject *)op);
+	}
+	Py_TYPE(op)->tp_free((PyObject *)op);
 done:
 	 Py_TRASHCAN_SAFE_END(op)
 }
@@ -845,42 +846,42 @@ PyTypeObject PyTuple_Type = {
 	 "tuple",
 	 sizeof(PyTupleObject) - sizeof(PyObject *),
 	 sizeof(PyObject *),
-	 (destructor)tupledealloc,						 /* tp_dealloc */
-	 0,//(printfunc)tupleprint,							 /* tp_print */
-	 0,														/* tp_getattr */
-	 0,														/* tp_setattr */
-	 0,														/* tp_compare */
-	 0,//(reprfunc)tuplerepr,								/* tp_repr */
-	 0,														/* tp_as_number */
-	 &tuple_as_sequence,								 /* tp_as_sequence */
-	 0,//&tuple_as_mapping,								  /* tp_as_mapping */
+	 (destructor)tupledealloc,							/* tp_dealloc */
+	 0,//(printfunc)tupleprint,							/* tp_print */
+	 0,													/* tp_getattr */
+	 0,													/* tp_setattr */
+	 0,													/* tp_compare */
+	 0,//(reprfunc)tuplerepr,							/* tp_repr */
+	 0,													/* tp_as_number */
+	 &tuple_as_sequence,								/* tp_as_sequence */
+	 0,//&tuple_as_mapping,								/* tp_as_mapping */
 	 (hashfunc)tuplehash,								/* tp_hash */
-	 0,														/* tp_call */
-	 0,														/* tp_str */
-	 0,//PyObject_GenericGetAttr,						  /* tp_getattro */
-	 0,														/* tp_setattro */
-	 0,														/* tp_as_buffer */
+	 0,													/* tp_call */
+	 0,													/* tp_str */
+	 0,//PyObject_GenericGetAttr,						/* tp_getattro */
+	 0,													/* tp_setattro */
+	 0,													/* tp_as_buffer */
 	 Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
 		  Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TUPLE_SUBCLASS, /* tp_flags */
-	 tuple_doc,											 /* tp_doc */
-	 (traverseproc)tupletraverse,					 /* tp_traverse */
-	 0,														/* tp_clear */
+	 tuple_doc,											/* tp_doc */
+	 (traverseproc)tupletraverse,						/* tp_traverse */
+	 0,													/* tp_clear */
 	 tuplerichcompare,									/* tp_richcompare */
-	 0,														/* tp_weaklistoffset */
-	 tuple_iter,											/* tp_iter */
-	 0,														/* tp_iternext */
+	 0,													/* tp_weaklistoffset */
+	 tuple_iter,										/* tp_iter */
+	 0,													/* tp_iternext */
 	 tuple_methods,										/* tp_methods */
-	 0,														/* tp_members */
-	 0,														/* tp_getset */
-	 0,														/* tp_base */
-	 0,														/* tp_dict */
-	 0,														/* tp_descr_get */
-	 0,														/* tp_descr_set */
-	 0,														/* tp_dictoffset */
-	 0,														/* tp_init */
-	 0,														/* tp_alloc */
-	 0,//tuple_new,											 /* tp_new */
-	 PyObject_GC_Del,									 /* tp_free */
+	 0,													/* tp_members */
+	 0,													/* tp_getset */
+	 0,													/* tp_base */
+	 0,													/* tp_dict */
+	 0,													/* tp_descr_get */
+	 0,													/* tp_descr_set */
+	 0,													/* tp_dictoffset */
+	 0,													/* tp_init */
+	 0,													/* tp_alloc */
+	 0,//tuple_new,										/* tp_new */
+	 PyObject_GC_Del,									/* tp_free */
 };
 
 /* The following function breaks the notion that tuples are immutable:
@@ -1048,11 +1049,11 @@ static PyMethodDef tupleiter_methods[] = {
 
 PyTypeObject PyTupleIter_Type = {
 	 PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	 "tupleiterator",									 /* tp_name */
-	 sizeof(tupleiterobject),						  /* tp_basicsize */
+	 "tupleiterator",										/* tp_name */
+	 sizeof(tupleiterobject),								/* tp_basicsize */
 	 0,														/* tp_itemsize */
 	 /* methods */
-	 (destructor)tupleiter_dealloc,				  /* tp_dealloc */
+	 (destructor)tupleiter_dealloc,							/* tp_dealloc */
 	 0,														/* tp_print */
 	 0,														/* tp_getattr */
 	 0,														/* tp_setattr */
@@ -1064,18 +1065,18 @@ PyTypeObject PyTupleIter_Type = {
 	 0,														/* tp_hash */
 	 0,														/* tp_call */
 	 0,														/* tp_str */
-	 0,//PyObject_GenericGetAttr,						  /* tp_getattro */
+	 0,//PyObject_GenericGetAttr,							/* tp_getattro */
 	 0,														/* tp_setattro */
 	 0,														/* tp_as_buffer */
-	 Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+	 Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,				/* tp_flags */
 	 0,														/* tp_doc */
-	 (traverseproc)tupleiter_traverse,			  /* tp_traverse */
+	 (traverseproc)tupleiter_traverse,						/* tp_traverse */
 	 0,														/* tp_clear */
 	 0,														/* tp_richcompare */
 	 0,														/* tp_weaklistoffset */
-	 PyObject_SelfIter,								  /* tp_iter */
-	 (iternextfunc)tupleiter_next,					/* tp_iternext */
-	 tupleiter_methods,								  /* tp_methods */
+	 PyObject_SelfIter,										/* tp_iter */
+	 (iternextfunc)tupleiter_next,							/* tp_iternext */
+	 tupleiter_methods,										/* tp_methods */
 	 0,
 };
 

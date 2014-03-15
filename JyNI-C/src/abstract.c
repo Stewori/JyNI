@@ -1,12 +1,12 @@
 /* This File is based on abstract.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -286,120 +286,120 @@ PyObject_Type(PyObject *o)
 //	Py_DECREF(okey);
 //	return ret;
 //}
-//
-//int
-//PyObject_AsCharBuffer(PyObject *obj,
-//						  const char **buffer,
-//						  Py_ssize_t *buffer_len)
-//{
-//	PyBufferProcs *pb;
-//	char *pp;
-//	Py_ssize_t len;
-//
-//	if (obj == NULL || buffer == NULL || buffer_len == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	pb = obj->ob_type->tp_as_buffer;
-//	if (pb == NULL ||
-//		 pb->bf_getcharbuffer == NULL ||
-//		 pb->bf_getsegcount == NULL) {
-//		PyErr_SetString(PyExc_TypeError,
-//						"expected a character buffer object");
-//		return -1;
-//	}
-//	if ((*pb->bf_getsegcount)(obj,NULL) != 1) {
-//		PyErr_SetString(PyExc_TypeError,
-//						"expected a single-segment buffer object");
-//		return -1;
-//	}
-//	len = (*pb->bf_getcharbuffer)(obj, 0, &pp);
-//	if (len < 0)
-//		return -1;
-//	*buffer = pp;
-//	*buffer_len = len;
-//	return 0;
-//}
-//
-//int
-//PyObject_CheckReadBuffer(PyObject *obj)
-//{
-//	PyBufferProcs *pb = obj->ob_type->tp_as_buffer;
-//
-//	if (pb == NULL ||
-//		pb->bf_getreadbuffer == NULL ||
-//		pb->bf_getsegcount == NULL ||
-//		(*pb->bf_getsegcount)(obj, NULL) != 1)
-//		return 0;
-//	return 1;
-//}
-//
-//int PyObject_AsReadBuffer(PyObject *obj,
-//						  const void **buffer,
-//						  Py_ssize_t *buffer_len)
-//{
-//	PyBufferProcs *pb;
-//	void *pp;
-//	Py_ssize_t len;
-//
-//	if (obj == NULL || buffer == NULL || buffer_len == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	pb = obj->ob_type->tp_as_buffer;
-//	if (pb == NULL ||
-//		 pb->bf_getreadbuffer == NULL ||
-//		 pb->bf_getsegcount == NULL) {
-//		PyErr_SetString(PyExc_TypeError,
-//						"expected a readable buffer object");
-//		return -1;
-//	}
-//	if ((*pb->bf_getsegcount)(obj, NULL) != 1) {
-//		PyErr_SetString(PyExc_TypeError,
-//						"expected a single-segment buffer object");
-//		return -1;
-//	}
-//	len = (*pb->bf_getreadbuffer)(obj, 0, &pp);
-//	if (len < 0)
-//		return -1;
-//	*buffer = pp;
-//	*buffer_len = len;
-//	return 0;
-//}
-//
-//int PyObject_AsWriteBuffer(PyObject *obj,
-//						   void **buffer,
-//						   Py_ssize_t *buffer_len)
-//{
-//	PyBufferProcs *pb;
-//	void*pp;
-//	Py_ssize_t len;
-//
-//	if (obj == NULL || buffer == NULL || buffer_len == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	pb = obj->ob_type->tp_as_buffer;
-//	if (pb == NULL ||
-//		 pb->bf_getwritebuffer == NULL ||
-//		 pb->bf_getsegcount == NULL) {
-//		PyErr_SetString(PyExc_TypeError,
-//						"expected a writeable buffer object");
-//		return -1;
-//	}
-//	if ((*pb->bf_getsegcount)(obj, NULL) != 1) {
-//		PyErr_SetString(PyExc_TypeError,
-//						"expected a single-segment buffer object");
-//		return -1;
-//	}
-//	len = (*pb->bf_getwritebuffer)(obj,0,&pp);
-//	if (len < 0)
-//		return -1;
-//	*buffer = pp;
-//	*buffer_len = len;
-//	return 0;
-//}
-//
+
+int
+PyObject_AsCharBuffer(PyObject *obj,
+						  const char **buffer,
+						  Py_ssize_t *buffer_len)
+{
+	PyBufferProcs *pb;
+	char *pp;
+	Py_ssize_t len;
+
+	if (obj == NULL || buffer == NULL || buffer_len == NULL) {
+		null_error();
+		return -1;
+	}
+	pb = obj->ob_type->tp_as_buffer;
+	if (pb == NULL ||
+		 pb->bf_getcharbuffer == NULL ||
+		 pb->bf_getsegcount == NULL) {
+		PyErr_SetString(PyExc_TypeError,
+						"expected a character buffer object");
+		return -1;
+	}
+	if ((*pb->bf_getsegcount)(obj,NULL) != 1) {
+		PyErr_SetString(PyExc_TypeError,
+						"expected a single-segment buffer object");
+		return -1;
+	}
+	len = (*pb->bf_getcharbuffer)(obj, 0, &pp);
+	if (len < 0)
+		return -1;
+	*buffer = pp;
+	*buffer_len = len;
+	return 0;
+}
+
+int
+PyObject_CheckReadBuffer(PyObject *obj)
+{
+	PyBufferProcs *pb = obj->ob_type->tp_as_buffer;
+
+	if (pb == NULL ||
+		pb->bf_getreadbuffer == NULL ||
+		pb->bf_getsegcount == NULL ||
+		(*pb->bf_getsegcount)(obj, NULL) != 1)
+		return 0;
+	return 1;
+}
+
+int PyObject_AsReadBuffer(PyObject *obj,
+						  const void **buffer,
+						  Py_ssize_t *buffer_len)
+{
+	PyBufferProcs *pb;
+	void *pp;
+	Py_ssize_t len;
+
+	if (obj == NULL || buffer == NULL || buffer_len == NULL) {
+		null_error();
+		return -1;
+	}
+	pb = obj->ob_type->tp_as_buffer;
+	if (pb == NULL ||
+		 pb->bf_getreadbuffer == NULL ||
+		 pb->bf_getsegcount == NULL) {
+		PyErr_SetString(PyExc_TypeError,
+						"expected a readable buffer object");
+		return -1;
+	}
+	if ((*pb->bf_getsegcount)(obj, NULL) != 1) {
+		PyErr_SetString(PyExc_TypeError,
+						"expected a single-segment buffer object");
+		return -1;
+	}
+	len = (*pb->bf_getreadbuffer)(obj, 0, &pp);
+	if (len < 0)
+		return -1;
+	*buffer = pp;
+	*buffer_len = len;
+	return 0;
+}
+
+int PyObject_AsWriteBuffer(PyObject *obj,
+						   void **buffer,
+						   Py_ssize_t *buffer_len)
+{
+	PyBufferProcs *pb;
+	void*pp;
+	Py_ssize_t len;
+
+	if (obj == NULL || buffer == NULL || buffer_len == NULL) {
+		null_error();
+		return -1;
+	}
+	pb = obj->ob_type->tp_as_buffer;
+	if (pb == NULL ||
+		 pb->bf_getwritebuffer == NULL ||
+		 pb->bf_getsegcount == NULL) {
+		PyErr_SetString(PyExc_TypeError,
+						"expected a writeable buffer object");
+		return -1;
+	}
+	if ((*pb->bf_getsegcount)(obj, NULL) != 1) {
+		PyErr_SetString(PyExc_TypeError,
+						"expected a single-segment buffer object");
+		return -1;
+	}
+	len = (*pb->bf_getwritebuffer)(obj,0,&pp);
+	if (len < 0)
+		return -1;
+	*buffer = pp;
+	*buffer_len = len;
+	return 0;
+}
+
 ///* Buffer C-API for Python 3.0 */
 //
 //int
@@ -2569,29 +2569,50 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 	jobject delegate = JyNI_GetJythonDelegate(func);
 	if (delegate)
 	{
+//		jputs("Delegate");
+//		puts(func->ob_type->tp_name);
 		env(NULL);
 		jobject jdict = JyNI_JythonPyObject_FromPyObject(kw);
-		jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+		JyNI_printJ(jdict);
+		jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 		jobject args = (*env)->NewObjectArray(env,
 			PyTuple_GET_SIZE(arg)
 			+dictSize,
-			stringClass, NULL);
+			pyObjectClass, NULL);
 		int i;
 		for (i = 0; i < PyTuple_GET_SIZE(arg); ++i)
-			(*env)->SetObjectArrayElement(env, args, i,
-				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(arg, i)));
+		{
+			jobject argi = JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(arg, i));
+			//puts("arg:");
+			//JyNI_printJ(argi);
+			(*env)->SetObjectArrayElement(env, args, i, argi);
+		}
 		//jobject jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict);
 		jobject jkw;
 		if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict);
 		else jkw = length0StringArray;
+//		JyNI_printJ(jkw);
+//		puts("call delegate... args:");
+//		JyNI_printJ(args);
+//		puts("delegate:");
+//		JyNI_printJ(delegate);
 		jobject er = (*env)->CallObjectMethod(env, delegate /*JyNI_JythonPyObject_FromPyObject(func)*/,
 				pyObject__call__, args, jkw);
+//		puts("done");
+//		if (er == NULL) puts("delegate result is NULL");
 		//maybe insert some exception check here...
+		if ((*env)->ExceptionCheck(env))
+		{
+			puts("Exception on delegate call:");
+			jobject exc = (*env)->ExceptionOccurred(env);
+			JyNI_printJ(exc);
+		}
 		return JyNI_PyObject_FromJythonPyObject(er);
 	}
 	else
 	{
-		//puts("PyObject_Call no delegate");
+//		jputs("PyObject_Call no delegate");
+//		jputs(func->ob_type->tp_name);
 		ternaryfunc call;
 
 		if ((call = func->ob_type->tp_call) != NULL) {
@@ -2600,19 +2621,21 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 //				return NULL;
 			env(NULL);
 			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
+
 			result = (*call)(func, arg, kw);
-//			puts("call done");
-//			if (result)
-//			{
-//				puts("result type1: ");
-//				puts(result->ob_type->tp_name);
-//			} else puts("result is NULL");
+
 //			Py_LeaveRecursiveCall();
 			Jy_LeaveRecursiveCall();
-			if (result == NULL && !PyErr_Occurred())
+			jboolean envExc = (*env)->ExceptionCheck(env);
+			if (result == NULL && !PyErr_Occurred() && !envExc)
 				PyErr_SetString(
 					PyExc_SystemError,
 					"NULL result without error in PyObject_Call");
+//			if (envExc && !PyErr_Occurred())
+//			{
+//				(*env)->ExceptionClear(env);
+//				Py_RETURN_NONE;
+//			}
 			return result;
 		}
 		PyErr_Format(PyExc_TypeError, "'%.200s' object is not callable",
@@ -2650,18 +2673,17 @@ PyObject_CallFunction(PyObject *callable, char *format, ...)
 {
 	va_list va;
 	PyObject *args;
-
+	puts("PyObject_CallFunction");
 	if (callable == NULL)
 		return null_error();
-
+	puts("v1");
 	if (format && *format) {
 		va_start(va, format);
 		args = Py_VaBuildValue(format, va);
 		va_end(va);
-	}
-	else
+	} else
 		args = PyTuple_New(0);
-
+	puts("v2");
 	return call_function_tail(callable, args);
 }
 

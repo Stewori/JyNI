@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -73,6 +73,21 @@
 	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2))\
 		return errRet
 
+//For now we assume, nobody would cache _PyThreadState_Current
+//for use after the current method returns.
+//So we need not acquire a global reference.
+//#define updateCurrentThreadState() \
+//	_PyThreadState_Current = tstate
+#define ENTER_JyNI \
+	PyEval_AcquireLock(); \
+	if (_PyThreadState_Current != NULL) Py_FatalError("ENTER_JyNI: overwriting non-NULL tstate"); \
+	_PyThreadState_Current = (*env)->NewGlobalRef(env, tstate);
+
+#define LEAVE_JyNI \
+	(*env)->DeleteGlobalRef(env, _PyThreadState_Current); \
+	_PyThreadState_Current = NULL; \
+	PyEval_ReleaseLock();
+
 //Cleanly convert a jstring to a cstring
 //with minimal JVM lock-time.
 //Use only once per Function.
@@ -95,7 +110,7 @@
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
 //Only use after one initial use of
-//cstr_from_jstring in each function.
+//cstr_from_jstring in the same block.
 //("+1" in 3rd line is for 0-termination)
 #define cstr_from_jstring2(cstrName, jstr) \
 	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
@@ -108,6 +123,36 @@
 	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
+
+#define pyTuple2jArray(pyTuple, javaElementType, javaDestName) \
+	jobject javaDestName = NULL; \
+	if (PyTuple_GET_SIZE(pyTuple)) \
+	{ \
+		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), javaElementType, NULL); \
+		for (i = 0; i < PyTuple_GET_SIZE(pyTuple); ++i) \
+			(*env)->SetObjectArrayElement(env, javaDestName, i, \
+				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(pyTuple, i))); \
+	}
+
+#define jStringArray2pyTuple(jArray, resultName) \
+	Py_ssize_t jArraySize = 0; \
+	if (jArray) jArraySize = (*env)->GetArrayLength(env, jArray); \
+	PyTupleObject* resultName = PyTuple_New(jArraySize); \
+	if (jArraySize) \
+	{ \
+		Py_ssize_t i; \
+		char* utf_string; \
+		jobject jstr; \
+		for (i = 0; i < jArraySize; ++i) \
+		{ \
+			jstr = (*env)->GetObjectArrayElement(env, jArray, i); \
+			utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+			char cstr[strlen(utf_string)+1]; \
+			strcpy(cstr, utf_string); \
+			(*env)->ReleaseStringUTFChars(env, jstr, utf_string); \
+			PyTuple_SET_ITEM(resultName, i, PyString_FromString(cstr)); \
+		} \
+	}
 
 /*
  * We use so-called JyObjects to reflect Jython-objects located inside the JVM.
@@ -142,7 +187,7 @@
 #define JY_INITIALIZED_FLAG_MASK 1
 #define JY_GC_FLAG_MASK			 2
 #define JY_TRUNCATE_FLAG_MASK	 4
-#define JY_PARTLY_TRUNCATE_MASK  8
+//#define JY_PARTLY_TRUNCATE_MASK  8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
 #define JY_CPEER_FLAG_MASK		16
 //#define JY_TYPE_FLAG_MASK		32 //Types can't have JyObject-data
 //32, 64, 128 reserved for future use...
@@ -175,12 +220,12 @@ typedef jlong (*jyChecksum)(jobject);
 	//(SYNC_ON_PY_TO_JY_FLAG_MASK | SYNC_ON_JY_TO_PY_FLAG_MASK)
 
 /*
- * py2jy copies everything sanely from a PyObject to a jython jobject.
- * jy2py copies everything sanely from a jython jobject to a PyObject.
- * jyInit sanely calls a valid constructor on a jython jobject using
+ * py2jy copies everything sanely from a PyObject to a Jython jobject.
+ * jy2py copies everything sanely from a Jython jobject to a PyObject.
+ * jyInit sanely calls a valid constructor on a Jython jobject using
  * data from a corresponding PyObject.
  * pyInit sanely creates a valid PyObject initialized with the data
- * from the given jython jobject.
+ * from the given Jython jobject.
  * pyInit may be NULL - in that case PyObject_New(), PyObject_NewVar()
  * PyObject_GC_New() or PyObject_GC_NewVar() is called directly,
  * depending on whether the GC-flag is set in flags and whether
@@ -212,6 +257,7 @@ extern const char* JyAttributeJyChecksum;
 extern const char* JyAttributeSyncFunctions;
 extern const char* JyAttributeModuleFile;
 extern const char* JyAttributeModuleName;
+extern const char* JyAttributeTypeName;
 extern const char* JyAttributeStringInterned;
 extern const char* JyAttributeSetEntry;
 //extern const char* JyAttributeTruncateSize;
@@ -222,7 +268,8 @@ struct JyAttribute { const char* name; void* value; char flags; JyAttribute* nex
 typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jobject jy; unsigned short flags; JyAttribute* attr;} JyObject;
-typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing;} TypeMapEntry;
+/* type_name is optional and defaults to py_type->tp_name */
+typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
 
 #define JyObject_IS_GC(o) (((JyObject *) o)->flags & JY_GC_FLAG_MASK)
@@ -307,16 +354,17 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall)
 
 /* Call-ins: */
-jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath);
+jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jobject tstate);
 jint JyNI_init(JavaVM *jvm);
 void JyNI_unload(JavaVM *jvm);
 void JyNI_clearPyCPeer(JNIEnv *env, jclass class, jlong objectHandle, jlong refHandle);
-jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw);
-jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name);
-jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value);
-jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle);
-jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle);
-jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle);
+void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, jstring msg);
+jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jobject tstate);
+jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject tstate);
+jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value, jobject tstate);
+jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jobject tstate);
+jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jobject tstate);
+jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jobject tstate);
 
 #define builtinTypeCount 50
 extern TypeMapEntry builtinTypes[builtinTypeCount];
@@ -350,7 +398,8 @@ inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc);
 /* Conversion-Stuff: */
 inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op);
 inline PyObject* JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject);
-inline PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType);
+inline PyObject* JyNI_PyObject_FromJythonPyObject_verbose(jobject jythonPyObject);
+PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType);
 inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type);
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls);
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject);
@@ -378,6 +427,10 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v);
 //void JyNI_Del(void * obj);
 inline void JyNI_Py_CLEAR(jobject obj);
 //inline char* PyLongToJavaSideString(PyObject* pl);
+inline void JyNI_printJ(jobject obj);
+inline void JyNI_printJInfo(jobject obj);
+inline void jputs(const char* msg);
+inline void jputsLong(jlong val);
 
 /* To save lookups: */
 PyObject* _JyObject_GC_New(PyTypeObject *tp, TypeMapEntry* tme);
@@ -429,6 +482,10 @@ extern JavaVM* java;
 extern jobject length0StringArray;
 extern jobject length0PyObjectArray;
 
+extern jclass objectClass;
+extern jmethodID objectToString;
+extern jmethodID objectGetClass;
+
 extern jclass classClass;
 extern jmethodID classEquals;
 
@@ -469,6 +526,12 @@ extern jmethodID JyNISlice_compare;
 extern jmethodID JyNIPrintPyLong;
 extern jmethodID JyNILookupNativeHandles;
 extern jmethodID JyNI_prepareKeywordArgs;
+extern jmethodID JyNI_getCurrentThreadID;
+extern jmethodID JyNI_pyCode_co_code;
+extern jmethodID JyNI_pyCode_co_flags;
+extern jmethodID JyNI_pyCode_co_lnotab;
+extern jmethodID JyNI_jPrint;
+extern jmethodID JyNI_jPrintLong;
 //extern jmethodID JyNIPySet_pop;
 
 extern jclass JyNIDictNextResultClass;
@@ -506,6 +569,11 @@ extern jclass JySetClass;
 extern jmethodID JySetFromBackendHandleConstructor;
 extern jmethodID JySetInstallToPySet;
 
+extern jclass JyLockClass;
+extern jmethodID JyLockConstructor;
+extern jmethodID JyLockAcquire;
+extern jmethodID JyLockRelease;
+
 extern jclass pyCPeerClass;
 extern jmethodID pyCPeerConstructor;
 extern jfieldID pyCPeerObjectHandle;
@@ -513,7 +581,9 @@ extern jfieldID pyCPeerObjectHandle;
 
 extern jclass pyCPeerTypeClass;
 extern jmethodID pyCPeerTypeConstructor;
+extern jmethodID pyCPeerTypeWithNameAndDictConstructor;
 extern jfieldID pyCPeerTypeObjectHandle;
 extern jfieldID pyCPeerTypeRefHandle;
 
+//extern jlong JyNIDebugMode;
 #endif /* JYNI_H_ */

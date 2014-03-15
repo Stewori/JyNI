@@ -1,12 +1,12 @@
 /* This File is based on dictobject.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -301,6 +301,7 @@ PyDict_New(void)
 #endif
 	}*/
 	if (numfree) {
+		//puts("from free");
 		mp = free_list[--numfree];
 		assert (mp != NULL);
 		assert (Py_TYPE(mp) == &PyDict_Type);
@@ -319,6 +320,7 @@ PyDict_New(void)
 		count_reuse++;
 #endif*/
 	} else {
+		//puts("GC_New");
 		mp = PyObject_GC_New(PyDictObject, &PyDict_Type);
 		if (mp == NULL)
 			return NULL;
@@ -747,16 +749,23 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 	JyNI_JythonPyObject_FromPyObject(key);
 
 	env(NULL);
-	//return
 	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env,
-				JyNI_JythonPyObject_FromPyObject(op),
-				//pyDictGet_PyObject, //<- contradicts original Python-behaviour:
-				//would return Py_None instead of NULL on error or if item not in dict
-				pyDictGet_PyObjectWithDefault,
-				JyNI_JythonPyObject_FromPyObject(key), NULL //to fix it, we set Default-return to NULL instead of Py_None
-			)
-		);
+				(*env)->CallObjectMethod(env,
+					JyNI_JythonPyObject_FromPyObject(op),
+					pyObject__finditem__,
+					JyNI_JythonPyObject_FromPyObject(key)
+				)
+			);
+//	return JyNI_PyObject_FromJythonPyObject(
+//			(*env)->CallObjectMethod(env,
+//				JyNI_JythonPyObject_FromPyObject(op),
+//				//pyDictGet_PyObject, //<- contradicts original Python-behaviour:
+//				//would return Py_None instead of NULL on error or if item not in dict
+//				pyDictGet_PyObjectWithDefault,
+//				JyNI_JythonPyObject_FromPyObject(key), NULL //to fix it, we set Default-return to NULL instead of Py_None
+//			)
+//		);
+
 //	long hash;
 //	PyDictObject *mp = (PyDictObject *)op;
 //	PyDictEntry *ep;
@@ -836,7 +845,7 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 
 	env(-1);
 	(*env)->CallVoidMethod(env,
-			JyNI_JythonPyObject_FromPyObject(op), pyDict__setitem__,
+			JyNI_JythonPyObject_FromPyObject(op), pyObject__setitem__,
 			JyNI_JythonPyObject_FromPyObject(key),
 			JyNI_JythonPyObject_FromPyObject(value));
 	return 0;
@@ -900,7 +909,7 @@ PyDict_DelItem(PyObject *op, PyObject *key)
 	Py_DECREF(old_value);
 	Py_DECREF(key);//old_key);
 	env(-1);
-	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject(op), pyDict__delitem__,
+	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject(op), pyObject__delitem__,
 			JyNI_JythonPyObject_FromPyObject(key));
 	return 0;
 }
@@ -921,8 +930,9 @@ PyDict_Clear(PyObject *op)
 	if (!PyDict_Check(op))
 		return;
 	env();
+	jobject jop = JyNI_JythonPyObject_FromPyObject(op);
 	jarray handles = (*env)->CallStaticObjectMethod(env, JyNIClass,
-			JyNI_getNativeAvailableKeysAndValues, JyNI_JythonPyObject_FromPyObject(op));
+			JyNI_getNativeAvailableKeysAndValues, jop);
 	jsize len = (*env)->GetArrayLength(env, handles);
 	jlong* elems = (*env)->GetLongArrayElements(env, handles, NULL);
 	jsize i;
@@ -930,7 +940,15 @@ PyDict_Clear(PyObject *op)
 		Py_DECREF((PyObject*) elems[i]);
 	(*env)->ReleaseLongArrayElements(env, handles, elems, JNI_ABORT);
 
-	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject(op), pyDictClear);
+	//(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject(op), pyDictClear);
+
+	//We look up this method on the fly to unify calls to PyDict and PyStringMap and
+	//maybe other dict-implementing classes. Unfortunately there is no python standard
+	//method for "clear". Neither is the clear-method of dict-implementing classes unified
+	//under a common interface.
+	jmethodID clearID = (*env)->GetMethodID(env, (*env)->GetObjectClass(env, jop), "clear", "()V");
+	(*env)->CallVoidMethod(env, jop, clearID);
+
 //	mp = (PyDictObject *)op;
 //#ifdef Py_DEBUG
 //	n = mp->ma_mask + 1;
@@ -1789,7 +1807,7 @@ PyDict_Size(PyObject *mp)
 		return -1;
 	}
 	env(-1);
-	return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
+	return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyObject__len__);
 	//return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
 //	return ((PyDictObject *)mp)->ma_used;
 }
@@ -2537,21 +2555,31 @@ PyTypeObject PyDict_Type = {
 PyObject* PyDict_GetItemStringJy(PyObject* v, jobject key)
 {
 	//if (!PyDict_Check(op)) return NULL;
-
+	//puts("PyDict_GetItemStringJy");
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env,
 				JyNI_JythonPyObject_FromPyObject(v),
-				//pyDictGet_PyObject,
-				pyDictGet_PyObjectWithDefault, //see explanation in PyDict_GetItem
-				key, NULL
+				pyObject__finditem__, key
 			)
 		);
+//	return JyNI_PyObject_FromJythonPyObject(
+//			(*env)->CallObjectMethod(env,
+//				JyNI_JythonPyObject_FromPyObject(v),
+//				//pyDictGet_PyObject,
+//				pyDictGet_PyObjectWithDefault, //see explanation in PyDict_GetItem
+//				key, NULL
+//			)
+//		);
 }
 
 PyObject *
 PyDict_GetItemString(PyObject *v, const char *key)
 {
+//	jputs("PyDict_GetItemString:");
+//	jputs(key);
+	if (!v) jputs("dict is NULL");
+	if (!v->ob_type) jputs("type of dict is NULL");
 	if (!PyDict_Check(v)) {
 		return NULL;
 	}
@@ -2569,18 +2597,23 @@ PyDict_GetItemString(PyObject *v, const char *key)
 int
 PyDict_SetItemString(PyObject *v, const char *key, PyObject *item)
 {
+	//puts("PyDict_SetItemString");
+	//puts(key);
 	if (!PyDict_Check(v)) {
 		return -1;
 	}
+//	if (item == NULL) puts("Item is NULL");
 	Py_INCREF(item);
+
 	//Py_INCREF(key);
 
 	env(-1);
+	jobject jitem = JyNI_JythonPyObject_FromPyObject(item);
 	(*env)->CallVoidMethod(env,
-			JyNI_JythonPyObject_FromPyObject(v), pyDict__setitem__,
+			JyNI_JythonPyObject_FromPyObject(v), pyObject__setitem__,
 			//(*env)->NewObject(env, pyStringClass, pyStringByJStringConstructor, (*env)->NewStringUTF(env, key)),
 			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, key)),
-			JyNI_JythonPyObject_FromPyObject(item));
+			jitem);
 	return 0;
 	/*PyObject *kv;
 	int err;
@@ -2608,7 +2641,7 @@ PyDict_DelItemString(PyObject *v, const char *key)
 	Py_DECREF(old_value);
 	//Py_DECREF(key);//old_key);
 
-	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject(v), pyDict__delitem__, key2);
+	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject(v), pyObject__delitem__, key2);
 	return 0;
 //	PyObject *kv;
 //	int err;

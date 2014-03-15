@@ -1,12 +1,12 @@
 /* This File is based on getargs.c from CPython 2.7.4 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -257,6 +257,8 @@ cleanreturn(int retval, PyObject *freelist)
 static int
 vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 {
+	//puts("vgetargs1");
+	//puts(format);
 	char msgbuf[256];
 	int levels[32];
 	const char *fname = NULL;
@@ -271,11 +273,13 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 	PyObject *freelist = NULL;
 	int compat = flags & FLAG_COMPAT;
 
+	if (args == (PyObject*)NULL) jputs("vgetargs1 call with NULL-args");
 	assert(compat || (args != (PyObject*)NULL));
 	flags = flags & ~FLAG_COMPAT;
 
 	while (endfmt == 0) {
 		int c = *format++;
+		//printf("process char: %c\n", c);
 		switch (c) {
 		case '(':
 			if (level == 0)
@@ -296,6 +300,8 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 			break;
 		case ':':
 			fname = format;
+			//puts("fname:");
+			//puts(fname);
 			endfmt = 1;
 			break;
 		case ';':
@@ -315,16 +321,17 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 			break;
 		}
 	}
-
+	//puts("format processed");
 	if (level != 0)
 		Py_FatalError(/* '(' */ "missing ')' in getargs format");
-
+	//puts("a");
 	if (min < 0)
 		min = max;
 
 	format = formatsave;
 
 	if (compat) {
+		//puts("compat");
 		if (max == 0) {
 			if (args == NULL)
 				return 1;
@@ -357,7 +364,7 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 			return 0;
 		}
 	}
-
+	//puts("compat done");
 	if (!PyTuple_Check(args)) {
 		PyErr_SetString(PyExc_SystemError,
 			"new style getargs format but argument is not a tuple");
@@ -384,7 +391,7 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 		PyErr_SetString(PyExc_TypeError, message);
 		return 0;
 	}
-
+	//puts("len check done");
 	for (i = 0; i < len; i++) {
 		if (*format == '|')
 			format++;
@@ -392,11 +399,12 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 						  flags, levels, msgbuf,
 						  sizeof(msgbuf), &freelist);
 		if (msg) {
+			puts(msg);
 			seterror(i+1, msg, levels, fname, msg);
 			return cleanreturn(0, freelist);
 		}
 	}
-
+	//puts("convertitem done");
 	if (*format != '\0' && !isalpha(Py_CHARMASK(*format)) &&
 		*format != '(' &&
 		*format != '|' && *format != ':' && *format != ';') {
@@ -404,7 +412,7 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
 					 "bad format string: %.200s", formatsave);
 		return cleanreturn(0, freelist);
 	}
-
+	//puts("cleanreturen...");
 	return cleanreturn(1, freelist);
 }
 
@@ -529,7 +537,7 @@ converttuple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 		/* PySequence_GetItem calls tp->sq_item, which INCREFs */
 		Py_XDECREF(item);
 		if (msg != NULL) {
-			puts(msg);
+			//puts(msg);
 			levels[0] = i+1;
 			return msg;
 		}
@@ -650,7 +658,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 #ifdef Py_USING_UNICODE
 	PyObject *uarg;
 #endif
-	//printf("convert simple %c", c);
+	//printf("convert simple %c\n", c);
 	switch (c) {
 
 	case 'b': { /* unsigned byte -- very short int */
@@ -956,6 +964,8 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 	}
 
 	case 'z': {/* string, may be NULL (None) */
+		//puts("case z");
+		//puts(format);
 		if (*format == '*') {
 			Py_buffer *p = (Py_buffer *)va_arg(*p_va, Py_buffer *);
 
@@ -1019,7 +1029,14 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 			}
 			format++;
 		} else {
+			//puts("raw z");
 			char **p = va_arg(*p_va, char **);
+
+			/*if (arg != Py_None)
+			{
+				puts("arg not None...");
+				puts(arg->ob_type->tp_name);
+			}*/
 
 			if (arg == Py_None)
 				*p = 0;

@@ -1,12 +1,12 @@
 /* This File is based on dynload_shlib.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -187,9 +187,13 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 		const char *error = dlerror();
 		if (error == NULL)
 			error = "unknown dlopen() error";
-//		puts("dlopen-error:");
-//		puts(error);
-//		puts(pathname);
+
+		//todo: Check, why error is not correctly propagated on the designated way.
+		//Until that is done, we print it out plainly with puts.
+		puts("dlopen-error:");
+		puts(error);
+		//puts(pathname);
+
 		PyErr_SetString(PyExc_ImportError, error);
 		JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError), error);
 		return NULL;

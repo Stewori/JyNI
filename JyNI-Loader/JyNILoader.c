@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -75,14 +75,15 @@
 JavaVM* java;
 void* JyNIHandle;
 
-jobject (*JyNILoadModule)(JNIEnv*, jclass, jstring, jstring);
+jobject (*JyNILoadModule)(JNIEnv*, jclass, jstring, jstring, jobject);
 void (*JyNIClearPyCPeer)(JNIEnv*, jclass, jlong, jlong);
-jobject (*JyNICallPyCPeer)(JNIEnv*, jclass, jlong, jobject, jobject);
-jobject (*JyNIGetAttrString)(JNIEnv*, jclass, jlong, jstring);
-jobject (*JyNIrepr)(JNIEnv*, jclass, jlong);
-jstring (*JyNIPyObjectAsString)(JNIEnv*, jclass, jlong);
-jobject (*JyNIPyObjectAsPyString)(JNIEnv*, jclass, jlong);
-jint (*JyNISetAttrString)(JNIEnv*, jclass, jlong, jstring, jobject);
+void (*JyNI_JyNIDebugMessage)(JNIEnv*, jclass, jlong, jlong, jstring);
+jobject (*JyNICallPyCPeer)(JNIEnv*, jclass, jlong, jobject, jobject, jobject);
+jobject (*JyNIGetAttrString)(JNIEnv*, jclass, jlong, jstring, jobject);
+jobject (*JyNIrepr)(JNIEnv*, jclass, jlong, jobject);
+jstring (*JyNIPyObjectAsString)(JNIEnv*, jclass, jlong, jobject);
+jobject (*JyNIPyObjectAsPyString)(JNIEnv*, jclass, jlong, jobject);
+jint (*JyNISetAttrString)(JNIEnv*, jclass, jlong, jstring, jobject, jobject);
 void (*JyNIUnload)(JavaVM*);
 
 jobject (*JyList_get)(JNIEnv*, jclass, jlong, jint);
@@ -148,6 +149,7 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyNIInit) = dlsym(JyNIHandle, "JyNI_init");
 	*(void **) (&JyNILoadModule) = dlsym(JyNIHandle, "JyNI_loadModule");
 	*(void **) (&JyNIClearPyCPeer) = dlsym(JyNIHandle, "JyNI_clearPyCPeer");
+	*(void **) (&JyNI_JyNIDebugMessage) = dlsym(JyNIHandle, "JyNI_JyNIDebugMessage");
 	*(void **) (&JyNICallPyCPeer) = dlsym(JyNIHandle, "JyNI_callPyCPeer");
 	*(void **) (&JyNIGetAttrString) = dlsym(JyNIHandle, "JyNI_getAttrString");
 	*(void **) (&JyNIrepr) = dlsym(JyNIHandle, "JyNI_repr");
@@ -174,13 +176,13 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 /*
  * Class:     JyNI_JyNI
  * Method:    loadModule
- * Signature: (Ljava/lang/String;Ljava/lang/String;)LJyNI/JyNIModule;
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/python/core/ThreadState;)LJyNI/JyNIModule;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_loadModule
-  (JNIEnv *env, jclass class, jstring moduleName, jstring modulePath)
+  (JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jobject tstate)
 {
 	//puts("JyNI-Loader: Java_JyNI_JyNI_loadModule...");
-	return (*JyNILoadModule)(env, class, moduleName, modulePath);
+	return (*JyNILoadModule)(env, class, moduleName, modulePath, tstate);
 }
 
 /*
@@ -196,63 +198,74 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_clearPyCPeer
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    JyNIDebugMessage
+ * Signature: (JJLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyNIDebugMessage
+  (JNIEnv *env, jclass class, jlong mode, jlong value, jstring msg)
+{
+	(*JyNI_JyNIDebugMessage)(env, class, mode, value, msg);
+}
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    callPyCPeer
- * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/ThreadState;)Lorg/python/core/PyObject;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_callPyCPeer
-  (JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw)
+  (JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jobject tstate)
 {
-	return (*JyNICallPyCPeer)(env, class, peerHandle, args, kw);
+	return (*JyNICallPyCPeer)(env, class, peerHandle, args, kw, tstate);
 }
 
 /*
  * Class:     JyNI_JyNI
  * Method:    getAttrString
- * Signature: (JLjava/lang/String;)Lorg/python/core/PyObject;
+ * Signature: (JLjava/lang/String;Lorg/python/core/ThreadState;)Lorg/python/core/PyObject;
  */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name)
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject tstate)
 {
-	return (*JyNIGetAttrString)(env, class, handle, name);
+	return (*JyNIGetAttrString)(env, class, handle, name, tstate);
 }
 
 /*
  * Class:     JyNI_JyNI
  * Method:    setAttrString
- * Signature: (JLjava/lang/String;Lorg/python/core/PyObject;)I
+ * Signature: (JLjava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/ThreadState;)I
  */
-JNIEXPORT jint JNICALL Java_JyNI_JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value)
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value, jobject tstate)
 {
-	return (*JyNISetAttrString)(env, class, handle, name, value);
+	return (*JyNISetAttrString)(env, class, handle, name, value, tstate);
 }
 
 /*
  * Class:     JyNI_JyNI
  * Method:    repr
- * Signature: (J)Lorg/python/core/PyObject;
+ * Signature: (JLorg/python/core/ThreadState;)Lorg/python/core/PyObject;
  */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_repr(JNIEnv *env, jclass class, jlong handle)
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_repr(JNIEnv *env, jclass class, jlong handle, jobject tstate)
 {
-	return (*JyNIrepr)(env, class, handle);
+	return (*JyNIrepr)(env, class, handle, tstate);
 }
 
 /*
  * Class:     JyNI_JyNI
  * Method:    PyObjectAsString
- * Signature: (J)Ljava/lang/String;
+ * Signature: (JLorg/python/core/ThreadState;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_JyNI_JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle)
+JNIEXPORT jstring JNICALL Java_JyNI_JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jobject tstate)
 {
-	return (*JyNIPyObjectAsString)(env, class, handle);
+	return (*JyNIPyObjectAsString)(env, class, handle, tstate);
 }
 
 /*
  * Class:     JyNI_JyNI
  * Method:    PyObjectAsPyString
- * Signature: (J)Lorg/python/core/PyString;
+ * Signature: (JLorg/python/core/ThreadState;)Lorg/python/core/PyString;
  */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle)
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jobject tstate)
 {
-	return (*JyNIPyObjectAsPyString)(env, class, handle);
+	return (*JyNIPyObjectAsPyString)(env, class, handle, tstate);
 }
 
 /*

@@ -1,12 +1,12 @@
 /* This File is based on ceval.h from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -159,8 +159,8 @@ PyAPI_DATA(int) _Py_CheckInterval;
    mechanism!
 */
 
-//PyAPI_FUNC(PyThreadState *) PyEval_SaveThread(void);
-//PyAPI_FUNC(void) PyEval_RestoreThread(PyThreadState *);
+PyAPI_FUNC(PyThreadState *) PyEval_SaveThread(void);
+PyAPI_FUNC(void) PyEval_RestoreThread(PyThreadState *);
 
 #ifdef WITH_THREAD
 
@@ -172,6 +172,16 @@ PyAPI_FUNC(void) PyEval_ReleaseLock(void);
 //PyAPI_FUNC(void) PyEval_ReleaseThread(PyThreadState *tstate);
 PyAPI_FUNC(void) PyEval_ReInitThreads(void);
 
+//#define Py_BEGIN_ALLOW_THREADS { \
+//						jputs("Py_BEGIN_ALLOW_THREADS"); \
+//                        PyThreadState *_save; \
+//                        _save = PyEval_SaveThread();
+//#define Py_BLOCK_THREADS        jputs("Py_BLOCK_THREADS"); PyEval_RestoreThread(_save);
+//#define Py_UNBLOCK_THREADS      jputs("Py_EUNBLOCK_THREADS"); _save = PyEval_SaveThread();
+//#define Py_END_ALLOW_THREADS    jputs("Py_END_ALLOW_THREADS"); \
+//								PyEval_RestoreThread(_save); \
+//                 }
+
 #define Py_BEGIN_ALLOW_THREADS { \
                         PyThreadState *_save; \
                         _save = PyEval_SaveThread();
@@ -179,6 +189,7 @@ PyAPI_FUNC(void) PyEval_ReInitThreads(void);
 #define Py_UNBLOCK_THREADS      _save = PyEval_SaveThread();
 #define Py_END_ALLOW_THREADS    PyEval_RestoreThread(_save); \
                  }
+
 
 #else /* !WITH_THREAD */
 

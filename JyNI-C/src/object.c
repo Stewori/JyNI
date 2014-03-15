@@ -1,12 +1,12 @@
 /* This File is based on object.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -500,6 +500,7 @@ PyObject_Repr(PyObject *v)
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
+		jputs("PyObject_Repr delegate");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObject__repr__));
 	}
@@ -532,7 +533,10 @@ PyObject_Repr(PyObject *v)
 											 Py_TYPE(v)->tp_name, v);
 	else {
 		 PyObject *res;
+//		 jputs("rep res");
+//		 jputs(Py_TYPE(v)->tp_name);
 		 res = (*Py_TYPE(v)->tp_repr)(v);
+//		 jputs("rep res done");
 		 if (res == NULL)
 				return NULL;
 #ifdef Py_USING_UNICODE
@@ -1332,16 +1336,17 @@ PyObject_Hash(PyObject *v)
 PyObject *
 PyObject_GetAttrString(PyObject *v, const char *name)
 {
-//	puts("PyObject_GetAttrString");
+//	jputs("PyObject_GetAttrString");
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
+//		jputs("delegate");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
 	}
-//	puts("no delegate");
+//	jputs("no delegate");
 
 	PyObject *w, *res;
 

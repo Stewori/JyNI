@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -49,6 +49,7 @@
  */
 
 #include <JyNI.h>
+#include <code_JyNI.h>
 
 /*
 typedef void (*jy2pySync)(jobject, PyObject*);
@@ -64,14 +65,6 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
 //typedef struct {SyncInfo sync; jy2pyItemSync jy2pyItem; py2jyItemSync py2jyItem;} SyncVarInfo;
 */
 
-
-//Tuple-Area:
-// Macro, trading safety for speed
-//#define PyTuple_GET_ITEM(op, i) (((PyTupleObject *)(op))->ob_item[i])
-//#define PyTuple_GET_SIZE(op)    Py_SIZE(op)
-
-// Macro, *only* to be used to fill in brand new tuples
-//#define PyTuple_SET_ITEM(op, i, v) (((PyTupleObject *)(op))->ob_item[i] = v)
 
 PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 {
@@ -108,15 +101,7 @@ jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src)
 }
 
 
-//String-Area:
-/*
-// Use only if you know it's a string
-#define PyString_CHECK_INTERNED(op) (((PyStringObject *)(op))->ob_sstate)
 
-// Macro, trading safety for speed
-#define PyString_AS_STRING(op) (((PyStringObject *)(op))->ob_sval)
-#define PyString_GET_SIZE(op)  Py_SIZE(op)
-*/
 PyObject* JySync_Init_PyString_From_JyString(jobject src)
 {
 	env(NULL);
@@ -346,9 +331,10 @@ jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src)
 PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
 {
 	env(NULL);
-	return PyInstance_NewRaw(
+	PyObject* er = PyInstance_NewRaw(
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstanceInstclassField)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance__dict__)));
+	return er;
 }
 
 
@@ -369,6 +355,71 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__func__)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__self__)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethodImClass)));
+}
+
+//jobject JySync_Init_JyCode_From_PyCode(PyObject* src) not needed because of truncation
+//PyObject* JySync_Init_PyCode_From_JyCode(jobject src)
+void JySync_PyCode_From_JyCode(jobject src, PyObject* dest)
+{
+	env();
+	//puts("JySync_PyCode_From_JyCode");
+	//jobject jCode = JyNI_JythonPyObject_FromPyObject(src);
+	jobject jArray = (*env)->GetObjectField(env, src, pyBaseCode_co_freevars);
+	//puts("get free vars...");
+	//if (jArray == NULL) //puts("free vars NULL");
+	Py_ssize_t size = 0;
+	if (jArray) size = (*env)->GetArrayLength(env, jArray);
+	//puts("get free vars size...");
+
+	/* We create a fake-tuple here. It uses minimal memory, i.e. has actual length 0.
+	 * It provides number of free vars in its size-field to be suitable for the
+	 * macro PyCode_GetNumFree(op), which is defined as
+	 * (PyTuple_GET_SIZE((op)->co_freevars))
+	 * Since the dummy-tuple is only accessed by this macro, this should cause no
+	 * problems as long as extensions stick to official API. All methods that access the
+	 * field are redirected to Jython. The corresponding memberdef was replaced by a
+	 * getsetdef that directs to Jython.
+	 *
+	 * To not mess up with tuple deallocation, the dummy-tuple's actual size is restored
+	 * in code_dealloc before the tuple's refcount is decreased.
+	 */
+	PyObject* dummyTuple = (PyObject*) PyObject_GC_NewVar(PyTupleObject, &PyTuple_Type, 0);
+	PyTuple_GET_SIZE(dummyTuple) = size;
+	((PyCodeObject*) dest)->co_freevars = dummyTuple;
+}
+
+//PyObject* JySync_Init_PyFunction_From_JyFunction(jobject src)
+void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
+{
+//Need to sync:
+//func_code, func_globals, func_module, func_defaults, func_closure
+	env();
+	jobject jCode = (*env)->GetObjectField(env, src, pyFunction__code__);
+	PyObject* pt = JyNI_PyObject_FromJythonPyObject(jCode);
+	((PyFunctionObject*) dest)->func_code = pt;
+	jobject jGlobals = (*env)->CallObjectMethod(env, src, pyFunctionGetFuncGlobals);
+	((PyFunctionObject*) dest)->func_globals = JyNI_PyObject_FromJythonPyObject(jGlobals);
+	jobject jModule = (*env)->GetObjectField(env, src, pyFunction__module__);
+	((PyFunctionObject*) dest)->func_module = JyNI_PyObject_FromJythonPyObject(jModule);
+	jobject jDefaults = (*env)->CallObjectMethod(env, src, pyFunctionGetFuncDefaults);
+	((PyFunctionObject*) dest)->func_defaults = JyNI_PyObject_FromJythonPyObject(jDefaults);
+	jobject jClosure = (*env)->GetObjectField(env, src, pyFunctionFuncClosure);
+	((PyFunctionObject*) dest)->func_closure = JyNI_PyObject_FromJythonPyObject(jClosure);
+}
+
+void JySync_JyCell_From_PyCell(PyObject* src, jobject dest)
+{
+	env();
+	(*env)->SetObjectField(env, dest, pyCell_ob_ref,
+		JyNI_JythonPyObject_FromPyObject(PyCell_GET(src)));
+
+}
+
+void JySync_PyCell_From_JyCell(jobject src, PyObject* dest)
+{
+	env();
+	PyCell_SET(dest, JyNI_PyObject_FromJythonPyObject(
+		(*env)->GetObjectField(env, src, pyCell_ob_ref)));
 }
 
 jobject JyExc_KeyErrorFactory()
@@ -420,3 +471,36 @@ jobject JyExc_UnicodeTranslateErrorFactory()
 	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeTranslateError);
 }
 #endif
+
+void JySync_PyType_From_JyType(jobject src, PyObject* dest)
+{
+	PyTypeObject* tp = (PyTypeObject*) dest;
+	env();
+
+	//name:
+	jobject jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetName);
+	//if (!jtmp) jputs("JySync_PyType_From_JyType: type with NULL-name!");
+	//cstr_from_jstring(cname, jname);
+	char* utf_string = (*env)->GetStringUTFChars(env, jtmp, NULL);
+	char* cname = malloc(strlen(utf_string)+1);
+	strcpy(cname, utf_string);
+	(*env)->ReleaseStringUTFChars(env, jtmp, utf_string);
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(dest), JyAttributeTypeName, cname, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	tp->tp_name = cname;
+
+	//dict:
+	jtmp = (*env)->CallObjectMethod(env, src, pyObjectFastGetDict);
+	tp->tp_dict = JyNI_PyObject_FromJythonPyObject(jtmp);
+
+	//base:
+	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBase);
+	tp->tp_base = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(jtmp);
+
+	//bases:
+	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBases);
+	tp->tp_bases = JyNI_PyObject_FromJythonPyObject(jtmp);
+
+	//mro:
+//	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);
+//	tp->tp_mro = JyNI_PyObject_FromJythonPyObject(jtmp);
+}

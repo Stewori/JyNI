@@ -1,10 +1,10 @@
 /*
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -86,6 +86,16 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src);
 
 jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src);
 PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src);
+
+void JySync_PyCode_From_JyCode(jobject src, PyObject* dest);
+
+//PyObject* JySync_Init_PyFunction_From_JyFunction(jobject src);
+void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest);
+
+void JySync_JyCell_From_PyCell(PyObject* src, jobject dest);
+void JySync_PyCell_From_JyCell(jobject src, PyObject* dest);
+
+void JySync_PyType_From_JyType(jobject src, PyObject* dest);
 
 //Exception factories:
 jobject JyExc_KeyErrorFactory();

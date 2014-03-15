@@ -60,13 +60,20 @@ public class PyCPeer extends PyObject {
 	public PyCPeer(long objectHandle, PyType subtype)
 	{
 		super(subtype);
+//		if (subtype == null) System.out.println("PyCPeer with null-type");
+//		else {
+//			System.out.println("PyCPeer "+objectHandle+" of type:");
+//			System.out.println(subtype.getName());
+//		}
 		this.objectHandle = objectHandle;
 		//JyNI.CPeerHandles.put(objectHandle, this);
 	}
 	
 	public PyObject __call__(PyObject[] args, String[] keywords)
 	{
-		//System.out.println("CPeer called...");
+//		System.out.println("CPeer called...");
+//		System.out.println(objectHandle);
+//		System.out.println(getType().getName());
 		//System.out.println("args: "+args);
 		//System.out.println("arg count: "+args.length);
 		//if (keywords !=)
@@ -76,13 +83,11 @@ public class PyCPeer extends PyObject {
 		System.out.println("PeerCall args: "+args.length);
 		for(int i = 0; i < args.length; ++i)
 			System.out.println(args[i]);*/
-		//PyObject er =
 		if (keywords.length == 0)
 		{
 			return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
-				args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null));//Py.None);
+					args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null, Py.getThreadState()));
 		} else {
-			//System.out.println("xyy2");
 			//todo: Use PyStringMap here... much work needs to be done to make the peer dictobject accept this
 			HashMap<PyObject, PyObject> back = new HashMap<PyObject, PyObject>(keywords.length);
 			for (int i = 0; i < keywords.length; ++i)
@@ -94,22 +99,18 @@ public class PyCPeer extends PyObject {
 			{
 				PyObject[] args2 = new PyObject[args.length - keywords.length];
 				System.arraycopy(args, 0, args2, 0, args2.length);
-				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false), new PyDictionary(back)));
+				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false), new PyDictionary(back), Py.getThreadState()));
 			} else
-				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back)));
+				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back), Py.getThreadState()));
 		}
-		
-		/*System.out.println("Call er:");
-		System.out.println(er);
-		System.out.println(er.getClass().getName());
-		System.out.println(er.getType().getName());*/
-		//return er;
 	}
 
 	public PyObject __findattr_ex__(String name)
 	{
 		//System.out.println("Look for attribute "+name+" in PyCPeer");
-		PyObject er = JyNI.getAttrString(objectHandle, name);
+		PyObject er = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name, Py.getThreadState()));
+		//System.out.println("result:");
+		//System.out.println(er);
 		return er != null ? er : Py.None;
 		//return super.__findattr_ex__(name);
 	}
@@ -118,18 +119,18 @@ public class PyCPeer extends PyObject {
 		//System.out.println("PyCPeer__str__");
 		//Object er = JyNI.PyObjectAsPyString(objectHandle);
 		//return (PyString) JyNI.repr(objectHandle);
-		PyString er = JyNI.PyObjectAsPyString(objectHandle);
-		return er == null ? (PyString) JyNI.repr(objectHandle) : er;
+		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle, Py.getThreadState()));
+		return er == null ? (PyString) JyNI.maybeExc(JyNI.repr(objectHandle, Py.getThreadState())) : er;
 	}
 	
 	public PyString __repr__() {
 		//System.out.println("PyCPeer__repr__");
-		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle));
+		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle, Py.getThreadState()));
 	}
 
 	public String toString()
 	{
-		return JyNI.PyObjectAsString(objectHandle);
+		return JyNI.PyObjectAsString(objectHandle, Py.getThreadState());
 	}
 
 	/**

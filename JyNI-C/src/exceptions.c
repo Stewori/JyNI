@@ -1,12 +1,12 @@
 /* This File is based on exceptions.c from CPython 2.7.5 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -76,24 +76,28 @@ static PyObject *
 BaseException_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyBaseExceptionObject *self;
-
+	puts("BaseException_new");
+	puts(type->tp_name);
 	//JyNI-note: This should call PyType_GenericAlloc actually:
 	//(and that's fine, since we adjusted that method to allocate space for JyObject)
 	self = (PyBaseExceptionObject *)type->tp_alloc(type, 0);
 	if (!self)
 		return NULL;
+	puts("alloc done");
 	/* the dict is created on the fly in PyObject_GenericSetAttr */
 	self->message = self->dict = NULL;
 
 	self->args = PyTuple_New(0);
 	if (!self->args) {
 		Py_DECREF(self);
+		puts("return null a7");
 		return NULL;
 	}
 
 	self->message = PyString_FromString("");
 	if (!self->message) {
 		Py_DECREF(self);
+		puts("return null a8");
 		return NULL;
 	}
 
@@ -103,6 +107,7 @@ BaseException_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 BaseException_init(PyBaseExceptionObject *self, PyObject *args, PyObject *kwds)
 {
+	puts("BaseException_init");
 	if (!_PyArg_NoKeywords(Py_TYPE(self)->tp_name, kwds))
 		return -1;
 
@@ -306,7 +311,7 @@ BaseException_getitem(PyBaseExceptionObject *self, Py_ssize_t index)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
 		JyNI_JythonPyObject_FromPyObject((PyObject*) self),
-		pyObject__getitem__,
+		pyObject__finditem__,
 		JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(index))));
 //	if (PyErr_WarnPy3k("__getitem__ not supported for exception "
 //					   "classes in 3.x; use args attribute", 1) < 0)
@@ -670,7 +675,7 @@ SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
 {
 	env(-1);
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
-	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)+dictSize,
 		stringClass, NULL);
@@ -802,7 +807,7 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 {
 	env(-1);
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
-	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -1373,7 +1378,7 @@ SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
 {
 	env(-1);
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
-	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -2436,7 +2441,7 @@ UnicodeEncodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	env(-1);
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
-	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -2547,7 +2552,7 @@ UnicodeDecodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	env(-1);
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
-	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -2654,7 +2659,7 @@ UnicodeTranslateError_init(PyUnicodeErrorObject *self, PyObject *args, PyObject 
 {
 	env(-1);
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
-	jint dictSize = (*env)->CallIntMethod(env, jdict, pyDictSize);
+	jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,

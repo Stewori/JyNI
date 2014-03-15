@@ -1,12 +1,12 @@
 /* This File is based on moduleobject.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -99,13 +99,16 @@ PyModule_New(const char *name)
 PyObject *
 PyModule_GetDict(PyObject *m)
 {
+	//puts("PyModule_GetDict");
 	if (!PyModule_Check(m)) {
 		PyErr_BadInternalCall();
 		return NULL;
 	}
 	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject(
+	//jobject jm = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict);
+	PyObject* er = JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict));
+	return er;
     /*PyObject *d;
     if (!PyModule_Check(m)) {
         PyErr_BadInternalCall();

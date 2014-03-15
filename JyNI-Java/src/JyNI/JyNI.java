@@ -186,16 +186,18 @@ public class JyNI {
 	
 	public static native void initJyNI(String JyNILibPath);
 	public static native void clearPyCPeer(long objectHandle, long refHandle);
-	public static native PyModule loadModule(String moduleName, String modulePath);
+	public static native PyModule loadModule(String moduleName, String modulePath, ThreadState tstate);
 	//public static native JyObject callModuleFunctionGlobalReferenceMode(CPythonModule module, String name, JyObject self, JyObject... args);
 	//public static native PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject[] args, long[] handles);
 	//public static native PyObject callModuleFunctionLocalReferenceMode(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject... args);
-	public static native PyObject callPyCPeer(long peerHandle, PyObject args, PyObject kw);
-	public static native PyObject getAttrString(long peerHandle, String name);
-	public static native int setAttrString(long peerHandle, String name, PyObject value);
-	public static native PyObject repr(long peerHandle);
-	public static native String PyObjectAsString(long peerHandle);
-	public static native PyString PyObjectAsPyString(long peerHandle);
+	public static native PyObject callPyCPeer(long peerHandle, PyObject args, PyObject kw, ThreadState tstate);
+	public static native PyObject getAttrString(long peerHandle, String name, ThreadState tstate);
+	public static native int setAttrString(long peerHandle, String name, PyObject value, ThreadState tstate);
+	public static native PyObject repr(long peerHandle, ThreadState tstate);
+	public static native String PyObjectAsString(long peerHandle, ThreadState tstate);
+	public static native PyString PyObjectAsPyString(long peerHandle, ThreadState tstate);
+	
+	public static native void JyNIDebugMessage(long mode, long value, String message);
 	
 	//List-Stuff:
 	public static native PyObject JyList_get(long handle, int index);
@@ -363,6 +365,8 @@ public class JyNI {
 	
 	public static void clearNativeHandle(PyObject object)
 	{
+		//System.out.println("java clearNativeHandle:");
+		//System.out.println(object);
 		if (object instanceof PyCPeer)
 			((PyCPeer) object).objectHandle = 0;
 		else
@@ -482,6 +486,11 @@ public class JyNI {
 			argsDest[offset+i] = entry.getValue();
 		}
 		return er;
+	}
+	
+	public static long getCurrentThreadID()
+	{
+		return Thread.currentThread().getId();
 	}
 	
 	protected static int lastDictIndex;
@@ -752,19 +761,21 @@ public class JyNI {
 	
 	protected static PyObject maybeExc(PyObject obj) throws PyException
 	{
-		if (obj == null) throw Py.getThreadState().exception;
+		if (obj == null && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
 		else return obj;
 	}
 	
 	public static void JyErr_InsertCurExc(ThreadState tstate)
 	{
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		//System.out.println("JyErr_InsertCurExc 1");
 		PyException cur_exc = cur_excLookup.remove(tstate0);
+		//System.out.println("JyErr_InsertCurExc 2");
 		if (cur_exc != null)
 		{
 			tstate0.exception = cur_exc;
-			//System.out.println("abc "+cur_exc);
 		}
+		//System.out.println("JyErr_InsertCurExc 3");
 	}
 	
 	public static void PyErr_Restore(PyObject type, PyObject value, PyTraceback traceback)
@@ -940,5 +951,32 @@ public class JyNI {
 		if (result < 0)
 			return -2;
 		return result;
+	}
+	
+	public static String JyNI_pyCode_co_code(PyBaseCode code)
+	{
+		if (code instanceof PyBytecode) return new String(((PyBytecode) code).co_code);
+		else if (code instanceof PyTableCode) return ((PyTableCode) code).co_code;
+		else return null;
+	}
+	
+	public static int JyNI_pyCode_co_flags(PyBaseCode code)
+	{
+		return code.co_flags.toBits();
+	}
+	
+	public static String JyNI_pyCode_co_lnotab(PyBytecode code)
+	{
+		return new String(code.co_lnotab);
+	}
+	
+	public static void jPrint(String msg)
+	{
+		System.out.println(msg);
+	}
+	
+	public static void jPrint(long val)
+	{
+		System.out.println(val);
 	}
 }

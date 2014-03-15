@@ -1,12 +1,12 @@
 /* This File is based on methodobject.c from CPython 2.7.4 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -393,35 +393,37 @@ PyTypeObject PyCFunction_Type = {
 
 /* Find a method in a method chain */
 
-//PyObject *
-//Py_FindMethodInChain(PyMethodChain *chain, PyObject *self, const char *name)
-//{
-//	if (name[0] == '_' && name[1] == '_') {
-//		if (strcmp(name, "__methods__") == 0) {
-//			if (PyErr_WarnPy3k("__methods__ not supported in 3.x",
-//							   1) < 0)
-//				return NULL;
-//			return listmethodchain(chain);
-//		}
-//		if (strcmp(name, "__doc__") == 0) {
-//			const char *doc = self->ob_type->tp_doc;
-//			if (doc != NULL)
-//				return PyString_FromString(doc);
-//		}
-//	}
-//	while (chain != NULL) {
-//		PyMethodDef *ml = chain->methods;
-//		for (; ml->ml_name != NULL; ml++) {
-//			if (name[0] == ml->ml_name[0] &&
-//				strcmp(name+1, ml->ml_name+1) == 0)
-//				/* XXX */
-//				return PyCFunction_New(ml, self);
-//		}
-//		chain = chain->link;
-//	}
-//	PyErr_SetString(PyExc_AttributeError, name);
-//	return NULL;
-//}
+PyObject *
+Py_FindMethodInChain(PyMethodChain *chain, PyObject *self, const char *name)
+{
+	//puts("Py_FindMethodInChain:");
+	//puts("name");
+	if (name[0] == '_' && name[1] == '_') {
+		if (strcmp(name, "__methods__") == 0) {
+			if (PyErr_WarnPy3k("__methods__ not supported in 3.x",
+							   1) < 0)
+				return NULL;
+			return listmethodchain(chain);
+		}
+		if (strcmp(name, "__doc__") == 0) {
+			const char *doc = self->ob_type->tp_doc;
+			if (doc != NULL)
+				return PyString_FromString(doc);
+		}
+	}
+	while (chain != NULL) {
+		PyMethodDef *ml = chain->methods;
+		for (; ml->ml_name != NULL; ml++) {
+			if (name[0] == ml->ml_name[0] &&
+				strcmp(name+1, ml->ml_name+1) == 0)
+				/* XXX */
+				return PyCFunction_New(ml, self);
+		}
+		chain = chain->link;
+	}
+	PyErr_SetString(PyExc_AttributeError, name);
+	return NULL;
+}
 
 /* Find a method in a single method list */
 
@@ -431,6 +433,8 @@ Py_FindMethod(PyMethodDef *methods, PyObject *self, const char *name)
 	PyMethodChain chain;
 	chain.methods = methods;
 	chain.link = NULL;
+	//puts("Py_FindMethod...");
+	//puts(name);
 	return Py_FindMethodInChain(&chain, self, name);
 }
 

@@ -1,12 +1,12 @@
 /* This File is based on modsupport.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -76,8 +76,8 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-//	puts("Py_InitModule4 called with name:");
-//	puts(name);
+	//puts("Py_InitModule4 called with name:");
+	//puts(name);
 
 	/*puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_name);
 	puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_base->tp_name);
@@ -115,14 +115,15 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		if (PyErr_Warn(PyExc_RuntimeWarning, message))
 			return NULL;
 	}
-//	   Make sure name is fully qualified.
-//
-//	   This is a bit of a hack: when the shared library is loaded,
-//	   the module name is "package.module", but the module calls
-//	   Py_InitModule*() with just "module" for the name.  The shared
-//	   library loader squirrels away the true name of the module in
-//	   _Py_PackageContext, and Py_InitModule*() will substitute this
-//	   (if the name actually matches).
+/*	   Make sure name is fully qualified.
+
+	   This is a bit of a hack: when the shared library is loaded,
+	   the module name is "package.module", but the module calls
+	   Py_InitModule*() with just "module" for the name.  The shared
+	   library loader squirrels away the true name of the module in
+	   _Py_PackageContext, and Py_InitModule*() will substitute this
+	   (if the name actually matches).
+*/
 
 	if (_Py_PackageContext != NULL) {
 		char *p = strrchr(_Py_PackageContext, '.');
@@ -131,7 +132,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			_Py_PackageContext = NULL;
 		}
 	}
-//	puts("ready to add module...");
+	//puts("ready to add module...");
 	//return NULL;
 	//if ((m = PyImport_AddModule(name)) == NULL)
 	env(NULL);
@@ -146,7 +147,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 //	env(NULL);
 //	//m = JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_AddModule, (*env)->NewStringUTF(env, name)));
 //	m = PyImport_AddModule(name);
-	// puts("module created");
+	//puts("module created");
 	//printf("dest-check for module7: %u\n", (int) PyModule_Check(m));
 	//printf("%u\n", (jlong) m2);
 	//printf("dest-type: %u\n", (int) m->ob_type);
@@ -189,7 +190,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			}*/
 //			puts("add method:");
 //			puts(ml->ml_name);
-			(*env)->CallVoidMethod(env, d, pyDict__setitem__,
+			(*env)->CallVoidMethod(env, d, pyObject__setitem__,
 					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
 					JyNI_JythonPyObject_FromPyObject(v));
 			Py_DECREF(v);
@@ -211,8 +212,9 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		PyModule_AddStringConstantJy(m, "__doc__", doc);
 		//Py_DECREF(v);
 	}
+	PyObject* er = JyNI_PyObject_FromJythonPyObject(m);
 	//puts("initModule4 done");
-	return JyNI_PyObject_FromJythonPyObject(m);
+	return er;
 }
 
 
@@ -767,7 +769,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 	}
 	//if (PyDict_SetItemString(dict, name, o))
 	//	return -1;
-	(*env)->CallVoidMethod(env, dict, pyDict__setitem__,
+	(*env)->CallVoidMethod(env, dict, pyObject__setitem__,
 			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, name)),
 			o);
 	//Py_DECREF(o);

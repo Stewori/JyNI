@@ -8,7 +8,7 @@ import sys
 
 #Since invalid paths do no harm, we add several possible paths here, where
 #DemoExtension.so could be located in various build scenarios. If you use different
-#scenarios in parallel, uncomment some of the paths to select,the one to be used.
+#scenarios in parallel, select the one to be used by setting some of the paths as comments.
 
 #build with an IDE in debug mode:
 sys.path.append('../../DemoExtension/Debug') #in case you run it from src dir
@@ -33,9 +33,9 @@ print DemoExtension.__doc__
 # With these lines this demo becomes a program that neither Jython without JyNI,
 # nor ordinary CPython could run.
 
-print "To prove that Jython is running, we make a java call:"
-from  java.lang import System
-print "System.currentTimeMillis: "+str(System.currentTimeMillis())
+#print "To prove that Jython is running, we make a java call:"
+#from  java.lang import System
+#print "System.currentTimeMillis: "+str(System.currentTimeMillis())
 
 
 print ""
@@ -90,5 +90,5 @@ print "after popping "+str(p)+" elements:"
 print fruit
 
 print ""
-print "============in JyNI-case expect native output after these lines=================="
-print "==(it is a JNI issue that native output is displayed after java output is done)=="
+print "======in JyNI-case expect native output after these lines on some consoles====="
+print "=====(it is a JNI issue that native output is displayed after java output)====="

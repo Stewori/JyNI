@@ -1,12 +1,12 @@
 /* This File is based on errors.c from CPython 2.7.3 release.
- * It has been modified to suite JyNI needs.
+ * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -83,7 +83,7 @@ extern "C" {
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
-//	puts("PyErr_Restore");
+	//puts("PyErr_Restore");
 	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
 		/* XXX Should never happen -- fatal error instead? */
 		/* Well, it could be None. */
@@ -101,6 +101,7 @@ PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 		jtb);
 	if (oldexc)
 	{
+		//puts("oldexc");
 		PyObject *oldtype, *oldvalue, *oldtraceback;
 		oldtype = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTypeField));
 		oldvalue = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionValueField));
@@ -359,9 +360,17 @@ PyErr_Fetch(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 {
 	env();
 	jobject pyExc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Fetch);
-	*p_type = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
-	*p_value = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
-	*p_traceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
+	if (pyExc)
+	{
+		*p_type = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
+		*p_value = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
+		*p_traceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
+	} //else
+//	{
+//		*p_type = NULL;
+//		*p_value = NULL;
+//		*p_traceback = NULL;
+//	}
 
 //	PyThreadState *tstate = PyThreadState_GET();
 //
@@ -711,6 +720,10 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 		if (PyDict_SetItemString(dict, "__module__", modulename) != 0)
 			goto failure;
 	}
+	//JyNI note: if ob_type is NULL, we assume that base is a Type object that was
+	//not initialized because of our use-on-demand philosophy regarding PyType_Ready.
+	if (base->ob_type == NULL)// && PyType_Check(base))
+		PyType_Ready((PyTypeObject*) base);
 	if (PyTuple_Check(base)) {
 		bases = base;
 		/* INCREF as we create a new ref in the else branch */
@@ -720,14 +733,54 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 		if (bases == NULL)
 			goto failure;
 	}
+	//puts("enter JNI part of exception creation...");
 	/* Create a real new-style class. */
-	result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO",
-								   dot+1, bases, dict);
+	//TODO clean this up. There should be a method to create objects like is done below.
+	env(NULL);
+	jobject jbases = (*env)->NewObjectArray(env,
+			PyTuple_GET_SIZE(bases),
+			pyObjectClass, NULL);
+	if ((*env)->ExceptionCheck(env))
+	{
+		jputs("Exception on creating jbases call:");
+		jobject exc = (*env)->ExceptionOccurred(env);
+		JyNI_printJ(exc);
+		(*env)->ExceptionClear(env);
+	}
+	int i;
+	for (i = 0; i < PyTuple_GET_SIZE(bases); ++i)
+		(*env)->SetObjectArrayElement(env, jbases, i, JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(bases, i)));
+	if ((*env)->ExceptionCheck(env))
+	{
+		jputs("Exception on storing in jbases call:");
+		jobject exc = (*env)->ExceptionOccurred(env);
+		JyNI_printJ(exc);
+		(*env)->ExceptionClear(env);
+	}
+//	jputs("PyErrNewException:");
+//	if (name) jputs(name);
+//	else jputs("name is NULL");
+	jobject jres = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyMakeClass,
+		(*env)->NewStringUTF(env, name), jbases, JyNI_JythonPyObject_FromPyObject(dict));
+	if ((*env)->ExceptionCheck(env))
+	{
+		jputs("Exception on makeClass call:");
+		jobject exc = (*env)->ExceptionOccurred(env);
+		JyNI_printJ(exc);
+		(*env)->ExceptionClear(env);
+	}
+	//result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO", dot+1, bases, dict);
+	result = JyNI_PyObject_FromJythonPyObject(jres);
+//	jputs("control name");
+//	jputs(((PyTypeObject*) result)->tp_name);
+
   failure:
 	Py_XDECREF(bases);
 	Py_XDECREF(mydict);
 	Py_XDECREF(classname);
 	Py_XDECREF(modulename);
+//	if (result == NULL) puts("exception result is NULL");
+//	else puts("exception result is not NULL");
 	return result;
 }
 

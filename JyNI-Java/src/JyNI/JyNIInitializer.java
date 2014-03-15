@@ -53,14 +53,7 @@ import org.python.util.PythonInterpreter;
 public class JyNIInitializer implements JythonInitializer {
 	public void initialize(Properties preProperties, Properties postProperties, String[] argv, ClassLoader classLoader, ExtensiblePyObjectAdapter adapter)
 	{
-		//System.out.println("JyNI init");
-		/*System.out.println("PreProperties:");
-		preProperties.list(System.out);
-		System.out.println("PostProperties:");
-		postProperties.list(System.out);
-		System.out.println("argv:");
-		for (String s : argv)
-			System.out.println(s);*/
+		//System.out.println("Init JyNI...");
 		PySystemState initState = PySystemState.doInitialize(preProperties, postProperties, argv, classLoader, adapter);
 		//add the JyNI-Importer to list of import hooks:
 		initState.path_hooks.append(new JyNIImporter());

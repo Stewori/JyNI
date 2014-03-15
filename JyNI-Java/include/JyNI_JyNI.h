@@ -44,58 +44,66 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_clearPyCPeer
 /*
  * Class:     JyNI_JyNI
  * Method:    loadModule
- * Signature: (Ljava/lang/String;Ljava/lang/String;)Lorg/python/core/PyModule;
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/python/core/ThreadState;)Lorg/python/core/PyModule;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_loadModule
-  (JNIEnv *, jclass, jstring, jstring);
+  (JNIEnv *, jclass, jstring, jstring, jobject);
 
 /*
  * Class:     JyNI_JyNI
  * Method:    callPyCPeer
- * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/ThreadState;)Lorg/python/core/PyObject;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_callPyCPeer
-  (JNIEnv *, jclass, jlong, jobject, jobject);
+  (JNIEnv *, jclass, jlong, jobject, jobject, jobject);
 
 /*
  * Class:     JyNI_JyNI
  * Method:    getAttrString
- * Signature: (JLjava/lang/String;)Lorg/python/core/PyObject;
+ * Signature: (JLjava/lang/String;Lorg/python/core/ThreadState;)Lorg/python/core/PyObject;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_getAttrString
-  (JNIEnv *, jclass, jlong, jstring);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    setAttrString
- * Signature: (JLjava/lang/String;Lorg/python/core/PyObject;)I
- */
-JNIEXPORT jint JNICALL Java_JyNI_JyNI_setAttrString
   (JNIEnv *, jclass, jlong, jstring, jobject);
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    setAttrString
+ * Signature: (JLjava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/ThreadState;)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_setAttrString
+  (JNIEnv *, jclass, jlong, jstring, jobject, jobject);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    repr
- * Signature: (J)Lorg/python/core/PyObject;
+ * Signature: (JLorg/python/core/ThreadState;)Lorg/python/core/PyObject;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_repr
-  (JNIEnv *, jclass, jlong);
+  (JNIEnv *, jclass, jlong, jobject);
 
 /*
  * Class:     JyNI_JyNI
  * Method:    PyObjectAsString
- * Signature: (J)Ljava/lang/String;
+ * Signature: (JLorg/python/core/ThreadState;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_JyNI_JyNI_PyObjectAsString
-  (JNIEnv *, jclass, jlong);
+  (JNIEnv *, jclass, jlong, jobject);
 
 /*
  * Class:     JyNI_JyNI
  * Method:    PyObjectAsPyString
- * Signature: (J)Lorg/python/core/PyString;
+ * Signature: (JLorg/python/core/ThreadState;)Lorg/python/core/PyString;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyObjectAsPyString
-  (JNIEnv *, jclass, jlong);
+  (JNIEnv *, jclass, jlong, jobject);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNIDebugMessage
+ * Signature: (JJLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyNIDebugMessage
+  (JNIEnv *, jclass, jlong, jlong, jstring);
 
 /*
  * Class:     JyNI_JyNI

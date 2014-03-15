@@ -27,7 +27,7 @@ print ""
 print datetime.__name__
 dt = datetime.datetime
 #print dt
-now = datetime.datetime(2003, 8, 4, 12, 30, 45)
+now = datetime.datetime(2013, 11, 3, 20, 30, 45)
 
 print now
 print repr(now)

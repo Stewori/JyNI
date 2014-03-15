@@ -54,12 +54,11 @@ import java.util.List;
 import java.util.HashMap;
 
 /**
- * Load Java classes.
+ * Load native modules.
  */
 public class JyNIImporter extends PyObject {
 	public static HashMap<String, JyNIModuleInfo> dynModules = new HashMap<String, JyNIModuleInfo>();
 	
-	//public static final String JAVA_IMPORT_PATH_ENTRY = "__classpath__";
 	List knownPaths = null;
 	Vector<String> libPaths = new Vector<String>();
 
@@ -150,6 +149,7 @@ public class JyNIImporter extends PyObject {
 			{
 				for (String m : ch)
 				{
+					//System.out.println("Check: "+m);
 					//if (m.equals(name+suf))
 					if (m.startsWith(name+".") && m.endsWith(suf))
 					{
@@ -172,7 +172,7 @@ public class JyNIImporter extends PyObject {
 		JyNIModuleInfo inf = dynModules.get(name);
 		if (inf.module == null)
 		{
-			inf.module = JyNI.loadModule(name, inf.path);
+			inf.module = JyNI.loadModule(name, inf.path, Py.getThreadState());
 			//System.out.println("had to call JyNI.loadModule, which returned "+inf.module);
 		}
 		//return JyNI.loadModule(name, "path");
