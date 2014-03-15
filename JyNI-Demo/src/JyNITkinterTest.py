@@ -1,3 +1,7 @@
+'''
+@author: Stefan Richthofer
+'''
+
 import sys
 
 #Include native Tkinter:
