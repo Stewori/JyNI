@@ -66,11 +66,13 @@ The following built-in types are already supported:
 * Number types PyInt, PyLong, PyFloat, PyComplex
 * Sequence types PyTuple, PyList, PySlice
 * Data structure types PyDict, PySet, PyFrozenSet
-* Operational types PyModule, PyClass, PyInstance, PyMethod
+* Operational types PyModule, PyClass, PyInstance, PyMethod, PyFunction, PyCode
 * Singleton types PyNone, PyNotImplemented, PyEllipsis
-* Miscellaneous types PyBool, PyString, PyUnicode
-* Natively defined types (you cannot subclass them (yet) in Jython)
+* Miscellaneous types PyBool, PyString, PyUnicode, PyCell (partly)
+* Native types PyCFunction, PyCapsule, PyCObject
+* Natively defined custom-types
 * Exception types
+* PyType as static type or heap type (partly - as far as needed)
 
 
 JyNI has been tested on
@@ -90,7 +92,8 @@ for all systems with shlib.
 3. Building and testing
 -----------------------
 
-* Download the sources from the latest release or clone the github repository.
+* Download the sources from the latest release or clone the github repository
+(https://github.com/Stewori/JyNI).
 
 * Provide Java: Make sure that Java 7 JDK or newer is installed. Some systems
 (f.i. Linux MINT) provide a symlink called "/usr/lib/jvm/default-java", that
@@ -104,7 +107,7 @@ from the JyNI base folder with a text editor and edit the line starting with
 jython.jar into the JyNI base directory, or you edit "makefile" and adjust the
 JYTHON-variable such that it points to jython.jar. Be sure to use
 Jython 2.7 (beta) or newer. If you want to use JyNIDemo.sh, you need to adjust
-the Jython-path in that file too.
+the Jython-path in that file too. Same for JyNITkinterDemo.sh.
 
 * If not yet done, install the dev-package of Python 2.7. JyNI only needs
 pyconfig.h from that package. Alternatively (if you know, what you're doing),
@@ -112,13 +115,15 @@ you can provide your own pyconfig.h. In that case you have to adjust the
 corresponding include path in the makefile.
 
 * Build JyNI: Open a terminal and enter the JyNI base directory. Type "make".
+Optionally run "make clean" afterwards. The resulting binaries are placed in
+the folder named "build".
 
 To run Jython with JyNI support, call (from JyNI base dir)
 
 java -cp jython.jar:build/JyNI.jar org.python.util.jython someFile.py
 
 Alternatively, one can use Jython's start-script
-(if you also copied it to the JyNI base dir):
+(assuming you copied it to the JyNI base dir):
 
 jython -J-cp build/JyNI.jar
 
@@ -137,8 +142,8 @@ provided classpath to Jython.
 Test-Example
 ............
 
-"DemoExtension" is a CPython-extension that demonstrates the
-already supported features of JyNI. It can be built like an
+"DemoExtension" is a CPython-extension that demonstrates some
+basic features of JyNI. It can be built like an
 ordinary Python-extension as described in the tutorial
 http://docs.python.org/2/extending/extending.html
 
@@ -147,22 +152,24 @@ Enter the folder DemoExtension and type "python setup.py build".
 JyNI-Demo/src/JyNIDemo.py demonstrates the use of DemoExtension from Python-side.
 It should run perfectly with either CPython 2.7.x or Jython+JyNI.
 To run it, type
-
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDemo.py
 
 To ease running this example, we provide that line in JyNIDemo.sh, so you can
-alternatively type
-
+alternatively run
 sh JyNIDemo.sh
 
 To see a basic demonstration that JyNI is capable of using the original datetime
-module, type
-
+module, run
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDatetimeTest.py
 
-To see a demonstration of exception support (on native level), type
-
+To see a demonstration of exception support (on native level), run
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIExceptionTest.py
+
+
+To see a demonstration of Tkinter support, run
+java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNITkinterTest.py
+or
+sh JyNITkinterDemo.sh
 
 
 
@@ -172,9 +179,9 @@ java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIExce
 
 Further steps:
 - support weak references
-- fix garbage collection
-- fix pydoc interoperation
-- focus on numpy-specific needs
+- support garbage collection
+- support ctypes
+- support numpy
 - test and support on other platforms
 - provide autotools-support
 
@@ -189,7 +196,7 @@ CPython-extensions must be compiled with the flag WITH_PYMALLOC activated
 the macros PyObject_MALLOC, PyObject_REALLOC and PyObject_FREE directly.
 If they use these macros with WITH_PYMALLOC not activated, JyNI will most
 likely produce segmantation faults. This is because without the flag, these
-macros directly map to the systems malloc-function family. In that case
+macros directly map to the system's malloc-function family. In that case
 JyNI would not be able to prepare the JyObject-header in every case.
 However, it would be easy to recompile such extensions for JyNI. Simply add
 the WITH_PYMALLOC-definition at compile-time or replace the macros by their
@@ -200,7 +207,7 @@ the greater the chance it will run with JyNI. Especially
 allocation/deallocation should not be done by hand, since JyNI must be able
 to setup the JyObject-headers.
 
-We hope that most extensions don't suffer from this issue.
+We hope that most extensions are not affected by this issue.
 
 
 
