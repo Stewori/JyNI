@@ -169,12 +169,13 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
+//	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 
 //	PyEval_AcquireLock();
 //	_PyThreadState_Current = (*env)->NewGlobalRef(env, tstate);
 	ENTER_JyNI
-	jobject er = JyNI_JythonPyObject_FromPyObject(
-			peer->ob_type->tp_call(peer,
+
+	jobject er = JyNI_JythonPyObject_FromPyObject(peer->ob_type->tp_call(peer,
 			JyNI_PyObject_FromJythonPyObject(args),
 			JyNI_PyObject_FromJythonPyObject(kw)
 		));
@@ -182,7 +183,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	LEAVE_JyNI
 	if (PyErr_Occurred())
 	{
-		//jputs("error finally occurred! (JyNI_callPyCPeer)");
+		jputs("error finally occurred! (JyNI_callPyCPeer)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -1470,8 +1471,10 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 	jobject dest = NULL;
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
+//		jputsLong(__LINE__);
 		if (tme->sync && tme->sync->jyInit)
 			dest = tme->sync->jyInit(src);
+//		jputsLong(__LINE__);
 	} else
 	{
 		env(NULL);
@@ -1497,8 +1500,6 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 {
 	if (op == NULL) return NULL;
-//	puts("convert:");
-//	puts(op->ob_type->tp_name);
 	if (op == Py_None) return JyNone;
 	if (op == Py_NotImplemented) return JyNotImplemented;
 	if (op == Py_Ellipsis) return JyEllipsis;
@@ -1510,39 +1511,48 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		//NULL for some other reason. However this would not go far without segfault then anyway.
 		PyType_Ready(op); //this is the wrong place to do this... it's just a quick hack. Find better solution soon...
 	}
+//	jputs("convert:");
+//	if (!op->ob_type) jputs("type is NULL");
+//	if (!op->ob_type->tp_name) jputs("type name is NULL");
+//	jputs(op->ob_type->tp_name);
 	//The following block cares for statically defined types. Heap-types are treated like ordinary objects.
 	if (PyType_Check(op) && !PyType_HasFeature(op->ob_type, Py_TPFLAGS_HEAPTYPE))
 	{
 		if (PyExceptionClass_Check(op))
 		{
-			//puts("convert exception...");
+			//jputs("convert exception...");
 			jobject er = JyNI_JythonExceptionType_FromPyExceptionType(op);
 			if (er != NULL) return er;
 		} else
 		{
-			//puts("convert type...");
+			//jputs("convert type...");
 			jobject er = JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op);
 			if (er != NULL) return er;
 		}
 	}
 	//if (PyType_Check(op)) puts("appears to be a HeapType");
-
+	//jputsLong(__LINE__);
 	JyObject* jy = AS_JY(op);
+	//jputsLong(__LINE__);
 	//if (JyNI_IsJyObject(op))
 	if (JyObject_IS_INITIALIZED(jy))
 	{
-		//puts("already initialized");
+		//jputs("already initialized");
 		if (jy->flags & SYNC_ON_PY_TO_JY_FLAG_MASK)
 			JyNI_SyncPy2Jy(op, jy);
 		return jy->jy;
 	} else
 	{
+		//jputsLong(__LINE__);
 		TypeMapEntry* tme;
 		if (jy->jy != NULL) tme = (TypeMapEntry*) jy->jy;
 		else tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
-
+		//jputsLong(__LINE__);
 		if (tme)// != NULL
+		{
+//			jputsLong(__LINE__);
 			return JyNI_InitJythonPyObject(tme, op, jy);
+		}
 		else
 		{
 			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op));
@@ -1913,6 +1923,9 @@ jmethodID objectGetClass;
 jclass classClass;
 jmethodID classEquals;
 
+//jclass systemClass;
+//jmethodID arraycopy;
+
 jclass JyNIClass;
 jmethodID JyNISetNativeHandle;
 jmethodID JyNILookupNativeHandle;
@@ -2109,6 +2122,7 @@ jmethodID pyTupleConstructor;
 jmethodID pyTupleByPyObjectArrayBooleanConstructor;
 jmethodID pyTupleSize;
 jmethodID pyTuplePyGet;
+//jfieldID pyTupleArray;
 //jmethodID pyTupleGetArray;
 
 jclass pyListClass;
@@ -2397,6 +2411,12 @@ inline jint initJNI(JNIEnv *env)
 	classClass = (jclass) (*env)->NewWeakGlobalRef(env, classClassLocal);
 	(*env)->DeleteLocalRef(env, classClassLocal);
 	classEquals = (*env)->GetMethodID(env, classClass, "equals", "(Ljava/lang/Object;)Z");
+
+//	jclass systemClassLocal = (*env)->FindClass(env, "java/lang/System");
+//	if (systemClassLocal == NULL) { return JNI_ERR;}
+//	systemClass = (jclass) (*env)->NewWeakGlobalRef(env, systemClassLocal);
+//	(*env)->DeleteLocalRef(env, systemClassLocal);
+//	arraycopy = (*env)->GetStaticMethodID(env, systemClass, "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
 
 	jclass stringClassLocal = (*env)->FindClass(env, "java/lang/String");
 	if (stringClassLocal == NULL) { return JNI_ERR;}

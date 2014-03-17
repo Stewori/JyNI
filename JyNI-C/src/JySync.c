@@ -68,6 +68,7 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
 
 PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 {
+	//jputs("JySync_Init_PyTuple_From_JyTuple");
 	env(NULL);
 	//jarray back = (*env)->CallObjectMethod(env, src, pyTupleGetArray);
 	jint srcSize = (*env)->CallIntMethod(env, src, pyTupleSize);

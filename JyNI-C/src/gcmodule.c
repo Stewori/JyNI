@@ -1605,7 +1605,8 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 		//JyObject* jy2 = AS_JY(op);
 		if (basicsize > PY_SSIZE_T_MAX - sizeof(PyGC_Head) - sizeof(JyObject))
 			return (PyVarObject *)PyErr_NoMemory();
-		jy = PyObject_REALLOC(jy,  sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
+		//jy = PyObject_REALLOC(jy,  sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
+		jy = PyObject_RawRealloc(jy,  sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
 		if (jy == NULL) return (PyVarObject *) PyErr_NoMemory();
 
 		//PyGC_Head *q = GC_FROM_JY(jy);
@@ -1613,7 +1614,14 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 		//op = (PyVarObject *) FROM_GC(q);
 		op = (PyVarObject *) FROM_JY(jy);
 		Py_SIZE(op) = nitems;
-		//todo: take care to correct the handle on java-side
+		//if (jy->jy) jputs("GC resize, but handle is initialized");
+		if (jy->flags & JY_INITIALIZED_FLAG_MASK && jy->jy) //jputs("really initialized");
+		{
+			/* take care to correct the handle on java-side */
+			env(NULL);
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNISetNativeHandle, jy->jy, (jlong) op);
+			//maybe do sync here
+		}
 		return op;
 	}
 }

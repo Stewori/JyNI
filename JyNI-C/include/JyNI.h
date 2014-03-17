@@ -489,6 +489,9 @@ extern jmethodID objectGetClass;
 extern jclass classClass;
 extern jmethodID classEquals;
 
+//extern jclass systemClass;
+//extern jmethodID arraycopy;
+
 extern jclass stringClass;
 extern jmethodID stringToUpperCase;
 extern jmethodID stringFromBytesAndCharsetNameConstructor;

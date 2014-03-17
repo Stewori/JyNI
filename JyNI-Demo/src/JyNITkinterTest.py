@@ -5,8 +5,8 @@
 import sys
 
 #Include native Tkinter:
-sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
-sys.path.insert(0, '/usr/lib/python2.7/lib-tk')
+sys.path.append('/usr/lib/python2.7/lib-dynload')
+sys.path.append('/usr/lib/python2.7/lib-tk')
 
 from Tkinter import *
 
@@ -15,7 +15,7 @@ def printTest():
 	
 def printTest2():
 	print "test2"
-	
+
 def printTimeStamp():
 	from java.lang import System
 	print "System.currentTimeMillis: "+str(System.currentTimeMillis())

@@ -894,56 +894,61 @@ PyTypeObject PyTuple_Type = {
 int
 _PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
 {
-	 register PyTupleObject *v;
-	 register PyTupleObject *sv;
-	 Py_ssize_t i;
-	 Py_ssize_t oldsize;
+//	jputs("_PyTuple_Resize");
+	register PyTupleObject *v;
+	register PyTupleObject *sv;
+	Py_ssize_t i;
+	Py_ssize_t oldsize;
 
-	 v = (PyTupleObject *) *pv;
-	 if (v == NULL || Py_TYPE(v) != &PyTuple_Type ||
-		  (Py_SIZE(v) != 0 && Py_REFCNT(v) != 1)) {
-		  *pv = 0;
-		  Py_XDECREF(v);
-		  PyErr_BadInternalCall();
-		  return -1;
-	 }
-	 oldsize = Py_SIZE(v);
-	 if (oldsize == newsize)
-		  return 0;
+	v = (PyTupleObject *) *pv;
+	if (v == NULL || Py_TYPE(v) != &PyTuple_Type ||
+		(Py_SIZE(v) != 0 && Py_REFCNT(v) != 1)) {
+		*pv = 0;
+		Py_XDECREF(v);
+		PyErr_BadInternalCall();
+		return -1;
+	}
+	oldsize = Py_SIZE(v);
+//	jputs("old size");
+//	jputsLong(oldsize);
+//	jputs("new size");
+//	jputsLong(newsize);
+	if (oldsize == newsize)
+		return 0;
 
-	 if (oldsize == 0) {
-		  /* Empty tuples are often shared, so we should never
-			  resize them in-place even if we do own the only
-			  (current) reference */
-		  Py_DECREF(v);
-		  *pv = PyTuple_New(newsize);
-		  return *pv == NULL ? -1 : 0;
-	 }
+	if (oldsize == 0) {
+		/*  Empty tuples are often shared, so we should never
+			resize them in-place even if we do own the only
+			(current) reference */
+		Py_DECREF(v);
+		*pv = PyTuple_New(newsize);
+		return *pv == NULL ? -1 : 0;
+	}
 
-	 /* XXX UNREF/NEWREF interface should be more symmetrical */
-	 _Py_DEC_REFTOTAL;
-	 if (_PyObject_GC_IS_TRACKED(v))
-		  _PyObject_GC_UNTRACK(v);
-	 _Py_ForgetReference((PyObject *) v);
-	 /* DECREF items deleted by shrinkage */
-	 for (i = newsize; i < oldsize; i++) {
-		  Py_XDECREF(v->ob_item[i]);
-		  v->ob_item[i] = NULL;
-	 }
-	 sv = PyObject_GC_Resize(PyTupleObject, v, newsize);
-	 if (sv == NULL) {
-		  *pv = NULL;
-		  PyObject_GC_Del(v);
-		  return -1;
-	 }
-	 _Py_NewReference((PyObject *) sv);
-	 /* Zero out items added by growing */
-	 if (newsize > oldsize)
-		  memset(&sv->ob_item[oldsize], 0,
-					sizeof(*sv->ob_item) * (newsize - oldsize));
-	 *pv = (PyObject *) sv;
-	 _PyObject_GC_TRACK(sv);
-	 return 0;
+	/* XXX UNREF/NEWREF interface should be more symmetrical */
+	_Py_DEC_REFTOTAL;
+	if (_PyObject_GC_IS_TRACKED(v))
+		_PyObject_GC_UNTRACK(v);
+	_Py_ForgetReference((PyObject *) v);
+	/* DECREF items deleted by shrinkage */
+	for (i = newsize; i < oldsize; i++) {
+		Py_XDECREF(v->ob_item[i]);
+		v->ob_item[i] = NULL;
+	}
+	sv = PyObject_GC_Resize(PyTupleObject, v, newsize);
+	if (sv == NULL) {
+		*pv = NULL;
+		PyObject_GC_Del(v);
+		return -1;
+	}
+	_Py_NewReference((PyObject *) sv);
+	/* Zero out items added by growing */
+	if (newsize > oldsize)
+		memset(&sv->ob_item[oldsize], 0,
+			sizeof(*sv->ob_item) * (newsize - oldsize));
+	*pv = (PyObject *) sv;
+	_PyObject_GC_TRACK(sv);
+	return 0;
 }
 
 int
