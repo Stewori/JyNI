@@ -47,8 +47,8 @@
 /* Boolean type, a subtype of int */
 
 #include <JyNI.h>
-/*
-// We need to define bool_print to override int_print
+
+/* We need to define bool_print to override int_print */
 
 static int
 bool_print(PyBoolObject *self, FILE *fp, int flags)
@@ -59,7 +59,7 @@ bool_print(PyBoolObject *self, FILE *fp, int flags)
     return 0;
 }
 
-// We define bool_repr to return "False" or "True"
+/* We define bool_repr to return "False" or "True" */
 
 static PyObject *false_str = NULL;
 static PyObject *true_str = NULL;
@@ -70,16 +70,16 @@ bool_repr(PyBoolObject *self)
     PyObject *s;
 
     if (self->ob_ival)
-        s = true_str ? true_str :
-            (true_str = PyString_InternFromString("True"));
+        s = true_str ? true_str : (true_str = PyString_InternFromString("True"));
+            //(true_str = PyString_InternFromString("True"));
     else
-        s = false_str ? false_str :
-            (false_str = PyString_InternFromString("False"));
+        s = false_str ? false_str : (false_str = PyString_InternFromString("False"));
+            //(false_str = PyString_InternFromString("False"));
     Py_XINCREF(s);
     return s;
 }
 
-// Function to return a bool from a C long
+/* Function to return a bool from a C long */
 
 PyObject *PyBool_FromLong(long ok)
 {
@@ -93,7 +93,7 @@ PyObject *PyBool_FromLong(long ok)
     return result;
 }
 
-// We define bool_new to always return either Py_True or Py_False
+/* We define bool_new to always return either Py_True or Py_False */
 
 static PyObject *
 bool_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -110,7 +110,7 @@ bool_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return PyBool_FromLong(ok);
 }
 
-// Arithmetic operations redefined to return bool if both args are bool.
+/* Arithmetic operations redefined to return bool if both args are bool. */
 
 static PyObject *
 bool_and(PyObject *a, PyObject *b)
@@ -138,8 +138,8 @@ bool_xor(PyObject *a, PyObject *b)
     return PyBool_FromLong(
         ((PyBoolObject *)a)->ob_ival ^ ((PyBoolObject *)b)->ob_ival);
 }
-*/
-// Doc string
+
+/* Doc string */
 
 PyDoc_STRVAR(bool_doc,
 "bool(x) -> bool\n\
@@ -148,7 +148,7 @@ Returns True when the argument x is true, False otherwise.\n\
 The builtins True and False are the only two instances of the class bool.\n\
 The class bool is a subclass of the class int, and cannot be subclassed.");
 /*
-// Arithmetic methods -- only so we can override &, |, ^.
+/* Arithmetic methods -- only so we can override &, |, ^. */
 
 static PyNumberMethods bool_as_number = {
     0,                          // nb_add
@@ -190,8 +190,8 @@ static PyNumberMethods bool_as_number = {
     0,                          // nb_inplace_floor_divide
     0,                          // nb_inplace_true_divide
 };
-*/
-// The type object for bool.  Note that this cannot be subclassed!
+
+/* The type object for bool.  Note that this cannot be subclassed! */
 
 PyTypeObject PyBool_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
@@ -199,17 +199,17 @@ PyTypeObject PyBool_Type = {
     sizeof(PyIntObject),
     0,
     0,                                          // tp_dealloc
-    0,//(printfunc)bool_print,                      // tp_print
+    (printfunc)bool_print,                      // tp_print
     0,                                          // tp_getattr
     0,                                          // tp_setattr
     0,                                          // tp_compare
-    0,//(reprfunc)bool_repr,                        // tp_repr
-    0,//&bool_as_number,                            // tp_as_number
+    (reprfunc)bool_repr,                        // tp_repr
+    &bool_as_number,                            // tp_as_number
     0,                                          // tp_as_sequence
     0,                                          // tp_as_mapping
     0,                                          // tp_hash
     0,                                          // tp_call
-    0,//(reprfunc)bool_repr,                        // tp_str
+    (reprfunc)bool_repr,                        // tp_str
     0,                                          // tp_getattro
     0,                                          // tp_setattro
     0,                                          // tp_as_buffer
@@ -224,19 +224,19 @@ PyTypeObject PyBool_Type = {
     0,                                          // tp_methods
     0,                                          // tp_members
     0,                                          // tp_getset
-    0,//&PyInt_Type,                                // tp_base
+    &PyInt_Type,                                // tp_base
     0,                                          // tp_dict
     0,                                          // tp_descr_get
     0,                                          // tp_descr_set
     0,                                          // tp_dictoffset
     0,                                          // tp_init
     0,                                          // tp_alloc
-    0,//bool_new,                                   // tp_new
+    bool_new,                                   // tp_new
 };
 
-// The objects representing bool values False and True
+/* The objects representing bool values False and True */
 
-// Named Zero for link-level compatibility
+/* Named Zero for link-level compatibility */
 PyIntObject _Py_ZeroStruct = {
     PyObject_HEAD_INIT(&PyBool_Type)
     0

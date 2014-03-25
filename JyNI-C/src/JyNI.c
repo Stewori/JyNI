@@ -183,7 +183,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	LEAVE_JyNI
 	if (PyErr_Occurred())
 	{
-		jputs("error finally occurred! (JyNI_callPyCPeer)");
+		//jputs("error finally occurred! (JyNI_callPyCPeer)");
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
 	}
 	return er;
@@ -433,11 +433,11 @@ inline void initBuiltinTypes()
 
 	builtinTypes[15].py_type = &PyProperty_Type;
 	builtinTypes[15].jy_class = pyPropertyClass;
-	builtinTypes[15].flags = 0;
+	builtinTypes[15].flags = 0;*/
 
 	builtinTypes[16].py_type = &PyBool_Type;
 	builtinTypes[16].jy_class = pyBooleanClass;
-	builtinTypes[16].flags = 0;*/
+	builtinTypes[16].flags = 0;
 
 	builtinTypes[17].py_type = &PyFloat_Type;
 	builtinTypes[17].jy_class = pyFloatClass;
@@ -2074,6 +2074,7 @@ jmethodID pyObject__setitem__;
 jmethodID pyObject__delitem__;
 jmethodID pyObject__len__;
 jmethodID pyObject__getslice__;
+jmethodID pyObject__nonzero__;
 jmethodID pyObjectGetDict;
 jmethodID pyObjectFastGetDict;
 jmethodID pyObjectSetDict;
@@ -2671,6 +2672,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyObject__delitem__ = (*env)->GetMethodID(env, pyObjectClass, "__delitem__", "(Lorg/python/core/PyObject;)V");
 	pyObject__len__ = (*env)->GetMethodID(env, pyObjectClass, "__len__", "()I");
 	pyObject__getslice__ = (*env)->GetMethodID(env, pyObjectClass, "__getslice__", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	pyObject__nonzero__ = (*env)->GetMethodID(env, pyObjectClass, "__nonzero__", "()Z");
 	pyObjectGetDict = (*env)->GetMethodID(env, pyObjectClass, "getDict", "()Lorg/python/core/PyObject;");
 	pyObjectFastGetDict = (*env)->GetMethodID(env, pyObjectClass, "fastGetDict", "()Lorg/python/core/PyObject;");
 	pyObjectSetDict = (*env)->GetMethodID(env, pyObjectClass, "setDict", "(Lorg/python/core/PyObject;)V");

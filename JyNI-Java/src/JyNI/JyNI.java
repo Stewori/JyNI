@@ -770,6 +770,7 @@ public class JyNI {
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
 		//System.out.println("JyErr_InsertCurExc 1");
 		PyException cur_exc = cur_excLookup.remove(tstate0);
+		//System.out.println(cur_exc);
 		//System.out.println("JyErr_InsertCurExc 2");
 		if (cur_exc != null)
 		{

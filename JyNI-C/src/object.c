@@ -2089,37 +2089,49 @@ PyObject_GenericSetAttr(PyObject *obj, PyObject *name, PyObject *value)
 }
 
 /*
-// Test a value used as condition, e.g., in a for or if statement.
-// Return -1 if an error occurred
+ Test a value used as condition, e.g., in a for or if statement.
+ Return -1 if an error occurred
+*/
 
 int
 PyObject_IsTrue(PyObject *v)
 {
-	Py_ssize_t res;
 	if (v == Py_True)
 		 return 1;
 	if (v == Py_False)
 		 return 0;
 	if (v == Py_None)
 		 return 0;
-	else if (v->ob_type->tp_as_number != NULL &&
-				v->ob_type->tp_as_number->nb_nonzero != NULL)
-		 res = (*v->ob_type->tp_as_number->nb_nonzero)(v);
-	else if (v->ob_type->tp_as_mapping != NULL &&
-				v->ob_type->tp_as_mapping->mp_length != NULL)
-		 res = (*v->ob_type->tp_as_mapping->mp_length)(v);
-	else if (v->ob_type->tp_as_sequence != NULL &&
-				v->ob_type->tp_as_sequence->sq_length != NULL)
-		 res = (*v->ob_type->tp_as_sequence->sq_length)(v);
-	else
-		 return 1;
-	// if it is negative, it should be either -1 or -2
-	return (res > 0) ? 1 : Py_SAFE_DOWNCAST(res, Py_ssize_t, int);
-}
- */
 
-// equivalent of 'not v'
-// Return -1 if an error occurred
+	jobject delegate = JyNI_GetJythonDelegate(v);
+	if (delegate)
+	{
+		env(-1);
+		return (*env)->CallBooleanMethod(env, delegate, pyObject__nonzero__);
+	} else
+	{
+
+		Py_ssize_t res;
+		if (v->ob_type->tp_as_number != NULL &&
+					v->ob_type->tp_as_number->nb_nonzero != NULL)
+			 res = (*v->ob_type->tp_as_number->nb_nonzero)(v);
+		else if (v->ob_type->tp_as_mapping != NULL &&
+					v->ob_type->tp_as_mapping->mp_length != NULL)
+			 res = (*v->ob_type->tp_as_mapping->mp_length)(v);
+		else if (v->ob_type->tp_as_sequence != NULL &&
+					v->ob_type->tp_as_sequence->sq_length != NULL)
+			 res = (*v->ob_type->tp_as_sequence->sq_length)(v);
+		else
+			 return 1;
+		// if it is negative, it should be either -1 or -2
+		return (res > 0) ? 1 : Py_SAFE_DOWNCAST(res, Py_ssize_t, int);
+	}
+}
+
+/*
+ equivalent of 'not v'
+ Return -1 if an error occurred
+*/
 
 int
 PyObject_Not(PyObject *v)
