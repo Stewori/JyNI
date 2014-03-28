@@ -3855,7 +3855,7 @@ PyTypeObject PyBaseString_Type = {
 	0,										  /* tp_setattro */
 	0,										  /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-	basestring_doc,							 /* tp_doc */
+	basestring_doc,							  /* tp_doc */
 	0,										  /* tp_traverse */
 	0,										  /* tp_clear */
 	0,										  /* tp_richcompare */
@@ -3865,14 +3865,14 @@ PyTypeObject PyBaseString_Type = {
 	0,										  /* tp_methods */
 	0,										  /* tp_members */
 	0,										  /* tp_getset */
-	0,//&PyBaseObject_Type,						 /* tp_base */
+	&PyBaseObject_Type,						  /* tp_base */
 	0,										  /* tp_dict */
 	0,										  /* tp_descr_get */
 	0,										  /* tp_descr_set */
 	0,										  /* tp_dictoffset */
 	0,										  /* tp_init */
 	0,										  /* tp_alloc */
-	basestring_new,							 /* tp_new */
+	basestring_new,							  /* tp_new */
 	0,										  /* tp_free */
 };
 
@@ -3899,7 +3899,7 @@ PyTypeObject PyString_Type = {
 	0,//(hashfunc)string_hash,					  /* tp_hash */
 	0,										  /* tp_call */
 	string_str,								 /* tp_str */
-	0,//PyObject_GenericGetAttr,					/* tp_getattro */
+	PyObject_GenericGetAttr,					/* tp_getattro */
 	0,										  /* tp_setattro */
 	0,//&string_as_buffer,						  /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES |

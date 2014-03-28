@@ -1466,7 +1466,9 @@ int unicode_decode_call_errorhandler(const char *errors, PyObject **errorHandler
 	int res = -1;
 
 	if (*errorHandler == NULL) {
+		jputsLong(__LINE__);
 		*errorHandler = PyCodec_LookupError(errors);
+		jputsLong(__LINE__);
 		if (*errorHandler == NULL)
 			goto onError;
 	}
@@ -2539,7 +2541,9 @@ PyUnicode_DecodeUTF16Stateful(const char *s,
 
 	/* Note: size will always be longer than the resulting Unicode
 	   character count */
+//	jputsLong(__LINE__);
 	unicode = _PyUnicode_New(size);
+//	jputsLong(__LINE__);
 	if (!unicode)
 		return NULL;
 	if (size == 0)
@@ -2650,7 +2654,9 @@ PyUnicode_DecodeUTF16Stateful(const char *s,
 		endinpos = startinpos+2;
 		/* Fall through to report the error */
 
-	  utf16Error:
+	utf16Error:
+		jputsLong(__LINE__);
+		jputs(errmsg);
 		outpos = p-PyUnicode_AS_UNICODE(unicode);
 		if (unicode_decode_call_errorhandler(
 				errors, &errorHandler,
@@ -2659,7 +2665,7 @@ PyUnicode_DecodeUTF16Stateful(const char *s,
 				&unicode, &outpos, &p))
 			goto onError;
 	}
-
+//	jputsLong(__LINE__);
 	if (byteorder)
 		*byteorder = bo;
 

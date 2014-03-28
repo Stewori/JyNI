@@ -23,9 +23,9 @@ def printTimeStamp():
 
 Label(root, text = "Welcome to JyNI Tkinter-Demo!").pack()
 Entry(root, textvariable = txt).pack()
-Button(root, text="print text", command = printText).pack()
-Button(root, text="print timestamp", command = printTimeStamp).pack()
-Button(root, text="Quit", command = root.destroy).pack()
+Button(root, text = "print text", command = printText).pack()
+Button(root, text = "print timestamp", command = printTimeStamp).pack()
+Button(root, text = "Quit", command = root.destroy).pack()
 
 root.mainloop()
 

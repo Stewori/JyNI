@@ -174,9 +174,9 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	PyEval_AcquireLock();
 //	_PyThreadState_Current = (*env)->NewGlobalRef(env, tstate);
 	ENTER_JyNI
-
+	PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
 	jobject er = JyNI_JythonPyObject_FromPyObject(peer->ob_type->tp_call(peer,
-			JyNI_PyObject_FromJythonPyObject(args),
+			jargs,//JyNI_PyObject_FromJythonPyObject(args),
 			JyNI_PyObject_FromJythonPyObject(kw)
 		));
 	//PyEval_ReleaseLock();
@@ -853,17 +853,25 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass
 	return NULL;
 }
 
-/* Doeas not work for Heap-Types. */
+/* Does not work for Heap-Types. */
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromName(char* name)
 {
+//	jputs("JyNI_JythonTypeEntry_FromName");
+//	jputs(name);
 	if (name == NULL) return NULL;
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
 		if (builtinTypes[i].type_name != NULL && strcmp(builtinTypes[i].type_name, name) == 0)
+		{
 			return &(builtinTypes[i]);
+		}
 		else if (builtinTypes[i].py_type != NULL && strcmp(builtinTypes[i].py_type->tp_name, name) == 0)
+		{
+//			jputs("found:");
+//			jputs(builtinTypes[i].py_type->tp_name);
 			return &(builtinTypes[i]);
+		}
 	}
 	return NULL;
 }
@@ -1173,10 +1181,12 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
  * These don't have an associated TypeMapEntry anyway. */
 inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 {
-	//puts("JyNI_InitPyObject");
+//	jputs("JyNI_InitPyObject");
+//	jputs(tme->py_type->tp_name);
 	PyObject* dest = NULL;
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
+//		jputs("sync on init");
 		if (tme->sync != NULL && tme->sync->pyInit != NULL)
 			dest = tme->sync->pyInit(src);
 	} else

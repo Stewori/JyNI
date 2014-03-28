@@ -76,6 +76,9 @@ public class PyCPeer extends PyObject {
 //		System.out.println(getType().getName());
 		//System.out.println("args: "+args);
 		//System.out.println("arg count: "+args.length);
+//		System.out.println(args[0]);
+//		System.out.println(args[0].getType());
+//		System.out.println(args[0].getClass());
 		//if (keywords !=)
 		/*System.out.println("PeerCall kw: "+keywords.length);
 		for(int i = 0; i < keywords.length; ++i)

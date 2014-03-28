@@ -175,6 +175,22 @@ exceptionTest(PyObject* self, PyObject* args)
 	return NULL;
 }
 
+PyObject*
+unicodeTest(PyObject* self, PyObject* args)
+{
+	PyObject* uni = PyTuple_GET_ITEM(args, 0);
+	puts("unicodeTest");
+	//"str"
+	puts(uni->ob_type->tp_name);
+	//puts(PyString_AS_STRING(PyObject_Repr(uni)));
+	puts(PyString_AS_STRING(uni->ob_type->tp_repr(uni)));
+
+	Py_UNICODE* unc = PyUnicode_AS_UNICODE(uni);
+	//PyObject* ret = PyUnicode_FromUnicode(unc, PyUnicode_GET_SIZE(uni));
+	//Py_RETURN_NONE;
+	return PyUnicode_FromUnicode(unc, PyUnicode_GET_SIZE(uni));
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
@@ -188,6 +204,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"concatFirstWithLastString", concatFirstWithLastString, METH_VARARGS, "Concatenates first with last element. Returns empty string, if less than two args are available."},
 	{"keywordTest", keywordTest, METH_VARARGS | METH_KEYWORDS, "Tests working with keywords."},
 	{"exceptionTest", exceptionTest, METH_NOARGS, "Raise an exception to test JyNI's exception support."},
+	{"unicodeTest", unicodeTest, METH_VARARGS, "Test JyNI's unicode support."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 
