@@ -113,6 +113,7 @@ extern jmethodID pyListInsert;
 extern jmethodID pyListSort;
 extern jmethodID pyListReverse;
 extern jmethodID pyListGetArray;
+extern jfieldID pyListBackend;
 
 extern jclass pyDictClass;
 extern jmethodID pyDictConstructor;

@@ -1994,7 +1994,7 @@ jfieldID JyNISetNextResultKeyHandleField;
 
 jclass JyListClass;
 jmethodID JyListFromBackendHandleConstructor;
-jmethodID JyListInstallToPyList;
+//jmethodID JyListInstallToPyList;
 
 jclass JySetClass;
 jmethodID JySetFromBackendHandleConstructor;
@@ -2148,6 +2148,7 @@ jmethodID pyListInsert;
 jmethodID pyListSort;
 jmethodID pyListReverse;
 jmethodID pyListGetArray;
+jfieldID pyListBackend;
 
 jclass pyDictClass;
 jmethodID pyDictConstructor;
@@ -2541,7 +2542,7 @@ inline jint initJyNI(JNIEnv *env)
 	JyListClass = (jclass) (*env)->NewWeakGlobalRef(env, JyListClassLocal);
 	(*env)->DeleteLocalRef(env, JyListClassLocal);
 	JyListFromBackendHandleConstructor = (*env)->GetMethodID(env, JyListClass, "<init>", "(J)V");
-	JyListInstallToPyList = (*env)->GetMethodID(env, JyListClass, "installToPyList", "(Lorg/python/core/PyList;)V");
+	//JyListInstallToPyList = (*env)->GetMethodID(env, JyListClass, "installToPyList", "(Lorg/python/core/PyList;)V");
 	//puts("  initJyList done");
 
 	jclass JySetClassLocal = (*env)->FindClass(env, "JyNI/JySet");
@@ -2790,6 +2791,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyListSort = (*env)->GetMethodID(env, pyListClass, "sort", "()V");
 	pyListReverse = (*env)->GetMethodID(env, pyListClass, "reverse", "()V");
 	pyListGetArray = (*env)->GetMethodID(env, pyListClass, "getArray", "()[Lorg/python/core/PyObject;");
+	pyListBackend = (*env)->GetFieldID(env, pyListClass, "list", "Ljava/util/List;");
 
 	jclass pyDictClassLocal = (*env)->FindClass(env, "org/python/core/PyDictionary");
 	if (pyDictClassLocal == NULL) { return JNI_ERR;}

@@ -322,7 +322,8 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 	}
 	(*env)->ReleaseLongArrayElements(env, handles, arr, JNI_ABORT);
 	jobject jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) op);
-	(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
+	//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
+	(*env)->SetObjectField(env, src, pyListBackend, jyList);
 	return op;
 }
 

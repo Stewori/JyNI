@@ -566,7 +566,7 @@ extern jmethodID JyNIPyErr_WriteUnraisable;
 
 extern jclass JyListClass;
 extern jmethodID JyListFromBackendHandleConstructor;
-extern jmethodID JyListInstallToPyList;
+//extern jmethodID JyListInstallToPyList;
 
 extern jclass JySetClass;
 extern jmethodID JySetFromBackendHandleConstructor;

@@ -107,7 +107,7 @@ public class JyList extends AbstractList<PyObject> {
 		addAll(0, c);
 	}
 	
-	public void installToPyList(PyList list)
+	/*public void installToPyList(PyList list)
 	{
 		try
 		{
@@ -134,7 +134,7 @@ public class JyList extends AbstractList<PyObject> {
 			System.err.println("Problem in installToPyListAndGetOldBackend: "+e);
 			return null;
 		}
-	}
+	}*/
 
 	public PyObject get(int index) {
 		return JyNI.JyList_get(backendHandle, index);
