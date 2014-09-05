@@ -78,13 +78,8 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 //	JyNI_jprintJ(moduleName);
 //	jputsLong(tstate);
 	ENTER_JyNI
-//	jputsLong(_PyThreadState_Current);
 	if (PyErr_Occurred()) jputs("PyErrOccured01 (beginning of JyNI_loadModule)");//this should never happen!
-//	jputs("go on...");
 	const char* utf_string;
-
-	//jboolean isCopy;
-
 	utf_string = (*env)->GetStringUTFChars(env, moduleName, NULL);
 	//"+1" for 0-termination:
 	char mName[strlen(utf_string)+1];
@@ -95,34 +90,16 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 	char mPath[strlen(utf_string)+1];
 	strcpy(mPath, utf_string);
 	(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
-//	jputs(mName);
-
-	//puts("Module:");
-	//puts(mName);
-	// printf("%i\n", strlen(mName));
-	// puts("");
-	//puts("Path:");
-	//puts(mPath);
-	// printf("%i\n", strlen(mPath));
 	FILE *fp;
 	fp = fopen(mPath, "r" PY_STDIOTEXTMODE);
 	if (fp == NULL)
 		//PyErr_SetFromErrno(PyExc_IOError);
-		puts("some error happened opening the file");
-	//puts("start loading");
-	//PyObject* er = _PyImport_LoadDynamicModule(mName, mPath, fp);
-//	PyEval_AcquireLock();
-//	updateCurrentThreadState();
-	//ENTER_JyNI
-//	jputs("loaad...");
+		jputs("some error happened opening the file");
+
 	jobject er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
-	//PyEval_ReleaseLock();
 	if (fclose(fp))
-		puts("Some error occurred on file close");
-//	jputs("loading done");
-	//if (PyErr_Occurred()) JyErr_InsertCurExc();
+		jputs("Some error occurred on file close");
 	LEAVE_JyNI
-//	jputs("done");
 	return er;
 }
 
@@ -172,22 +149,12 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
-
-//	PyEval_AcquireLock();
-//	_PyThreadState_Current = (*env)->NewGlobalRef(env, tstate);
 	ENTER_JyNI
 	PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
 	jobject er = JyNI_JythonPyObject_FromPyObject(peer->ob_type->tp_call(peer,
 			jargs,//JyNI_PyObject_FromJythonPyObject(args),
 			JyNI_PyObject_FromJythonPyObject(kw)
 		));
-	//PyEval_ReleaseLock();
-//	if (PyErr_Occurred())
-//	{
-//		//jputs("error finally occurred! (JyNI_callPyCPeer)");
-//		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
-//		JyErr_InsertCurExc();
-//	}
 	LEAVE_JyNI
 	return er;
 }
@@ -202,18 +169,8 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 //	jputs("JyNI_getAttrString");
 	if (handle == 0) return NULL;
 	cstr_from_jstring(cName, name);
-	//PyEval_AcquireLock();
-	//updateCurrentThreadState();
 	ENTER_JyNI
 	jobject er = JyNI_JythonPyObject_FromPyObject(PyObject_GetAttrString((PyObject*) handle, cName));//PyObject_GetAttrString((PyObject*) handle, cName));
-	//(*env)->DeleteGlobalRef(env, _PyThreadState_Current);
-	//PyEval_ReleaseLock();
-//	if (PyErr_Occurred())
-//	{
-//		//puts("error finally occurred! (JyNI_getAttrString)");
-//		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
-//		JyErr_InsertCurExc();
-//	}
 	LEAVE_JyNI
 	return er;
 }
@@ -227,17 +184,8 @@ jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, j
 {
 	if (handle == 0) return 0;
 	cstr_from_jstring(cName, name);
-//	PyEval_AcquireLock();
-//	updateCurrentThreadState();
 	ENTER_JyNI
 	jint er = PyObject_SetAttrString((PyObject*) handle, cName, JyNI_PyObject_FromJythonPyObject(value));
-	//PyEval_ReleaseLock();
-//	if (PyErr_Occurred())
-//	{
-//		//puts("error finally occurred! (JyNI_setAttrString)");
-//		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
-//		JyErr_InsertCurExc();
-//	}
 	LEAVE_JyNI
 	return er;
 }
@@ -249,17 +197,8 @@ jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, j
  */
 jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
-//	PyEval_AcquireLock();
-//	updateCurrentThreadState();
 	ENTER_JyNI
 	jobject er = JyNI_JythonPyObject_FromPyObject(PyObject_Repr((PyObject*) handle));
-	//PyEval_ReleaseLock();
-//	if (PyErr_Occurred())
-//	{
-//		//puts("error finally occurred! (JyNI_repr)");
-//		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
-//		JyErr_InsertCurExc();
-//	}
 	LEAVE_JyNI
 	return er;
 }
@@ -271,18 +210,9 @@ jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate)
  */
 jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
-	//puts("JyNI_PyObjectAsString");
-//	PyEval_AcquireLock();
-//	updateCurrentThreadState();
+	//jputs("JyNI_PyObjectAsString");
 	ENTER_JyNI
 	jstring er = JyNI_jstring_FromPyStringObject(env, (PyStringObject*) PyObject_Str((PyObject*) handle));
-	//PyEval_ReleaseLock();
-//	if (PyErr_Occurred())
-//	{
-//		//puts("error finally occurred! (JyNI_PyObjectAsString)");
-//		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
-//		JyErr_InsertCurExc();
-//	}
 	LEAVE_JyNI
 	return er;
 }
@@ -294,20 +224,9 @@ jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tst
  */
 jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
-	//puts("JyNI_PyObjectAsPyString");
-//	PyEval_AcquireLock();
-//	updateCurrentThreadState();
+	//jputs("JyNI_PyObjectAsPyString");
 	ENTER_JyNI
-	//_PyThreadState_Current = class;
-	//PyObject* er0 = PyObject_Str((PyObject*) handle);
 	jobject er = JyNI_JythonPyObject_FromPyObject(PyObject_Str((PyObject*) handle));
-	//PyEval_ReleaseLock();
-//	if (PyErr_Occurred())
-//	{
-//		//puts("error finally occurred! (JyNI_PyObjectAsPyString)");
-//		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyErr_InsertCurExc, NULL);
-//		JyErr_InsertCurExc();
-//	}
 	LEAVE_JyNI
 	return er;
 }

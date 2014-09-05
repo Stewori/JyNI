@@ -149,15 +149,15 @@ setPopTest(PyObject* self, PyObject* args)
 	PyObject* set;
 	int i;
 	if (!PyArg_ParseTuple(args, "O!i", &PySet_Type, &set, &i)) return NULL;
-	printf("pop %i elements from the set...\n", i);
+	//printf("pop %i elements from the set...\n", i);
 	int j;
 	for (j = 0; j < i; ++j)
 	{
 		PyObject* pop = PySet_Pop(set);
-		if (pop != NULL)
-			puts(PyString_AS_STRING(pop));
-		else
-			puts("No more elements in the set!");
+//		if (pop != NULL)
+//			puts(PyString_AS_STRING(pop));
+//		else
+//			puts("No more elements in the set!");
 	}
 	Py_RETURN_NONE;
 }
@@ -179,11 +179,11 @@ PyObject*
 unicodeTest(PyObject* self, PyObject* args)
 {
 	PyObject* uni = PyTuple_GET_ITEM(args, 0);
-	puts("unicodeTest");
+//	puts("unicodeTest");
 	//"str"
-	puts(uni->ob_type->tp_name);
+//	puts(uni->ob_type->tp_name);
 	//puts(PyString_AS_STRING(PyObject_Repr(uni)));
-	puts(PyString_AS_STRING(uni->ob_type->tp_repr(uni)));
+//	puts(PyString_AS_STRING(uni->ob_type->tp_repr(uni)));
 
 	Py_UNICODE* unc = PyUnicode_AS_UNICODE(uni);
 	//PyObject* ret = PyUnicode_FromUnicode(unc, PyUnicode_GET_SIZE(uni));
@@ -197,14 +197,14 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"listReadTest", listReadTest, METH_VARARGS, "Prints out the strings from a three-string sequence."},
 	{"listModifyTest", listModifyTest, METH_VARARGS, "Modifies a list."},
 	{"setTest", setTest, METH_VARARGS, "Performs some tests on a given PySet object."},
-	{"setPopTest", setPopTest, METH_VARARGS, "Pops the given number of elements from the set and prints them."},
+	{"setPopTest", setPopTest, METH_VARARGS, "Pops the given number of elements from the set."},
 	{"printInt", printInt, METH_VARARGS, "Prints out the int and returns nothing."},
 	{"intSquare", intSquare, METH_VARARGS, "Returns the square of the given int."},
 	{"argCountToString", argCountToString, METH_VARARGS, "Returns number of arguments as string."},
 	{"concatFirstWithLastString", concatFirstWithLastString, METH_VARARGS, "Concatenates first with last element. Returns empty string, if less than two args are available."},
 	{"keywordTest", keywordTest, METH_VARARGS | METH_KEYWORDS, "Tests working with keywords."},
 	{"exceptionTest", exceptionTest, METH_NOARGS, "Raise an exception to test JyNI's exception support."},
-	{"unicodeTest", unicodeTest, METH_VARARGS, "Test JyNI's unicode support."},
+	{"unicodeTest", unicodeTest, METH_VARARGS, "Test JyNI's unicode support by converting forth and back."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

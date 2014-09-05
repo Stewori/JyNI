@@ -73,6 +73,8 @@ The following built-in types are already supported:
 * Exception types
 * PyType as static type or heap type
 
+Passing instances of new-style classes to an extension does not work yet.
+
 
 JyNI has been tested on
 
@@ -148,13 +150,19 @@ http://docs.python.org/2/extending/extending.html
 
 Enter the folder DemoExtension and type "python setup.py build".
 
+JyNI-Demo/src/test_JyNI.py runs unittests for some basic JyNI features.
+You can run it via
+java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/test_JyNI.py
+or
+sh JyNI_unittest.sh
+provided that jython.jar is placed in JyNI's directory. Otherwise you need to provide
+the correct path for your jython.jar in the command.
+
 JyNI-Demo/src/JyNIDemo.py demonstrates the use of DemoExtension from Python-side.
 It should run perfectly with either CPython 2.7.x or Jython+JyNI.
 To run it, type
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDemo.py
-
-To ease running this example, we provide that line in JyNIDemo.sh, so you can
-alternatively run
+Like with the unittest you can alternatively run
 sh JyNIDemo.sh
 
 To see a basic demonstration that JyNI is capable of using the original datetime
