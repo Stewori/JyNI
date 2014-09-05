@@ -68,7 +68,7 @@ jy->flags = JySYNC_ON_INIT_FLAGS; \
 op = (PyStringObject *) FROM_JY_NO_GC(jy)
 
 static PyStringObject *characters[UCHAR_MAX + 1];
-static PyStringObject *nullstring;
+PyStringObject *nullstring;
 
 /* This dictionary holds all interned strings.  Note that references to
    strings in this dictionary are *not* counted in the string's ob_refcnt.

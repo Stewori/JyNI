@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  * 
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -49,16 +49,17 @@ import org.python.core.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.io.File;
+import java.io.IOException;
 
 public class JyNI {
 	static {
 		try {
 			//To make configuration easier, we not only search in the library path for the libs,
-			//but also in the classpath and some additional typical places.
+			//but also in the classpath and in some additional typical places.
 			//We currently don't look inside jar files.
 			String classpath = System.getProperty("java.class.path");
 			String libpath = System.getProperty("java.library.path");
-			//System.out.println("lp: "+libpath);
+//			System.out.println("lp: "+libpath);
 			String[] commonPositions = (libpath+File.pathSeparator+classpath).split(File.pathSeparator);
 			int idx;
 			for (int i = 0; i < commonPositions.length; ++i)
@@ -134,7 +135,7 @@ public class JyNI {
 				{
 					//System.out.println("initJyNI: "+fileNames[i]);
 					nativeHandles = new IdentityHashMap<PyObject, Long>();
-					cur_excLookup = new IdentityHashMap<ThreadState, PyException>(5);
+					//cur_excLookup = new IdentityHashMap<ThreadState, PyException>(5);
 					initJyNI(libFile.getAbsolutePath());
 					//System.out.println("initJyNI done");
 					loaded = true;
@@ -176,36 +177,42 @@ public class JyNI {
 
 	/** Do not delete object when closed.*/
 	public static final int RTLD_NODELETE = 0x01000;
-	
+
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
-	
+
 	//protected static HashMap<PyObject, JyObject> jyObjects = new HashMap();
 	protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
-	protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
+	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
 	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
-	
+
 	public static native void initJyNI(String JyNILibPath);
 	public static native void clearPyCPeer(long objectHandle, long refHandle);
-	public static native PyModule loadModule(String moduleName, String modulePath, ThreadState tstate);
+	public static native PyModule loadModule(String moduleName, String modulePath, long tstate);
 	//public static native JyObject callModuleFunctionGlobalReferenceMode(CPythonModule module, String name, JyObject self, JyObject... args);
 	//public static native PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject[] args, long[] handles);
 	//public static native PyObject callModuleFunctionLocalReferenceMode(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject... args);
-	public static native PyObject callPyCPeer(long peerHandle, PyObject args, PyObject kw, ThreadState tstate);
-	public static native PyObject getAttrString(long peerHandle, String name, ThreadState tstate);
-	public static native int setAttrString(long peerHandle, String name, PyObject value, ThreadState tstate);
-	public static native PyObject repr(long peerHandle, ThreadState tstate);
-	public static native String PyObjectAsString(long peerHandle, ThreadState tstate);
-	public static native PyString PyObjectAsPyString(long peerHandle, ThreadState tstate);
-	
+	public static native PyObject callPyCPeer(long peerHandle, PyObject args, PyObject kw, long tstate);
+	public static native PyObject getAttrString(long peerHandle, String name, long tstate);
+	public static native int setAttrString(long peerHandle, String name, PyObject value, long tstate);
+	public static native PyObject repr(long peerHandle, long tstate);
+	public static native String PyObjectAsString(long peerHandle, long tstate);
+	public static native PyString PyObjectAsPyString(long peerHandle, long tstate);
+
+	//ThreadState-stuff:
+	public static native void setNativeRecursionLimit(int nativeRecursionLimit);
+	public static native void setNativeCallDepth(long nativeHandle, int callDepth);
+	public static native long initNativeThreadState(JyTState jts, ThreadState ts);
+	public static native void clearNativeThreadState(long nativeHandle);
+
 	public static native void JyNIDebugMessage(long mode, long value, String message);
-	
+
 	//List-Stuff:
 	public static native PyObject JyList_get(long handle, int index);
 	public static native int JyList_size(long handle);
 	public static native PyObject JyList_set(long handle, int index, PyObject o, long pyObject);
 	public static native void JyList_add(long handle, int index, PyObject o, long pyObject);
 	public static native PyObject JyList_remove(long handle, int index);
-	
+
 	//Set-Stuff:
 	public static native void JySet_putSize(long handle, int size);
 	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
@@ -225,12 +232,12 @@ public class JyNI {
 //		System.out.println("PySet_pop returns "+er.__repr__());
 		return er;
 	}*/
-	
+
 //	public static PyObject callModuleFunction(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject... args)
 //	{
 //		return callModuleFunctionLocalReferenceMode(module, name, self, selfNativeHandle, args);
 //	}
-	
+
 	public static PyObject getPyObjectByName(String name)
 	{
 		//todo: Check, whether this does what it is supposed to
@@ -706,8 +713,7 @@ public class JyNI {
 		}
 	}*/
 	
-	public static long[] lookupNativeHandles(PyList lst)
-	{
+	public static long[] lookupNativeHandles(PyList lst) {
 		PyObject[] obj = lst.getArray();
 		long[] er = new long[obj.length];
 		for (int i = 0; i < er.length; ++i)
@@ -716,8 +722,7 @@ public class JyNI {
 	}
 	
 	//--------------errors-section-----------------
-	public static PyObject exceptionByName(String name)
-	{
+	public static PyObject exceptionByName(String name) {
 //		System.out.println("look for exception: "+name);
 		String rawName = name;
 		int pin = name.indexOf('.');
@@ -729,15 +734,14 @@ public class JyNI {
 //			System.out.println("return "+er);
 //			System.out.println("class: "+er.getClass());
 			return er;
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			System.out.println("Could not obtain Exception: "+name);
 			System.out.println("Reason: "+e);
 			return null;
 		}
 	}
 	
-	public static void JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
+	/*public static void JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
 	{
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
 		PyException curexc = cur_excLookup.get(tstate0);
@@ -757,44 +761,57 @@ public class JyNI {
 	{
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
 		return cur_excLookup.get(tstate0);
-	}
+	}*/
 	
-	protected static PyObject maybeExc(PyObject obj) throws PyException
-	{
+	protected static PyObject maybeExc(PyObject obj) throws PyException {
 		if (obj == null && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
 		else return obj;
 	}
 	
-	public static void JyErr_InsertCurExc(ThreadState tstate)
-	{
+	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
+		if (type == null) type = Py.None;
+		if (value == null) value = Py.None;
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
-		//System.out.println("JyErr_InsertCurExc 1");
-		PyException cur_exc = cur_excLookup.remove(tstate0);
-		//System.out.println(cur_exc);
-		//System.out.println("JyErr_InsertCurExc 2");
-		if (cur_exc != null)
-		{
-			tstate0.exception = cur_exc;
-		}
+		tstate0.exception = new PyException(type, value, traceback);
+//		PyException cur_exc = cur_excLookup.remove(tstate0);
+//		if (cur_exc != null)
+//		{
+//			tstate0.exception = cur_exc;
+//		}
 		//System.out.println("JyErr_InsertCurExc 3");
 	}
-	
-	public static void PyErr_Restore(PyObject type, PyObject value, PyTraceback traceback)
-	{
+
+	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value) {
+		if (type == null) type = Py.None;
+		if (value == null) value = Py.None;
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		tstate0.exception = new PyException(type, value);
+	}
+
+	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type) {
+		if (type == null) type = Py.None;
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		tstate0.exception = new PyException(type);
+	}
+
+	public static void JyErr_InsertCurExc(ThreadState tstate) {
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		tstate0.exception = new PyException();
+	}
+
+	/*public static void PyErr_Restore(PyObject type, PyObject value, PyTraceback traceback) {
 		//ThreadState tstate = ;
 		//tstate.exception = traceback instanceof PyTraceback ? new PyException(type, value, (PyTraceback) traceback) : new PyException(type, value);
 		JyErr_SetCurExc(Py.getThreadState(), type, value, traceback);
 	}
 	
-	public static void PyErr_Clear()
-	{
+	public static void PyErr_Clear() {
 		//ThreadState tstate = Py.getThreadState();
 		//tstate.exception = null;
 		cur_excLookup.remove(Py.getThreadState());
 	}
 	
-	public static PyException PyErr_Fetch()
-	{
+	public static PyException PyErr_Fetch() {
 		//ThreadState tstate = Py.getThreadState();
 		//PyException er = tstate.exception;
 		PyException er = cur_excLookup.remove(Py.getThreadState());
@@ -802,61 +819,58 @@ public class JyNI {
 		return er;
 	}
 	
-	public static PyObject PyErr_Occurred()
-	{
+	public static PyObject PyErr_Occurred() {
 		PyException er = cur_excLookup.get(Py.getThreadState());
 		return er == null ? null : er.type;
-		/*ThreadState tstate = Py.getThreadState();
-		if (tstate.exception != null)
-		{
-			System.out.println("PyErr_Occurred: "+tstate.exception.getMessage());
-			System.out.println(tstate.exception);
-			System.out.println("value "+tstate.exception.value);
-			System.out.println("type "+tstate.exception.type);
-		}
-		return tstate.exception == null ? null : tstate.exception.type;*/
-	}
-	
-	public static boolean PyErr_ExceptionMatches(PyObject exc)
-	{
-		PyException cur_exc = cur_excLookup.get(Py.getThreadState());
-		return cur_exc == null ? exc == null : cur_exc.match(exc);
+//		ThreadState tstate = Py.getThreadState();
+//		if (tstate.exception != null)
+//		{
+//			System.out.println("PyErr_Occurred: "+tstate.exception.getMessage());
+//			System.out.println(tstate.exception);
+//			System.out.println("value "+tstate.exception.value);
+//			System.out.println("type "+tstate.exception.type);
+//		}
+//		return tstate.exception == null ? null : tstate.exception.type;
+	}*/
+
+	public static boolean PyErr_ExceptionMatches(PyObject exc, PyObject type, PyObject value, PyTraceback traceback) {
+		if (type == null) type = Py.None;
+		if (value == null) value = Py.None;
+		//PyException cur_exc = cur_excLookup.get(Py.getThreadState());
+		//return cur_exc == null ? exc == null : cur_exc.match(exc);
+		return (new PyException(type, value, traceback)).match(exc);
 //		ThreadState tstate = Py.getThreadState();
 //		return tstate.exception == null ? exc == null : tstate.exception.match(exc);
 	}
-	
-	public static void PyErr_SetObject(PyObject exception, PyObject value)
-	{
+
+	/*public static void PyErr_SetObject(PyObject exception, PyObject value) {
 		PyErr_Restore(exception, value, null);
 	}
 	
-	public static void PyErr_SetString(PyObject exc, String value)
-	{
+	public static void PyErr_SetString(PyObject exc, String value) {
 		PyErr_Restore(exc, Py.newString(value), null);
 	}
 	
-	public static void PyErr_SetNone(PyObject exc)
-	{
+	public static void PyErr_SetNone(PyObject exc) {
 		PyErr_Restore(exc, null, null);
 	}
 	
-	public static PyObject PyErr_NoMemory()
-	{
+	public static PyObject PyErr_NoMemory() {
 		if (PyErr_ExceptionMatches(Py.MemoryError))
 			// already current
 			return null;
 
 		// raise the pre-allocated instance if it still exists
-		/*if (PyExc_MemoryErrorInst)
-			PyErr_SetObject(PyExc_MemoryError, PyExc_MemoryErrorInst);
-		else
-			// this will probably fail since there's no memory and hee,
-			// hee, we have to instantiate this class*/
+//		if (PyExc_MemoryErrorInst)
+//			PyErr_SetObject(PyExc_MemoryError, PyExc_MemoryErrorInst);
+//		else
+//			// this will probably fail since there's no memory and hee,
+//			// hee, we have to instantiate this class
 
 		PyErr_SetNone(Py.MemoryError);
 
 		return null;
-	}
+	}*/
 		
 	public static void PyErr_WriteUnraisable(PyObject obj)
 	{

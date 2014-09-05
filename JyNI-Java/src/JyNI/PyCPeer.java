@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  * 
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -57,8 +57,7 @@ public class PyCPeer extends PyObject {
 	
 	public long objectHandle;//, refHandle;
 	
-	public PyCPeer(long objectHandle, PyType subtype)
-	{
+	public PyCPeer(long objectHandle, PyType subtype) {
 		super(subtype);
 //		if (subtype == null) System.out.println("PyCPeer with null-type");
 //		else {
@@ -69,8 +68,7 @@ public class PyCPeer extends PyObject {
 		//JyNI.CPeerHandles.put(objectHandle, this);
 	}
 	
-	public PyObject __call__(PyObject[] args, String[] keywords)
-	{
+	public PyObject __call__(PyObject[] args, String[] keywords) {
 //		System.out.println("CPeer called...");
 //		System.out.println(objectHandle);
 //		System.out.println(getType().getName());
@@ -86,32 +84,32 @@ public class PyCPeer extends PyObject {
 		System.out.println("PeerCall args: "+args.length);
 		for(int i = 0; i < args.length; ++i)
 			System.out.println(args[i]);*/
-		if (keywords.length == 0)
-		{
+		if (keywords.length == 0) {
 			return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
-					args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null, Py.getThreadState()));
+					args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null,
+					JyTState.prepareNativeThreadState(Py.getThreadState())));
 		} else {
 			//todo: Use PyStringMap here... much work needs to be done to make the peer dictobject accept this
 			HashMap<PyObject, PyObject> back = new HashMap<PyObject, PyObject>(keywords.length);
-			for (int i = 0; i < keywords.length; ++i)
-			{
+			for (int i = 0; i < keywords.length; ++i) {
 				back.put(Py.newString(keywords[i]), args[args.length-keywords.length+i]);
 			}
 			
-			if (args.length > keywords.length)
-			{
+			if (args.length > keywords.length) {
 				PyObject[] args2 = new PyObject[args.length - keywords.length];
 				System.arraycopy(args, 0, args2, 0, args2.length);
-				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false), new PyDictionary(back), Py.getThreadState()));
+				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false),
+					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
 			} else
-				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back), Py.getThreadState()));
+				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple,
+					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
 		}
 	}
 
-	public PyObject __findattr_ex__(String name)
-	{
+	public PyObject __findattr_ex__(String name) {
 		//System.out.println("Look for attribute "+name+" in PyCPeer");
-		PyObject er = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name, Py.getThreadState()));
+		PyObject er = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name,
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
 		//System.out.println("result:");
 		//System.out.println(er);
 		return er != null ? er : Py.None;
@@ -122,18 +120,21 @@ public class PyCPeer extends PyObject {
 		//System.out.println("PyCPeer__str__");
 		//Object er = JyNI.PyObjectAsPyString(objectHandle);
 		//return (PyString) JyNI.repr(objectHandle);
-		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle, Py.getThreadState()));
-		return er == null ? (PyString) JyNI.maybeExc(JyNI.repr(objectHandle, Py.getThreadState())) : er;
+		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
+		return er == null ? (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
 	}
 	
 	public PyString __repr__() {
 		//System.out.println("PyCPeer__repr__");
-		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle, Py.getThreadState()));
+		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
-	public String toString()
-	{
-		return JyNI.PyObjectAsString(objectHandle, Py.getThreadState());
+	public String toString() {
+		return JyNI.PyObjectAsString(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState()));
 	}
 
 	/**
@@ -147,8 +148,7 @@ public class PyCPeer extends PyObject {
 	 * From Time to time poll things from the queue and tidy
 	 * up or have a thread permanently waiting on the queue.)
 	 */
-	protected void finalize() //throws Throwable
-	{
+	protected void finalize() throws Throwable {
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
 }

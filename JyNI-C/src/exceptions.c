@@ -76,28 +76,28 @@ static PyObject *
 BaseException_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyBaseExceptionObject *self;
-	puts("BaseException_new");
-	puts(type->tp_name);
+//	puts("BaseException_new");
+//	puts(type->tp_name);
 	//JyNI-note: This should call PyType_GenericAlloc actually:
 	//(and that's fine, since we adjusted that method to allocate space for JyObject)
 	self = (PyBaseExceptionObject *)type->tp_alloc(type, 0);
 	if (!self)
 		return NULL;
-	puts("alloc done");
+//	puts("alloc done");
 	/* the dict is created on the fly in PyObject_GenericSetAttr */
 	self->message = self->dict = NULL;
 
 	self->args = PyTuple_New(0);
 	if (!self->args) {
 		Py_DECREF(self);
-		puts("return null a7");
+//		puts("return null a7");
 		return NULL;
 	}
 
 	self->message = PyString_FromString("");
 	if (!self->message) {
 		Py_DECREF(self);
-		puts("return null a8");
+//		puts("return null a8");
 		return NULL;
 	}
 
@@ -107,7 +107,7 @@ BaseException_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 BaseException_init(PyBaseExceptionObject *self, PyObject *args, PyObject *kwds)
 {
-	puts("BaseException_init");
+//	puts("BaseException_init");
 	if (!_PyArg_NoKeywords(Py_TYPE(self)->tp_name, kwds))
 		return -1;
 

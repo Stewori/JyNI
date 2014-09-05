@@ -59,6 +59,7 @@
 //#include <JyNI_JyNI.h>
 #include "JythonSite.h"
 #include "JyList.h"
+#include "JyTState.h"
 //PyFPE_jbuf
 /* JNI-Shortcuts: */
 
@@ -81,12 +82,15 @@
 #define ENTER_JyNI \
 	PyEval_AcquireLock(); \
 	if (_PyThreadState_Current != NULL) Py_FatalError("ENTER_JyNI: overwriting non-NULL tstate"); \
-	_PyThreadState_Current = (*env)->NewGlobalRef(env, tstate);
+	_PyThreadState_Current = tstate;
 
-#define LEAVE_JyNI \
-	(*env)->DeleteGlobalRef(env, _PyThreadState_Current); \
+#define LEAVE_JyNI0 \
 	_PyThreadState_Current = NULL; \
 	PyEval_ReleaseLock();
+
+#define LEAVE_JyNI \
+	if (PyErr_Occurred()) JyErr_InsertCurExc(); \
+	LEAVE_JyNI0
 
 //Cleanly convert a jstring to a cstring
 //with minimal JVM lock-time.
@@ -319,24 +323,24 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
  *
  * Note that these macros are only usable after a call to the env-macro in the same block.
  */
-#define Jy_EnterRecursiveCall(where) \
-	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
-	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
-	jboolean Jy_EnterRecursiveCallResult = JNI_FALSE; \
-	if ((*env)->ExceptionCheck(env)) \
-	{ \
-		(*env)->ExceptionClear(env); \
-		Jy_EnterRecursiveCallResult = JNI_TRUE; \
-	}
-
-#define Jy_EnterRecursiveCall2(where, doOnFail) \
-	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
-	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
-	if ((*env)->ExceptionCheck(env)) \
-	{ \
-		(*env)->ExceptionClear(env); \
-		doOnFail; \
-	}
+//#define Jy_EnterRecursiveCall(where) \
+//	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
+//	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
+//	jboolean Jy_EnterRecursiveCallResult = JNI_FALSE; \
+//	if ((*env)->ExceptionCheck(env)) \
+//	{ \
+//		(*env)->ExceptionClear(env); \
+//		Jy_EnterRecursiveCallResult = JNI_TRUE; \
+//	}
+//
+//#define Jy_EnterRecursiveCall2(where, doOnFail) \
+//	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
+//	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
+//	if ((*env)->ExceptionCheck(env)) \
+//	{ \
+//		(*env)->ExceptionClear(env); \
+//		doOnFail; \
+//	}
 
 /* Replacement for Py_LeaveRecursiveCall.
  * Original usage: Py_LeaveRecursiveCall()
@@ -350,21 +354,21 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
  * Note that this macro is only usable after a call to
  * Jy_EnterRecursiveCall or Jy_EnterRecursiveCall2 in the same block.
  */
-#define Jy_LeaveRecursiveCall() \
-	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall)
+//#define Jy_LeaveRecursiveCall() \
+//	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall)
 
 /* Call-ins: */
-jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jobject tstate);
+jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jlong tstate);
 jint JyNI_init(JavaVM *jvm);
 void JyNI_unload(JavaVM *jvm);
 void JyNI_clearPyCPeer(JNIEnv *env, jclass class, jlong objectHandle, jlong refHandle);
 void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, jstring msg);
-jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jobject tstate);
-jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject tstate);
-jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value, jobject tstate);
-jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jobject tstate);
-jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jobject tstate);
-jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jobject tstate);
+jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate);
+jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jlong tstate);
+jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value, jlong tstate);
+jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate);
+jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tstate);
+jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 
 #define builtinTypeCount 50
 extern TypeMapEntry builtinTypes[builtinTypeCount];
@@ -440,10 +444,17 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp);
 inline int PyModule_AddStringConstantJy(jobject m, const char *name, const char *value);
 inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o);
 
-/* Backdoor to reach original alloc-functions, which were renamed with "Raw"-prefix: */
+/* JyNI specific:
+ * Backdoor to reach original alloc-functions, which were renamed with "Raw"-prefix: */
 PyAPI_FUNC(void *) PyObject_RawMalloc(size_t);
 PyAPI_FUNC(void *) PyObject_RawRealloc(void *, size_t);
 PyAPI_FUNC(void) PyObject_RawFree(void *);
+
+/* Provide header for nullstring from stringobject.c
+ * This way, the nullstring can also be used from other
+ * places.
+ */
+extern PyStringObject *nullstring;
 
 /* Load- and unload-stuff from Python-files, missing in the headers currently used: */
 int _PyInt_Init(void);
@@ -537,6 +548,10 @@ extern jmethodID JyNI_jPrint;
 extern jmethodID JyNI_jPrintLong;
 //extern jmethodID JyNIPySet_pop;
 
+extern jclass JyTStateClass;
+extern jmethodID JyTState_setRecursionLimit;
+extern jfieldID JyTState_nativeRecursionLimitField;
+
 extern jclass JyNIDictNextResultClass;
 extern jfieldID JyNIDictNextResultKeyField;
 extern jfieldID JyNIDictNextResultValueField;
@@ -550,18 +565,18 @@ extern jfieldID JyNISetNextResultNewIndexField;
 extern jfieldID JyNISetNextResultKeyHandleField;
 
 extern jmethodID JyNIExceptionByName;
-extern jmethodID JyErr_SetCurExc;
-extern jmethodID JyErr_GetCurExc;
-extern jmethodID JyErr_InsertCurExc;
-extern jmethodID JyNIPyErr_Restore;
-extern jmethodID JyNIPyErr_Clear;
-extern jmethodID JyNIPyErr_Occurred;
+//extern jmethodID JyErr_SetCurExc;
+//extern jmethodID JyErr_GetCurExc;
+extern jmethodID JyNIJyErr_InsertCurExc;
+//extern jmethodID JyNIPyErr_Restore;
+//extern jmethodID JyNIPyErr_Clear;
+//extern jmethodID JyNIPyErr_Occurred;
 extern jmethodID JyNIPyErr_ExceptionMatches;
-extern jmethodID JyNIPyErr_SetObject;
-extern jmethodID JyNIPyErr_SetString;
-extern jmethodID JyNIPyErr_SetNone;
-extern jmethodID JyNIPyErr_NoMemory;
-extern jmethodID JyNIPyErr_Fetch;
+//extern jmethodID JyNIPyErr_SetObject;
+//extern jmethodID JyNIPyErr_SetString;
+//extern jmethodID JyNIPyErr_SetNone;
+//extern jmethodID JyNIPyErr_NoMemory;
+//extern jmethodID JyNIPyErr_Fetch;
 extern jmethodID JyNIPyErr_WriteUnraisable;
 
 extern jclass JyListClass;

@@ -589,10 +589,10 @@ _PyObject_Str(PyObject *v)
 
 	// It is possible for a type to have a tp_str representation that loops
 	// infinitely.
-	env(NULL);
-	Jy_EnterRecursiveCall2(" while getting the str of an object", return NULL)
+//	env(NULL);
+//	Jy_EnterRecursiveCall2(" while getting the str of an object", return NULL)
 //	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState);
-//	//if (Py_EnterRecursiveCall(" while getting the str of an object")) return NULL;
+	if (Py_EnterRecursiveCall(" while getting the str of an object")) return NULL;
 //	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall);
 //	if ((*env)->ExceptionCheck(env))
 //	{
@@ -603,8 +603,8 @@ _PyObject_Str(PyObject *v)
 	res = (*Py_TYPE(v)->tp_str)(v);
 //	puts("result type10: ");
 //	puts(res->ob_type->tp_name);
-	//Py_LeaveRecursiveCall();
-	Jy_LeaveRecursiveCall();
+	Py_LeaveRecursiveCall();
+//	Jy_LeaveRecursiveCall();
 	if (res == NULL) return NULL;
 	type_ok = PyString_Check(res);
 #ifdef Py_USING_UNICODE

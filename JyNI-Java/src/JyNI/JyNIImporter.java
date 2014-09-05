@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
  * 
  * Copyright of JyNI:
- * Copyright (c) 2013 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -59,32 +59,24 @@ import java.util.HashMap;
 public class JyNIImporter extends PyObject {
 	public static HashMap<String, JyNIModuleInfo> dynModules = new HashMap<String, JyNIModuleInfo>();
 	
-	List knownPaths = null;
+	List<String> knownPaths = null;
 	Vector<String> libPaths = new Vector<String>();
 
-	public JyNIImporter()
-	{
+	public JyNIImporter() {
 		super();
 	}
 	
-	public JyNIImporter(List knownPaths)
-	{
+	public JyNIImporter(List<String> knownPaths) {
 		super();
 		this.knownPaths = knownPaths;
 	}
 	
-	public JyNIImporter(String... knownPaths)
-	{
+	public JyNIImporter(String... knownPaths) {
 		super();
 		this.knownPaths = Arrays.asList(knownPaths);
 	}
 	
 	public PyObject __call__(PyObject args[], String keywords[]) {
-		//if(args[0].toString().endsWith(JAVA_IMPORT_PATH_ENTRY)){
-			//return this;
-		//}
-		//System.out.println("CPythonImporter7: "+args[0]+"  "+args.length);
-		//libPath = args[0].toString();
 		String s = args[0].toString();
 		if (knownPaths == null)
 		{
@@ -95,20 +87,6 @@ public class JyNIImporter extends PyObject {
 			if (!libPaths.contains(s)) libPaths.add(s);
 			return this;
 		}
-		/*String suf = "."+getSystemDependendDynamicLibraryExtension();
-		System.out.println(suf);
-		File look = new File(args[0].toString());
-		String[] ch = look.list();
-		for (int i = 0; i < ch.length; ++i)
-		{
-			//if (s.endsWith(suf))
-			{
-				//System.out.println("CPythonExtension handles "+args[0]);
-				//libPaths.add(args[0]);
-				//return this;
-			}
-		}
-		//return this;*/
 		throw Py.ImportError("unable to handle");
 	}
 	
@@ -172,7 +150,7 @@ public class JyNIImporter extends PyObject {
 		JyNIModuleInfo inf = dynModules.get(name);
 		if (inf.module == null)
 		{
-			inf.module = JyNI.loadModule(name, inf.path, Py.getThreadState());
+			inf.module = JyNI.loadModule(name, inf.path, JyTState.prepareNativeThreadState(Py.getThreadState()));
 			//System.out.println("had to call JyNI.loadModule, which returned "+inf.module);
 		}
 		//return JyNI.loadModule(name, "path");
@@ -191,18 +169,17 @@ public class JyNIImporter extends PyObject {
 		return this.getType().toString();
 	}
 	
-	public static String getSystemDependendDynamicLibraryExtension()
-	{
+	public static String getSystemDependendDynamicLibraryExtension() {
 		String OS = System.getProperty("os.name").toLowerCase();
 		//if isWindows:
 		if (OS.indexOf("win") >= 0) return "dll";
 		else return "so";
 	}
 	
-	//not needed, since CPython-extensions ignore this naming-standard.
-	//Only difference in filename is the ending, i.e. ".so" or ".dll"
-	public static String libNameToFileName(String libName)
-	{
+	/**	This method is actually not needed, since CPython-extensions ignore this naming-standard.
+		Filenames only differ in the ending, i.e. ".so" vs ".dll".
+	*/
+	public static String libNameToFileName(String libName) {
 		String OS = System.getProperty("os.name").toLowerCase();
 		//isWindows:
 		if (OS.indexOf("win") >= 0) return libName+".dll";

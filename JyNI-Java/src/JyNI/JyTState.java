@@ -44,53 +44,69 @@
 
 package JyNI;
 
-import org.python.core.PySystemState;
-import org.python.util.PythonInterpreter;
+import java.util.WeakHashMap;
+import java.lang.ref.WeakReference;
 
-/**
- * A variant of PySystemState that supports the sys-functions
- * 
- * sys.setdlopenflags and sys.getdlopenflags.
- * 
- * These are relevant for loading CPython Extensions via JyNI.
- * The JyNI initializer adds these functions to the default
- * PySystemState anyway.
- * The sole purpose of this class is to allow for
- * PythonInterpreter-setups using a custom PySystemState, f.i.
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemStateJyNI());
- * 
- * This is equivalent to calling
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemState());
- * pint.exec("import sys");
- * pint.exec("import JyNI.JyNI");
- * pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_NOW");
- * pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
- * pint.exec("sys.setdlopenflags = setdlopenflags");
- * pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
- * 
- * @author Stefan Richthofer
- *
- */
-public class PySystemStateJyNI extends PySystemState {
-	//protected int dlopenflags = JyNI.RTLD_NOW;
-	//public int getdlopenflags() {return dlopenflags;}
-	//public void setdlopenflags(int n) {this.dlopenflags = n;}
+import org.python.core.Py;
+//import org.python.core.PyException;
+import org.python.core.ThreadState;
+
+public class JyTState {
+	protected static int nativeRecursionLimit;
 	
-	public PySystemStateJyNI()
+	//No IdentityHashMap needed, since ThreadState does not overvrite hashCode().
+	protected static WeakHashMap<ThreadState, JyTState> tStateLookup = new WeakHashMap<ThreadState, JyTState>();
+	
+	protected WeakReference<ThreadState> tState;
+	protected int nativeCallDepth;
+	protected long nativeHandle;
+
+	public static void setRecursionLimit(int limit) {
+		Py.getSystemState().setrecursionlimit(limit);
+	}
+
+	public static void setRecursionLimit(ThreadState ts, int limit) {
+		ts.systemState.setrecursionlimit(limit);
+	}
+
+	public static JyTState fromThreadState(ThreadState ts) {
+		JyTState res = tStateLookup.get(ts);
+		if (res != null) return res;
+		res = new JyTState(ts);
+		tStateLookup.put(ts, res);
+		return res;
+	}
+
+	public static long prepareNativeThreadState(ThreadState ts) {
+		JyTState jts = fromThreadState(ts);
+		syncToNative(jts);
+		return jts.nativeHandle;
+	}
+
+	protected static void syncToNative(JyTState ts) {
+		ThreadState tState = ts.tState.get();
+		if (tState == null) return;
+		if (nativeRecursionLimit != tState.systemState.getrecursionlimit())
+		{
+			nativeRecursionLimit = tState.systemState.getrecursionlimit();
+			JyNI.setNativeRecursionLimit(nativeRecursionLimit);
+		}
+		
+		if (ts.nativeCallDepth != tState.call_depth) {
+			ts.nativeCallDepth = tState.call_depth;
+			JyNI.setNativeCallDepth(ts.nativeHandle, ts.nativeCallDepth);
+		}
+	}
+
+	protected JyTState(ThreadState tState)
 	{
-		super();
-		PythonInterpreter pint = new PythonInterpreter(this);
-		pint.exec("import sys");
-		pint.exec("import JyNI.JyNI");
-		pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_JyNI_DEFAULT");
-		//pint.exec("sys.setdlopenflags = JyNI.JyNI.setDLOpenFlags");
-		//pint.exec("sys.getdlopenflags = JyNI.JyNI.getDLOpenFlags");
-		//pint.exec("sys.setdlopenflags = lambda n: (sys.dlopenflags = n)");
-		pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
-		pint.exec("sys.setdlopenflags = setdlopenflags");
-		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
-		pint.cleanup();
+		this.tState = new WeakReference<ThreadState>(tState);
+		nativeCallDepth = tState.call_depth;
+		nativeHandle = JyNI.initNativeThreadState(this, tState);
+//		System.out.println("JyTState created: "+nativeHandle);
+	}
+	
+	protected void finalize() throws Throwable {
+		JyNI.clearNativeThreadState(nativeHandle);
 	}
 }

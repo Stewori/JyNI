@@ -58,6 +58,7 @@ extern jobject JyNone;
 extern jobject JyNotImplemented;
 extern jobject JyEllipsis;
 extern jobject JyEmptyFrozenSet;
+extern jobject JyEmptyString;
 
 extern jclass pyObjectClass;
 extern jmethodID pyObjectGetType;

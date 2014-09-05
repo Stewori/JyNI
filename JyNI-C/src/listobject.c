@@ -430,10 +430,10 @@ list_repr(PyListObject *v)
 	for (i = 0; i < Py_SIZE(v); ++i) {
 		int status;
 
-		env(NULL);
-		Jy_EnterRecursiveCall2(" while getting the repr of a list", goto Done)
+//		env(NULL);
+//		Jy_EnterRecursiveCall2(" while getting the repr of a list", goto Done)
 //		jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState);
-//		//if (Py_EnterRecursiveCall(" while getting the repr of a list"))
+		if (Py_EnterRecursiveCall(" while getting the repr of a list")) goto Done;
 //		(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(" while getting the repr of a list"));
 //		if ((*env)->ExceptionCheck(env))
 //		{
@@ -441,9 +441,9 @@ list_repr(PyListObject *v)
 //			goto Done;
 //		}
 		s = PyObject_Repr(v->ob_item[i]);
-		//Py_LeaveRecursiveCall();
+		Py_LeaveRecursiveCall();
 		//(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall);
-		Jy_LeaveRecursiveCall();
+//		Jy_LeaveRecursiveCall();
 
 		if (s == NULL)
 			goto Done;

@@ -1,10 +1,11 @@
 /*
+ * Copyright of JyNI:
+ * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ *
+ *
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
  * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
- * 
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -42,33 +43,65 @@
  */
 
 
-package JyNI;
+/*
+ * JyTState.h
+ *
+ *  Created on: 02.09.2014
+ *      Author: Stefan Richthofer
+ */
 
-import java.util.Properties;
-import org.python.core.JythonInitializer;
-import org.python.core.PySystemState;
-import org.python.core.adapter.ExtensiblePyObjectAdapter;
-import org.python.util.PythonInterpreter;
+#ifndef JYTSTATE_H_
+#define JYTSTATE_H_
 
-public class JyNIInitializer implements JythonInitializer {
-	public void initialize(Properties preProperties, Properties postProperties, String[] argv, ClassLoader classLoader, ExtensiblePyObjectAdapter adapter)
-	{
-//		System.out.println("Init JyNI...");
-		PySystemState initState = PySystemState.doInitialize(preProperties, postProperties, argv, classLoader, adapter);
-		//add the JyNI-Importer to list of import hooks:
-		initState.path_hooks.append(new JyNIImporter());
+#define TS_GET_JY(ts) ((jobject) (ts)->frame)
+#define TS_SET_JY(ts, jy) ((ts)->frame = (struct _frame*) (jy))
 
-		PythonInterpreter pint = new PythonInterpreter();
-		//add support for sys.setdlopenflags and sys.getdlopenflags as available in common CPython:
-		pint.exec("import sys");
-		//pint.exec("import JyNI.JyNI");
-		pint.exec("sys.dlopenflags = "+JyNI.RTLD_JyNI_DEFAULT);
-		//pint.exec("sys.setdlopenflags = JyNI.JyNI.setDLOpenFlags");
-		//pint.exec("sys.getdlopenflags = JyNI.JyNI.getDLOpenFlags");
-		//pint.exec("sys.setdlopenflags = lambda n: (sys.dlopenflags = n)");
-		pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
-		pint.exec("sys.setdlopenflags = setdlopenflags");
-		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
-		pint.cleanup();
-	}
-}
+//struct _ts *next;
+//PyInterpreterState *interp;
+//struct _frame *frame;
+//int recursion_depth;
+//int tracing;
+//int use_tracing;
+//Py_tracefunc c_profilefunc;
+//Py_tracefunc c_tracefunc;
+//PyObject *c_profileobj;
+//PyObject *c_traceobj;
+//PyObject *curexc_type;
+//PyObject *curexc_value;
+//PyObject *curexc_traceback;
+#define TS_TRUNCATED_SIZE (sizeof(struct _ts*) + sizeof(PyInterpreterState*) \
+		+ sizeof(struct _frame*) + 3*sizeof(int) + 2*sizeof(Py_tracefunc) \
+		+ 5*sizeof(PyObject*))
+
+inline void JyErr_InsertCurExc();
+inline void Py_SetRecursionLimitNative(int new_limit);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    setNativeRecursionLimit
+ * Signature: (I)V
+ */
+void JyTState_setNativeRecursionLimit(JNIEnv *env, jclass class, jint recursionLimit);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    setNativeCallDepth
+ * Signature: (JI)V
+ */
+void JyTState_setNativeCallDepth(JNIEnv *env, jclass class, jlong nativeThreadState, jint callDepth);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    initNativeThreadState
+ * Signature: (LJyNI/JyTState;Lorg/python/core/ThreadState;)J
+ */
+jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState, jobject threadState);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    clearNativeThreadState
+ * Signature: (J)V
+ */
+void JyTState_clearNativeThreadState(JNIEnv *env, jclass class, jlong threadState);
+
+#endif /* JYTSTATE_H_ */

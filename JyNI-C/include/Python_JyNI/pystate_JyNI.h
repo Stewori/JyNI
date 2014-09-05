@@ -1,4 +1,4 @@
-/* This File is based on pystate.h from CPython 2.7.6 release.
+/* This File is based on pystate.h from CPython 2.7.8 release.
  * It has been modified to suit JyNI needs.
  *
  * Copyright of the original file:

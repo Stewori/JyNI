@@ -82,10 +82,10 @@ print "--------Set testing----------"
 basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
 fruit = set(basket)
 #print fruit
-#DemoExtension.setTest(fruit);
+#DemoExtension.setTest(fruit)
 print fruit
 p = 2
-DemoExtension.setPopTest(fruit, p);
+DemoExtension.setPopTest(fruit, p)
 print "after popping "+str(p)+" elements:"
 print fruit
 print ""

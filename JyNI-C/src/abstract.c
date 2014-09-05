@@ -2617,15 +2617,15 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 
 		if ((call = func->ob_type->tp_call) != NULL) {
 			PyObject *result;
-//			if (Py_EnterRecursiveCall(" while calling a Python object"))
-//				return NULL;
+			if (Py_EnterRecursiveCall(" while calling a Python object"))
+				return NULL;
 			env(NULL);
-			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
+//			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
 
 			result = (*call)(func, arg, kw);
 
-//			Py_LeaveRecursiveCall();
-			Jy_LeaveRecursiveCall();
+			Py_LeaveRecursiveCall();
+//			Jy_LeaveRecursiveCall();
 			jboolean envExc = (*env)->ExceptionCheck(env);
 			if (result == NULL && !PyErr_Occurred() && !envExc)
 				PyErr_SetString(

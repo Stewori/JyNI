@@ -635,57 +635,67 @@ PyEval_RestoreThread(PyThreadState *tstate)
 //}
 //
 //#endif /* WITH_THREAD */
-//
-//
-///* The interpreter's recursion limit */
-//
-//#ifndef Py_DEFAULT_RECURSION_LIMIT
-//#define Py_DEFAULT_RECURSION_LIMIT 1000
-//#endif
-//static int recursion_limit = Py_DEFAULT_RECURSION_LIMIT;
-//int _Py_CheckRecursionLimit = Py_DEFAULT_RECURSION_LIMIT;
-//
-//int
-//Py_GetRecursionLimit(void)
-//{
-//	return recursion_limit;
-//}
-//
-//void
-//Py_SetRecursionLimit(int new_limit)
-//{
-//	recursion_limit = new_limit;
-//	_Py_CheckRecursionLimit = recursion_limit;
-//}
-//
-///* the macro Py_EnterRecursiveCall() only calls _Py_CheckRecursiveCall()
-//   if the recursion_depth reaches _Py_CheckRecursionLimit.
-//   If USE_STACKCHECK, the macro decrements _Py_CheckRecursionLimit
-//   to guarantee that _Py_CheckRecursiveCall() is regularly called.
-//   Without USE_STACKCHECK, there is no need for this. */
-//int
-//_Py_CheckRecursiveCall(char *where)
-//{
-//	PyThreadState *tstate = PyThreadState_GET();
-//
-//#ifdef USE_STACKCHECK
-//	if (PyOS_CheckStack()) {
-//		--tstate->recursion_depth;
-//		PyErr_SetString(PyExc_MemoryError, "Stack overflow");
-//		return -1;
-//	}
-//#endif
-//	if (tstate->recursion_depth > recursion_limit) {
-//		--tstate->recursion_depth;
-//		PyErr_Format(PyExc_RuntimeError,
-//					 "maximum recursion depth exceeded%s",
-//					 where);
-//		return -1;
-//	}
-//	_Py_CheckRecursionLimit = recursion_limit;
-//	return 0;
-//}
-//
+
+
+/* The interpreter's recursion limit */
+
+#ifndef Py_DEFAULT_RECURSION_LIMIT
+#define Py_DEFAULT_RECURSION_LIMIT 1000
+#endif
+static int recursion_limit = Py_DEFAULT_RECURSION_LIMIT;
+int _Py_CheckRecursionLimit = Py_DEFAULT_RECURSION_LIMIT;
+
+int
+Py_GetRecursionLimit(void)
+{
+	return recursion_limit;
+}
+
+inline void
+Py_SetRecursionLimitNative(int new_limit)
+{
+	recursion_limit = new_limit;
+	_Py_CheckRecursionLimit = recursion_limit;
+}
+
+void
+Py_SetRecursionLimit(int new_limit)
+{
+	Py_SetRecursionLimitNative(new_limit);
+	//set Jython's recursion limit here too:
+	env();
+	(*env)->CallStaticIntMethod(env, JyTStateClass, JyTState_setRecursionLimit, new_limit);
+	(*env)->SetStaticIntField(env, JyTStateClass, JyTState_nativeRecursionLimitField, new_limit);
+}
+
+/* the macro Py_EnterRecursiveCall() only calls _Py_CheckRecursiveCall()
+   if the recursion_depth reaches _Py_CheckRecursionLimit.
+   If USE_STACKCHECK, the macro decrements _Py_CheckRecursionLimit
+   to guarantee that _Py_CheckRecursiveCall() is regularly called.
+   Without USE_STACKCHECK, there is no need for this. */
+int
+_Py_CheckRecursiveCall(char *where)
+{
+	PyThreadState *tstate = PyThreadState_GET();
+
+#ifdef USE_STACKCHECK
+	if (PyOS_CheckStack()) {
+		--tstate->recursion_depth;
+		PyErr_SetString(PyExc_MemoryError, "Stack overflow");
+		return -1;
+	}
+#endif
+	if (tstate->recursion_depth > recursion_limit) {
+		--tstate->recursion_depth;
+		PyErr_Format(PyExc_RuntimeError,
+					 "maximum recursion depth exceeded%s",
+					 where);
+		return -1;
+	}
+	_Py_CheckRecursionLimit = recursion_limit;
+	return 0;
+}
+
 ///* Status code for main loop (reason for stack unwind) */
 //enum why_code {
 //		WHY_NOT =	   0x0001, /* No error */

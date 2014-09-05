@@ -90,50 +90,50 @@ PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 		Py_DECREF(traceback);
 		traceback = NULL;
 	}
-	env();
-	jobject oldexc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyErr_GetCurExc, NULL);
-	jobject jv = JyNI_JythonPyObject_FromPyObject(value);
-	jobject jtb = JyNI_JythonPyObject_FromPyObject(traceback);
-	jobject jt = JyNI_JythonPyObject_FromPyObject(type);
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Restore,
-		jt,
-		jv,
-		jtb);
-	if (oldexc)
-	{
-		//puts("oldexc");
-		PyObject *oldtype, *oldvalue, *oldtraceback;
-		oldtype = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTypeField));
-		oldvalue = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionValueField));
-		oldtraceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTracebackField));
-
-		Py_XDECREF(oldtype);
-		Py_XDECREF(oldvalue);
-		Py_XDECREF(oldtraceback);
-	}
-//	PyThreadState *tstate = PyThreadState_GET();
-//	PyObject *oldtype, *oldvalue, *oldtraceback;
+//	env();
+//	jobject oldexc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyErr_GetCurExc, NULL);
+//	jobject jv = JyNI_JythonPyObject_FromPyObject(value);
+//	jobject jtb = JyNI_JythonPyObject_FromPyObject(traceback);
+//	jobject jt = JyNI_JythonPyObject_FromPyObject(type);
+//	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Restore,
+//		jt,
+//		jv,
+//		jtb);
+//	if (oldexc)
+//	{
+//		//puts("oldexc");
+//		PyObject *oldtype, *oldvalue, *oldtraceback;
+//		oldtype = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTypeField));
+//		oldvalue = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionValueField));
+//		oldtraceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, oldexc, pyExceptionTracebackField));
 //
-//	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
-//		/* XXX Should never happen -- fatal error instead? */
-//		/* Well, it could be None. */
-//		Py_DECREF(traceback);
-//		traceback = NULL;
+//		Py_XDECREF(oldtype);
+//		Py_XDECREF(oldvalue);
+//		Py_XDECREF(oldtraceback);
 //	}
-//
-//	/* Save these in locals to safeguard against recursive
-//	   invocation through Py_XDECREF */
-//	oldtype = tstate->curexc_type;
-//	oldvalue = tstate->curexc_value;
-//	oldtraceback = tstate->curexc_traceback;
-//
-//	tstate->curexc_type = type;
-//	tstate->curexc_value = value;
-//	tstate->curexc_traceback = traceback;
-//
-//	Py_XDECREF(oldtype);
-//	Py_XDECREF(oldvalue);
-//	Py_XDECREF(oldtraceback);
+	PyThreadState *tstate = PyThreadState_GET();
+	PyObject *oldtype, *oldvalue, *oldtraceback;
+
+	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
+		/* XXX Should never happen -- fatal error instead? */
+		/* Well, it could be None. */
+		Py_DECREF(traceback);
+		traceback = NULL;
+	}
+
+	/* Save these in locals to safeguard against recursive
+	   invocation through Py_XDECREF */
+	oldtype = tstate->curexc_type;
+	oldvalue = tstate->curexc_value;
+	oldtraceback = tstate->curexc_traceback;
+
+	tstate->curexc_type = type;
+	tstate->curexc_value = value;
+	tstate->curexc_traceback = traceback;
+
+	Py_XDECREF(oldtype);
+	Py_XDECREF(oldvalue);
+	Py_XDECREF(oldtraceback);
 }
 
 void
@@ -162,11 +162,17 @@ PyErr_SetString(PyObject *exception, const char *string)
 PyObject *
 PyErr_Occurred(void)
 {
-	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject(
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Occurred));
-	//PyThreadState *tstate = PyThreadState_GET();
-	//return tstate->curexc_type;
+//	env(NULL);
+//	return JyNI_PyObject_FromJythonPyObject(
+//		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Occurred));
+	PyThreadState *tstate = PyThreadState_GET();
+	//jputs("got thread state");
+	//jputsLong(tstate);
+
+//	PyObject* res = tstate->curexc_type;
+//	jputs("got result in PyErr_Occurred");
+//	return res;
+	return tstate->curexc_type;
 }
 
 
@@ -229,9 +235,14 @@ PyErr_GivenExceptionMatches(PyObject *err, PyObject *exc)
 int
 PyErr_ExceptionMatches(PyObject *exc)
 {
+	PyThreadState *tstate = PyThreadState_GET();
+
 	env(-1);
 	return (*env)->CallStaticBooleanMethod(env, JyNIClass, JyNIPyErr_ExceptionMatches,
-		JyNI_JythonPyObject_FromPyObject(exc));
+		JyNI_JythonPyObject_FromPyObject(exc),
+		JyNI_JythonPyObject_FromPyObject(tstate->curexc_type),
+		JyNI_JythonPyObject_FromPyObject(tstate->curexc_value),
+		JyNI_JythonPyObject_FromPyObject(tstate->curexc_traceback));
 //	return PyErr_GivenExceptionMatches(PyErr_Occurred(), exc);
 }
 
@@ -358,37 +369,32 @@ PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 void
 PyErr_Fetch(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 {
-	env();
-	jobject pyExc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Fetch);
-	if (pyExc)
-	{
-		*p_type = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
-		*p_value = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
-		*p_traceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
-	} //else
+//	env();
+//	jobject pyExc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Fetch);
+//	if (pyExc)
 //	{
-//		*p_type = NULL;
-//		*p_value = NULL;
-//		*p_traceback = NULL;
+//		*p_type = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
+//		*p_value = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
+//		*p_traceback = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
 //	}
 
-//	PyThreadState *tstate = PyThreadState_GET();
-//
-//	*p_type = tstate->curexc_type;
-//	*p_value = tstate->curexc_value;
-//	*p_traceback = tstate->curexc_traceback;
-//
-//	tstate->curexc_type = NULL;
-//	tstate->curexc_value = NULL;
-//	tstate->curexc_traceback = NULL;
+	PyThreadState *tstate = PyThreadState_GET();
+
+	*p_type = tstate->curexc_type;
+	*p_value = tstate->curexc_value;
+	*p_traceback = tstate->curexc_traceback;
+
+	tstate->curexc_type = NULL;
+	tstate->curexc_value = NULL;
+	tstate->curexc_traceback = NULL;
 }
 
 void
 PyErr_Clear(void)
 {
-	env();
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Clear);
-	//PyErr_Restore(NULL, NULL, NULL);
+//	env();
+//	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Clear);
+	PyErr_Restore(NULL, NULL, NULL);
 }
 
 /* Convenience functions to set a type error exception and return 0 */
@@ -404,14 +410,24 @@ PyErr_BadArgument(void)
 PyObject *
 PyErr_NoMemory(void)
 {
-	env(NULL);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_NoMemory);
-	return NULL; /*the above always returns NULL anyway, so no need to bother the conversion function*/
-//	if (PyErr_ExceptionMatches(PyExc_MemoryError))
-//		/* already current */
-//		return NULL;
-//
-//	/* raise the pre-allocated instance if it still exists */
+//	env(NULL); //old solution
+//	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_NoMemory);
+//	return NULL; /*the above always returns NULL anyway, so no need to bother the conversion function*/
+	if (PyErr_ExceptionMatches(PyExc_MemoryError))
+		/* already current */
+		return NULL;
+
+	/* It is typical Jython-style to use string-messages as value for
+	 * MemoryErrors. If no message is available, empty strings are used.
+	 * We try to use nullstring here to minimize the need of additional
+	 * memory.
+	 */
+	if (nullstring)
+		PyErr_SetObject(PyExc_MemoryError, nullstring);
+	else
+		PyErr_SetString(PyExc_MemoryError, "");
+
+	/* raise the pre-allocated instance if it still exists */
 //	if (PyExc_MemoryErrorInst)
 //		PyErr_SetObject(PyExc_MemoryError, PyExc_MemoryErrorInst);
 //	else
@@ -419,8 +435,8 @@ PyErr_NoMemory(void)
 //		   hee, we have to instantiate this class
 //		*/
 //		PyErr_SetNone(PyExc_MemoryError);
-//
-//	return NULL;
+
+	return NULL;
 }
 
 //PyObject *

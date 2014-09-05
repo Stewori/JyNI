@@ -1562,15 +1562,15 @@ half_binop(PyObject *v, PyObject *w, char *opname, binaryfunc thisfunc,
 		result = generic_binary_op(v1, w, opname);
 	} else {
 		env(NULL);
-		Jy_EnterRecursiveCall2(" after coercion", return NULL)
-//		if (Py_EnterRecursiveCall(" after coercion"))
-//			return NULL;
+//		Jy_EnterRecursiveCall2(" after coercion", return NULL)
+		if (Py_EnterRecursiveCall(" after coercion"))
+			return NULL;
 		if (swapped)
 			result = (thisfunc)(w, v1);
 		else
 			result = (thisfunc)(v1, w);
-		Jy_LeaveRecursiveCall();
-//		Py_LeaveRecursiveCall();
+//		Jy_LeaveRecursiveCall();
+		Py_LeaveRecursiveCall();
 	}
 	Py_DECREF(coerced);
 	return result;
@@ -2208,17 +2208,17 @@ instance_call(PyObject *func, PyObject *arg, PyObject *kw)
 	   This bounces between instance_call() and PyObject_Call() without
 	   ever hitting eval_frame() (which has the main recursion check). */
 
-//	if (Py_EnterRecursiveCall(" in __call__")) {
-//		res = NULL;
-//	}
-	env(NULL);
-	Jy_EnterRecursiveCall2(" in __call__", res = NULL)
+	if (Py_EnterRecursiveCall(" in __call__")) {
+		res = NULL;
+	}
+//	env(NULL);
+//	Jy_EnterRecursiveCall2(" in __call__", res = NULL)
 	else {	//JyNI note: This might look a bit confusing. It works because the
 			//macro Jy_EnterRecursiveCall2 ends with an if-clause. This else-clause
 			//simply appends to that macro's intern clause.
 		res = PyObject_Call(call, arg, kw);
-//		Py_LeaveRecursiveCall();
-		Jy_LeaveRecursiveCall();
+		Py_LeaveRecursiveCall();
+//		Jy_LeaveRecursiveCall();
 	}
 	Py_DECREF(call);
 	return res;
