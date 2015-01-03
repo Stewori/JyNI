@@ -1,6 +1,4 @@
-If not yet done, make sure to visit our project homepage at
-
-www.jyni.org
+If not yet done, make sure to visit our project homepage at www.jyni.org
 
 ![JyNI Logo](http://www.jyni.org/_static/JyNILogo2s.png)
 
@@ -141,7 +139,7 @@ is NOT suitable to run Jython with JyNI support. It does not pass the
 provided classpath to Jython.
 
 
-##Test-Example
+###Test-Example
 
 "DemoExtension" is a CPython-extension that demonstrates some
 basic features of JyNI. It can be built like an
