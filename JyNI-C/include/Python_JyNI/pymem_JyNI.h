@@ -1,8 +1,8 @@
 /* This File is based on objectpymem 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.

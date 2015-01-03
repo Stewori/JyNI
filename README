@@ -97,34 +97,34 @@ for all systems with shlib.
 (https://github.com/Stewori/JyNI).
 
 * Provide Java: Make sure that Java 7 JDK or newer is installed. Some systems
-(f.i. Linux MINT) provide a symlink called "/usr/lib/jvm/default-java", that
+(e.g. Linux MINT) provide a symlink called "/usr/lib/jvm/default-java" that
 points to the specific Java folder named by Java version and architecture. If
-your system does not provide this generic link (f.i. Ubuntu does not), you
-must specify your Java folder in the JyNI make file. To do so, open "makefile"
-from the JyNI base folder with a text editor and edit the line starting with
-"JAVA_HOME" such that it is appropriate for your system.
+your system does not provide this generic link (e.g. Ubuntu does not), you
+must specify your Java folder in the JyNI make file. To do so open "makefile"
+from the JyNI base folder with a text editor of your choice and edit the line
+starting with "JAVA_HOME" such that it is appropriate for your system.
 
-* Provide Jython: You have two ways to provide Jython. Either, you simply copy
-jython.jar into the JyNI base directory, or you edit "makefile" and adjust the
+* Provide Jython: You have two ways to provide Jython. Either you simply copy
+jython.jar into the JyNI base directory or you edit "makefile" and adjust the
 JYTHON-variable such that it points to jython.jar. Be sure to use
-Jython 2.7 (beta) or newer. If you want to use JyNIDemo.sh, you need to adjust
+Jython 2.7 beta 3. If you want to use JyNIDemo.sh, you need to adjust
 the Jython-path in that file too. Same for JyNITkinterDemo.sh.
 
 * If not yet done, install the dev-package of Python 2.7. JyNI only needs
-pyconfig.h from that package. Alternatively (if you know, what you're doing),
-you can provide your own pyconfig.h. In that case you have to adjust the
-corresponding include path in the makefile.
+pyconfig.h from that package. Alternatively (if you know what you're doing)
+you can provide your own pyconfig.h. In that case you'll have to adjust the
+corresponding include-path in the makefile.
 
 * Build JyNI: Open a terminal and enter the JyNI base directory. Type "make".
 Optionally run "make clean" afterwards. The resulting binaries are placed in
-the folder named "build".
+the subfolder named "build".
 
 To run Jython with JyNI support, call (from JyNI base dir)
 
 java -cp jython.jar:build/JyNI.jar org.python.util.jython someFile.py
 
-Alternatively, one can use Jython's start-script
-(assuming you copied it to the JyNI base dir):
+Alternatively one can use Jython's start-script
+(assuming you copied it to the JyNI base directory):
 
 jython -J-cp build/JyNI.jar
 
@@ -155,18 +155,18 @@ You can run it via
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/test_JyNI.py
 or
 sh JyNI_unittest.sh
-provided that jython.jar is placed in JyNI's directory. Otherwise you need to provide
-the correct path for your jython.jar in the command.
+provided that jython.jar is placed in JyNI's directory. Otherwise you need to
+provide the correct path for your jython.jar in the command.
 
-JyNI-Demo/src/JyNIDemo.py demonstrates the use of DemoExtension from Python-side.
-It should run perfectly with either CPython 2.7.x or Jython+JyNI.
-To run it, type
+JyNI-Demo/src/JyNIDemo.py demonstrates the use of DemoExtension from
+Python-side. It should run perfectly with either CPython 2.7.x or
+Jython+JyNI. To run it, type
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDemo.py
 Like with the unittest you can alternatively run
 sh JyNIDemo.sh
 
-To see a basic demonstration that JyNI is capable of using the original datetime
-module, run
+To see a basic demonstration that JyNI is capable of using the original
+datetime module, run
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDatetimeTest.py
 
 To see a demonstration of exception support (on native level), run
@@ -187,6 +187,7 @@ sh JyNITkinterDemo.sh
 Further steps:
 - support weak references
 - support garbage collection
+- support newstyle classes
 - support ctypes
 - support numpy
 - test and support on other platforms
@@ -202,7 +203,7 @@ CPython-extensions must be compiled with the flag WITH_PYMALLOC activated
 (which is actually the default anyway). Otherwise they must not use
 the macros PyObject_MALLOC, PyObject_REALLOC and PyObject_FREE directly.
 If they use these macros with WITH_PYMALLOC not activated, JyNI will most
-likely produce segmantation faults. This is because without the flag, these
+likely produce segmentation faults. This is because without the flag, these
 macros directly map to the system's malloc-function family. In that case
 JyNI would not be able to prepare the JyObject-header in every case.
 However, it would be easy to recompile such extensions for JyNI. Simply add
@@ -224,9 +225,9 @@ We hope that most extensions are not affected by this issue.
 
 Briefly speaking, we took the python files crucial for loading native
 C-extensions and modified them to perform the explained purpose of JyNI.
-Mainly we changed alloc and dealloc behaviour of PyObjects consequently, also
-when occuring inline like in stringobject.c or intobject.c. The new allocation
-behaviour adds a header called JyObject before the PyObject header or even in
+Mainly we changed alloc and dealloc behavior of PyObjects consequently, also
+when inlined like in stringobject.c or intobject.c. The new allocation
+behavior adds a header called JyObject before the PyObject header or even in
 front of PyGC_Head if present. This header contains information that allows to
 wrap or mirror a corresponding Jython jobject in a seamless way.
 
@@ -243,11 +244,11 @@ PyByteArray in Jython uses a primitive byte[]-array as backend, we can't replace
 the backend by a subclass. Our most promising idea to solve the issue anyway, is
 to insert a custom implementation of SequenceIndexDelegate as delegator
 (PyByteArray is a subclass of PySequence and thus offers a delegator-field,
-which allows to customize the indexed access-behaviour).
+which allows to customize the indexed access-behavior).
 
-Builtins that don't provide access via macros can be wrappered. That means, the
-original CPython data structure is not used and not even allocated. All functions
-of such objects are rewritten to delegate their calls to Jython.
+Builtins that don't provide access via macros can be wrapped. That means, the
+original CPython data structure is not used and not even allocated. All
+functions of such objects are rewritten to delegate their calls to Jython.
 However, also in these cases, we usually don't rewrite everything. Functions
 that access the data only via other functions are mostly kept unchanged.
 
@@ -259,10 +260,10 @@ that access the data only via other functions are mostly kept unchanged.
 
 Copyright of Python and Jython:
 Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
 
 Copyright of JyNI:
-Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
 
 
 
@@ -276,7 +277,7 @@ License (with a special exception described below).
 A copy of GNU General Public License (GPL) is included in this distribution,
 in the file "COPYING".  If you do not have the source code, it is available at:
 
-    https://github.com, project JyNI
+    https://github.com/Stewori/JyNI
 
   Linking this library statically or dynamically with other modules is
   making a combined work based on this library.  Thus, the terms and
@@ -297,10 +298,10 @@ in the file "COPYING".  If you do not have the source code, it is available at:
 
 
 JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
-2.7.7 and 2.7.8. As such, it includes the common license of CPython 2.7.3,
-2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8 and Jython in the file "PSF-LICENSE-2".
-Whether a source-file is directly based on CPython source-code is documented
-at the beginning of each file.
+2.7.7, 2.7.8 and 2.7.9. As such, it includes the common license of CPython
+2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9 and Jython in the file
+"PSF-LICENSE-2". Whether a source-file is directly based on CPython
+source-code is documented at the beginning of each file.
 
 For compliance with PSF LICENSE AGREEMENT FOR PYTHON 2, section 3,
 the required overview of changes done to CPython-code is given
@@ -316,3 +317,4 @@ For convenience, a copy of the current section is provided in the file
 ----------
 
 Please use the contact information provided on www.jyni.org, section "contact".
+

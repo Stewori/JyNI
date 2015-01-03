@@ -3,10 +3,10 @@
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -2039,44 +2039,51 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 	}
 
 	if (dict == NULL) {
-		 dictptr = _PyObject_GetDictPtr(obj);
-		 if (dictptr != NULL) {
-				dict = *dictptr;
-				if (dict == NULL && value != NULL) {
-					dict = PyDict_New();
-					if (dict == NULL)
-						 goto done;
-					*dictptr = dict;
-				}
-		 }
+		jputs("_PyObject_GenericGetAttrWithDict 1");
+		jputs(Py_TYPE(obj)->tp_name);
+		if (PyModule_Check(obj)) {
+			jputs(PyModule_GetName(obj));
+			jputsLong((jlong) obj);
+		}
+
+		dictptr = _PyObject_GetDictPtr(obj);
+		if (dictptr != NULL) {
+			dict = *dictptr;
+			if (dict == NULL && value != NULL) {
+				dict = PyDict_New();
+				if (dict == NULL)
+					 goto done;
+				*dictptr = dict;
+			}
+		}
 	}
 	if (dict != NULL) {
-		 Py_INCREF(dict);
-		 if (value == NULL)
-				res = PyDict_DelItem(dict, name);
-		 else
-				res = PyDict_SetItem(dict, name, value);
-//		 if (res < 0 && PyErr_ExceptionMatches(PyExc_KeyError))
-//				PyErr_SetObject(PyExc_AttributeError, name);
-		 Py_DECREF(dict);
-		 goto done;
+		Py_INCREF(dict);
+		if (value == NULL)
+			res = PyDict_DelItem(dict, name);
+		else
+			res = PyDict_SetItem(dict, name, value);
+//		if (res < 0 && PyErr_ExceptionMatches(PyExc_KeyError))
+//			PyErr_SetObject(PyExc_AttributeError, name);
+		Py_DECREF(dict);
+		goto done;
 	}
 
 	if (f != NULL) {
-		 res = f(descr, obj, value);
-		 goto done;
+		res = f(descr, obj, value);
+		goto done;
 	}
 
 	if (descr == NULL) {
-		 PyErr_Format(PyExc_AttributeError,
+		PyErr_Format(PyExc_AttributeError,
 							"'%.100s' object has no attribute '%.200s'",
 							tp->tp_name, PyString_AS_STRING(name));
-		 goto done;
+		goto done;
 	}
 
 	PyErr_Format(PyExc_AttributeError,
-					 "'%.50s' object attribute '%.400s' is read-only",
-					 tp->tp_name, PyString_AS_STRING(name));
+					"'%.50s' object attribute '%.400s' is read-only",
+					tp->tp_name, PyString_AS_STRING(name));
   done:
 	Py_DECREF(name);
 	return res;

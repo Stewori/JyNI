@@ -3,10 +3,10 @@
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -140,8 +140,8 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 				(*env)->NewStringUTF(env, name));
 	if (m == NULL)
 	{
-		puts("PyImport_AddModule returned NULL on name:");
-		puts(name);
+		jputs("PyImport_AddModule returned NULL on name:");
+		jputs(name);
 		return NULL;
 	}
 //	env(NULL);
@@ -213,7 +213,12 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		//Py_DECREF(v);
 	}
 	PyObject* er = JyNI_PyObject_FromJythonPyObject(m);
-	//puts("initModule4 done");
+	jputs("initModule4 done");
+	jputsLong((jlong) er);
+	JyObject* jy = AS_JY(er);
+//	jputsLong((jlong) jy);
+	jputsLong(jy->flags);
+	//jputsLong(er);
 	return er;
 }
 

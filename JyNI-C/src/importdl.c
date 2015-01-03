@@ -3,10 +3,10 @@
  *
  * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -94,25 +94,27 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	}
 	//PyErr_Clear(); //added temporarily by JyNI to focus on further development until the exception thing is solved.
 	p = _PyImport_GetDynLoadFunc(name, shortname, pathname, fp);
-	//puts("got dyn load func");
+	jputs("got dyn load func");
 	if (PyErr_Occurred())
 	{
-		//puts("PyErrOccured00");
+		jputs("PyErrOccured00");
 		return NULL;
 	}
-	//puts("error check done");
+	jputs("error check done");
 	env(NULL);
 	if (p == NULL) {
-		//puts("no init function");
+		jputs("no init function");
 		JyNI_JyErr_Format((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError),
 		   "dynamic module does not define init function (init%.200s)",
 					 shortname);
 		return NULL;
 	}
-	//puts("dyn load func is not NULL");
+	jputs("dyn load func is not NULL");
 	oldcontext = _Py_PackageContext;
 	_Py_PackageContext = packagecontext;
+	jputs("run dyn load func...");
 	(*p)();
+	jputs("run dyn load func done");
 	_Py_PackageContext = oldcontext;
 	if (PyErr_Occurred())
 	{
@@ -121,8 +123,8 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	}
 
 	//m = PyDict_GetItemString(PyImport_GetModuleDict(), name);
-	//puts("retrieving module...");
-	//puts(name);
+	jputs("retrieving module...");
+	jputs(name);
 	//the following somehow goes wrong, probaby because we didn't call String.intern...
 	/*jobject mName = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, name));
 	m = (*env)->CallObjectMethod(env,
@@ -156,7 +158,9 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 			"import %s # dynamically loaded from %s\n",
 			name, pathname);
 	//Py_INCREF(m);
-	//puts("importdl done");
+	jputs("module loaded:");
+	jputs(name);
+	jputsLong(m);
 	return m;
 }
 

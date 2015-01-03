@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
  *
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -126,50 +126,45 @@ jobject JySync_Init_JyString_From_PyString(PyObject* src)
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, jstr);
 }
 
-// For unknown reasons converting via UTF16 fails.
-//PyObject* JySync_Init_PyUnicode_From_JyUnicode16(jobject src)
+PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
+{
+	env(NULL);
+	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
+	jstring charsetName = (*env)->NewStringUTF(env, "UTF-16BE");
+	jobject stringByteArray = (*env)->CallObjectMethod(env, jstr,
+		stringGetBytesUsingCharset, charsetName);
+	jbyte* stringBytes = (*env)->GetByteArrayElements(env, stringByteArray, NULL);
+	jsize len = (*env)->GetArrayLength(env, stringByteArray);
+	int byteOrder = 1; //indicates BE
+	PyObject* unicode = PyUnicode_DecodeUTF16(
+			(char*) stringBytes,  /* UTF-16 encoded string */
+			len,                  /* size of string */
+			NULL,                 /* error handling */
+			&byteOrder            /* pointer to byteorder to use
+			                         0=native;-1=LE,1=BE; */
+			);
+	(*env)->ReleaseByteArrayElements(env, stringByteArray, stringBytes, JNI_ABORT);
+	return unicode;
+}
+
+//UTF-8 variant
+//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 //{
 ////	jputs("JySync_Init_PyUnicode_From_JyUnicode");
 //	env(NULL);
 //	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
 //	//jchar* uc = (*env)->GetStringChars(env, jstr, NULL);
-//	jstring charsetName = (*env)->NewStringUTF(env, "UTF-16BE");
+//	jstring charsetName = (*env)->NewStringUTF(env, "UTF-8");
 //	jobject stringByteArray = (*env)->CallObjectMethod(env, jstr,
 //		stringGetBytesUsingCharset, charsetName);
 //	jbyte* stringBytes = (*env)->GetByteArrayElements(env, stringByteArray, NULL);
+//	//jsize len = (*env)->GetStringLength(env, jstr);
 //	jsize len = (*env)->GetArrayLength(env, stringByteArray);
-//	jputsLong(len);
-////	PyObject* unicode = PyUnicode_DecodeUTF8((char*) stringBytes, len, NULL);
-//
-//	int byteOrder = 1; //should indicate BE
-//	PyObject* unicode = PyUnicode_DecodeUTF16(
-//		    (char*) stringBytes, //const char *string,         /* UTF-16 encoded string */
-//		    (*env)->GetStringLength(env, jstr), //Py_ssize_t length,          /* size of string */
-//		    NULL, //const char *errors,         /* error handling */
-//		    &byteOrder //int *byteorder             pointer to byteorder to use
-////		                                   0=native;-1=LE,1=BE;
-//		    );
+//	//jputsLong(len);
+//	PyObject* unicode = PyUnicode_DecodeUTF8((char*) stringBytes, len, NULL);
 //	(*env)->ReleaseByteArrayElements(env, stringByteArray, stringBytes, JNI_ABORT);
 //	return unicode;
 //}
-
-PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
-{
-//	jputs("JySync_Init_PyUnicode_From_JyUnicode");
-	env(NULL);
-	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
-	//jchar* uc = (*env)->GetStringChars(env, jstr, NULL);
-	jstring charsetName = (*env)->NewStringUTF(env, "UTF-8");
-	jobject stringByteArray = (*env)->CallObjectMethod(env, jstr,
-		stringGetBytesUsingCharset, charsetName);
-	jbyte* stringBytes = (*env)->GetByteArrayElements(env, stringByteArray, NULL);
-	//jsize len = (*env)->GetStringLength(env, jstr);
-	jsize len = (*env)->GetArrayLength(env, stringByteArray);
-	//jputsLong(len);
-	PyObject* unicode = PyUnicode_DecodeUTF8((char*) stringBytes, len, NULL);
-	(*env)->ReleaseByteArrayElements(env, stringByteArray, stringBytes, JNI_ABORT);
-	return unicode;
-}
 
 //PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 //{
@@ -196,17 +191,20 @@ PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 
 jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
 {
-//	jputs("JySync_Init_JyUnicode_From_PyUnicode");
-	PyObject* utf8 = PyUnicode_AsUTF8String(src);
-	//PyUnicode_GET_SIZE(src)
-	Py_ssize_t len = PyString_GET_SIZE(utf8);
+	PyObject* utf16 = PyUnicode_EncodeUTF16(PyUnicode_AS_UNICODE(src),
+			 PyUnicode_GET_SIZE(src),
+			 NULL,
+			 1); //BE
+	Py_ssize_t len = PyString_GET_SIZE(utf16);
+	//Py_ssize_t len = PyUnicode_GET_DATA_SIZE(utf16);
 //	jputsLong(len);
 	env(NULL);
 	//jstring jstr = (*env)->NewStringUTF(env, PyString_AS_STRING(src));
-	jstring charsetName = (*env)->NewStringUTF(env, "UTF-8");
+	jstring charsetName = (*env)->NewStringUTF(env, "UTF-16BE");
 	jobject strByteArray = (*env)->NewByteArray(env, len);
 	jbyte* strBytes = (*env)->GetByteArrayElements(env, strByteArray, NULL);
-	memcpy(strBytes, PyString_AS_STRING(utf8), len);
+	memcpy(strBytes, PyString_AS_STRING(utf16), len);
+	//memcpy(strBytes, PyUnicode_AS_DATA(utf16), len);
 	(*env)->ReleaseByteArrayElements(env, strByteArray, strBytes, 0); //copy back and free buffer
 	jobject jstr = (*env)->NewObject(env, stringClass,
 		stringFromBytesAndCharsetNameConstructor, strByteArray, charsetName);
@@ -214,6 +212,27 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
 //		jstr = (*env)->CallObjectMethod(env, jstr, stringIntern);
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
 }
+
+//jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
+//{
+////	jputs("JySync_Init_JyUnicode_From_PyUnicode");
+//	PyObject* utf8 = PyUnicode_AsUTF8String(src);
+//	//PyUnicode_GET_SIZE(src)
+//	Py_ssize_t len = PyString_GET_SIZE(utf8);
+////	jputsLong(len);
+//	env(NULL);
+//	//jstring jstr = (*env)->NewStringUTF(env, PyString_AS_STRING(src));
+//	jstring charsetName = (*env)->NewStringUTF(env, "UTF-8");
+//	jobject strByteArray = (*env)->NewByteArray(env, len);
+//	jbyte* strBytes = (*env)->GetByteArrayElements(env, strByteArray, NULL);
+//	memcpy(strBytes, PyString_AS_STRING(utf8), len);
+//	(*env)->ReleaseByteArrayElements(env, strByteArray, strBytes, 0); //copy back and free buffer
+//	jobject jstr = (*env)->NewObject(env, stringClass,
+//		stringFromBytesAndCharsetNameConstructor, strByteArray, charsetName);
+////	if (JyNI_HasJyAttribute(AS_JY_NO_GC(src), JyAttributeStringInterned))
+////		jstr = (*env)->CallObjectMethod(env, jstr, stringIntern);
+//	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
+//}
 
 PyObject* JySync_Init_PyInt_From_JyInt(jobject src)
 {

@@ -1,10 +1,10 @@
 /*
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014 Python Software Foundation.  All rights reserved.
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
  * 
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014 Stefan Richthofer.  All rights reserved.
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -54,7 +54,7 @@ import org.python.core.ThreadState;
 public class JyTState {
 	protected static int nativeRecursionLimit;
 	
-	//No IdentityHashMap needed, since ThreadState does not overvrite hashCode().
+	//No IdentityHashMap needed, since ThreadState does not overwrite hashCode().
 	protected static WeakHashMap<ThreadState, JyTState> tStateLookup = new WeakHashMap<ThreadState, JyTState>();
 	
 	protected WeakReference<ThreadState> tState;
