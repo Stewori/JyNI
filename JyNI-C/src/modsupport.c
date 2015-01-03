@@ -213,11 +213,11 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		//Py_DECREF(v);
 	}
 	PyObject* er = JyNI_PyObject_FromJythonPyObject(m);
-	jputs("initModule4 done");
-	jputsLong((jlong) er);
-	JyObject* jy = AS_JY(er);
+	//jputs("initModule4 done");
+	//jputsLong((jlong) er);
+	//JyObject* jy = AS_JY(er);
 //	jputsLong((jlong) jy);
-	jputsLong(jy->flags);
+	//jputsLong(jy->flags);
 	//jputsLong(er);
 	return er;
 }

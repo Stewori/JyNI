@@ -2039,12 +2039,12 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 	}
 
 	if (dict == NULL) {
-		jputs("_PyObject_GenericGetAttrWithDict 1");
-		jputs(Py_TYPE(obj)->tp_name);
-		if (PyModule_Check(obj)) {
-			jputs(PyModule_GetName(obj));
-			jputsLong((jlong) obj);
-		}
+		//jputs("_PyObject_GenericGetAttrWithDict 1");
+		//jputs(Py_TYPE(obj)->tp_name);
+		//if (PyModule_Check(obj)) {
+		//	jputs(PyModule_GetName(obj));
+		//	jputsLong((jlong) obj);
+		//}
 
 		dictptr = _PyObject_GetDictPtr(obj);
 		if (dictptr != NULL) {

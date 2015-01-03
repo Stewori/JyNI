@@ -94,27 +94,27 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	}
 	//PyErr_Clear(); //added temporarily by JyNI to focus on further development until the exception thing is solved.
 	p = _PyImport_GetDynLoadFunc(name, shortname, pathname, fp);
-	jputs("got dyn load func");
+	//jputs("got dyn load func");
 	if (PyErr_Occurred())
 	{
 		jputs("PyErrOccured00");
 		return NULL;
 	}
-	jputs("error check done");
+	//jputs("error check done");
 	env(NULL);
 	if (p == NULL) {
-		jputs("no init function");
+		//jputs("no init function");
 		JyNI_JyErr_Format((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError),
 		   "dynamic module does not define init function (init%.200s)",
 					 shortname);
 		return NULL;
 	}
-	jputs("dyn load func is not NULL");
+	//jputs("dyn load func is not NULL");
 	oldcontext = _Py_PackageContext;
 	_Py_PackageContext = packagecontext;
-	jputs("run dyn load func...");
+	//jputs("run dyn load func...");
 	(*p)();
-	jputs("run dyn load func done");
+	//jputs("run dyn load func done");
 	_Py_PackageContext = oldcontext;
 	if (PyErr_Occurred())
 	{
@@ -123,8 +123,8 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	}
 
 	//m = PyDict_GetItemString(PyImport_GetModuleDict(), name);
-	jputs("retrieving module...");
-	jputs(name);
+	//jputs("retrieving module...");
+	//jputs(name);
 	//the following somehow goes wrong, probaby because we didn't call String.intern...
 	/*jobject mName = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, name));
 	m = (*env)->CallObjectMethod(env,
@@ -158,9 +158,9 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 			"import %s # dynamically loaded from %s\n",
 			name, pathname);
 	//Py_INCREF(m);
-	jputs("module loaded:");
-	jputs(name);
-	jputsLong(m);
+	//jputs("module loaded:");
+	//jputs(name);
+	//jputsLong(m);
 	return m;
 }
 

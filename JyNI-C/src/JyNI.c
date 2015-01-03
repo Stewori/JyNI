@@ -74,8 +74,8 @@ int (*PyOS_InputHook)(void) = NULL;
  */
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jlong tstate)
 {
-	jputs("JyNI_loadModule...");
-	JyNI_jprintJ(moduleName);
+	//jputs("JyNI_loadModule...");
+	//JyNI_jprintJ(moduleName);
 //	jputsLong(tstate);
 	ENTER_JyNI
 	if (PyErr_Occurred()) jputs("PyErrOccured01 (beginning of JyNI_loadModule)");//this should never happen!
@@ -849,18 +849,18 @@ inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc)
 /* Does not work for Heap-Type exceptions. */
 inline ExceptionMapEntry* JyNI_PyExceptionMapEntry_FromPyExceptionType(PyTypeObject* excType)
 {
-	jputs("lookup exception...");
+	//jputs("lookup exception...");
 	if (excType == NULL) {
-		jputs("excType is NULL");
+		//jputs("excType is NULL");
 		return NULL;
-	} else
-		jputs(excType->tp_name);
+	} //else
+		//jputs(excType->tp_name);
 	int i;
 	for (i = 0; i < builtinExceptionCount; ++i)
 	{
 		if (builtinExceptions[i].exc_type == excType) return &(builtinExceptions[i]);
 	}
-	jputs("excType: Returning NULL...");
+	//jputs("excType: Returning NULL...");
 	return NULL;
 }
 
@@ -901,13 +901,13 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 
 	if (PyType_IS_GC(tme->py_type))
 	{
-		jputs("alloc gc");
+		//jputs("alloc gc");
 		obj = _PyObject_GC_Malloc(size);
 		if (obj == NULL) return PyErr_NoMemory();
 		AS_JY_WITH_GC(obj)->flags |= tme->flags;
 	} else
 	{
-		jputs("ordinary alloc");
+		//jputs("ordinary alloc");
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->jy = (jobject) tme; //tme->jy_class;
@@ -1121,7 +1121,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 	PyObject* dest = NULL;
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
-		jputs("sync on init");
+		//jputs("sync on init");
 		if (tme->sync != NULL && tme->sync->pyInit != NULL)
 			dest = tme->sync->pyInit(src);
 	} else
@@ -1136,7 +1136,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		//PyObject_GC_Track(dest);
 		if (dest && tme->sync && tme->sync->jy2py)
 			tme->sync->jy2py(src, dest);
-		else jputs("no sync needed");
+		//else jputs("no sync needed");
 	}
 	if (dest)
 	{
@@ -1245,40 +1245,40 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		}
 	}
 
-	jputs("no handle exists yet");
+	//jputs("no handle exists yet");
 	//initialize PyObject*...
 	//find tme:
 	jstring tpName = (*env)->CallObjectMethod(env,
 			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType),
 			pyTypeGetName);
-	jputs("tp name obtained:");
+	//jputs("tp name obtained:");
 	cstr_from_jstring(cName, tpName);
-	jputs(cName);
+	//jputs(cName);
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
 	if (tme)
 	{
-		jputs("initialize handle:");
-		if (tme->type_name) jputs(tme->type_name);
-		if (tme->py_type) jputs(tme->py_type->tp_name);
+		//jputs("initialize handle:");
+		//if (tme->type_name) jputs(tme->type_name);
+		//if (tme->py_type) jputs(tme->py_type->tp_name);
 		PyObject* er = JyNI_InitPyObject(tme, jythonPyObject);
-		jputs("handle initialized");
+		//jputs("handle initialized");
 		return er;
 	} else
 	{
-		jputs("tme is NULL...");
+		//jputs("tme is NULL...");
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(
 			JyNI_PyExceptionType_FromJythonExceptionType(
 			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType)));
-		jputs("exception type...");
+		//jputs("exception type...");
 		if (eme)
 		{
-			jputs("exception type2...");
+			//jputs("exception type2...");
 			PyObject* er = JyNI_InitPyException(eme, jythonPyObject);
 			return er;
 		} else {
-			jputs("returning NULL...");
-			JyNI_jprintJ(jythonPyObject);
-			JyNI_printJInfo(jythonPyObject);
+			//jputs("returning NULL...");
+			//JyNI_jprintJ(jythonPyObject);
+			//JyNI_printJInfo(jythonPyObject);
 			return NULL;
 		}
 	}
@@ -1682,13 +1682,13 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v)
 
 	if (!PyType_Check(v)) // && !PyExc_Check(v)
 	{
-		jputs(Py_TYPE(v)->tp_name);
-		jputs("is no type object");
-		jputsLong(v);
+		//jputs(Py_TYPE(v)->tp_name);
+		//jputs("is no type object");
+		//jputsLong(v);
 		JyObject* jy = AS_JY(v);
-		jputsLong(jy->flags);
+		//jputsLong(jy->flags);
 		if (JY_DELEGATE(v, jy->flags)) {
-			jputs("should delegate...");
+			//jputs("should delegate...");
 			jobject er = JyNI_JythonPyObject_FromPyObject(v);
 			return er;
 		}
