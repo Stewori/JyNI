@@ -50,10 +50,13 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyDictionary;
 import org.python.core.Py;
+import org.python.core.finalization.FinalizableBuiltin;
+import org.python.core.Untraversable;
 
 import java.util.HashMap;
 
-public class PyCPeer extends PyObject {
+@Untraversable
+public class PyCPeer extends PyObject implements FinalizableBuiltin {
 	
 	public long objectHandle;//, refHandle;
 	
@@ -148,7 +151,12 @@ public class PyCPeer extends PyObject {
 	 * From Time to time poll things from the queue and tidy
 	 * up or have a thread permanently waiting on the queue.)
 	 */
-	protected void finalize() throws Throwable {
+	@Override
+	public void __del_builtin__() {
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
+
+//	protected void finalize() throws Throwable {
+//		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
+//	}
 }

@@ -431,8 +431,10 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v);
 //void JyNI_Del(void * obj);
 inline void JyNI_Py_CLEAR(jobject obj);
 //inline char* PyLongToJavaSideString(PyObject* pl);
-inline void JyNI_printJ(jobject obj);
+//inline void JyNI_printJ(jobject obj);
 inline void JyNI_printJInfo(jobject obj);
+inline void JyNI_jprintHash(jobject obj);
+inline void JyNI_jprintJ(jobject obj);
 inline void jputs(const char* msg);
 inline void jputsLong(jlong val);
 
@@ -546,6 +548,7 @@ extern jmethodID JyNI_pyCode_co_flags;
 extern jmethodID JyNI_pyCode_co_lnotab;
 extern jmethodID JyNI_jPrint;
 extern jmethodID JyNI_jPrintLong;
+extern jmethodID JyNI_jPrintHash;
 //extern jmethodID JyNIPySet_pop;
 
 extern jclass JyTStateClass;

@@ -53,7 +53,7 @@ import org.python.util.PythonInterpreter;
 public class JyNIInitializer implements JythonInitializer {
 	public void initialize(Properties preProperties, Properties postProperties, String[] argv, ClassLoader classLoader, ExtensiblePyObjectAdapter adapter)
 	{
-//		System.out.println("Init JyNI...");
+		//System.out.println("Init JyNI...");
 		PySystemState initState = PySystemState.doInitialize(preProperties, postProperties, argv, classLoader, adapter);
 		//add the JyNI-Importer to list of import hooks:
 		initState.path_hooks.append(new JyNIImporter());
@@ -70,5 +70,6 @@ public class JyNIInitializer implements JythonInitializer {
 		pint.exec("sys.setdlopenflags = setdlopenflags");
 		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
 		pint.cleanup();
+		//System.out.println("Init JyNI done");
 	}
 }

@@ -52,8 +52,9 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyObject;
+import org.python.core.finalization.FinalizableBuiltin;
 
-public class PyCPeerType extends PyType {
+public class PyCPeerType extends PyType implements FinalizableBuiltin {
 	/*
 	public static long tp_name; // For printing, in format "<module>.<name>"
 	public static long tp_basicsize, tp_itemsize; // For allocation
@@ -227,7 +228,12 @@ public class PyCPeerType extends PyType {
 	 * From Time to time poll things from the queue and tidy
 	 * up or have a thread permanently waiting on the queue.)
 	 */
-	protected void finalize() throws Throwable {
+	@Override
+	public void __del_builtin__() {
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, refHandle);
 	}
+
+//	protected void finalize() throws Throwable {
+//		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, refHandle);
+//	}
 }

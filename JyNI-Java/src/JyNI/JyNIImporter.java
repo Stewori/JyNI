@@ -46,7 +46,7 @@ package JyNI;
 
 import org.python.core.Py;
 import org.python.core.PyObject;
-import org.python.core.PySystemState;
+import org.python.core.Untraversable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
@@ -56,6 +56,7 @@ import java.util.HashMap;
 /**
  * Load native modules.
  */
+@Untraversable
 public class JyNIImporter extends PyObject {
 	public static HashMap<String, JyNIModuleInfo> dynModules = new HashMap<String, JyNIModuleInfo>();
 	
@@ -78,6 +79,10 @@ public class JyNIImporter extends PyObject {
 	
 	public PyObject __call__(PyObject args[], String keywords[]) {
 		String s = args[0].toString();
+		File f = new File(s);
+		if (!f.exists() || !f.isDirectory()) {
+			throw Py.ImportError("unable to handle");
+		}
 		if (knownPaths == null)
 		{
 			if (!libPaths.contains(s)) libPaths.add(s);
@@ -146,6 +151,12 @@ public class JyNIImporter extends PyObject {
 	}
 
 	public PyObject load_module(String name) {
+		//ToDo:
+		//Maybe check via 
+		//imp.loadBuiltin and
+		//imp.loadFromSource if
+		//name is maybe just some Python script with an odd name.
+		//CPython also works as usual if an ordinary script is called foo.so.
 		//System.out.println("JyNIImporter.load module: "+name);
 		JyNIModuleInfo inf = dynModules.get(name);
 		if (inf.module == null)

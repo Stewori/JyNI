@@ -648,8 +648,9 @@ PyObject *PyString_AsEncodedString(PyObject *str,
 static void
 string_dealloc(PyObject *op)
 {
-//	puts("string_dealloc called on string:");
-//	puts(PyString_AS_STRING(op));
+//	jputs("string_dealloc called on string:");
+//	jputs(PyString_AS_STRING(op));
+//	jputsLong(Py_REFCNT(op));
 	switch (PyString_CHECK_INTERNED(op)) {
 		case SSTATE_NOT_INTERNED:
 			break;
@@ -4804,6 +4805,9 @@ _PyString_Resize(PyObject **pv, Py_ssize_t newsize)
 void
 PyString_InternInPlace(PyObject **p)
 {
+	//jputs("InternInPlace called on string:");
+	//jputs(PyString_AS_STRING(*p));
+	//JyNI_jprintHash(JyNI_JythonPyObject_FromPyObject(*p));
 	register PyStringObject *s = (PyStringObject *)(*p);
 	PyObject *t;
 	if (s == NULL || !PyString_Check(s))
@@ -4814,8 +4818,8 @@ PyString_InternInPlace(PyObject **p)
 		return;
 	if (PyString_CHECK_INTERNED(s))
 		return;
-	//puts("string not yet interned:");
-	//puts(PyString_AS_STRING(*p));
+	//jputs("string not yet interned:");
+	//jputs(PyString_AS_STRING(*p));
 	if (interned == NULL) {
 		interned = PyDict_New();
 		if (interned == NULL) {
@@ -4825,6 +4829,7 @@ PyString_InternInPlace(PyObject **p)
 	}
 	t = PyDict_GetItem(interned, (PyObject *)s);
 	if (t) {
+		//jputs("Already in interned dict");
 		Py_INCREF(t);
 		//puts("decr1");
 		Py_DECREF(*p);
@@ -4833,12 +4838,35 @@ PyString_InternInPlace(PyObject **p)
 		//puts("string replaced by intern");
 		return;
 	}
-
+	env();
+	if ((*env)->ExceptionCheck(env)) {
+		jputs("exception before setItem");
+	}
+//	jputs("jdict...");
+//	if (!interned) {
+//		jputs("interned is NULL");
+//	} else jputs("interned is not NULL");
+	jobject jdict = JyNI_JythonPyObject_FromPyObject(interned);
+	//JyNI_jprintJ(jdict);
+	//JyNI_printJInfo(jdict);
 	if (PyDict_SetItem(interned, (PyObject *)s, (PyObject *)s) < 0) {
+//		jputs("Error interning string!");
 		PyErr_Clear();
 		return;
 	} else
 	{
+		if ((*env)->ExceptionCheck(env)) {
+			jputs("exception after setItem");
+			(*env)->ExceptionDescribe(env);
+		}
+		//jputs("Successfully interned");
+//		if (PyDict_GetItem(interned, (PyObject *)s)) {
+//			jputs("Confirmed1");
+//		} else jputs("Not confirmed1");
+//		if (PyDict_Contains(interned, (PyObject *)s) == 1) {
+//			jputs("Confirmed2");
+//		} else jputs("Not confirmed2");
+
 		/*JyNI-Note:
 		 * Maybe it's good to reflect intern-behavior to java-side.
 		 * We still don't want to init the python-string here,
@@ -4871,6 +4899,8 @@ PyString_InternInPlace(PyObject **p)
 PyObject *
 PyString_InternFromString(const char *cp)
 {
+//	jputs("InternFromString called on string:");
+//	jputs(cp);
 	PyObject *s = PyString_FromString(cp);
 	if (s == NULL)
 		return NULL;

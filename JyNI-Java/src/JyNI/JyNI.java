@@ -49,7 +49,6 @@ import org.python.core.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.io.File;
-import java.io.IOException;
 
 public class JyNI {
 	static {
@@ -134,7 +133,7 @@ public class JyNI {
 				if (libFile.exists())
 				{
 					//System.out.println("initJyNI: "+fileNames[i]);
-					nativeHandles = new IdentityHashMap<PyObject, Long>();
+					//nativeHandles = new IdentityHashMap<PyObject, Long>();
 					//cur_excLookup = new IdentityHashMap<ThreadState, PyException>(5);
 					initJyNI(libFile.getAbsolutePath());
 					//System.out.println("initJyNI done");
@@ -181,7 +180,10 @@ public class JyNI {
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
 
 	//protected static HashMap<PyObject, JyObject> jyObjects = new HashMap();
-	protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
+	//Note: nativeHandles keeps (exclusively) natively needed objects save from beeing gc'ed.
+	//JyAttribute solution lacks this currently -> fix it!
+	protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
+	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
 	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
 	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
 
@@ -317,6 +319,7 @@ public class JyNI {
 		//no WeakReferences needed here, because clearNativeHandle is always called
 		//when a corresponding PyObject on C-Side is deallocated
 		//nativeHandles.put(object, handle);
+		nativeHandlesKeepAlive.put(object, object);
 		if (object instanceof PyCPeer)
 		{
 			((PyCPeer) object).objectHandle = handle;
@@ -325,10 +328,11 @@ public class JyNI {
 			//PyCPeer peer = (PyCPeer) object.__getattr__(JyNIHandleAttr);
 			//if (peer == null)
 			//object.__setattr__(JyNIHandleAttr, new PyCPeer(handle, object.getType()));
-			nativeHandles.put(object, Long.valueOf(handle));
+			//nativeHandles.put(object, Long.valueOf(handle));
+			JyAttribute.setAttr(object, JyAttribute.JYNI_HANDLE_ATTR, handle);
 		}
 	}
-	
+
 	//public static long lookupNativeHandle(PyObject object)
 	public static long lookupNativeHandle(PyObject object)
 	{
@@ -336,9 +340,10 @@ public class JyNI {
 		if (object == null) return 0;
 		if (object instanceof PyCPeer) return ((PyCPeer) object).objectHandle;
 		else {
-			Long er = nativeHandles.get(object);
+			//Long er = nativeHandles.get(object);
+			Long er = (Long) JyAttribute.getAttr(object, JyAttribute.JYNI_HANDLE_ATTR);
 			return er == null ? 0 : er.longValue();
-			
+
 //			System.out.println("Exception before:");
 //			System.out.println(Py.getThreadState().exception);
 			//We abuse PyCPeer as a dumb container for the native handle here.
@@ -362,14 +367,14 @@ public class JyNI {
 		}
 		return 0;*/
 	}
-	
+
 	public static PyObject lookupCPeerHandle(long handle)
 	{
 		//Problem: When JyNI is initialized, nativeHandles have not been initialized...
 		if (handle == 0) return null;
 		else return CPeerHandles.get(handle);
 	}
-	
+
 	public static void clearNativeHandle(PyObject object)
 	{
 		//System.out.println("java clearNativeHandle:");
@@ -377,7 +382,9 @@ public class JyNI {
 		if (object instanceof PyCPeer)
 			((PyCPeer) object).objectHandle = 0;
 		else
-			nativeHandles.remove(object);
+			//nativeHandles.remove(object);
+			nativeHandlesKeepAlive.remove(object);
+			JyAttribute.delAttr(object, JyAttribute.JYNI_HANDLE_ATTR);
 //		PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
 //		if (peer != null)
 //		{
@@ -385,7 +392,7 @@ public class JyNI {
 //			object.__delattr__(JyNIHandleAttr);
 //		}
 	}
-	
+
 //	public static PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name, PyObject self, PyObject... args)
 //	{
 //		Long selfHandle = nativeHandles.get(self);
@@ -712,7 +719,7 @@ public class JyNI {
 			return er.object;
 		}
 	}*/
-	
+
 	public static long[] lookupNativeHandles(PyList lst) {
 		PyObject[] obj = lst.getArray();
 		long[] er = new long[obj.length];
@@ -720,7 +727,7 @@ public class JyNI {
 			er[i] = lookupNativeHandle(obj[i]);
 		return er;
 	}
-	
+
 	//--------------errors-section-----------------
 	public static PyObject exceptionByName(String name) {
 //		System.out.println("look for exception: "+name);
@@ -740,7 +747,7 @@ public class JyNI {
 			return null;
 		}
 	}
-	
+
 	/*public static void JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
 	{
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
@@ -762,12 +769,12 @@ public class JyNI {
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
 		return cur_excLookup.get(tstate0);
 	}*/
-	
+
 	protected static PyObject maybeExc(PyObject obj) throws PyException {
 		if (obj == null && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
 		else return obj;
 	}
-	
+
 	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
 		if (type == null) type = Py.None;
 		if (value == null) value = Py.None;
@@ -871,7 +878,7 @@ public class JyNI {
 
 		return null;
 	}*/
-		
+
 	public static void PyErr_WriteUnraisable(PyObject obj)
 	{
 		//Todo: Create and use something like JyNIUnraisableError instead of UnknownError.
@@ -927,7 +934,7 @@ public class JyNI {
 		Py_XDECREF(v);
 		Py_XDECREF(tb);*/
 	}
-	
+
 	/*public static void main(String[] args)
 	{
 		System.out.println(System.getProperty("user.dir"));
@@ -940,7 +947,7 @@ public class JyNI {
 			System.out.println(t.getName());
 		} catch (Exception e) {}
 	}*/
-	
+
 	public static int slice_compare(PySlice v, PySlice w)
 	{
 		int result = 0;
@@ -967,26 +974,26 @@ public class JyNI {
 			return -2;
 		return result;
 	}
-	
+
 	public static String JyNI_pyCode_co_code(PyBaseCode code)
 	{
 		if (code instanceof PyBytecode) return new String(((PyBytecode) code).co_code);
 		else if (code instanceof PyTableCode) return ((PyTableCode) code).co_code;
 		else return null;
 	}
-	
+
 	public static int JyNI_pyCode_co_flags(PyBaseCode code)
 	{
 		return code.co_flags.toBits();
 	}
-	
+
 	public static String JyNI_pyCode_co_lnotab(PyBytecode code)
 	{
 		return new String(code.co_lnotab);
 	}
 
 	public static String getPlatform() {
-		return Py.getSystemState().version.asString();
+		return PySystemState.version.asString();
 	}
 
 	public static void jPrint(String msg)
@@ -997,5 +1004,14 @@ public class JyNI {
 	public static void jPrint(long val)
 	{
 		System.out.println(val);
+	}
+
+	public static void jPrintHash(Object val)
+	{
+		try {
+			System.out.println(val.hashCode()+" ("+System.identityHashCode(val)+")");
+		} catch (Exception e) {
+			System.out.println("("+System.identityHashCode(val)+")");
+		}
 	}
 }

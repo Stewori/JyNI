@@ -745,17 +745,22 @@ PyObject *
 PyDict_GetItem(PyObject *op, PyObject *key)
 {
 	if (!PyDict_Check(op)) return NULL;
-
-	JyNI_JythonPyObject_FromPyObject(key);
-
 	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject(
+//	if ((*env)->ExceptionCheck(env)) {
+//		jputs("PyDict_GetItem - previous exception");
+//	}
+	PyObject* result = JyNI_PyObject_FromJythonPyObject(
 				(*env)->CallObjectMethod(env,
 					JyNI_JythonPyObject_FromPyObject(op),
 					pyObject__finditem__,
 					JyNI_JythonPyObject_FromPyObject(key)
 				)
 			);
+	if((*env)->ExceptionCheck(env)) {
+		(*env)->ExceptionClear(env);
+		return NULL;
+	}
+	return result;
 //	return JyNI_PyObject_FromJythonPyObject(
 //			(*env)->CallObjectMethod(env,
 //				JyNI_JythonPyObject_FromPyObject(op),
@@ -820,9 +825,12 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 //	register PyDictObject *mp;
 //	register long hash;
 //	register Py_ssize_t n_used;
-
+//	if (!op) {
+//		jputs("dict is NULL!! 0");
+//	}
 	if (!PyDict_Check(op)) {
 //		PyErr_BadInternalCall();
+		//jputs("return -1...");
 		return -1;
 	}
 //	assert(key);
@@ -843,9 +851,23 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 	Py_INCREF(value);
 	Py_INCREF(key);
 
+//	if (!op) {
+//		jputs("dict is NULL!! 1");
+//	}
 	env(-1);
+	jobject jop = JyNI_JythonPyObject_FromPyObject(op);
+//	if (!jop) {
+//		jputs("jdict is NULL!! 2");
+//	} else {
+//		JyNI_jprintJ(jop);
+//		jputsLong((jlong) jop);
+//		JyNI_jprintHash(jop);
+//	}
+//	if ((*env)->IsSameObject(env, jop, NULL)) {
+//		jputs("pseudo null");
+//	}
 	(*env)->CallVoidMethod(env,
-			JyNI_JythonPyObject_FromPyObject(op), pyObject__setitem__,
+			jop, pyObject__setitem__,
 			JyNI_JythonPyObject_FromPyObject(key),
 			JyNI_JythonPyObject_FromPyObject(value));
 	return 0;
@@ -881,10 +903,14 @@ PyDict_DelItem(PyObject *op, PyObject *key)
 
 	if (!PyDict_Check(op)) {
 		//PyErr_BadInternalCall();
+		jputs("DelItem: Not a dict");
 		return -1;
 	}
 	PyObject* old_value = PyDict_GetItem(op, key);
-	if (old_value == NULL) return -1;
+	if (old_value == NULL) {
+		jputs("DelItem: Value not in dict");
+		return -1;
+	}
 //	assert(key);
 //	if (!PyString_CheckExact(key) ||
 //		(hash = ((PyStringObject *) key)->ob_shash) == -1) {
@@ -2409,15 +2435,31 @@ PyDict_Size(PyObject *mp)
 //	 iteritems__doc__},
 //	{NULL,			  NULL}   /* sentinel */
 //};
-//
-///* Return 1 if `key` is in dict `op`, 0 if not, and -1 on error. */
-//int
-//PyDict_Contains(PyObject *op, PyObject *key)
-//{
+
+/* Return 1 if `key` is in dict `op`, 0 if not, and -1 on error. */
+int
+PyDict_Contains(PyObject *op, PyObject *key)
+{
+	env(-1);
+//	if ((*env)->ExceptionCheck(env)) {
+//		jputs("PyDict_Contains - previous exception");
+//	}
+	jobject dict = JyNI_JythonPyObject_FromPyObject(op);
+	jobject k = JyNI_JythonPyObject_FromPyObject(key);
+	jboolean result = (*env)->CallBooleanMethod(env,
+		dict,
+		pyObject__contains__,
+		k
+	);
+	if ((*env)->ExceptionCheck(env)) {
+		//(*env)->ExceptionDescribe(env);
+		(*env)->ExceptionClear(env);
+		return -1;
+	}
+	return result;
 //	long hash;
 //	PyDictObject *mp = (PyDictObject *)op;
 //	PyDictEntry *ep;
-//
 //	if (!PyString_CheckExact(key) ||
 //		(hash = ((PyStringObject *) key)->ob_shash) == -1) {
 //		hash = PyObject_Hash(key);
@@ -2426,8 +2468,8 @@ PyDict_Size(PyObject *mp)
 //	}
 //	ep = (mp->ma_lookup)(mp, key, hash);
 //	return ep == NULL ? -1 : (ep->me_value != NULL);
-//}
-//
+}
+
 ///* Internal version of PyDict_Contains used when the hash value is already known */
 //int
 //_PyDict_Contains(PyObject *op, PyObject *key, long hash)

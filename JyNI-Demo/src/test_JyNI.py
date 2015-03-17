@@ -72,10 +72,10 @@ import datetime
 import unittest
 
 class TestJyNI(unittest.TestCase):
-	
+
 	def test_DemoExtension_doc(self):
 		self.assertEqual(DemoExtension.__doc__, "This is a pure demo extension.")
-		
+
 	def test_hello_world_info(self):
 		self.assertEqual(str(DemoExtension.hello_world), "<built-in function hello_world>")
 		self.assertEqual(DemoExtension.hello_world.__doc__, "Hello World method.")
@@ -131,7 +131,7 @@ class TestJyNI(unittest.TestCase):
 			exc = sys.exc_info()
 			self.assertEqual(exc[0], SystemError)
 			self.assertEqual(str(exc[1]), "This is a test exception message for JyNI.")
-			
+
 	def test_datetime(self):
 		self.assertEqual(datetime.__doc__, "Fast implementation of the datetime type.")
 		self.assertEqual(datetime.__name__, "datetime")
