@@ -106,7 +106,7 @@ starting with "JAVA_HOME" such that it is appropriate for your system.
 * Provide Jython: You have two ways to provide Jython. Either you simply copy
 jython.jar into the JyNI base directory or you edit "makefile" and adjust the
 JYTHON-variable such that it points to jython.jar. Be sure to use
-Jython 2.7 beta 3. If you want to use JyNIDemo.sh, you need to adjust
+Jython 2.7 beta 4. If you want to use JyNIDemo.sh, you need to adjust
 the Jython-path in that file too. Same for JyNITkinterDemo.sh.
 
 * If not yet done, install the dev-package of Python 2.7. JyNI only needs
@@ -127,7 +127,7 @@ Alternatively one can use Jython's start-script
 
 jython -J-cp build/JyNI.jar
 
-To run it from a different place, you just need adjust the paths for
+To run it from a different place, you just need to adjust the paths for
 JyNI and Jython in the above commands.
 
 
@@ -241,8 +241,8 @@ macro is not used by NumPy. Nevertheless, we can say a bit about this issue. As
 PyByteArray in Jython uses a primitive byte[]-array as backend, we can't replace
 the backend by a subclass. Our most promising idea to solve the issue anyway, is
 to insert a custom implementation of SequenceIndexDelegate as delegator
-(PyByteArray is a subclass of PySequence and thus offers a delegator-field,
-which allows to customize the indexed access-behavior).
+(PyByteArray is a subclass of PySequence and thus offers a delegator-field
+that allows to customize the indexed access-behavior).
 
 Builtins that don't provide access via macros can be wrapped. That means, the
 original CPython data structure is not used and not even allocated. All
