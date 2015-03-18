@@ -903,12 +903,12 @@ PyDict_DelItem(PyObject *op, PyObject *key)
 
 	if (!PyDict_Check(op)) {
 		//PyErr_BadInternalCall();
-		jputs("DelItem: Not a dict");
+		//jputs("DelItem: Not a dict");
 		return -1;
 	}
 	PyObject* old_value = PyDict_GetItem(op, key);
 	if (old_value == NULL) {
-		jputs("DelItem: Value not in dict");
+		//jputs("DelItem: Value not in dict");
 		return -1;
 	}
 //	assert(key);

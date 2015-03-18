@@ -23,9 +23,7 @@ sys.path.append('./DemoExtension/build/lib.linux-x86_64-2.7') #in case you run i
 sys.path.append('../../DemoExtension/build/lib.linux-i686-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it from base dir
 
-print "import DemoExtension..."
 import DemoExtension
-print "done"
 
 print "--------Access Docstring----------"
 #print DemoExtension
