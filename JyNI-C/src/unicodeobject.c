@@ -6275,7 +6275,7 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 	*/
 	if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) return NULL;
 	env(NULL);
-	if (!JyNI_JyErr_ExceptionMatches((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeDecodeError))) return NULL;
+	//if (!JyNI_JyErr_ExceptionMatches((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeDecodeError))) return NULL;
 	PyErr_Clear();
 	const char *text = (op == Py_EQ) ?
 	   "Unicode equal comparison "

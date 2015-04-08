@@ -258,7 +258,7 @@ public class JyNI {
 		System.out.println(er2.getType());
 		return er;*/
 	}
-	
+
 	public static long getJyObjectByName(String name)
 	{
 		//System.out.println("getJyObjectByName "+name);
@@ -270,7 +270,7 @@ public class JyNI {
 		//return er != null ? er : 0;
 		return lookupNativeHandle(obj);
 	}
-	
+
 	public static int getDLVerbose()
 	{
 		//current hard-coded Debug:
@@ -283,7 +283,7 @@ public class JyNI {
 		case Py.MESSAGE: return true;
 		default: return false;*/
 	}
-	
+
 	public static int getDLOpenFlags()
 	{
 		try {
