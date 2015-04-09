@@ -410,12 +410,13 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 inline jstring JyNI_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 
+//Use PyErr_* methods with converted PyObject*-Exception instead!
 /* Exception-Stuff: */
-inline void JyNI_JyErr_SetString(jobject exception, const char *string);
-inline void JyNI_JyErr_SetObject(jobject exception, PyObject *value);
-inline void JyNI_JyErr_SetExceptionObject(jobject exception);
-inline int JyNI_JyErr_ExceptionMatches(jobject exc);
-inline PyObject* JyNI_JyErr_Format(jobject exception, const char *format, ...);
+//inline void JyNI_JyErr_SetString(jobject exception, const char *string);
+//inline void JyNI_JyErr_SetObject(jobject exception, PyObject *value);
+//inline void JyNI_JyErr_SetExceptionObject(jobject exception);
+//inline int JyNI_JyErr_ExceptionMatches(jobject exc);
+//inline PyObject* JyNI_JyErr_Format(jobject exception, const char *format, ...);
 
 /* JyNI-Stuff: */
 inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);

@@ -3877,14 +3877,21 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //	PyThreadState *tstate = PyThreadState_GET();
 //	return _PyThreadState_GetFrame(tstate);
 //}
-//
-//int
-//PyEval_GetRestricted(void)
-//{
-//	PyFrameObject *current_frame = PyEval_GetFrame();
-//	return current_frame == NULL ? 0 : PyFrame_IsRestricted(current_frame);
-//}
-//
+
+int
+PyEval_GetRestricted(void)
+{
+	/*
+	 * JyNI-note:
+	 * Jython does not support restricted mode, so we let this always return
+	 * false. However we implement this method as a stub in case Jython
+	 * would someday add support for restricted mode.
+	 */
+	return 0;
+	//PyFrameObject *current_frame = PyEval_GetFrame();
+	//return current_frame == NULL ? 0 : PyFrame_IsRestricted(current_frame);
+}
+
 //int
 //PyEval_MergeCompilerFlags(PyCompilerFlags *cf)
 //{

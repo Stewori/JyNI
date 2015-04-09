@@ -2573,7 +2573,7 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 //		puts(func->ob_type->tp_name);
 		env(NULL);
 		jobject jdict = JyNI_JythonPyObject_FromPyObject(kw);
-		JyNI_printJ(jdict);
+		JyNI_jprintJ(jdict);
 		jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
 		jobject args = (*env)->NewObjectArray(env,
 			PyTuple_GET_SIZE(arg)
@@ -2603,9 +2603,9 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 		//maybe insert some exception check here...
 		if ((*env)->ExceptionCheck(env))
 		{
-			puts("Exception on delegate call:");
+			jputs("Exception on delegate call:");
 			jobject exc = (*env)->ExceptionOccurred(env);
-			JyNI_printJ(exc);
+			JyNI_jprintJ(exc);
 		}
 		return JyNI_PyObject_FromJythonPyObject(er);
 	}

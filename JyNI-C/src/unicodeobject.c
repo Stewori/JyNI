@@ -2982,15 +2982,13 @@ PyObject *PyUnicode_DecodeUnicodeEscape(const char *s,
 		PyExc_UnicodeError,
 		"\\N escapes not supported (can't load unicodedata module)"
 		);
-  {
-	env(NULL);
-	JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeError)
-			, "\\N escapes not supported (can't load unicodedata module)");
+//	env(NULL);
+//	JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeError)
+//			, "\\N escapes not supported (can't load unicodedata module)");
 	Py_XDECREF(v);
 	Py_XDECREF(errorHandler);
 	Py_XDECREF(exc);
 	return NULL;
-  }
 
   onError:
 	Py_XDECREF(v);
@@ -6274,7 +6272,6 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 
 	*/
 	if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) return NULL;
-	env(NULL);
 	//if (!JyNI_JyErr_ExceptionMatches((*env)->GetStaticObjectField(env, pyPyClass, pyPyUnicodeDecodeError))) return NULL;
 	PyErr_Clear();
 	const char *text = (op == Py_EQ) ?
@@ -6284,6 +6281,7 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 	   "Unicode unequal comparison "
 	   "failed to convert both arguments to Unicode - "
 	   "interpreting them as being unequal";
+	env(NULL);
 	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPyRaiseUnicodeWarning, (*env)->NewStringUTF(env, text));
 	if ((*env)->ExceptionCheck(env))
 	{

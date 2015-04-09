@@ -195,7 +195,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 		//puts(pathname);
 
 		PyErr_SetString(PyExc_ImportError, error);
-		JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError), error);
+		//JyNI_JyErr_SetString((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError), error);
 		return NULL;
 	}
 	if (fp != NULL && nhandles < 128)

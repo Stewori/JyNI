@@ -235,15 +235,15 @@ static PyMemberDef func_memberlist[] = {
 	{NULL}  /* Sentinel */
 };
 
-//static int
-//restricted(void)
-//{
-//	if (!PyEval_GetRestricted())
-//		return 0;
-//	PyErr_SetString(PyExc_RuntimeError,
-//		"function attributes not accessible in restricted mode");
-//	return 1;
-//}
+static int
+restricted(void)
+{
+	if (!PyEval_GetRestricted())
+		return 0;
+	PyErr_SetString(PyExc_RuntimeError,
+		"function attributes not accessible in restricted mode");
+	return 1;
+}
 
 static PyObject *
 func_get_dict(PyFunctionObject *op)

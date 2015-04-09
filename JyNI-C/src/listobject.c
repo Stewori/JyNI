@@ -1925,7 +1925,12 @@ merge_compute_minrun(Py_ssize_t n)
    unchanged.  Also, if a custom comparison function is used, it will only see
    the key instead of a full record. */
 
-//JyNI todo: Cover the sortwrapperobject
+/*
+ * JyNI-note: This roughly corresponds to org.python.core.PyList.KV, but we don't
+ * map it to that type because KV is no PyObject-subclass and both KV and sortwrapper
+ * are just used list-internally anyway. However sending it to Java-side Jython should
+ * still work, but would result in a PyCPeer rather than in a PyList.KV.
+ */
 typedef struct {
 	PyObject_HEAD
 	PyObject *key;
@@ -1984,7 +1989,8 @@ sortwrapper_dealloc(sortwrapperobject *so)
 {
 	Py_XDECREF(so->key);
 	Py_XDECREF(so->value);
-	PyObject_Del(so);
+	//PyObject_Del(so);
+	PyObject_Free(so);
 }
 
 /* Returns a new reference to a sortwrapper.
@@ -2032,7 +2038,8 @@ static void
 cmpwrapper_dealloc(cmpwrapperobject *co)
 {
 	Py_XDECREF(co->func);
-	PyObject_Del(co);
+	//PyObject_Del(co);
+	PyObject_Free(co);
 }
 
 static PyObject *

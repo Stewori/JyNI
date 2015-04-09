@@ -760,7 +760,7 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	{
 		jputs("Exception on creating jbases call:");
 		jobject exc = (*env)->ExceptionOccurred(env);
-		JyNI_printJ(exc);
+		JyNI_jprintJ(exc);
 		(*env)->ExceptionClear(env);
 	}
 	int i;
@@ -770,7 +770,7 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	{
 		jputs("Exception on storing in jbases call:");
 		jobject exc = (*env)->ExceptionOccurred(env);
-		JyNI_printJ(exc);
+		JyNI_jprintJ(exc);
 		(*env)->ExceptionClear(env);
 	}
 //	jputs("PyErrNewException:");
@@ -782,7 +782,7 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	{
 		jputs("Exception on makeClass call:");
 		jobject exc = (*env)->ExceptionOccurred(env);
-		JyNI_printJ(exc);
+		JyNI_jprintJ(exc);
 		(*env)->ExceptionClear(env);
 	}
 	//result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO", dot+1, bases, dict);

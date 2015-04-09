@@ -360,36 +360,36 @@ PyTypeObject PyCFunction_Type = {
 
 /* List all methods in a chain -- helper for findmethodinchain */
 
-//static PyObject *
-//listmethodchain(PyMethodChain *chain)
-//{
-//	PyMethodChain *c;
-//	PyMethodDef *ml;
-//	int i, n;
-//	PyObject *v;
-//
-//	n = 0;
-//	for (c = chain; c != NULL; c = c->link) {
-//		for (ml = c->methods; ml->ml_name != NULL; ml++)
-//			n++;
-//	}
-//	v = PyList_New(n);
-//	if (v == NULL)
-//		return NULL;
-//	i = 0;
-//	for (c = chain; c != NULL; c = c->link) {
-//		for (ml = c->methods; ml->ml_name != NULL; ml++) {
-//			PyList_SetItem(v, i, PyString_FromString(ml->ml_name));
-//			i++;
-//		}
-//	}
-//	if (PyErr_Occurred()) {
-//		Py_DECREF(v);
-//		return NULL;
-//	}
-//	PyList_Sort(v);
-//	return v;
-//}
+static PyObject *
+listmethodchain(PyMethodChain *chain)
+{
+	PyMethodChain *c;
+	PyMethodDef *ml;
+	int i, n;
+	PyObject *v;
+
+	n = 0;
+	for (c = chain; c != NULL; c = c->link) {
+		for (ml = c->methods; ml->ml_name != NULL; ml++)
+			n++;
+	}
+	v = PyList_New(n);
+	if (v == NULL)
+		return NULL;
+	i = 0;
+	for (c = chain; c != NULL; c = c->link) {
+		for (ml = c->methods; ml->ml_name != NULL; ml++) {
+			PyList_SetItem(v, i, PyString_FromString(ml->ml_name));
+			i++;
+		}
+	}
+	if (PyErr_Occurred()) {
+		Py_DECREF(v);
+		return NULL;
+	}
+	PyList_Sort(v);
+	return v;
+}
 
 /* Find a method in a method chain */
 

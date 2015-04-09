@@ -101,12 +101,12 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 		return NULL;
 	}
 	//jputs("error check done");
-	env(NULL);
 	if (p == NULL) {
 		//jputs("no init function");
-		JyNI_JyErr_Format((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError),
+		//JyNI_JyErr_Format((*env)->GetStaticObjectField(env, pyPyClass, pyPyImportError),
+		PyErr_Format(PyExc_ImportError,
 		   "dynamic module does not define init function (init%.200s)",
-					 shortname);
+			shortname);
 		return NULL;
 	}
 	//jputs("dyn load func is not NULL");
@@ -132,6 +132,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 			pyDictGet_PyObject,
 			mName
 		);*/
+	env(NULL);
 	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIJyNI_GetModule, (*env)->NewStringUTF(env, name));
 	//puts("retrieved module");
 	if (m == NULL) {
