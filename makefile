@@ -27,7 +27,7 @@ CFLAGS = -fPIC -Wl,--add-stdcall-alias -c $(INCLUDES)
 LDFLAGS = -shared
 JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN)
 
-SOURCES = $(wildcard JyNI-C/src/*.c)
+SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
 OBJECTS = $(SOURCES:.c=.o)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java)
 
@@ -66,6 +66,9 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI
 clean:
 	rm -rf $(JYNIBIN)/JyNI
 	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
 	rm -f ./JyNI-Loader/JyNILoader.o
 
 .PHONY: JyNI libJyNI libJyNI-Loader clean all
