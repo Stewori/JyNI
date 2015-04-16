@@ -272,6 +272,8 @@ struct JyAttribute { const char* name; void* value; char flags; JyAttribute* nex
 typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jobject jy; unsigned short flags; JyAttribute* attr;} JyObject;
+typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject;
+typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;
 /* type_name is optional and defaults to py_type->tp_name */
 typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
