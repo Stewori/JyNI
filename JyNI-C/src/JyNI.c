@@ -2055,6 +2055,7 @@ jmethodID pyObject__contains__;
 jmethodID pyObject__len__;
 jmethodID pyObject__getslice__;
 jmethodID pyObject__nonzero__;
+jmethodID pyObject_cmp;
 jmethodID pyObjectGetDict;
 jmethodID pyObjectFastGetDict;
 jmethodID pyObjectSetDict;
@@ -2068,6 +2069,7 @@ jfieldID pyThreadStateExceptionField;
 //jmethodID pyThreadStateLeaveRecursiveCall;
 jmethodID pyThreadStateEnterRepr;
 jmethodID pyThreadStateExitRepr;
+jmethodID pyThreadStateGetCompareStateDict;
 
 jclass pyInstanceClass;
 jmethodID pyInstanceConstructor;
@@ -2622,6 +2624,8 @@ inline jint initJythonSite(JNIEnv *env)
 	//pyThreadStateLeaveRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "leaveRecursiveCall", "()V");
 	pyThreadStateEnterRepr = (*env)->GetMethodID(env, pyThreadStateClass, "enterRepr", "(Lorg/python/core/PyObject;)Z");
 	pyThreadStateExitRepr = (*env)->GetMethodID(env, pyThreadStateClass, "exitRepr", "(Lorg/python/core/PyObject;)V");
+	pyThreadStateGetCompareStateDict = (*env)->GetMethodID(env, pyThreadStateClass, "getCompareStateDict", "()Lorg/python/core/PyDictionary;");
+
 	return JNI_VERSION_1_2;
 }
 
@@ -2663,6 +2667,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyObject__len__ = (*env)->GetMethodID(env, pyObjectClass, "__len__", "()I");
 	pyObject__getslice__ = (*env)->GetMethodID(env, pyObjectClass, "__getslice__", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyObject__nonzero__ = (*env)->GetMethodID(env, pyObjectClass, "__nonzero__", "()Z");
+	pyObject_cmp = (*env)->GetMethodID(env, pyObjectClass, "_cmp", "(Lorg/python/core/PyObject;)I");
 	pyObjectGetDict = (*env)->GetMethodID(env, pyObjectClass, "getDict", "()Lorg/python/core/PyObject;");
 	pyObjectFastGetDict = (*env)->GetMethodID(env, pyObjectClass, "fastGetDict", "()Lorg/python/core/PyObject;");
 	pyObjectSetDict = (*env)->GetMethodID(env, pyObjectClass, "setDict", "(Lorg/python/core/PyObject;)V");

@@ -5697,6 +5697,7 @@ SLOT1BIN(slot_nb_floor_divide, nb_floor_divide,
 SLOT1BIN(slot_nb_true_divide, nb_true_divide, "__truediv__", "__rtruediv__")
 SLOT1(slot_nb_inplace_floor_divide, "__ifloordiv__", PyObject *, "O")
 SLOT1(slot_nb_inplace_true_divide, "__itruediv__", PyObject *, "O")
+*/
 
 static int
 half_compare(PyObject *self, PyObject *other)
@@ -5732,7 +5733,7 @@ half_compare(PyObject *self, PyObject *other)
 	return 2;
 }
 
-// This slot is published for the benefit of try_3way_compare in object.c
+/* This slot is published for the benefit of try_3way_compare in object.c */
 int
 _PyObject_SlotCompare(PyObject *self, PyObject *other)
 {
@@ -5754,6 +5755,7 @@ _PyObject_SlotCompare(PyObject *self, PyObject *other)
 		(void *)self > (void *)other ? 1 : 0;
 }
 
+/*
 static PyObject *
 slot_tp_repr(PyObject *self)
 {

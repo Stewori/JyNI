@@ -112,6 +112,7 @@ extern jfieldID pyThreadStateExceptionField;
 //extern jmethodID pyThreadStateLeaveRecursiveCall;
 extern jmethodID pyThreadStateEnterRepr;
 extern jmethodID pyThreadStateExitRepr;
+extern jmethodID pyThreadStateGetCompareStateDict;
 
 extern jclass pyExceptionClass;
 extern jfieldID pyExceptionTypeField;

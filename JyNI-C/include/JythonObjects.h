@@ -85,6 +85,7 @@ extern jmethodID pyObject__contains__;
 extern jmethodID pyObject__len__;
 extern jmethodID pyObject__getslice__;
 extern jmethodID pyObject__nonzero__;
+extern jmethodID pyObject_cmp;
 extern jmethodID pyObjectGetDict;
 extern jmethodID pyObjectFastGetDict;
 extern jmethodID pyObjectSetDict;
