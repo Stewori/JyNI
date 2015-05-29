@@ -60,25 +60,24 @@
 #include "JythonSite.h"
 #include "JyList.h"
 #include "JyTState.h"
-//PyFPE_jbuf
+
+
 /* JNI-Shortcuts: */
 
-
-//Shortcut to get JNI-environment,
-//including check for whether JNI version is supported.
-//note that we don't put a semicolon to the end, so the
-//macro-call must be succeeded by a semicolon, giving it
-//a more natural look...
+/* Shortcut to get JNI-environment, including check for whether
+ * JNI version is supported. Note that we don't put a semicolon
+ * to the end, so the macro-call must be succeeded by a semicolon,
+ * giving it a more natural look...
+ */
 #define env(errRet) \
 	JNIEnv *env;\
 	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2))\
 		return errRet
 
-//For now we assume, nobody would cache _PyThreadState_Current
-//for use after the current method returns.
-//So we need not acquire a global reference.
-//#define updateCurrentThreadState() \
-//	_PyThreadState_Current = tstate
+/* For now we assume, nobody would cache _PyThreadState_Current for
+ * use after the current method returns. So we need not acquire a
+ * global reference.
+ */
 #define ENTER_JyNI \
 	PyEval_AcquireLock(); \
 	if (_PyThreadState_Current != NULL) Py_FatalError("ENTER_JyNI: overwriting non-NULL tstate"); \
@@ -92,15 +91,12 @@
 	if (PyErr_Occurred()) JyErr_InsertCurExc(); \
 	LEAVE_JyNI0
 
-//Cleanly convert a jstring to a cstring
-//with minimal JVM lock-time.
-//Use only once per Function.
-//For further conversions use
-//cstr_from_jstring2.
-//Note that at least one call of "env()"
-//must have happened before in the
-//same block or in some parent block.
-//("+1" in 4th line is for 0-termination)
+/* Cleanly convert a jstring to a cstring with minimal JVM lock-time.
+ * Use only once per Function. For further conversions use
+ * cstr_from_jstring2. Note that at least one call of "env()" must
+ * have happened before in the same block or in some parent block.
+ * ("+1" in 3rd line is for 0-termination)
+ */
 #define cstr_from_jstring(cstrName, jstr) \
 	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char cstrName[strlen(utf_string)+1]; \
@@ -113,9 +109,9 @@
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
-//Only use after one initial use of
-//cstr_from_jstring in the same block.
-//("+1" in 3rd line is for 0-termination)
+/* Only use after one initial use of cstr_from_jstring in the same block.
+ * ("+1" in 3rd line is for 0-termination)
+ */
 #define cstr_from_jstring2(cstrName, jstr) \
 	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char cstrName[strlen(utf_string)+1]; \
@@ -243,10 +239,11 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
 //typedef Py_ssize_t (*lenfunc)(PyObject *);
 
 /* JyAttributes are intended to track allocated memory for
- * various purpose stuff. It's a dict-like idea implemented
+ * various-purpose stuff. It's a dict-like idea implemented
  * as a simple linked list. This feature is intended for
- * rare use, so this naive implementation is sufficient.
- * Every JyAttribute must be uniquely identifyed by an
+ * rare use, so this is a sufficient implementation with minimal
+ * overhead.
+ * Every JyAttribute must be uniquely identified by an
  * "interned" cstring. Comparison is done via == (pointer-equal)
  * rather than strcmp. So for lookup one must pass the very same
  * char* as on declaration.
@@ -277,6 +274,8 @@ typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;
 /* type_name is optional and defaults to py_type->tp_name */
 typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
+
+#include "JyRefMonitor.h"
 
 #define JyObject_IS_GC(o) (((JyObject *) o)->flags & JY_GC_FLAG_MASK)
 #define JyObject_IS_INITIALIZED(o) (((JyObject *) o)->flags & JY_INITIALIZED_FLAG_MASK)
@@ -399,16 +398,35 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyType(jobject jythonPyType);
 inline ExceptionMapEntry* JyNI_PyExceptionMapEntry_FromPyExceptionType(PyTypeObject* excType);
 inline jobject JyNI_JythonExceptionType_FromPyExceptionType(PyObject* exc);
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc);
 
 /* Conversion-Stuff: */
 inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op);
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 inline PyObject* JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject);
-inline PyObject* JyNI_PyObject_FromJythonPyObject_verbose(jobject jythonPyObject);
+
+//inline PyObject* JyNI_PyObject_FromJythonPyObject_verbose(jobject jythonPyObject);
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType);
+
 inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type);
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls);
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject);
+
 inline jstring JyNI_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 
@@ -597,6 +615,9 @@ extern jclass JyLockClass;
 extern jmethodID JyLockConstructor;
 extern jmethodID JyLockAcquire;
 extern jmethodID JyLockRelease;
+
+extern jclass JyReferenceMonitorClass;
+extern jmethodID JyRefMonitorAddAction;
 
 extern jclass pyCPeerClass;
 extern jmethodID pyCPeerConstructor;

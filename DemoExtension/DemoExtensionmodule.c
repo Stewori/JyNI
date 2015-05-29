@@ -123,6 +123,7 @@ listModifyTest(PyObject* self, PyObject* args)
 	PyObject* list;
 	int i;
 	if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &list, &i)) return NULL;
+	Py_XDECREF(PyList_GET_ITEM(list, i));
 	PyList_SET_ITEM(list, i, PyString_FromString(modText));
 	//PyList_Append(list, PyString_FromString(appendText));
 	Py_RETURN_NONE;

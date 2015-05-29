@@ -43,55 +43,47 @@
  */
 
 
-package JyNI;
-
-import org.python.core.PySystemState;
-import org.python.util.PythonInterpreter;
-
-/**
- * A variant of PySystemState that supports the sys-functions
- * 
- * sys.setdlopenflags and sys.getdlopenflags.
- * 
- * These are relevant for loading CPython Extensions via JyNI.
- * The JyNI initializer adds these functions to the default
- * PySystemState anyway.
- * The sole purpose of this class is to allow for
- * PythonInterpreter-setups using a custom PySystemState, f.i.
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemStateJyNI());
- * 
- * This is equivalent to calling
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemState());
- * pint.exec("import sys");
- * pint.exec("import JyNI.JyNI");
- * pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_NOW");
- * pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
- * pint.exec("sys.setdlopenflags = setdlopenflags");
- * pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
- * 
- * @author Stefan Richthofer
+/*
+ * JyRefMonitor.c
  *
+ *  Created on: 20.05.2014
+ *      Author: Stefan Richthofer
  */
-public class PySystemStateJyNI extends PySystemState {
-	//protected int dlopenflags = JyNI.RTLD_NOW;
-	//public int getdlopenflags() {return dlopenflags;}
-	//public void setdlopenflags(int n) {this.dlopenflags = n;}
-	
-	public PySystemStateJyNI()
-	{
-		super();
-		PythonInterpreter pint = new PythonInterpreter(this);
-		pint.exec("import sys");
-		pint.exec("import JyNI.JyNI");
-		pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_JyNI_DEFAULT");
-		//pint.exec("sys.setdlopenflags = JyNI.JyNI.setDLOpenFlags");
-		//pint.exec("sys.getdlopenflags = JyNI.JyNI.getDLOpenFlags");
-		//pint.exec("sys.setdlopenflags = lambda n: (sys.dlopenflags = n)");
-		pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
-		pint.exec("sys.setdlopenflags = setdlopenflags");
-		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
-		pint.cleanup();
-	}
+#include <JyNI.h>
+
+jint Jy_memDebugFlags = 0;
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyRefMonitor_setMemDebug
+ * Signature: (Z)V
+ */
+void JyRefMonitor_setMemDebugFlags(JNIEnv *env, jclass class, jint flags)
+{
+	Jy_memDebugFlags = flags;
+	if (flags) jputs("JyNI: memDebug enabled!");
+	else jputs("JyNI: memDebug disabled!");
+}
+
+void JyRefMonitor_addAction(jshort action, JyObject* object, size_t size, char* type,
+		char* function, char* file, jint line)
+{
+	env();
+	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
+	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
+	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
+	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
+			JyRefMonitorAddAction, action, NULL, (jlong) FROM_JY(object), NULL, jtp, jcm, jfl, line);
+}
+
+void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2, size_t size,
+		char* type, char* function, char* file, jint line)
+{
+	env();
+	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
+	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
+	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
+	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
+			JyRefMonitorAddAction, action, NULL, (jlong) FROM_JY(object), (jlong) FROM_JY(object2),
+			jtp, jcm, jfl, line);
 }

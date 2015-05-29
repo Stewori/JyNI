@@ -185,6 +185,14 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove
 JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize
   (JNIEnv *, jclass, jlong, jint);
 
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyRefMonitor_setMemDebugFlags
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags
+  (JNIEnv *, jclass, jint);
+
 #ifdef __cplusplus
 }
 #endif

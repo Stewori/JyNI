@@ -2398,6 +2398,7 @@ PyLong_AsDouble(PyObject *v)
 static void
 long_dealloc(PyObject *v)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, v, -1);
 	Py_TYPE(v)->tp_free(v);
 }
 

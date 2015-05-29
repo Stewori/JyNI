@@ -333,8 +333,8 @@ int unicode_resize(register PyUnicodeObject *unicode,
 	   it contains). */
 
 	oldstr = unicode->str;
-	unicode->str = PyObject_REALLOC(unicode->str,
-									sizeof(Py_UNICODE) * (length + 1));
+	//unicode->str = PyObject_REALLOC(unicode->str, sizeof(Py_UNICODE) * (length + 1));
+	unicode->str = PyObject_RawRealloc(unicode->str, sizeof(Py_UNICODE) * (length + 1));
 	if (!unicode->str) {
 		unicode->str = (Py_UNICODE *)oldstr;
 		PyErr_NoMemory();
@@ -387,15 +387,18 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 			   never downsize it. */
 			if ((unicode->length < length) &&
 				unicode_resize(unicode, length) < 0) {
-				PyObject_DEL(unicode->str);
+				//PyObject_DEL(unicode->str);
+				PyObject_RawFree(unicode->str);
 				unicode->str = NULL;
 			}
 		}
 		else {
 			size_t new_size = sizeof(Py_UNICODE) * ((size_t)length + 1);
-			unicode->str = (Py_UNICODE*) PyObject_MALLOC(new_size);
+			//unicode->str = (Py_UNICODE*) PyObject_MALLOC(new_size);
+			unicode->str = (Py_UNICODE*) PyObject_RawMalloc(new_size);
 		}
 		PyObject_INIT(unicode, &PyUnicode_Type);
+		JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, unicode, -1);
 	}
 	else {
 		size_t new_size;
@@ -403,7 +406,7 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 		if (unicode == NULL)
 			return NULL;
 		new_size = sizeof(Py_UNICODE) * ((size_t)length + 1);
-		unicode->str = (Py_UNICODE*) PyObject_MALLOC(new_size);
+		unicode->str = (Py_UNICODE*) PyObject_RawMalloc(new_size);
 	}
 
 	if (!unicode->str) {
@@ -435,11 +438,13 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 static
 void unicode_dealloc(register PyUnicodeObject *unicode)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, unicode, -1);
 	if (PyUnicode_CheckExact(unicode) &&
 		numfree < PyUnicode_MAXFREELIST) {
 		/* Keep-Alive optimization */
 		if (unicode->length >= KEEPALIVE_SIZE_LIMIT) {
-			PyObject_DEL(unicode->str);
+			//PyObject_DEL(unicode->str);
+			PyObject_RawFree(unicode->str);
 			unicode->str = NULL;
 			unicode->length = 0;
 		}
@@ -450,9 +455,14 @@ void unicode_dealloc(register PyUnicodeObject *unicode)
 		*(PyUnicodeObject **)unicode = free_list;
 		free_list = unicode;
 		numfree++;
+		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, unicode, -1);
+		JyObject* jy = AS_JY_NO_GC(unicode);
+		JyNI_CleanUp_JyObject(jy);
 	}
 	else {
-		PyObject_DEL(unicode->str);
+		//PyObject_DEL(unicode->str);
+		JyNIDebugOp(JY_NATIVE_FREE, unicode, -1);
+		PyObject_RawFree(unicode->str);
 		Py_XDECREF(unicode->defenc);
 		Py_TYPE(unicode)->tp_free((PyObject *)unicode);
 	}

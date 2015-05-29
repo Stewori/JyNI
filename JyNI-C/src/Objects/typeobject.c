@@ -807,6 +807,16 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 
+/*
+ * JyNI-note:
+ * In contrast to alloc-methods in gcmodule.c or obmalloc.c, this
+ * alloc-method actually returns a NEW reference.
+ *
+ * Note that type is incref'd, iff it is a heaptype (since one must
+ * ensure that it not cleared before this instance, right?)
+ * Types are decref'd in subtype_dealloc, which is not supported
+ * by JyNI as of this writing. Todo: Fix this!
+ */
 PyObject *
 PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 {

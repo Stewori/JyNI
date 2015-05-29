@@ -123,6 +123,7 @@ PyTuple_New(register Py_ssize_t size)
 		Py_TYPE(op) = &PyTuple_Type;
 #endif
 		_Py_NewReference((PyObject *)op);
+		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(op), size, PyTuple_Type.tp_name);
 	}
 	else
 #endif
@@ -260,6 +261,7 @@ PyTuple_Pack(Py_ssize_t n, ...)
 static void
 tupledealloc(register PyTupleObject *op)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	register Py_ssize_t i;
 	register Py_ssize_t len =  Py_SIZE(op);
 	PyObject_GC_UnTrack(op);
@@ -273,6 +275,7 @@ tupledealloc(register PyTupleObject *op)
 			numfree[len] < PyTuple_MAXFREELIST &&
 			Py_TYPE(op) == &PyTuple_Type)
 		{
+			JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, op, -1);
 			JyNI_CleanUp_JyObject(AS_JY_WITH_GC(op));
 			op->ob_item[0] = (PyObject *) free_list[len];
 			numfree[len]++;

@@ -1,10 +1,11 @@
 /*
+ * Copyright of JyNI:
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+ *
+ *
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
  * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
- * 
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -217,6 +218,9 @@ public class JyNI {
 
 	//Set-Stuff:
 	public static native void JySet_putSize(long handle, int size);
+
+	//ReferenceMonitor-Stuff:
+	public static native void JyRefMonitor_setMemDebugFlags(int flags);
 	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
 	/*public static PyObject PySet_pop(BaseSet set)
 	{

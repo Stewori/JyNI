@@ -98,6 +98,8 @@ void (*JyList_add)(JNIEnv*, jclass, jlong, jint, jobject, jlong);
 jobject (*JyList_remove)(JNIEnv*, jclass, jlong, jint);
 
 void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
+
+void (*JyRefMonitor_setMemDebugFlags)(JNIEnv*, jclass, jint);
 //void JyNI_unload(JavaVM *jvm);
 
 
@@ -175,6 +177,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyList_remove) = dlsym(JyNIHandle, "JyList_remove");
 
 	*(void **) (&JySet_putSize) = dlsym(JyNIHandle, "JySet_putSize");
+
+	*(void **) (&JyRefMonitor_setMemDebugFlags) = dlsym(JyNIHandle, "JyRefMonitor_setMemDebugFlags");
 
 	//puts("done");
 	jint result = (*JyNIInit)(java);
@@ -380,4 +384,13 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove(JNIEnv *env, jclass clas
 JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize(JNIEnv *env, jclass class, jlong handle, jint size)
 {
 	(*JySet_putSize)(env, class, handle, size);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyRefMonitor_setMemDebugFlags
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags(JNIEnv *env, jclass class, jint flags) {
+	(*JyRefMonitor_setMemDebugFlags)(env, class, flags);
 }

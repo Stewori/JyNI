@@ -65,7 +65,11 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
 //typedef struct {SyncInfo sync; jy2pyItemSync jy2pyItem; py2jyItemSync py2jyItem;} SyncVarInfo;
 */
 
-
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ * For every item in the tuple also a new reference is created. However the tuple
+ * deallocator will take care of these.
+ */
 PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 {
 	//jputs("JySync_Init_PyTuple_From_JyTuple");
@@ -102,7 +106,9 @@ jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src)
 }
 
 
-
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyString_From_JyString(jobject src)
 {
 	env(NULL);
@@ -126,6 +132,10 @@ jobject JySync_Init_JyString_From_PyString(PyObject* src)
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, jstr);
 }
 
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 {
 	env(NULL);
@@ -234,6 +244,10 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
 //	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
 //}
 
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyInt_From_JyInt(jobject src)
 {
 	env(NULL);
@@ -254,6 +268,9 @@ jobject JySync_Init_JyInt_From_PyInt(PyObject* src)
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewIntFromLong, (jlong) PyInt_AS_LONG(src));
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyFloat_From_JyFloat(jobject src)
 {
 	env(NULL);
@@ -266,6 +283,9 @@ jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src)
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewFloatFromDouble, (jdouble) PyFloat_AS_DOUBLE(src));
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyComplex_From_JyComplex(jobject src)
 {
 	env(NULL);
@@ -282,6 +302,9 @@ jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src)
 			PyComplex_ImagAsDouble(src));
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyLong_From_JyLong(jobject src)
 {
 	env(NULL);
@@ -319,6 +342,10 @@ jobject JySync_Init_JyList_From_PyList(PyObject* src)
 			(*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src));
 }
 
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyList_From_JyList(jobject src)
 {
 	env(NULL);
@@ -349,6 +376,9 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 
 //jobject JySync_Init_JySet_From_PySet(PyObject* src) not needed because of truncation
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PySet_From_JySet(jobject src) //needed because truncation is only partial
 {
 	PySetObject* so = (PySetObject *) PySet_Type.tp_alloc(&PySet_Type, 0);
@@ -364,6 +394,9 @@ PyObject* JySync_Init_PySet_From_JySet(jobject src) //needed because truncation 
 
 //jobject JySync_Init_JyFrozenSet_From_PyFrozenSet(PyObject* src) not needed because of truncation
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src) //needed because truncation is only partial
 {
 	PySetObject* so = (PySetObject *) PyFrozenSet_Type.tp_alloc(&PyFrozenSet_Type, 0);
@@ -388,6 +421,9 @@ jobject JySync_Init_JyClass_From_PyClass(PyObject* src)
 		JyNI_JythonPyObject_FromPyObject(cls->cl_dict));
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyClass_From_JyClass(jobject src)
 {
 	env(NULL);
@@ -409,6 +445,9 @@ jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src)
 		JyNI_JythonPyObject_FromPyObject(inst->in_dict));
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
 {
 	env(NULL);
@@ -429,6 +468,9 @@ jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src)
 		JyNI_JythonPyObject_FromPyObject(meth->im_class));
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
 {
 	env(NULL);

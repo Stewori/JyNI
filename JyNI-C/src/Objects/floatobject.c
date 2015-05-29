@@ -203,6 +203,7 @@ PyFloat_FromDouble(double fval)
 	free_list = (PyFloatObject *)Py_TYPE(op);
 	PyObject_INIT(op, &PyFloat_Type);
 	op->ob_fval = fval;
+	JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, op, -1);
 	return (PyObject *) op;
 }
 
@@ -291,6 +292,7 @@ PyFloat_FromString(PyObject *v, char **pend)
 static void
 float_dealloc(PyFloatObject *op)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	if (PyFloat_CheckExact(op)) {
 		JyObject* jy = AS_JY_NO_GC(op);
 		JyNI_CleanUp_JyObject(jy);

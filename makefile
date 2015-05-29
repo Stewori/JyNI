@@ -63,6 +63,9 @@ $(JYTHON):
 JyNI: $(JYTHON) $(JYNIBIN)/JyNI
 	jar cvf $(OUTPUTDIR)/JyNI.jar -C $(JYNIBIN) .
 
+cleanJ:
+	rm -rf $(JYNIBIN)/JyNI
+
 clean:
 	rm -rf $(JYNIBIN)/JyNI
 	rm -f ./JyNI-C/src/*.o

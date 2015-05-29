@@ -151,10 +151,12 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 	ENTER_JyNI
 	PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
-	jobject er = JyNI_JythonPyObject_FromPyObject(peer->ob_type->tp_call(peer,
-			jargs,//JyNI_PyObject_FromJythonPyObject(args),
-			JyNI_PyObject_FromJythonPyObject(kw)
-		));
+	PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
+	PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
+	jobject er = JyNI_JythonPyObject_FromPyObject(jres);
+	//Py_XDECREF(jargs);
+	//Py_XDECREF(jkw);
+	//Py_XDECREF(jres); Todo: Reason about this line!
 	LEAVE_JyNI
 	return er;
 }
@@ -757,10 +759,17 @@ inline jclass JyNI_JythonClassFromPyType(PyTypeObject* type)
 /* Does not work for Heap-Types. */
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromPyType(PyTypeObject* type)
 {
+	//jputs(__FUNCTION__);
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
-		if (builtinTypes[i].py_type == type) return &(builtinTypes[i]);
+		if (builtinTypes[i].py_type == type) {
+			//jputs("Found:");
+			//jputsLong(i);
+			//jputs(builtinTypes[i].py_type->tp_name);
+			//jputs(builtinTypes[i].type_name);
+			return &(builtinTypes[i]);
+		}
 	}
 	return NULL;
 }
@@ -826,7 +835,10 @@ inline jobject JyNI_JythonExceptionType_FromPyExceptionType(PyObject* exc)
 	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, PyExceptionClass_Name(exc)));
 }
 
-/* Does not work for Heap-Type exceptions. */
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ * Does not work for Heap-Type exceptions.
+ */
 inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc)
 {
 	env(NULL);
@@ -841,7 +853,11 @@ inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc)
 	int i;
 	for (i = 0; i < builtinExceptionCount; ++i)
 	{
-		if (builtinExceptions[i].exc_type != NULL && strcmp(builtinExceptions[i].exc_type->tp_name, mName) == 0) return builtinExceptions[i].exc_type;
+		if (builtinExceptions[i].exc_type != NULL && strcmp(builtinExceptions[i].exc_type->tp_name, mName) == 0)
+		{
+			Py_INCREF(builtinExceptions[i].exc_type);
+			return builtinExceptions[i].exc_type;
+		}
 	}
 	return NULL;
 }
@@ -892,7 +908,10 @@ inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems)
 	}
 }
 
-/* Should do the same as JyNI_AllocVar with nitems == -1 */
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ * Should do the same as JyNI_AllocVar with nitems == -1.
+ */
 inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 {
 	PyObject *obj;
@@ -931,6 +950,9 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 	return obj;
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 {
 	PyObject *obj;
@@ -979,13 +1001,16 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 	if (tme->py_type->tp_itemsize == 0)
 		PyObject_INIT(obj, tme->py_type);
 	else
-		(void) PyObject_INIT_VAR((PyVarObject *)obj, tme->py_type, nitems);
+		PyObject_INIT_VAR((PyVarObject *)obj, tme->py_type, nitems);
 
 	if (PyType_IS_GC(tme->py_type))
 		_PyObject_GC_TRACK(obj);
 	return obj;
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 {
 	PyObject *obj;
@@ -1021,6 +1046,9 @@ inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 	return obj;
 }
 
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
 inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 {
 	PyObject *obj;
@@ -1060,8 +1088,12 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 	return obj;
 }
 
-/* Not intended for Heap-Type exceptions.
- * These don't have an associated ExceptionMapEntry anyway. */
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * Not intended for Heap-Type exceptions.
+ * These don't have an associated ExceptionMapEntry anyway.
+ */
 inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 {
 	PyObject *obj;
@@ -1091,15 +1123,20 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 	if (eme->exc_type->tp_itemsize == 0)
 		PyObject_INIT(obj, eme->exc_type);
 	else
-		(void) PyObject_INIT_VAR((PyVarObject *)obj, eme->exc_type, 0);//nitems);
+		//(void) PyObject_INIT_VAR((PyVarObject *)obj, eme->exc_type, 0);//nitems);
+		PyObject_INIT_VAR((PyVarObject *)obj, eme->exc_type, 0);
 
 	if (PyType_IS_GC(eme->exc_type))
 		_PyObject_GC_TRACK(obj);
 	return obj;
 }
 
-/* Not intended for Heap-Type exceptions.
- * These don't have an associated ExceptionMapEntry anyway. */
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * Not intended for Heap-Type exceptions.
+ * These don't have an associated ExceptionMapEntry anyway.
+ */
 inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 {
 	PyObject* obj = JyNI_ExceptionAlloc(eme);
@@ -1112,8 +1149,13 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 	return obj;
 }
 
-/* Not intended for Heap-Types.
- * These don't have an associated TypeMapEntry anyway. */
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * Not intended for Heap-Types.
+ * These don't have an associated TypeMapEntry anyway.
+ */
 inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 {
 //	jputs("JyNI_InitPyObject");
@@ -1124,6 +1166,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		//jputs("sync on init");
 		if (tme->sync != NULL && tme->sync->pyInit != NULL)
 			dest = tme->sync->pyInit(src);
+		//todo: Check that JySync.c always returns new ref in sync on init methods.
 	} else
 	{
 		//dest = PyObject_GC_New(tme->py_type);
@@ -1169,7 +1212,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		if (jy->flags & SYNC_NEEDED_MASK)
 			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
 		env(NULL);
-		jy->jy = (*env)->NewGlobalRef(env, src);
+		jy->jy = (*env)->NewGlobalRef(env, src); //Todo: eventually change to weak ref.
 		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
 		//printf("dest-check for module2: %u\n", (int) PyModule_Check(dest));
@@ -1179,16 +1222,8 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 }
 
 /*
- * Does expect a "local" ref!
- * If the ref is stored somehow, it is made global
- * automatically.
- * (Todo: Check what happens if a global ref is made global again? I suppose, it just stays global.)
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-inline PyObject* JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject)
-{
-	return _JyNI_PyObject_FromJythonPyObject(jythonPyObject, JNI_TRUE, JNI_TRUE, JNI_TRUE);
-}
-
 PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType)
 {
 	if (jythonPyObject == NULL) return NULL;
@@ -1221,16 +1256,20 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	}
 	if (checkForType && (*env)->IsInstanceOf(env, jythonPyObject, pyTypeClass))
 	{
+		//No increfs here, since JyNI_PyTypeObject_FromJythonPyTypeObject returns NEW ref if any.
 		PyObject* er = (PyObject*) JyNI_PyTypeObject_FromJythonPyTypeObject(jythonPyObject);
 		if (er) return er;
+		//No increfs here, since JyNI_PyExceptionType_FromJythonExceptionType returns NEW ref if any.
 		er = (PyObject*) JyNI_PyExceptionType_FromJythonExceptionType(jythonPyObject);
 		if (er) return er;
-		//heap type case: Proceed same way like for ordinary PyObjects.
+		//heap-type case: Proceed same way like for ordinary PyObjects.
 	}
 	if (checkCPeer && (*env)->IsInstanceOf(env, jythonPyObject, pyCPeerClass))
 	{
 		//puts("object is a PyCPeer");
-		return (PyObject*) (*env)->GetLongField(env, jythonPyObject, pyCPeerObjectHandle);
+		PyObject* er = (PyObject*) (*env)->GetLongField(env, jythonPyObject, pyCPeerObjectHandle);
+		Py_INCREF(er);
+		return er;
 	}
 	if (lookupNative)
 	{
@@ -1242,6 +1281,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			JyObject* jy = AS_JY(handle);
 			if (jy->flags & SYNC_ON_JY_TO_PY_FLAG_MASK)
 				JyNI_SyncJy2Py(jy, handle);
+			Py_INCREF(handle);
 			return handle;
 		}
 	}
@@ -1261,7 +1301,10 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		//jputs("initialize handle:");
 		//if (tme->type_name) jputs(tme->type_name);
 		//if (tme->py_type) jputs(tme->py_type->tp_name);
+
+		//No need to incref here, since JyNI_InitPyObject returns NEW ref.
 		PyObject* er = JyNI_InitPyObject(tme, jythonPyObject);
+
 		//jputs("handle initialized");
 		return er;
 	} else
@@ -1274,9 +1317,11 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		if (eme)
 		{
 			//jputs("exception type2...");
+			//No need to incref here, since JyNI_InitPyException returns NEW ref.
 			PyObject* er = JyNI_InitPyException(eme, jythonPyObject);
 			return er;
 		} else {
+			//Todo: Add case for new-style classes or Jython-defined types.
 			//jputs("returning NULL...");
 			//JyNI_jprintJ(jythonPyObject);
 			//JyNI_printJInfo(jythonPyObject);
@@ -1286,6 +1331,19 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	//PyObject* result = JyNI_NewPyObject_FromJythonPyObject(jythonPyObject);
 	//Py_INCREF(result);
 	//return result;
+}
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * Does expect a "local" ref!
+ * If the ref is stored somehow, it is made global
+ * automatically.
+ * (Todo: Check what happens if a global ref is made global again? I suppose, it just stays global.)
+ */
+inline PyObject* JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject)
+{
+	return _JyNI_PyObject_FromJythonPyObject(jythonPyObject, JNI_TRUE, JNI_TRUE, JNI_TRUE);
 }
 
 //inline PyObject* JyNI_PyObject_FromJythonPyObject_verbose(jobject jythonPyObject)
@@ -1516,18 +1574,28 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		return jy->jy;
 	} else
 	{
-		//jputsLong(__LINE__);
 		TypeMapEntry* tme;
-		if (jy->jy != NULL) tme = (TypeMapEntry*) jy->jy;
-		else tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
-		//jputsLong(__LINE__);
+		if (jy->jy != NULL)
+		{
+			//jputsLong(__LINE__);
+			tme = (TypeMapEntry*) jy->jy;
+		} else {
+			//jputsLong(__LINE__);
+			tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
+		}
+		//tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 		if (tme)// != NULL
 		{
 			//jputsLong(__LINE__);
+			//jputs(Py_TYPE(op)->tp_name);
+			//if (!tme->py_type) jputs("py_type is NULL");
+			//if (!tme->py_type->tp_name) jputs("py_type name is NULL");
+			//jputs(tme->py_type->tp_name);
 			return JyNI_InitJythonPyObject(tme, op, jy);
 		}
 		else
 		{
+			//jputsLong(__LINE__);
 			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op));
 			if (eme)
 				return JyNI_InitJythonPyException(eme, op, jy);
@@ -1604,14 +1672,21 @@ inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type)
 	return _JyNI_JythonPyTypeObject_FromPyTypeObject(type, JyNI_JythonClassFromPyType((PyTypeObject*) type));
 }
 
-//No support for derived types for now...
-//Only builtin types or native declared types work.
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * No support for derived types for now...
+ * Only builtin types or native declared types work.
+ */
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject)
 {
 	env(NULL);
 	if ((*env)->IsInstanceOf(env, jythonPyTypeObject, pyCPeerTypeClass))
 	{
-		return (PyTypeObject*) (*env)->GetLongField(env, jythonPyTypeObject, pyCPeerTypeObjectHandle);
+		PyTypeObject* er = (PyTypeObject*) (*env)->GetLongField(env,
+				jythonPyTypeObject, pyCPeerTypeObjectHandle);
+		Py_INCREF(er);
+		return er;
 	}
 
 	//jstring name = (*env)->CallStaticObjectMethod(env, pyTypeClass, pyTypeGetName, jythonPyTypeObject);
@@ -1627,7 +1702,11 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
-		if (builtinTypes[i].py_type != NULL && strcmp(builtinTypes[i].py_type->tp_name, mName) == 0) return builtinTypes[i].py_type;
+		if (builtinTypes[i].py_type != NULL && strcmp(builtinTypes[i].py_type->tp_name, mName) == 0)
+		{
+			Py_INCREF(builtinTypes[i].py_type);
+			return builtinTypes[i].py_type;
+		}
 	}
 	return NULL;
 }
@@ -1973,6 +2052,9 @@ jclass JyLockClass;
 jmethodID JyLockConstructor;
 jmethodID JyLockAcquire;
 jmethodID JyLockRelease;
+
+jclass JyReferenceMonitorClass;
+jmethodID JyRefMonitorAddAction;
 
 jclass pyCPeerClass;
 jmethodID pyCPeerConstructor;
@@ -2538,6 +2620,12 @@ inline jint initJyNI(JNIEnv *env)
 	JyLockConstructor = (*env)->GetMethodID(env, JyLockClass, "<init>", "()V");
 	JyLockAcquire = (*env)->GetMethodID(env, JyLockClass, "acquire", "(Z)Z");
 	JyLockRelease = (*env)->GetMethodID(env, JyLockClass, "release", "()V");
+
+	jclass JyReferenceMonitorClassLocal = (*env)->FindClass(env, "JyNI/JyReferenceMonitor");
+	JyReferenceMonitorClass = (jclass) (*env)->NewWeakGlobalRef(env, JyReferenceMonitorClassLocal);
+	(*env)->DeleteLocalRef(env, JyReferenceMonitorClassLocal);
+	JyRefMonitorAddAction = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "addNativeAction",
+			"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
 
 	//Peer stuff:
 	jclass pyCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyCPeer");

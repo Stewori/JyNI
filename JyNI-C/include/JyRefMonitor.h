@@ -43,55 +43,53 @@
  */
 
 
-package JyNI;
-
-import org.python.core.PySystemState;
-import org.python.util.PythonInterpreter;
-
-/**
- * A variant of PySystemState that supports the sys-functions
- * 
- * sys.setdlopenflags and sys.getdlopenflags.
- * 
- * These are relevant for loading CPython Extensions via JyNI.
- * The JyNI initializer adds these functions to the default
- * PySystemState anyway.
- * The sole purpose of this class is to allow for
- * PythonInterpreter-setups using a custom PySystemState, f.i.
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemStateJyNI());
- * 
- * This is equivalent to calling
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemState());
- * pint.exec("import sys");
- * pint.exec("import JyNI.JyNI");
- * pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_NOW");
- * pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
- * pint.exec("sys.setdlopenflags = setdlopenflags");
- * pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
- * 
- * @author Stefan Richthofer
+/*
+ * JyRefMonitor.h
  *
+ *  Created on: 20.05.2014
+ *      Author: Stefan Richthofer
  */
-public class PySystemStateJyNI extends PySystemState {
-	//protected int dlopenflags = JyNI.RTLD_NOW;
-	//public int getdlopenflags() {return dlopenflags;}
-	//public void setdlopenflags(int n) {this.dlopenflags = n;}
-	
-	public PySystemStateJyNI()
-	{
-		super();
-		PythonInterpreter pint = new PythonInterpreter(this);
-		pint.exec("import sys");
-		pint.exec("import JyNI.JyNI");
-		pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_JyNI_DEFAULT");
-		//pint.exec("sys.setdlopenflags = JyNI.JyNI.setDLOpenFlags");
-		//pint.exec("sys.getdlopenflags = JyNI.JyNI.getDLOpenFlags");
-		//pint.exec("sys.setdlopenflags = lambda n: (sys.dlopenflags = n)");
-		pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
-		pint.exec("sys.setdlopenflags = setdlopenflags");
-		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
-		pint.cleanup();
-	}
-}
+#include <JyNI.h>
+
+#define JY_INC_MASK        1
+#define JY_DEC_MASK        2
+#define JY_MEMORY_MASK     4
+#define JY_NATIVE_MASK     8
+#define JY_GC_MASK        16
+#define JY_PRE_MASK       32
+#define JY_POST_MASK      64
+#define JY_FINALIZE_MASK 128
+#define JY_INLINE_MASK   256
+
+#define JY_NATIVE_ALLOC      13  // INC_MASK | MEMORY_MASK | NATIVE_MASK
+#define JY_NATIVE_FREE       14  // DEC_MASK | MEMORY_MASK | NATIVE_MASK
+#define JY_NATIVE_REALLOC    15  // JY_NATIVE_ALLOC | JY_NATIVE_FREE
+#define JY_NATIVE_ALLOC_GC   29  // JY_NATIVE_ALLOC | GC_MASK
+#define JY_NATIVE_FREE_GC    30  // JY_NATIVE_FREE | GC_MASK
+#define JY_NATIVE_REALLOC_GC 31  // JY_NATIVE_REALLOC | GC_MASK
+#define JY_NATIVE_FINALIZE  168  // NATIVE_MASK | FINALIZE_MASK | PRE_MASK;
+
+#define IsJyNIDebug(flags) Jy_memDebugFlags
+
+#define JyNIDebug(flags, ref, size, tpName) \
+	if (Jy_memDebugFlags) JyRefMonitor_addAction(flags, ref, size, tpName, __FUNCTION__, __FILE__, __LINE__)
+
+#define JyNIDebug2(flags, ref1, ref2, size, tpName) \
+	if (Jy_memDebugFlags) JyRefMonitor_addAction2(flags, ref1, ref2, size, tpName, __FUNCTION__, __FILE__, __LINE__)
+
+#define JyNIDebugOp(flags, op, size) \
+	JyNIDebug(flags, AS_JY(op), size, Py_TYPE(op) ? Py_TYPE(op)->tp_name : NULL)
+
+#define JyNIDebugOp2(flags, op, ref2, size) \
+	JyNIDebug2(flags, AS_JY(op), ref2, size, Py_TYPE(op) ? Py_TYPE(op)->tp_name : NULL)
+
+extern jint Jy_memDebugFlags;
+
+// Call-in
+void JyRefMonitor_setMemDebug(JNIEnv *env, jclass class, jint flags);
+
+// Memory-tracking
+void JyRefMonitor_addAction(jshort action, JyObject* object, size_t size,
+		char* type, char* function, char* file, jint line);
+void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2,
+		size_t size, char* type, char* function, char* file, jint line);

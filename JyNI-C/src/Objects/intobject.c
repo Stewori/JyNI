@@ -162,6 +162,7 @@ PyInt_FromLong(long ival)
 	free_list = (PyIntObject *)Py_TYPE(v);
 	PyObject_INIT(v, &PyInt_Type);
 	v->ob_ival = ival;
+	JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, v, -1);
 	return (PyObject *) v;
 }
 
@@ -184,11 +185,13 @@ PyInt_FromSsize_t(Py_ssize_t ival)
 static void
 int_dealloc(PyIntObject *v)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, v, -1);
 	if (PyInt_CheckExact(v)) {
 		JyObject* jy = AS_JY_NO_GC(v);
 		JyNI_CleanUp_JyObject(jy);
 		Py_TYPE(v) = (struct _typeobject *)free_list;
 		free_list = v;
+		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, v, -1);
 	}
 	else
 		Py_TYPE(v)->tp_free((PyObject *)v);
@@ -197,6 +200,7 @@ int_dealloc(PyIntObject *v)
 static void
 int_free(PyIntObject *v)
 {
+	JyNIDebugOp(JY_NATIVE_FREE, v, -1);
 	JyObject* jy = AS_JY_NO_GC(v);
 	JyNI_CleanUp_JyObject(jy);
 	Py_TYPE(v) = (struct _typeobject *)free_list;
@@ -1529,6 +1533,7 @@ _PyInt_Init(void)
 		small_ints[ival + NSMALLNEGINTS] = v;
 		jy = AS_JY_NO_GC(v);
 		Jy_InitImmutable(jy);
+		JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, v, -1);
 	}
 #endif
 	return 1;

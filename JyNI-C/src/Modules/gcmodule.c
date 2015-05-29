@@ -1482,6 +1482,11 @@ _PyObject_GC_UnTrack(PyObject *op)
 	PyObject_GC_UnTrack(op);
 }
 
+/*
+ * JyNI-note:
+ * Note that this function returns an uninitialized ref, i.e. with refcount not set.
+ * One will have to init it via something like PyObject_INIT or PyObject_INIT_VAR.
+ */
 PyObject *
 _PyObject_GC_Malloc(size_t basicsize)
 {
@@ -1516,6 +1521,10 @@ _PyObject_GC_Malloc(size_t basicsize)
 		collecting = 0;
 	}
 	op = FROM_GC(g);
+	JyNIDebug(JY_NATIVE_ALLOC_GC, AS_JY_WITH_GC(op), basicsize, NULL);
+	//Shortcut not feasible because generic AS_JY not yet works as it depends
+	//on a properly configured Py_TYPE(op):
+	//JyNIDebugOp(JY_NATIVE_ALLOC_GC, op, basicsize);
 	return op;
 }
 
@@ -1596,6 +1605,7 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 			return (PyVarObject *)PyErr_NoMemory();
 		op = (PyVarObject *) FROM_GC(g);
 		Py_SIZE(op) = nitems;*/
+
 		return op;
 	}
 	else
@@ -1612,6 +1622,7 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 		//PyGC_Head *q = GC_FROM_JY(jy);
 		//if (q == NULL) return (PyVarObject *) PyErr_NoMemory();
 		//op = (PyVarObject *) FROM_GC(q);
+		PyVarObject *op0 = op; //Only needed in debug-mode!
 		op = (PyVarObject *) FROM_JY(jy);
 		Py_SIZE(op) = nitems;
 		//if (jy->jy) jputs("GC resize, but handle is initialized");
@@ -1620,8 +1631,10 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 			/* take care to correct the handle on java-side */
 			env(NULL);
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNISetNativeHandle, jy->jy, (jlong) op);
-			//maybe do sync here
+			//todo: maybe do sync here
 		}
+		//JyNIDebug2(JY_NATIVE_REALLOC_GC, AS_JY_WITH_GC(op0), jy, basicsize, NULL);
+		JyNIDebugOp2(JY_NATIVE_REALLOC_GC, op0, jy, basicsize);
 		return op;
 	}
 }
@@ -1638,6 +1651,7 @@ PyObject_GC_Del(void *op)
 	}*/
 	//JyObject* jy = AS_JY(op);
 	JyObject* jy = AS_JY_WITH_GC(op);
+	JyNIDebugOp(JY_NATIVE_FREE_GC, op, -1);
 	JyNI_CleanUp_JyObject(jy);
 	PyGC_Head *g = AS_GC(op);
 	if (IS_TRACKED(op))
