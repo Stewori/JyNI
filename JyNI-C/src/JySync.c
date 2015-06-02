@@ -255,11 +255,11 @@ PyObject* JySync_Init_PyInt_From_JyInt(jobject src)
 }
 
 /*
- * This method can in fact return a jython PyLong. This can be the case, if
- * on 64-bit systems, native PyInteger has 64 bit backend while jython PyInteger
+ * This method can in fact return a Jython-PyLong. This can be the case, if
+ * on 64-bit systems, native PyInteger has 64 bit backend while Jython-PyInteger
  * is always guaranteed to be 32 bit.
  * This might cause confusion, if the type is looked up again for some reason.
- * When writing this, we consider this as less confusing than changing a number
+ * As of this writing, we consider this as less confusing than changing a number
  * value during conversion.
  */
 jobject JySync_Init_JyInt_From_PyInt(PyObject* src)
@@ -370,6 +370,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 	jobject jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) op);
 	//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
 	(*env)->SetObjectField(env, src, pyListBackend, jyList);
+	Py_INCREF(op); //For now we make the list immortal here. Later GC will take care of it.
 	return op;
 }
 

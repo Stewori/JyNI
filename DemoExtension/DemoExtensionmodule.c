@@ -40,11 +40,17 @@ concatFirstWithLastString(PyObject *self, PyObject *args)
 }
 
 PyObject *
+printString(PyObject *self, PyObject *args)
+{
+	puts(PyString_AS_STRING(PyTuple_GET_ITEM(args, 0)));
+	Py_RETURN_NONE;
+}
+
+PyObject *
 printInt(PyObject *self, PyObject *args)
 {
 	printf("%i\n", PyInt_AS_LONG(PyTuple_GET_ITEM(args, 0)));
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject *
@@ -77,8 +83,7 @@ keywordTest(PyObject* self, PyObject* args, PyObject* kw)
 		if (ar != NULL) puts(PyString_AS_STRING(ar));
 	}
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject*
@@ -200,6 +205,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"setTest", setTest, METH_VARARGS, "Performs some tests on a given PySet object."},
 	{"setPopTest", setPopTest, METH_VARARGS, "Pops the given number of elements from the set."},
 	{"printInt", printInt, METH_VARARGS, "Prints out the int and returns nothing."},
+	{"printString", printString, METH_VARARGS, "Prints out the string and returns nothing."},
 	{"intSquare", intSquare, METH_VARARGS, "Returns the square of the given int."},
 	{"argCountToString", argCountToString, METH_VARARGS, "Returns number of arguments as string."},
 	{"concatFirstWithLastString", concatFirstWithLastString, METH_VARARGS, "Concatenates first with last element. Returns empty string, if less than two args are available."},
@@ -212,10 +218,5 @@ PyMethodDef DemoExtensionMethods[] = {
 PyMODINIT_FUNC
 initDemoExtension(void)
 {
-//	puts("initDemoExtension:");
-//	if (PyErr_Occurred()) puts("Error present0");
-//	else  puts("no Error present0");
 	(void) Py_InitModule3("DemoExtension", DemoExtensionMethods, "This is a pure demo extension.");
-//	if (PyErr_Occurred()) puts("Error present1");
-//	else  puts("no Error present1");
 }

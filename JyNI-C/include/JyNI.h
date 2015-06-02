@@ -185,11 +185,13 @@
 
 /* General Flags: */
 #define JY_INITIALIZED_FLAG_MASK 1
-#define JY_GC_FLAG_MASK			 2
-#define JY_TRUNCATE_FLAG_MASK	 4
+#define JY_GC_FLAG_MASK          2
+#define JY_TRUNCATE_FLAG_MASK    4
 //#define JY_PARTLY_TRUNCATE_MASK  8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
-#define JY_CPEER_FLAG_MASK		16
-//#define JY_TYPE_FLAG_MASK		32 //Types can't have JyObject-data
+#define JY_CPEER_FLAG_MASK      16
+//#define JY_TYPE_FLAG_MASK	    32 //Types can't have JyObject-data
+#define JY_CACHE_GC             32
+#define JY_CACHE_ETERNAL        64
 //32, 64, 128 reserved for future use...
 
 /* define some method signatures for sync purposes: */
@@ -476,8 +478,20 @@ PyAPI_FUNC(void) PyObject_RawFree(void *);
 /* Provide header for nullstring from stringobject.c
  * This way, the nullstring can also be used from other
  * places.
+ * Note that nullstring and unicode_empty are initialized
+ * on demand. One has to check them to be non-NULL before use.
  */
 extern PyStringObject *nullstring;
+extern PyUnicodeObject *unicode_empty;
+
+/* Some caches to be considered for eternal caching: */
+/* (These macros overwrite those in intobject.c.) */
+#define NSMALLPOSINTS           257
+#define NSMALLNEGINTS           5
+extern JyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
+extern PyStringObject *characters[UCHAR_MAX + 1];
+extern PyUnicodeObject *unicode_latin1[256];
+//extern PyFloatBlock *block_list;
 
 /* Load- and unload-stuff from Python-files, missing in the headers currently used: */
 int _PyInt_Init(void);

@@ -689,12 +689,13 @@ set_next(PySetObject *so, Py_ssize_t *pos_ptr, setentry **entry_ptr)
 static void
 set_dealloc(PySetObject *so)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, so, -1);
 //	register setentry *entry;
 //	Py_ssize_t fill = so->fill;
 	PyObject_GC_UnTrack(so);
 //	Py_TRASHCAN_SAFE_BEGIN(so)
-	if (so->weakreflist != NULL)
-		PyObject_ClearWeakRefs((PyObject *) so);
+	//if (so->weakreflist != NULL)
+		//PyObject_ClearWeakRefs((PyObject *) so);
 //
 //	for (entry = so->table; fill > 0; entry++) {
 //		if (entry->key) {

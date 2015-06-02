@@ -59,8 +59,7 @@
  */
 jobject JyList_get(JNIEnv *env, jclass class, jlong handle, jint index)
 {
-	return JyNI_JythonPyObject_FromPyObject(
-			PyList_GET_ITEM((PyObject*) handle, index));
+	return JyNI_JythonPyObject_FromPyObject(PyList_GET_ITEM((PyObject*) handle, index));
 }
 
 /*

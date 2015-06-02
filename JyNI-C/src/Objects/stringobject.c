@@ -70,7 +70,7 @@ jy->flags = JySYNC_ON_INIT_FLAGS; \
 op = (PyStringObject *) FROM_JY_NO_GC(jy); \
 JyNIDebug(JY_NATIVE_ALLOC | JY_INLINE_MASK, jy, basicsize, PyString_Type.tp_name)
 
-static PyStringObject *characters[UCHAR_MAX + 1];
+PyStringObject *characters[UCHAR_MAX + 1];
 /*static*/ PyStringObject *nullstring; //not static in JyNI to use it with extern in JyNI.h
 
 /* This dictionary holds all interned strings.  Note that references to
@@ -509,7 +509,7 @@ PyObject *PyString_AsDecodedObject(PyObject *str,
 	}
 
 	/* Decode via the codec registry */
-	v = PyCodec_Decode(str, encoding, errors);
+	v = _PyCodec_DecodeText(str, encoding, errors);
 	if (v == NULL)
 		goto onError;
 
@@ -589,7 +589,7 @@ PyObject *PyString_AsEncodedObject(PyObject *str,
 	}
 
 	/* Encode via the codec registry */
-	v = PyCodec_Encode(str, encoding, errors);
+	v = _PyCodec_EncodeText(str, encoding, errors);
 	if (v == NULL)
 		goto onError;
 
@@ -4878,11 +4878,15 @@ PyString_Fini(void)
 {
 	int i;
 	for (i = 0; i < UCHAR_MAX + 1; i++) {
-		JyNI_CleanUp_JyObject(AS_JY_NO_GC(characters[i]));
-		Py_CLEAR(characters[i]);
+		if (characters[i]) {
+			JyNI_CleanUp_JyObject(AS_JY_NO_GC(characters[i]));
+			Py_CLEAR(characters[i]);
+		}
 	}
-	JyNI_CleanUp_JyObject(AS_JY_NO_GC(nullstring));
-	Py_CLEAR(nullstring);
+	if (nullstring) {
+		JyNI_CleanUp_JyObject(AS_JY_NO_GC(nullstring));
+		Py_CLEAR(nullstring);
+	}
 }
 
 //void _Py_ReleaseInternedStrings(void)

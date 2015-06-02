@@ -81,6 +81,51 @@ PyAPI_FUNC(PyObject *) PyCodec_Decode(
        const char *errors
        );
 
+/* Text codec specific encoding and decoding API.
+
+   Checks the encoding against a list of codecs which do not
+   implement a unicode<->bytes encoding before attempting the
+   operation.
+
+   Please note that these APIs are internal and should not
+   be used in Python C extensions.
+
+   XXX (ncoghlan): should we make these, or something like them, public
+   in Python 3.5+?
+
+ */
+PyAPI_FUNC(PyObject *) _PyCodec_LookupTextEncoding(
+       const char *encoding,
+       const char *alternate_command
+       );
+
+PyAPI_FUNC(PyObject *) _PyCodec_EncodeText(
+       PyObject *object,
+       const char *encoding,
+       const char *errors
+       );
+
+PyAPI_FUNC(PyObject *) _PyCodec_DecodeText(
+       PyObject *object,
+       const char *encoding,
+       const char *errors
+       );
+
+/* These two aren't actually text encoding specific, but _io.TextIOWrapper
+ * is the only current API consumer.
+ */
+PyAPI_FUNC(PyObject *) _PyCodecInfo_GetIncrementalDecoder(
+       PyObject *codec_info,
+       const char *errors
+       );
+
+PyAPI_FUNC(PyObject *) _PyCodecInfo_GetIncrementalEncoder(
+       PyObject *codec_info,
+       const char *errors
+       );
+
+
+
 /* --- Codec Lookup APIs -------------------------------------------------- 
 
    All APIs return a codec object with incremented refcount and are
@@ -103,33 +148,33 @@ PyAPI_FUNC(PyObject *) PyCodec_Decoder(
 
 /* Get a IncrementalEncoder object for the given encoding. */
 
-//PyAPI_FUNC(PyObject *) PyCodec_IncrementalEncoder(
-//       const char *encoding,
-//       const char *errors
-//       );
+PyAPI_FUNC(PyObject *) PyCodec_IncrementalEncoder(
+       const char *encoding,
+       const char *errors
+       );
 
 /* Get a IncrementalDecoder object function for the given encoding. */
 
-//PyAPI_FUNC(PyObject *) PyCodec_IncrementalDecoder(
-//       const char *encoding,
-//       const char *errors
-//       );
+PyAPI_FUNC(PyObject *) PyCodec_IncrementalDecoder(
+       const char *encoding,
+       const char *errors
+       );
 
 /* Get a StreamReader factory function for the given encoding. */
 
-//PyAPI_FUNC(PyObject *) PyCodec_StreamReader(
-//       const char *encoding,
-//       PyObject *stream,
-//       const char *errors
-//       );
+PyAPI_FUNC(PyObject *) PyCodec_StreamReader(
+       const char *encoding,
+       PyObject *stream,
+       const char *errors
+       );
 
 /* Get a StreamWriter factory function for the given encoding. */
 
-//PyAPI_FUNC(PyObject *) PyCodec_StreamWriter(
-//       const char *encoding,
-//       PyObject *stream,
-//       const char *errors
-//       );
+PyAPI_FUNC(PyObject *) PyCodec_StreamWriter(
+       const char *encoding,
+       PyObject *stream,
+       const char *errors
+       );
 
 /* Unicode encoding error handling callback registry API */
 
@@ -150,16 +195,16 @@ PyAPI_FUNC(PyObject *) PyCodec_LookupError(const char *name);
 PyAPI_FUNC(PyObject *) PyCodec_StrictErrors(PyObject *exc);
 
 /* ignore the unicode error, skipping the faulty input */
-//PyAPI_FUNC(PyObject *) PyCodec_IgnoreErrors(PyObject *exc);
+PyAPI_FUNC(PyObject *) PyCodec_IgnoreErrors(PyObject *exc);
 
 /* replace the unicode encode error with ? or U+FFFD */
-//PyAPI_FUNC(PyObject *) PyCodec_ReplaceErrors(PyObject *exc);
+PyAPI_FUNC(PyObject *) PyCodec_ReplaceErrors(PyObject *exc);
 
 /* replace the unicode encode error with XML character references */
-//PyAPI_FUNC(PyObject *) PyCodec_XMLCharRefReplaceErrors(PyObject *exc);
+PyAPI_FUNC(PyObject *) PyCodec_XMLCharRefReplaceErrors(PyObject *exc);
 
 /* replace the unicode encode error with backslash escapes (\x, \u and \U) */
-//PyAPI_FUNC(PyObject *) PyCodec_BackslashReplaceErrors(PyObject *exc);
+PyAPI_FUNC(PyObject *) PyCodec_BackslashReplaceErrors(PyObject *exc);
 
 #ifdef __cplusplus
 }

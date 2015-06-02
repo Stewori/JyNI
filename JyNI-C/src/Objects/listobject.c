@@ -342,6 +342,7 @@ PyList_Append(PyObject *op, PyObject *newitem)
 static void
 list_dealloc(PyListObject *op)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	Py_ssize_t i;
 	PyObject_GC_UnTrack(op);
 	Py_TRASHCAN_SAFE_BEGIN(op)
@@ -357,8 +358,10 @@ list_dealloc(PyListObject *op)
 		PyMem_FREE(op->ob_item);
 	}
 	if (numfree < PyList_MAXFREELIST && PyList_CheckExact(op))
+	{
+		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, op, -1);
 		free_list[numfree++] = op;
-	else
+	} else
 		Py_TYPE(op)->tp_free((PyObject *)op);
 	Py_TRASHCAN_SAFE_END(op)
 }

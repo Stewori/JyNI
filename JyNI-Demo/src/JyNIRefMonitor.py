@@ -24,16 +24,26 @@ sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it 
 
 import DemoExtension
 
-#l = ["Hello", "lovely", "world"]
-#DemoExtension.listModifyTest(l, 2)
-#print l[2]
+
+# a = 200000
+# print str(a)+" ("+str(id(a))+")"
+# b = 300000
+# print str(b)+" ("+str(id(b))+")"
+# b = 200000
+# print str(b)+" ("+str(id(b))+")"
+
+from JyNI import JyNI
+
+l = ["Hello", "lovely", "world"]
+DemoExtension.listModifyTest(l, 2)
+print "Set mem debug..."
+JyNI.JyRefMonitor_setMemDebugFlags(1)
+print "done"
+print l[1]
 #print l
 #self.assertEqual(l[2], "natively modified")
 #self.assertEqual(len(l), 3)
 
-from JyNI import JyNI
-print "Set mem debug..."
-JyNI.JyRefMonitor_setMemDebugFlags(1)
-print "done"
-DemoExtension.printInt(1333)
+DemoExtension.printInt(333)
+DemoExtension.hello_world()
 print "done2"

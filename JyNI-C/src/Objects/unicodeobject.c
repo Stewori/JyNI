@@ -146,7 +146,7 @@ static PyUnicodeObject *free_list = NULL;
 static int numfree = 0;
 
 /* The empty Unicode object is shared to improve performance. */
-static PyUnicodeObject *unicode_empty = NULL;
+PyUnicodeObject *unicode_empty = NULL;
 
 #define _Py_RETURN_UNICODE_EMPTY()                      \
 	do {                                                \
@@ -162,7 +162,7 @@ static PyUnicodeObject *unicode_empty = NULL;
 
 /* Single character Unicode strings in the Latin-1 range are being
    shared as well. */
-static PyUnicodeObject *unicode_latin1[256] = {NULL};
+PyUnicodeObject *unicode_latin1[256] = {NULL};
 
 /* Default encoding to use and assume when NULL is passed as encoding
    parameter; it is initialized by _PyUnicode_Init().
@@ -1318,7 +1318,7 @@ PyObject *PyUnicode_Decode(const char *s,
 	buffer = PyBuffer_FromMemory((void *)s, size);
 	if (buffer == NULL)
 		goto onError;
-	unicode = PyCodec_Decode(buffer, encoding, errors);
+	unicode = _PyCodec_DecodeText(buffer, encoding, errors);
 	if (unicode == NULL)
 		goto onError;
 	if (!PyUnicode_Check(unicode)) {
@@ -1351,7 +1351,7 @@ PyObject *PyUnicode_AsDecodedObject(PyObject *unicode,
 		encoding = PyUnicode_GetDefaultEncoding();
 
 	/* Decode via the codec registry */
-	v = PyCodec_Decode(unicode, encoding, errors);
+	v = _PyCodec_DecodeText(unicode, encoding, errors);
 	if (v == NULL)
 		goto onError;
 	return v;
@@ -1390,7 +1390,7 @@ PyObject *PyUnicode_AsEncodedObject(PyObject *unicode,
 		encoding = PyUnicode_GetDefaultEncoding();
 
 	/* Encode via the codec registry */
-	v = PyCodec_Encode(unicode, encoding, errors);
+	v = _PyCodec_EncodeText(unicode, encoding, errors);
 	if (v == NULL)
 		goto onError;
 	return v;
@@ -1428,7 +1428,7 @@ PyObject *PyUnicode_AsEncodedString(PyObject *unicode,
 	}
 
 	/* Encode via the codec registry */
-	v = PyCodec_Encode(unicode, encoding, errors);
+	v = _PyCodec_EncodeText(unicode, encoding, errors);
 	if (v == NULL)
 		goto onError;
 	if (!PyString_Check(v)) {
@@ -9047,10 +9047,17 @@ _PyUnicode_Fini(void)
 {
 	int i;
 
-	Py_CLEAR(unicode_empty);
+	if (unicode_empty) {
+		JyNI_CleanUp_JyObject(AS_JY_NO_GC(unicode_empty));
+		Py_CLEAR(unicode_empty);
+	}
 
-	for (i = 0; i < 256; i++)
-		Py_CLEAR(unicode_latin1[i]);
+	for (i = 0; i < 256; i++) {
+		if (unicode_latin1[i]) {
+			JyNI_CleanUp_JyObject(AS_JY_NO_GC(unicode_latin1[i]));
+			Py_CLEAR(unicode_latin1[i]);
+		}
+	}
 
 	(void)PyUnicode_ClearFreeList();
 }

@@ -154,8 +154,8 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
 	PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
 	jobject er = JyNI_JythonPyObject_FromPyObject(jres);
-	//Py_XDECREF(jargs);
-	//Py_XDECREF(jkw);
+	Py_XDECREF(jargs);
+	Py_XDECREF(jkw);
 	//Py_XDECREF(jres); Todo: Reason about this line!
 	LEAVE_JyNI
 	return er;
@@ -1249,6 +1249,11 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		Py_INCREF(nullstring);
 		return nullstring;
 	}
+	if ((*env)->IsSameObject(env, jythonPyObject, JyEmptyUnicode) && unicode_empty)
+	{
+		Py_INCREF(unicode_empty);
+		return unicode_empty;
+	}
 	if ((*env)->IsSameObject(env, jythonPyObject, JyEllipsis))
 	{
 		Py_INCREF(Py_Ellipsis);
@@ -1525,14 +1530,17 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	 * it would already have triggered "return NULL" some lines above.
 	 */
 	if (op == nullstring) return JyEmptyString;
+	if (op == unicode_empty) return JyEmptyUnicode;
+	//jputsLong(__LINE__);
 	if (op->ob_type == NULL)
 	{
-		//puts("type of op is NULL");
+		//jputs("type of op is NULL");
 		//we assume that only type-objects (and as such also exception types) can have ob_type == NULL.
 		//So we call PyType_Ready to init it. However this might fail brutally, if ob_type was
 		//NULL for some other reason. However this would not go far without segfault then anyway.
 		PyType_Ready(op); //this is the wrong place to do this... it's just a quick hack. Find better solution soon...
 	}
+	//jputsLong(__LINE__);
 //	jputs("convert:");
 //	if (!op->ob_type) jputs("type is NULL");
 //	if (!op->ob_type->tp_name) jputs("type name is NULL");
@@ -1553,17 +1561,16 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			if (er != NULL) return er;
 		}
 	}
-	//if (PyType_Check(op)) puts("appears to be a HeapType");
 	//jputsLong(__LINE__);
+	//if (PyType_Check(op)) puts("appears to be a HeapType");
 	JyObject* jy = AS_JY(op);
 	//jputsLong(__LINE__);
 	//if (JyNI_IsJyObject(op))
 	if (JyObject_IS_INITIALIZED(jy))
 	{
-		//jputs("already initialized");
+		//jputsLong(__LINE__);
 		if (jy->flags & SYNC_ON_PY_TO_JY_FLAG_MASK)
 			JyNI_SyncPy2Jy(op, jy);
-//		env(NULL);
 //		if ((*env)->IsSameObject(env, jy->jy, NULL)) {
 //			jputs("Alert!!! Initialized jy->jy became null!!");
 //			jputsLong((jlong) jy->jy);
@@ -1574,6 +1581,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		return jy->jy;
 	} else
 	{
+		//jputsLong(__LINE__);
 		TypeMapEntry* tme;
 		if (jy->jy != NULL)
 		{
@@ -1963,6 +1971,7 @@ jobject JyNotImplemented;
 jobject JyEllipsis;
 jobject JyEmptyFrozenSet;
 jobject JyEmptyString;
+jobject JyEmptyUnicode;
 //PyUnicodeObject* unicode_empty;
 PyObject* PyTrue;
 PyObject* PyFalse;
@@ -3251,6 +3260,8 @@ inline jint initSingletons(JNIEnv *env)
 	JyEmptyFrozenSet = (*env)->NewGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyFrozenSet));
 	jfieldID jyEmptyString = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyString", "Lorg/python/core/PyString;");
 	JyEmptyString = (*env)->NewGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyString));
+	jfieldID jyEmptyUnicode = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyUnicode", "Lorg/python/core/PyUnicode;");
+	JyEmptyUnicode = (*env)->NewGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyUnicode));
 	length0StringArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, stringClass, NULL));
 	length0PyObjectArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, pyObjectClass, NULL));
 
@@ -3259,7 +3270,6 @@ inline jint initSingletons(JNIEnv *env)
 	return JNI_VERSION_1_2;
 }
 
-//static PyStringObject *characters2[UCHAR_MAX + 1];
 
 int Py_DebugFlag; /* Needed by parser.c */
 int Py_VerboseFlag; /* Needed by import.c */

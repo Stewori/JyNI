@@ -54,9 +54,10 @@ import java.io.File;
 public class JyNI {
 	static {
 		try {
-			//To make configuration easier, we not only search in the library path for the libs,
-			//but also in the classpath and in some additional typical places.
-			//We currently don't look inside jar files.
+			/* To make configuration easier, we not only search on the library-path for the libs,
+			 * but also on the classpath and in some additional typical places.
+			 * We currently don't look inside jar files.
+			 */
 			String classpath = System.getProperty("java.class.path");
 			String libpath = System.getProperty("java.library.path");
 //			System.out.println("lp: "+libpath);
