@@ -68,8 +68,8 @@ PyModule_New(const char *name)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->NewGlobalRef(env, (*env)->NewObject(env, pyModuleClass, pyModuleByStringConstructor,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern))));
+			(*env)->NewObject(env, pyModuleClass, pyModuleByStringConstructor,
+			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
 
     /*PyModuleObject *m;
     PyObject *nameobj;

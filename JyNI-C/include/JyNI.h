@@ -184,15 +184,81 @@
  */
 
 /* General Flags: */
-#define JY_INITIALIZED_FLAG_MASK 1
-#define JY_GC_FLAG_MASK          2
-#define JY_TRUNCATE_FLAG_MASK    4
-//#define JY_PARTLY_TRUNCATE_MASK  8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
-#define JY_CPEER_FLAG_MASK      16
-//#define JY_TYPE_FLAG_MASK	    32 //Types can't have JyObject-data
-#define JY_CACHE_GC             32
-#define JY_CACHE_ETERNAL        64
-//32, 64, 128 reserved for future use...
+#define JY_INITIALIZED_FLAG_MASK    1
+#define JY_GC_FLAG_MASK             2
+#define JY_TRUNCATE_FLAG_MASK       4
+//#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
+#define JY_CPEER_FLAG_MASK         16
+//#define JY_TYPE_FLAG_MASK	       32 //Types can't have JyObject-data
+#define JY_CACHE_GC_FLAG_MASK      32
+#define JY_CACHE_ETERNAL_FLAG_MASK 64
+//8, 128 reserved for future use...
+#define JY_CACHE 96 // JY_CACHE_GC_MASK | JY_CACHE_ETERNAL_MASK
+
+
+#define Is_StaticSingleton(pyObject) \
+	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented)
+
+#define Is_StaticTypeObject(pyObject) \
+	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))
+
+#define Has_Dealloc(pyObject) \
+	(Py_TYPE(pyObject)->tp_dealloc)
+
+/* Todo Invent a flag or something to explicitly mark heap-allocated PyObjects.
+ * The current solution (i.e. the macro below) fails if an extension defines its
+ * own static singletons or whatever.
+ * Checking for tp_dealloc == NULL is a good indicator for static objects, but
+ * is not entirely safe - the extension might use some equivalent of none_dealloc.
+ */
+#define Is_Static_PyObject(pyObject) \
+	(Is_StaticSingleton(pyObject) || Is_StaticTypeObject(pyObject) || !Has_Dealloc(pyObject))
+
+
+#define JyNIClearRef0(jobjectRef, flags, env0) \
+	if (!(flags & JY_CACHE)) \
+		(*env0)->DeleteLocalRef(env0, jobjectRef)
+
+#define JyNIClearRef(jobjectRef, pyObject, env0) \
+	if (!Is_Static_PyObject(pyObject)) { \
+		jyRef0 = AS_JY(jobjectRef); \
+		JyNIClearRef0(jobjectRef, jyRef0->flags, env0) \
+	} else if (Is_StaticTypeObject(pyObject)) { \
+		(*env0)->DeleteLocalRef(env0, jobjectRef); \
+	}
+
+#define JyNIToGlobalRef0(jobjectRef, flags, env0) \
+	if (!(flags & JY_CACHE)) { \
+		jobjectTmp0 = jobjectRef; \
+		jobjectRef = (*env0)->NewGlobalRef(env0, jobjectRef); \
+		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
+	}
+
+#define JyNIToGlobalRef(jobjectRef, pyObject, env0) \
+	if (!Is_Static_PyObject(pyObject)) { \
+		JyNIToGlobalRef0(jobjectRef, AS_JY(pyObject)->flags, env0) \
+	} else if (Is_StaticTypeObject(pyObject)) { \
+		jobjectTmp0 = jobjectRef; \
+		jobjectRef = (*env0)->NewGlobalRef(env0, jobjectRef); \
+		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
+	}
+
+#define JyNIToWeakGlobalRef0(jobjectRef, flags, env0) \
+	if (!(flags & JY_CACHE)) { \
+		jobjectTmp0 = jobjectRef; \
+		jobjectRef = (*env0)->NewWeakGlobalRef(env0, jobjectRef); \
+		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
+	}
+
+#define JyNIToWeakGlobalRef(jobjectRef, pyObject, env0) \
+	if (!Is_Static_PyObject(pyObject)) { \
+		JyNIToWeakGlobalRef0(jobjectRef, AS_JY(pyObject)->flags, env0) \
+	} else if (Is_StaticTypeObject(pyObject)) { \
+		jobjectTmp0 = jobjectRef; \
+		jobjectRef = (*env0)->NewWeakGlobalRef(env0, jobjectRef); \
+		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
+	}
+
 
 /* define some method signatures for sync purposes: */
 
@@ -270,7 +336,7 @@ typedef struct JyAttribute JyAttribute; //Forward declaration
 struct JyAttribute { const char* name; void* value; char flags; JyAttribute* next;};
 typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
-typedef struct { jobject jy; unsigned short flags; JyAttribute* attr;} JyObject;
+typedef struct { jweak jy; unsigned short flags; JyAttribute* attr;} JyObject;
 typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject;
 typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;
 /* type_name is optional and defaults to py_type->tp_name */
@@ -302,63 +368,14 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 	(jyObj)->attr = NULL; \
 	(jyObj)->jy = NULL
 
+#define JyNI_InitSingleton(cSingle, jSingle) \
+	AS_JY_NO_GC(cSingle)->flags |= JY_CACHE_ETERNAL_FLAG_MASK | JY_INITIALIZED_FLAG_MASK; \
+	AS_JY_NO_GC(cSingle)->jy = jSingle
 
-/* Replacement for Py_EnterRecursiveCall.
- * Original usage: Py_EnterRecursiveCall(where) : fail (?)
- * Example:
- * if (Py_EnterRecursiveCall(" while doing blah"))
- *  	return NULL;
- *
- * New version:
- * Usage: Jy_EnterRecursiveCall(where) : void
- * Result is placed in Jy_EnterRecursiveCallResult.
- * Example:
- * Jy_EnterRecursiveCall(" while doing blah");
- * if (Jy_EnterRecursiveCallResult) return NULL;
- *
- * Alternative:
- * Usage: Jy_EnterRecursiveCall2(where, doOnFail) : void
- * Example:
- * Jy_EnterRecursiveCall2(" while doing blah", return NULL);
- *
- * Warning: Can only be used once per block. For subsequent usage one
- * needs to adopt this macro by hand and simply leave out the first line.
- *
- * Note that these macros are only usable after a call to the env-macro in the same block.
- */
-//#define Jy_EnterRecursiveCall(where) \
-//	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
-//	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
-//	jboolean Jy_EnterRecursiveCallResult = JNI_FALSE; \
-//	if ((*env)->ExceptionCheck(env)) \
-//	{ \
-//		(*env)->ExceptionClear(env); \
-//		Jy_EnterRecursiveCallResult = JNI_TRUE; \
-//	}
-//
-//#define Jy_EnterRecursiveCall2(where, doOnFail) \
-//	jobject tstate = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState); \
-//	(*env)->CallVoidMethod(env, tstate, pyThreadStateEnterRecursiveCall, (*env)->NewStringUTF(env, where)); \
-//	if ((*env)->ExceptionCheck(env)) \
-//	{ \
-//		(*env)->ExceptionClear(env); \
-//		doOnFail; \
-//	}
+#define JyNI_InitSingletonGC(cSingle, jSingle) \
+	AS_JY_WITH_GC(cSingle)->flags |= JY_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK | JY_INITIALIZED_FLAG_MASK; \
+	AS_JY_WITH_GC(cSingle)->jy = jSingle
 
-/* Replacement for Py_LeaveRecursiveCall.
- * Original usage: Py_LeaveRecursiveCall()
- * Example:
- * Py_LeaveRecursiveCall();
- *
- * New version:
- * Usage: Jy_LeaveRecursiveCall()
- * i.e. usage did not change from original
- *
- * Note that this macro is only usable after a call to
- * Jy_EnterRecursiveCall or Jy_EnterRecursiveCall2 in the same block.
- */
-//#define Jy_LeaveRecursiveCall() \
-//	(*env)->CallVoidMethod(env, tstate, pyThreadStateLeaveRecursiveCall)
 
 /* Call-ins: */
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jlong tstate);
@@ -407,6 +424,13 @@ inline jobject JyNI_JythonExceptionType_FromPyExceptionType(PyObject* exc);
 inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc);
 
 /* Conversion-Stuff: */
+
+/*
+ * Returns a jobject as a new JNI-local reference, unless op has a
+ * cache-flag set. The caller should call deleteLocalRef on it after
+ * work was done. In case the reference must be stored or cached for
+ * future used, NewGlobalRef must be used.
+ */
 inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op);
 
 /*
@@ -488,6 +512,9 @@ extern PyUnicodeObject *unicode_empty;
 /* (These macros overwrite those in intobject.c.) */
 #define NSMALLPOSINTS           257
 #define NSMALLNEGINTS           5
+#define NSMALLPOSINTSJYTHON     900
+#define NSMALLNEGINTSJYTHON     100
+#define LETTERCHAR_MAXJYTHON    256
 extern JyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
 extern PyStringObject *characters[UCHAR_MAX + 1];
 extern PyUnicodeObject *unicode_latin1[256];
@@ -560,7 +587,6 @@ extern jmethodID JyNISetNativeHandle;
 extern jmethodID JyNILookupNativeHandle;
 extern jmethodID JyNIClearNativeHandle;
 extern jmethodID JyNILookupCPeerHandle;
-//extern jmethodID JyNIConstructDefaultObject;
 extern jmethodID JyNIGetDLOpenFlags;
 extern jmethodID JyNIGetDLVerbose;
 extern jmethodID JyNIGetJyObjectByName;

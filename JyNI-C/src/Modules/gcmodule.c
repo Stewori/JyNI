@@ -1545,7 +1545,15 @@ _JyObject_GC_New(PyTypeObject *tp, TypeMapEntry* tme)
 		if (op != NULL)
 		{
 			JyObject* jy = AS_JY_WITH_GC(op);
-			jy->jy = (jobject) tme;//->jy_class;
+			/*
+			 * We abuse the jy-field here to cache the already
+			 * looked-up tme for later use. Methods in JyNI are
+			 * aware of this and check for a cached tme in the
+			 * jy-field before another look-up is performed.
+			 * A non-NULL jy-field and lacking the INITIALIZED-flag
+			 * indicate that a tme was stored in the jy-field.
+			 */
+			jy->jy = (jweak) tme;
 			jy->flags |= tme->flags;
 			op = PyObject_INIT(op, tp);
 		}
@@ -1575,7 +1583,15 @@ _JyObject_GC_NewVar(PyTypeObject *tp, Py_ssize_t nitems, TypeMapEntry* tme)
 		if (op != NULL)
 		{
 			JyObject* jy = AS_JY_WITH_GC(op);
-			jy->jy = (jobject) tme;//tme->jy_class;
+			/*
+			 * We abuse the jy-field here to cache the already
+			 * looked-up tme for later use. Methods in JyNI are
+			 * aware of this and check for a cached tme in the
+			 * jy-field before another look-up is performed.
+			 * A non-NULL jy-field and lacking the INITIALIZED-flag
+			 * indicate that a tme was stored in the jy-field.
+			 */
+			jy->jy = (jweak) tme;
 			jy->flags |= tme->flags;
 			op = PyObject_INIT_VAR(op, tp, nitems);
 		}

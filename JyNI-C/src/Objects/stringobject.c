@@ -71,7 +71,7 @@ op = (PyStringObject *) FROM_JY_NO_GC(jy); \
 JyNIDebug(JY_NATIVE_ALLOC | JY_INLINE_MASK, jy, basicsize, PyString_Type.tp_name)
 
 PyStringObject *characters[UCHAR_MAX + 1];
-/*static*/ PyStringObject *nullstring; //not static in JyNI to use it with extern in JyNI.h
+PyStringObject *nullstring; //not static in JyNI to use it with extern in JyNI.h
 
 /* This dictionary holds all interned strings.  Note that references to
    strings in this dictionary are *not* counted in the string's ob_refcnt.
@@ -160,6 +160,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 		PyString_InternInPlace(&t);
 		op = (PyStringObject *)t;
 		nullstring = op;
+		JyNI_InitSingleton(nullstring, JyEmptyString);
 		Py_INCREF(op);
 	} else if (size == 1 && str != NULL) {
 		PyObject *t = (PyObject *)op;
@@ -213,6 +214,7 @@ PyString_FromString(const char *str)
 		PyString_InternInPlace(&t);
 		op = (PyStringObject *)t;
 		nullstring = op;
+		JyNI_InitSingleton(nullstring, JyEmptyString);
 		Py_INCREF(op);
 	} else if (size == 1) {
 		PyObject *t = (PyObject *)op;

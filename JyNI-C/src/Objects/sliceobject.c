@@ -67,25 +67,25 @@ ellipsis_repr(PyObject *op)
 
 PyTypeObject PyEllipsis_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"ellipsis",						 /* tp_name */
-	0,								  /* tp_basicsize */
-	0,								  /* tp_itemsize */
-	0, /*never called*/				 /* tp_dealloc */
-	0,								  /* tp_print */
-	0,								  /* tp_getattr */
-	0,								  /* tp_setattr */
-	0,								  /* tp_compare */
-	ellipsis_repr,					  /* tp_repr */
-	0,								  /* tp_as_number */
-	0,								  /* tp_as_sequence */
-	0,								  /* tp_as_mapping */
-	0,								  /* tp_hash */
-	0,								  /* tp_call */
-	0,								  /* tp_str */
-	PyObject_GenericGetAttr,			/* tp_getattro */
-	0,								  /* tp_setattro */
-	0,								  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,				 /* tp_flags */
+	"ellipsis",                         /* tp_name */
+	0,                                  /* tp_basicsize */
+	0,                                  /* tp_itemsize */
+	0, /*never called*/                 /* tp_dealloc */
+	0,                                  /* tp_print */
+	0,                                  /* tp_getattr */
+	0,                                  /* tp_setattr */
+	0,                                  /* tp_compare */
+	ellipsis_repr,                      /* tp_repr */
+	0,                                  /* tp_as_number */
+	0,                                  /* tp_as_sequence */
+	0,                                  /* tp_as_mapping */
+	0,                                  /* tp_hash */
+	0,                                  /* tp_call */
+	0,                                  /* tp_str */
+	PyObject_GenericGetAttr,            /* tp_getattro */
+	0,                                  /* tp_setattro */
+	0,                                  /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,                 /* tp_flags */
 };
 
 PyObject _Py_EllipsisObject = {
@@ -462,41 +462,41 @@ slice_hash(PySliceObject *v)
 
 PyTypeObject PySlice_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"slice",					/* Name of this type */
-	sizeof(PySliceObject),	  /* Basic object size */
-	0,						  /* Item size for varobject */
-	(destructor)slice_dealloc,				  /* tp_dealloc */
-	0,										  /* tp_print */
-	0,										  /* tp_getattr */
-	0,										  /* tp_setattr */
-	(cmpfunc)slice_compare,					  /* tp_compare */
-	(reprfunc)slice_repr,					  /* tp_repr */
-	0,										  /* tp_as_number */
-	0,										  /* tp_as_sequence */
-	0,										  /* tp_as_mapping */
-	(hashfunc)slice_hash,					  /* tp_hash */
-	0,										  /* tp_call */
-	0,										  /* tp_str */
-	PyObject_GenericGetAttr,				  /* tp_getattro */
-	0,										  /* tp_setattro */
-	0,										  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,						  /* tp_flags */
-	slice_doc,								  /* tp_doc */
-	0,										  /* tp_traverse */
-	0,										  /* tp_clear */
-	0,										  /* tp_richcompare */
-	0,										  /* tp_weaklistoffset */
-	0,										  /* tp_iter */
-	0,										  /* tp_iternext */
-	slice_methods,							  /* tp_methods */
-	0,//slice_members,						  /* tp_members */
-	slice_getsets,							  /* tp_getset */
-	0,										  /* tp_base */
-	0,										  /* tp_dict */
-	0,										  /* tp_descr_get */
-	0,										  /* tp_descr_set */
-	0,										  /* tp_dictoffset */
-	0,										  /* tp_init */
-	0,										  /* tp_alloc */
-	slice_new,								  /* tp_new */
+	"slice",                    /* Name of this type */
+	sizeof(PySliceObject),      /* Basic object size */
+	0,                          /* Item size for varobject */
+	(destructor)slice_dealloc,                /* tp_dealloc */
+	0,                                        /* tp_print */
+	0,                                        /* tp_getattr */
+	0,                                        /* tp_setattr */
+	(cmpfunc)slice_compare,                   /* tp_compare */
+	(reprfunc)slice_repr,                     /* tp_repr */
+	0,                                        /* tp_as_number */
+	0,                                        /* tp_as_sequence */
+	0,                                        /* tp_as_mapping */
+	(hashfunc)slice_hash,                     /* tp_hash */
+	0,                                        /* tp_call */
+	0,                                        /* tp_str */
+	PyObject_GenericGetAttr,                  /* tp_getattro */
+	0,                                        /* tp_setattro */
+	0,                                        /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,                       /* tp_flags */
+	slice_doc,                                /* tp_doc */
+	0,                                        /* tp_traverse */
+	0,                                        /* tp_clear */
+	0,                                        /* tp_richcompare */
+	0,                                        /* tp_weaklistoffset */
+	0,                                        /* tp_iter */
+	0,                                        /* tp_iternext */
+	slice_methods,                            /* tp_methods */
+	0,//slice_members,                        /* tp_members */
+	slice_getsets,                            /* tp_getset */
+	0,                                        /* tp_base */
+	0,                                        /* tp_dict */
+	0,                                        /* tp_descr_get */
+	0,                                        /* tp_descr_set */
+	0,                                        /* tp_dictoffset */
+	0,                                        /* tp_init */
+	0,                                        /* tp_alloc */
+	slice_new,                                /* tp_new */
 };

@@ -54,12 +54,12 @@
 #include "JyNI.h"
 
 //singletons:
-extern jobject JyNone;
-extern jobject JyNotImplemented;
-extern jobject JyEllipsis;
-extern jobject JyEmptyFrozenSet;
-extern jobject JyEmptyString;
-extern jobject JyEmptyUnicode;
+extern jweak JyNone;
+extern jweak JyNotImplemented;
+extern jweak JyEllipsis;
+extern jweak JyEmptyFrozenSet;
+extern jweak JyEmptyString;
+extern jweak JyEmptyUnicode;
 
 extern jclass pyObjectClass;
 extern jmethodID pyObjectGetType;
@@ -134,8 +134,9 @@ extern jclass pyStringMapClass;
 
 extern jclass pyIntClass;
 extern jmethodID pyIntConstructor;
-extern jmethodID pyIntAsInt;
-extern jmethodID pyIntAsLong;
+extern jmethodID pyIntGetValue;
+//extern jmethodID pyIntAsInt;
+//extern jmethodID pyIntAsLong;
 
 extern jclass pyLongClass;
 extern jmethodID pyLongByBigIntConstructor;

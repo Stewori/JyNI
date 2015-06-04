@@ -146,7 +146,7 @@ static PyUnicodeObject *free_list = NULL;
 static int numfree = 0;
 
 /* The empty Unicode object is shared to improve performance. */
-PyUnicodeObject *unicode_empty = NULL;
+PyUnicodeObject *unicode_empty = NULL; //not static in JyNI to use it with extern in JyNI.h
 
 #define _Py_RETURN_UNICODE_EMPTY()                      \
 	do {                                                \
@@ -155,6 +155,7 @@ PyUnicodeObject *unicode_empty = NULL;
 		else {                                          \
 			unicode_empty = _PyUnicode_New(0);          \
 			if (unicode_empty != NULL)                  \
+				JyNI_InitSingleton(unicode_empty, JyEmptyUnicode); \
 				Py_INCREF(unicode_empty);               \
 		}                                               \
 		return (PyObject *)unicode_empty;               \
@@ -9001,6 +9002,7 @@ void _PyUnicode_Init(void)
 		unicode_empty = _PyUnicode_New(0);
 		if (!unicode_empty)
 			return;
+		JyNI_InitSingleton(unicode_empty, JyEmptyUnicode);
 	}
 
 	if (PyType_Ready(&PyUnicode_Type) < 0)

@@ -2908,9 +2908,10 @@ type_is_gc(PyTypeObject *type)
 /*
  * JyNI-note:
  * PyTyp_Type functions seem to be hardly used by extensions and
- * are on the other hand hard to implement JyNI-friendly. So we
- * try live without them for now. We will implement them, but not
- * with high priority, unless we discover that they are needed.
+ * are on the other hand hard to implement in a JyNI-friendly way.
+ * So we try to live without them for now. We will implement them,
+ * but not with high priority, unless we discover that they are
+ * crucially needed.
  */
 PyTypeObject PyType_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)

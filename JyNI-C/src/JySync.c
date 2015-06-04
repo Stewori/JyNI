@@ -101,10 +101,18 @@ jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src)
 		(*env)->SetObjectArrayElement(env, back, i, JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(src, i)));
 		//Py_XINCREF(PyTuple_GET_ITEM(src, i));
 	}
-	//return (*env)->NewGlobalRef(env, (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor, back, JNI_FALSE));
 	return (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor, back, JNI_FALSE);
 }
 
+jboolean isPreAllocatedJythonString(jobject obj, char value)//jchar value)
+{
+	if (value >= LETTERCHAR_MAXJYTHON)
+		return JNI_FALSE;
+	env(JNI_FALSE);
+	jarray scache = (*env)->GetStaticObjectField(env, pyPyClass, pyPyLetters);
+	jobject cachedString = (*env)->GetObjectArrayElement(env, scache, (jint) value);
+	return (*env)->IsSameObject(env, cachedString, obj);
+}
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -113,19 +121,34 @@ PyObject* JySync_Init_PyString_From_JyString(jobject src)
 {
 	env(NULL);
 	jstring jstr = (*env)->CallObjectMethod(env, src, pyStringAsString);
-	cstr_from_jstring(cstr, jstr);
-	return PyString_FromString(cstr);
+	//cstr_from_jstring(cstr, jstr);
+
+	//cstr_from_jstring(cstrName, jstr)
+	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL);
+	size_t len = strlen(utf_string);
+	char cstr[len+1];
+	strcpy(cstr, utf_string);
+	(*env)->ReleaseStringUTFChars(env, jstr, utf_string);
+	if (len == 1) {
+		PyObject* result = PyString_FromString(cstr);
+		if (isPreAllocatedJythonString(src, cstr[0]))
+			/* The JY_CACHE_ETERNAL-flag tells JyNI permanently that accessing
+			 * AS_JY_NO_GC(blah)->jy is safe, i.e. the reference cannot be
+			 * garbage-collected on Java-side. Usually methods in JySync should
+			 * not set flags or perform JyObject initialization. However setting
+			 * this flag is only feasible in JySync.c as the decision is very
+			 * type-specific. So we set it here to tell the caller.
+			 */
+			AS_JY_NO_GC(result)->flags |= JY_CACHE_ETERNAL_FLAG_MASK;
+		return result;
+	} else
+		return PyString_FromString(cstr);
 }
 
 jobject JySync_Init_JyString_From_PyString(PyObject* src)
 {
 	//todo: check interned-regulations on jython-side
 	env(NULL);
-//	return	(*env)->NewGlobalRef(env,
-//					(*env)->NewObject(env, pyStringClass, pyStringByJStringConstructor,
-//						(*env)->NewStringUTF(env, PyString_AS_STRING(src))
-//					)
-//				);
 	jstring jstr = (*env)->NewStringUTF(env, PyString_AS_STRING(src));
 	if (JyNI_HasJyAttribute(AS_JY_NO_GC(src), JyAttributeStringInterned))
 		jstr = (*env)->CallObjectMethod(env, jstr, stringIntern);
@@ -244,6 +267,15 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
 //	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
 //}
 
+jboolean isPreAllocatedJythonInt(jobject obj, jint value)
+{
+	if (value < -NSMALLNEGINTSJYTHON || value >= NSMALLPOSINTSJYTHON)
+		return JNI_FALSE;
+	env(JNI_FALSE);
+	jarray icache = (*env)->GetStaticObjectField(env, pyPyClass, pyPyIntegerCache);
+	jobject cachedInt = (*env)->GetObjectArrayElement(env, icache, value+NSMALLNEGINTSJYTHON);
+	return (*env)->IsSameObject(env, cachedInt, obj);
+}
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -251,7 +283,19 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
 PyObject* JySync_Init_PyInt_From_JyInt(jobject src)
 {
 	env(NULL);
-	return PyInt_FromLong((long) (*env)->CallLongMethod(env, src, pyIntAsLong));
+	//return PyInt_FromLong((long) (*env)->CallLongMethod(env, src, pyIntAsLong));
+	jint value = (*env)->CallIntMethod(env, src, pyIntGetValue);
+	PyObject* result = PyInt_FromLong((long) value);
+	if (isPreAllocatedJythonInt(src, value))
+		/* The JY_CACHE_ETERNAL-flag tells JyNI permanently that accessing
+		 * AS_JY_NO_GC(blah)->jy is safe, i.e. the reference cannot be
+		 * garbage-collected on Java-side. Usually methods in JySync should
+		 * not set flags or perform JyObject initialization. However setting
+		 * this flag is only feasible in JySync.c as the decision is very
+		 * type-specific. So we set it here to tell the caller.
+		 */
+		AS_JY_NO_GC(result)->flags |= JY_CACHE_ETERNAL_FLAG_MASK;
+	return result;
 }
 
 /*

@@ -1256,14 +1256,14 @@ make_new_set(PyTypeObject *type, PyObject *iterable)
 		JyObject* srcJy = AS_JY((PyObject*) so);
 		srcJy->jy = (*env)->NewWeakGlobalRef(env, JyEmptyFrozenSet);
 		srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
-		//so->used = (*env)->CallIntMethod(env, jobj, pyFrozenSetSize);
+			//so->used = (*env)->CallIntMethod(env, jobj, pyFrozenSetSize);
 	}//else leave srcJy uninitialized - JyNI's default initialization approach should do the job in this case.
 
 	return (PyObject *)so;
 }
 
 /* The empty frozenset is a singleton */
-static PyObject *emptyfrozenset = NULL;
+static PyObject *emptyfrozenset = NULL; //Can also be static in JyNI
 
 static PyObject *
 frozenset_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -1291,8 +1291,14 @@ frozenset_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		Py_DECREF(result);
 	}
 	/* The empty frozenset is a singleton */
-	if (emptyfrozenset == NULL)
+	if (emptyfrozenset == NULL) {
 		emptyfrozenset = make_new_set(type, NULL);
+//JyNI-note: It appears cumbersome that a GC-object is a singleton.
+//Maybe we overlooked something here.
+		env(NULL);
+		(*env)->DeleteWeakGlobalRef(env, AS_JY_WITH_GC(emptyfrozenset)->jy);
+		JyNI_InitSingletonGC(emptyfrozenset, JyEmptyFrozenSet);
+	}
 	Py_XINCREF(emptyfrozenset);
 	return emptyfrozenset;
 }
@@ -2447,46 +2453,46 @@ Build an unordered collection of unique elements.");
 
 PyTypeObject PySet_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"set",							  /* tp_name */
-	sizeof(PySetObject),				/* tp_basicsize */
-	0,								  /* tp_itemsize */
+	"set",                                 /* tp_name */
+	sizeof(PySetObject),                   /* tp_basicsize */
+	0,                                     /* tp_itemsize */
 	/* methods */
-	(destructor)set_dealloc,			/* tp_dealloc */
-	(printfunc)set_tp_print,			/* tp_print */
-	0,								  /* tp_getattr */
-	0,								  /* tp_setattr */
-	set_nocmp,						  /* tp_compare */
-	(reprfunc)set_repr,				 /* tp_repr */
-	&set_as_number,					 /* tp_as_number */
-	&set_as_sequence,				   /* tp_as_sequence */
-	0,								  /* tp_as_mapping */
-	(hashfunc)PyObject_HashNotImplemented,	  /* tp_hash */
-	0,								  /* tp_call */
-	0,								  /* tp_str */
-	PyObject_GenericGetAttr,			/* tp_getattro */
-	0,								  /* tp_setattro */
-	0,								  /* tp_as_buffer */
+	(destructor)set_dealloc,               /* tp_dealloc */
+	(printfunc)set_tp_print,               /* tp_print */
+	0,                                     /* tp_getattr */
+	0,                                     /* tp_setattr */
+	set_nocmp,                             /* tp_compare */
+	(reprfunc)set_repr,                    /* tp_repr */
+	&set_as_number,                        /* tp_as_number */
+	&set_as_sequence,                      /* tp_as_sequence */
+	0,                                     /* tp_as_mapping */
+	(hashfunc)PyObject_HashNotImplemented, /* tp_hash */
+	0,                                     /* tp_call */
+	0,                                     /* tp_str */
+	PyObject_GenericGetAttr,               /* tp_getattro */
+	0,                                     /* tp_setattro */
+	0,                                     /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_CHECKTYPES |
-		Py_TPFLAGS_BASETYPE,			/* tp_flags */
-	set_doc,							/* tp_doc */
-	0,//(traverseproc)set_traverse,		 /* tp_traverse */
-	(inquiry)set_clear_internal,		/* tp_clear */
-	(richcmpfunc)set_richcompare,	   /* tp_richcompare */
-	offsetof(PySetObject, weakreflist),	//JyNI todo: repair this line	 /* tp_weaklistoffset */
-	0,//(getiterfunc)set_iter,	  /* tp_iter */
-	0,								  /* tp_iternext */
-	set_methods,						/* tp_methods */
-	0,								  /* tp_members */
-	0,								  /* tp_getset */
-	0,								  /* tp_base */
-	0,								  /* tp_dict */
-	0,								  /* tp_descr_get */
-	0,								  /* tp_descr_set */
-	0,								  /* tp_dictoffset */
-	(initproc)set_init,				 /* tp_init */
-	PyType_GenericAlloc,				/* tp_alloc */
-	set_new,							/* tp_new */
-	PyObject_GC_Del,					/* tp_free */
+		Py_TPFLAGS_BASETYPE,               /* tp_flags */
+	set_doc,                               /* tp_doc */
+	0,//(traverseproc)set_traverse,        /* tp_traverse */
+	(inquiry)set_clear_internal,           /* tp_clear */
+	(richcmpfunc)set_richcompare,          /* tp_richcompare */
+	offsetof(PySetObject, weakreflist),    //JyNI todo: repair this line	 /* tp_weaklistoffset */
+	0,//(getiterfunc)set_iter,             /* tp_iter */
+	0,                                     /* tp_iternext */
+	set_methods,                           /* tp_methods */
+	0,                                     /* tp_members */
+	0,                                     /* tp_getset */
+	0,                                     /* tp_base */
+	0,                                     /* tp_dict */
+	0,                                     /* tp_descr_get */
+	0,                                     /* tp_descr_set */
+	0,                                     /* tp_dictoffset */
+	(initproc)set_init,                    /* tp_init */
+	PyType_GenericAlloc,                   /* tp_alloc */
+	set_new,                               /* tp_new */
+	PyObject_GC_Del,                       /* tp_free */
 };
 
 /* frozenset object ********************************************************/
@@ -2519,23 +2525,23 @@ static PyMethodDef frozenset_methods[] = {
 };
 
 static PyNumberMethods frozenset_as_number = {
-	0,								  /*nb_add*/
-	(binaryfunc)set_sub,				/*nb_subtract*/
-	0,								  /*nb_multiply*/
-	0,								  /*nb_divide*/
-	0,								  /*nb_remainder*/
-	0,								  /*nb_divmod*/
-	0,								  /*nb_power*/
-	0,								  /*nb_negative*/
-	0,								  /*nb_positive*/
-	0,								  /*nb_absolute*/
-	0,								  /*nb_nonzero*/
-	0,								  /*nb_invert*/
-	0,								  /*nb_lshift*/
-	0,								  /*nb_rshift*/
-	(binaryfunc)set_and,				/*nb_and*/
-	(binaryfunc)set_xor,				/*nb_xor*/
-	(binaryfunc)set_or,				 /*nb_or*/
+	0,                                  /*nb_add*/
+	(binaryfunc)set_sub,                /*nb_subtract*/
+	0,                                  /*nb_multiply*/
+	0,                                  /*nb_divide*/
+	0,                                  /*nb_remainder*/
+	0,                                  /*nb_divmod*/
+	0,                                  /*nb_power*/
+	0,                                  /*nb_negative*/
+	0,                                  /*nb_positive*/
+	0,                                  /*nb_absolute*/
+	0,                                  /*nb_nonzero*/
+	0,                                  /*nb_invert*/
+	0,                                  /*nb_lshift*/
+	0,                                  /*nb_rshift*/
+	(binaryfunc)set_and,                /*nb_and*/
+	(binaryfunc)set_xor,                /*nb_xor*/
+	(binaryfunc)set_or,                 /*nb_or*/
 };
 
 PyDoc_STRVAR(frozenset_doc,
@@ -2546,46 +2552,46 @@ Build an immutable unordered collection of unique elements.");
 
 PyTypeObject PyFrozenSet_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"frozenset",						/* tp_name */
-	sizeof(PySetObject),				/* tp_basicsize */
-	0,								  /* tp_itemsize */
+	"frozenset",                        /* tp_name */
+	sizeof(PySetObject),                /* tp_basicsize */
+	0,                                  /* tp_itemsize */
 	/* methods */
-	(destructor)set_dealloc,			/* tp_dealloc */
-	(printfunc)set_tp_print,			/* tp_print */
-	0,								  /* tp_getattr */
-	0,								  /* tp_setattr */
-	set_nocmp,						  /* tp_compare */
-	(reprfunc)set_repr,				 /* tp_repr */
-	&frozenset_as_number,			   /* tp_as_number */
-	&set_as_sequence,				   /* tp_as_sequence */
-	0,								  /* tp_as_mapping */
-	frozenset_hash,					 /* tp_hash */
-	0,								  /* tp_call */
-	0,								  /* tp_str */
-	PyObject_GenericGetAttr,			/* tp_getattro */
-	0,								  /* tp_setattro */
-	0,								  /* tp_as_buffer */
+	(destructor)set_dealloc,            /* tp_dealloc */
+	(printfunc)set_tp_print,            /* tp_print */
+	0,                                  /* tp_getattr */
+	0,                                  /* tp_setattr */
+	set_nocmp,                          /* tp_compare */
+	(reprfunc)set_repr,                 /* tp_repr */
+	&frozenset_as_number,               /* tp_as_number */
+	&set_as_sequence,                   /* tp_as_sequence */
+	0,                                  /* tp_as_mapping */
+	frozenset_hash,                     /* tp_hash */
+	0,                                  /* tp_call */
+	0,                                  /* tp_str */
+	PyObject_GenericGetAttr,            /* tp_getattro */
+	0,                                  /* tp_setattro */
+	0,                                  /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_CHECKTYPES |
-		Py_TPFLAGS_BASETYPE,			/* tp_flags */
-	frozenset_doc,					  /* tp_doc */
-	0,//(traverseproc)set_traverse,		 /* tp_traverse */
-	(inquiry)set_clear_internal,		/* tp_clear */
-	(richcmpfunc)set_richcompare,	   /* tp_richcompare */
+		Py_TPFLAGS_BASETYPE,            /* tp_flags */
+	frozenset_doc,                      /* tp_doc */
+	0,//(traverseproc)set_traverse,     /* tp_traverse */
+	(inquiry)set_clear_internal,        /* tp_clear */
+	(richcmpfunc)set_richcompare,       /* tp_richcompare */
 	offsetof(PySetObject, weakreflist),		//JyNI todo: repair this /* tp_weaklistoffset */
-	0,//(getiterfunc)set_iter,			  /* tp_iter */
-	0,								  /* tp_iternext */
-	frozenset_methods,				  /* tp_methods */
-	0,								  /* tp_members */
-	0,								  /* tp_getset */
-	0,								  /* tp_base */
-	0,								  /* tp_dict */
-	0,								  /* tp_descr_get */
-	0,								  /* tp_descr_set */
-	0,								  /* tp_dictoffset */
-	0,								  /* tp_init */
-	PyType_GenericAlloc,				/* tp_alloc */
-	frozenset_new,					  /* tp_new */
-	PyObject_GC_Del,					/* tp_free */
+	0,//(getiterfunc)set_iter,          /* tp_iter */
+	0,                                  /* tp_iternext */
+	frozenset_methods,                  /* tp_methods */
+	0,                                  /* tp_members */
+	0,                                  /* tp_getset */
+	0,                                  /* tp_base */
+	0,                                  /* tp_dict */
+	0,                                  /* tp_descr_get */
+	0,                                  /* tp_descr_set */
+	0,                                  /* tp_dictoffset */
+	0,                                  /* tp_init */
+	PyType_GenericAlloc,                /* tp_alloc */
+	frozenset_new,                      /* tp_new */
+	PyObject_GC_Del,                    /* tp_free */
 };
 
 
