@@ -188,13 +188,17 @@
 #define JY_GC_FLAG_MASK             2
 #define JY_TRUNCATE_FLAG_MASK       4
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
-#define JY_CPEER_FLAG_MASK         16
-//#define JY_TYPE_FLAG_MASK	       32 //Types can't have JyObject-data
-#define JY_CACHE_GC_FLAG_MASK      32
-#define JY_CACHE_ETERNAL_FLAG_MASK 64
-//8, 128 reserved for future use...
-#define JY_CACHE 96 // JY_CACHE_GC_MASK | JY_CACHE_ETERNAL_MASK
-
+#define JY_CPEER_FLAG_MASK          8
+#define JY_CACHE_GC_FLAG_MASK      16
+#define JY_CACHE_ETERNAL_FLAG_MASK 32
+#define JY_GC_SINGLE_LINK          64
+#define JY_GC_FIXED_SIZE          128 /* Only meaningful if JY_GC_SINGLE_LINK is turned off.
+                                       * Then it distinguishes array-like vs list-like links.
+                                       * Otherwise it is interpreted as JY_GC_SPECIAL_CASE.
+                                       */
+#define JY_CACHE                   96 /* JY_CACHE_GC_MASK | JY_CACHE_ETERNAL_MASK */
+#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
+#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker.
 
 #define Is_StaticSingleton(pyObject) \
 	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented)
@@ -262,10 +266,10 @@
 
 /* define some method signatures for sync purposes: */
 
-//jobject is src, PyObject* is dest. Src must not be modified.
+/* jobject is src, PyObject* is dest. Src must not be modified. */
 typedef void (*jy2pySync)(jobject, PyObject*);
 
-//PyObject* is src, jobject is dest. Src must not be modified.
+/* PyObject* is src, jobject is dest. Src must not be modified. */
 typedef void (*py2jySync)(PyObject*, jobject);
 
 typedef jobject (*jyInitSync)(PyObject*);
@@ -332,9 +336,9 @@ extern const char* JyAttributeSetEntry;
 //extern const char* JyAttributeTruncateSize;
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1
 #define JY_ATTR_VAR_SIZE_FLAG_MASK 2
-typedef struct JyAttribute JyAttribute; //Forward declaration
+typedef struct JyAttribute JyAttribute; /* Forward declaration */
 struct JyAttribute { const char* name; void* value; char flags; JyAttribute* next;};
-typedef struct JyAttributeElement JyAttributeElement; //Forward declaration
+typedef struct JyAttributeElement JyAttributeElement; /* Forward declaration */
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jweak jy; unsigned short flags; JyAttribute* attr;} JyObject;
 typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject;
@@ -396,16 +400,14 @@ extern TypeMapEntry builtinTypes[builtinTypeCount];
 /* "Hidden" PyTypes: */
 extern PyTypeObject PyNone_Type;
 extern PyTypeObject PyNotImplemented_Type;
-extern PyTypeObject Pyrangeiter_Type; //jython uses PySequenceIter.
-extern PyTypeObject PyTupleIter_Type; //jython uses PyFastSequenceIter.
-extern PyTypeObject PyListIter_Type; //jython uses PyFastSequenceIter.
-extern PyTypeObject PyListRevIter_Type; //jython uses PyReversedSequenceIter.
-extern PyTypeObject PySetIter_Type; //jython uses inline subclass of PyIterator.
+extern PyTypeObject Pyrangeiter_Type; /* jython uses PySequenceIter. */
+extern PyTypeObject PyTupleIter_Type; /* jython uses PyFastSequenceIter. */
+extern PyTypeObject PyListIter_Type; /* jython uses PyFastSequenceIter. */
+extern PyTypeObject PyListRevIter_Type; /* jython uses PyReversedSequenceIter. */
+extern PyTypeObject PySetIter_Type; /* jython uses inline subclass of PyIterator. */
 //extern PyTypeObject PyMethodDescr_Type;
 //extern PyTypeObject PyClassMethodDescr_Type;
 extern PyTypeObject PyTraceBack_Type;
-
-//extern PyStringObject* characters;
 
 /* Type-Lookup: */
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type);
@@ -551,8 +553,10 @@ inline void JyNI_AddOrSetJyAttribute(JyObject* obj, const char* name, void* valu
 inline void JyNI_AddOrSetJyAttributeWithFlags(JyObject* obj, const char* name, void* value, char flags);
 inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
 
-//JNI IDs for Jython-stuff:
-//singletons:
+
+/* JNI IDs for Jython-stuff: */
+
+/* singletons: */
 extern JavaVM* java;
 extern jobject length0StringArray;
 extern jobject length0PyObjectArray;

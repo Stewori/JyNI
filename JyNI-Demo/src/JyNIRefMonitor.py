@@ -44,6 +44,6 @@ print l[1]
 #self.assertEqual(l[2], "natively modified")
 #self.assertEqual(len(l), 3)
 
-DemoExtension.printInt(333)
+#DemoExtension.printInt(333)
 DemoExtension.hello_world()
 print "done2"

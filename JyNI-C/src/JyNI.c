@@ -299,41 +299,42 @@ inline void initBuiltinTypes()
 	builtinTypes[3].jy_class = pyFileClass;
 	builtinTypes[3].flags = JY_TRUNCATE_FLAG_MASK;
 
+	//todo check traverse
 	builtinTypes[4].py_type = &PyModule_Type;
 	builtinTypes[4].jy_class = pyModuleClass;
-	builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK;
+	builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_SINGLE_LINK;
 
 	builtinTypes[5].py_type = &PyCell_Type;
 	builtinTypes[5].jy_class = pyCellClass;
-	//builtinTypes[5].flags = 0;//JySYNC_ON_INIT_FLAGS;
+	builtinTypes[5].flags = JY_GC_SINGLE_LINK;//JySYNC_ON_INIT_FLAGS;
 	builtinTypes[5].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[5].sync->py2jy = (py2jySync) JySync_JyCell_From_PyCell;
 	builtinTypes[5].sync->jy2py = (jy2pySync) JySync_PyCell_From_JyCell;
 
 	builtinTypes[6].py_type = &PyClass_Type;
 	builtinTypes[6].jy_class = pyClassClass;
-	builtinTypes[6].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[6].flags = JySYNC_ON_INIT_FLAGS | JY_GC_FIXED_SIZE; // 6 links
 	builtinTypes[6].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[6].sync->jyInit = (jyInitSync) JySync_Init_JyClass_From_PyClass;
 	builtinTypes[6].sync->pyInit = (pyInitSync) JySync_Init_PyClass_From_JyClass;
 
 	builtinTypes[7].py_type = &PyInstance_Type;
 	builtinTypes[7].jy_class = pyInstanceClass;
-	builtinTypes[7].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[7].flags = JySYNC_ON_INIT_FLAGS | JY_GC_FIXED_SIZE; // 2 links
 	builtinTypes[7].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[7].sync->jyInit = (jyInitSync) JySync_Init_JyInstance_From_PyInstance;
 	builtinTypes[7].sync->pyInit = (pyInitSync) JySync_Init_PyInstance_From_JyInstance;
 
 	builtinTypes[8].py_type = &PyMethod_Type;
 	builtinTypes[8].jy_class = pyMethodClass;
-	builtinTypes[8].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[8].flags = JySYNC_ON_INIT_FLAGS | JY_GC_FIXED_SIZE; // 3 links
 	builtinTypes[8].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[8].sync->jyInit = (jyInitSync) JySync_Init_JyMethod_From_PyMethod;
 	builtinTypes[8].sync->pyInit = (pyInitSync) JySync_Init_PyMethod_From_JyMethod;
 
 	builtinTypes[9].py_type = &PyFunction_Type;
 	builtinTypes[9].jy_class = pyFunctionClass;
-	//builtinTypes[9].flags = 0;//JySYNC_ON_INIT_FLAGS;
+	builtinTypes[9].flags = JY_GC_FIXED_SIZE; // 5 (8) links
 	builtinTypes[9].sync = malloc(sizeof(SyncFunctions));
 	//builtinTypes[9].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFunction_From_PyFunction;
 	//builtinTypes[9].sync->pyInit = (pyInitSync) JySync_Init_PyFunction_From_JyFunction;
@@ -429,7 +430,7 @@ inline void initBuiltinTypes()
 
 	builtinTypes[27].py_type = &PyTuple_Type;
 	builtinTypes[27].jy_class = pyTupleClass;
-	builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS | JY_GC_FIXED_SIZE; // Py_SIZE(o) links
 	builtinTypes[27].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[27].sync->jyInit = (jyInitSync) JySync_Init_JyTuple_From_PyTuple;
 	builtinTypes[27].sync->pyInit = (pyInitSync) JySync_Init_PyTuple_From_JyTuple;
@@ -440,7 +441,7 @@ inline void initBuiltinTypes()
 
 	builtinTypes[29].py_type = &PyList_Type;
 	builtinTypes[29].jy_class = pyListClass;
-	builtinTypes[29].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[29].flags = JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE;
 	builtinTypes[29].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[29].sync->jyInit = (jyInitSync) JySync_Init_JyList_From_PyList;
 	builtinTypes[29].sync->pyInit = (pyInitSync) JySync_Init_PyList_From_JyList;
@@ -455,7 +456,7 @@ inline void initBuiltinTypes()
 
 	builtinTypes[32].py_type = &PyDict_Type;
 	builtinTypes[32].jy_class = pyDictClass;
-	builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK;
+	builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_VAR_SIZE;
 
 	//In the CPython->Java lookup direction, this is
 	//overwritten by the previous entry with pyDictClass.
@@ -466,14 +467,14 @@ inline void initBuiltinTypes()
 	//on Java/Jython-side.
 	builtinTypes[33].py_type = &PyDict_Type;
 	builtinTypes[33].jy_class = pyStringMapClass;
-	builtinTypes[33].flags = JY_TRUNCATE_FLAG_MASK;
+	builtinTypes[33].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_VAR_SIZE;
 	char* tp_name33 = "stringmap";
 	builtinTypes[33].type_name = malloc(strlen(tp_name33)+1);
 	strcpy(builtinTypes[33].type_name, tp_name33);
 
 	builtinTypes[34].py_type = &PySet_Type;
 	builtinTypes[34].jy_class = pySetClass;
-	builtinTypes[34].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS;
+	builtinTypes[34].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE;
 	builtinTypes[34].truncate_trailing = sizeof(Py_ssize_t); //setObject.fill is covered by PyVarObject.ob_size. We add another sizeof(Py_ssize_t) to allocate space for setObject.used
 	builtinTypes[34].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[34].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JySet_From_PySet;
@@ -485,7 +486,7 @@ inline void initBuiltinTypes()
 
 	builtinTypes[35].py_type = &PyFrozenSet_Type;
 	builtinTypes[35].jy_class = pyFrozenSetClass;
-	builtinTypes[35].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS;
+	builtinTypes[35].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE;
 	builtinTypes[35].truncate_trailing = sizeof(Py_ssize_t); //setObject.fill is covered by PyVarObject.ob_size. We add another sizeof(Py_ssize_t) to allocate space for setObject.used
 	builtinTypes[35].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[35].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFrozenSet_From_PyFrozenSet;
@@ -507,6 +508,11 @@ inline void initBuiltinTypes()
 	builtinTypes[39].jy_class = pyGeneratorClass;
 	builtinTypes[39].flags = 0;*/
 
+	/* Code objects are not subject to GC in CPython althought they contain some links.
+	 * However the contained links are always strings or string-tuples and nothing that
+	 * could lead to reference-cycles.
+	 * Todo: Check whether this simplification of GC-traversal can be applied in Jython too.
+	 */
 	builtinTypes[40].py_type = &PyCode_Type;
 	builtinTypes[40].jy_class = pyBytecodeClass;
 	builtinTypes[40].flags = JY_TRUNCATE_FLAG_MASK;// | JySYNC_ON_INIT_FLAGS;
@@ -542,9 +548,10 @@ inline void initBuiltinTypes()
 	builtinTypes[43].jy_class = pySuperClass;
 	builtinTypes[43].flags = 0;*/
 
+	//todo check traverse
 	builtinTypes[44].py_type = (PyTypeObject*) PyExc_BaseException;
 	builtinTypes[44].jy_class = pyBaseExceptionClass;
-	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK;
+	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_FIXED_SIZE; // 3 links
 
 	builtinTypes[45].py_type = &PyTraceBack_Type;
 	builtinTypes[45].jy_class = pyTracebackClass;
@@ -1143,12 +1150,11 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 	if (obj == NULL) return PyErr_NoMemory();
 	JyObject* jy = AS_JY(obj);
 	env(NULL);
-	jy->jy = (*env)->NewGlobalRef(env, src);
+	jy->jy = (*env)->NewWeakGlobalRef(env, src);
 	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj);
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	return obj;
 }
-
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -1212,7 +1218,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		if (jy->flags & SYNC_NEEDED_MASK)
 			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
 		env(NULL);
-		jy->jy = (*env)->NewGlobalRef(env, src); //Todo: eventually change to weak ref.
+		jy->jy = (*env)->NewWeakGlobalRef(env, src);
 		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
 		//printf("dest-check for module2: %u\n", (int) PyModule_Check(dest));

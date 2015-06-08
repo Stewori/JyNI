@@ -365,7 +365,7 @@ PyTypeObject PyModule_Type = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,                    // tp_flags
     module_doc,                                 // tp_doc
-    0,//(traverseproc)module_traverse,              // tp_traverse
+    0,//(traverseproc)module_traverse,          // tp_traverse
     0,                                          // tp_clear
     0,                                          // tp_richcompare
     0,                                          // tp_weaklistoffset

@@ -65,15 +65,15 @@ extern "C" {
 
 typedef struct {
     PyObject_HEAD
-    PyObject *func_code;	/* A code object */
-    PyObject *func_globals;	/* A dictionary (other mappings won't do) */
-    PyObject *func_defaults;	/* NULL or a tuple */
-    PyObject *func_closure;	/* NULL or a tuple of cell objects */
-    PyObject *func_doc;		/* The __doc__ attribute, can be anything */
-    PyObject *func_name;	/* The __name__ attribute, a string object */
-    PyObject *func_dict;	/* The __dict__ attribute, a dict or NULL */
-    PyObject *func_weakreflist;	/* List of weak references */
-    PyObject *func_module;	/* The __module__ attribute, can be anything */
+    PyObject *func_code;        /* A code object */
+    PyObject *func_globals;     /* A dictionary (other mappings won't do) */
+    PyObject *func_defaults;    /* NULL or a tuple */
+    PyObject *func_closure;     /* NULL or a tuple of cell objects */
+    PyObject *func_doc;         /* The __doc__ attribute, can be anything */
+    PyObject *func_name;        /* The __name__ attribute, a string object */
+    PyObject *func_dict;        /* The __dict__ attribute, a dict or NULL */
+    PyObject *func_weakreflist; /* List of weak references */
+    PyObject *func_module;      /* The __module__ attribute, can be anything */
 
     /* Invariant:
      *     func_closure contains the bindings for func_code->co_freevars, so

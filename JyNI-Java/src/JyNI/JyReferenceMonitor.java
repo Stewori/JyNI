@@ -64,6 +64,7 @@ public class JyReferenceMonitor {
 	public static final short POST_MASK     =  64;
 	public static final short FINALIZE_MASK = 128;
 	public static final short INLINE_MASK   = 256;
+	public static final short IMMORTAL_MASK = 512;
 
 	public static final short NAT_ALLOC = INC_MASK | MEMORY_MASK | NATIVE_MASK;
 	public static final short NAT_FREE = DEC_MASK | MEMORY_MASK | NATIVE_MASK;
@@ -84,21 +85,22 @@ public class JyReferenceMonitor {
 	public static String actionToString(short action) {
 		StringBuilder result = new StringBuilder();
 		if ((action & NATIVE_MASK) != 0) result.append("_NATIVE");
+		if ((action & PRE_MASK) != 0) result.append("_PRE");
+		if ((action & POST_MASK) != 0) result.append("_POST");
 		if ((action & MEMORY_MASK) != 0) {
 			if ((action & INC_MASK) != 0 && (action &  DEC_MASK) != 0) result.append("_REALLOC");
 			else if ((action & (INC_MASK)) != 0) result.append("_ALLOC");
 			else if ((action & (DEC_MASK)) != 0) result.append("_FREE");
 		} else {
-			if ((action & (INC_MASK | DEC_MASK)) != 0) result.append("_REF-RESTORE");
+			if ((action & (INC_MASK)) != 0 && (action & (DEC_MASK)) != 0) result.append("_REF-RESTORE");
 			else if ((action & (INC_MASK)) != 0) result.append("_INCREF");
 			else if ((action & (DEC_MASK)) != 0) result.append("_DECREF");
 		}
-		if ((action & PRE_MASK) != 0) result.append("_PRE");
-		if ((action & POST_MASK) != 0) result.append("_POST");
 		if ((action & GC_MASK) != 0) result.append("_GC");
 		if ((action & INLINE_MASK) != 0) result.append("_INLINE");
 		if ((action & FINALIZE_MASK) != 0 && (action & INC_MASK) != 0)  result.append("_RESURRECT");
 		else if ((action & FINALIZE_MASK) != 0) result.append("_FINALIZE");
+		if ((action & IMMORTAL_MASK) != 0) result.append("_IMMORTAL");
 		return result.substring(1);
 	}
 

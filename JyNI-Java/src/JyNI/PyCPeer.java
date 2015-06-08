@@ -53,11 +53,11 @@ import org.python.core.PyDictionary;
 import org.python.core.Py;
 import org.python.core.finalization.FinalizableBuiltin;
 import org.python.core.Untraversable;
-
+import JyNI.gc.JyGCHead;
 import java.util.HashMap;
 
 @Untraversable
-public class PyCPeer extends PyObject implements FinalizableBuiltin {
+public class PyCPeer extends PyObject implements JyGCHead, FinalizableBuiltin {
 	
 	public long objectHandle;//, refHandle;
 	
@@ -157,6 +157,10 @@ public class PyCPeer extends PyObject implements FinalizableBuiltin {
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
 
+	@Override
+	public long getHandle() {
+		return objectHandle;
+	}
 //	protected void finalize() throws Throwable {
 //		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 //	}

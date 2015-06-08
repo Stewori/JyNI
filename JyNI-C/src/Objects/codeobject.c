@@ -848,7 +848,7 @@ PyTypeObject PyCode_Type = {
 	code_doc,								/* tp_doc */
 	0,										/* tp_traverse */
 	0,										/* tp_clear */
-	0,//code_richcompare,						/* tp_richcompare */
+	0,//code_richcompare,					/* tp_richcompare */
 	offsetof(PyCodeObject, co_weakreflist),	/* tp_weaklistoffset */
 	0,										/* tp_iter */
 	0,										/* tp_iternext */

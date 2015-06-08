@@ -146,6 +146,8 @@ PyTuple_New(register Py_ssize_t size)
 	if (size == 0) {
 		free_list[0] = op;
 		++numfree[0];
+		JyNIDebug(JY_NATIVE_INCREF | JY_IMMORTAL_MASK | JY_PRE_MASK,
+				AS_JY_WITH_GC(op), size, PyTuple_Type.tp_name);
 		Py_INCREF(op);          /* extra INCREF so that this is never freed */
 	}
 #endif
