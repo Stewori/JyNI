@@ -692,7 +692,7 @@ set_dealloc(PySetObject *so)
 	JyNIDebugOp(JY_NATIVE_FINALIZE, so, -1);
 //	register setentry *entry;
 //	Py_ssize_t fill = so->fill;
-	PyObject_GC_UnTrack(so);
+	//PyObject_GC_UnTrack(so);
 //	Py_TRASHCAN_SAFE_BEGIN(so)
 	//if (so->weakreflist != NULL)
 		//PyObject_ClearWeakRefs((PyObject *) so);
@@ -1296,8 +1296,8 @@ frozenset_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 //JyNI-note: It appears cumbersome that a GC-object is a singleton.
 //Maybe we overlooked something here.
 		env(NULL);
-		(*env)->DeleteWeakGlobalRef(env, AS_JY_WITH_GC(emptyfrozenset)->jy);
-		JyNI_InitSingletonGC(emptyfrozenset, JyEmptyFrozenSet);
+		(*env)->DeleteWeakGlobalRef(env, AS_JY_NO_GC(emptyfrozenset)->jy);
+		JyNI_InitSingleton(emptyfrozenset, JyEmptyFrozenSet);
 	}
 	Py_XINCREF(emptyfrozenset);
 	return emptyfrozenset;
@@ -2472,7 +2472,7 @@ PyTypeObject PySet_Type = {
 	PyObject_GenericGetAttr,               /* tp_getattro */
 	0,                                     /* tp_setattro */
 	0,                                     /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_CHECKTYPES |
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES | //Py_TPFLAGS_HAVE_GC |
 		Py_TPFLAGS_BASETYPE,               /* tp_flags */
 	set_doc,                               /* tp_doc */
 	0,//(traverseproc)set_traverse,        /* tp_traverse */
@@ -2492,7 +2492,7 @@ PyTypeObject PySet_Type = {
 	(initproc)set_init,                    /* tp_init */
 	PyType_GenericAlloc,                   /* tp_alloc */
 	set_new,                               /* tp_new */
-	PyObject_GC_Del,                       /* tp_free */
+	PyObject_Free,//PyObject_GC_Del,       /* tp_free */
 };
 
 /* frozenset object ********************************************************/
@@ -2571,7 +2571,7 @@ PyTypeObject PyFrozenSet_Type = {
 	PyObject_GenericGetAttr,            /* tp_getattro */
 	0,                                  /* tp_setattro */
 	0,                                  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_CHECKTYPES |
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES | //Py_TPFLAGS_HAVE_GC |
 		Py_TPFLAGS_BASETYPE,            /* tp_flags */
 	frozenset_doc,                      /* tp_doc */
 	0,//(traverseproc)set_traverse,     /* tp_traverse */
@@ -2591,7 +2591,7 @@ PyTypeObject PyFrozenSet_Type = {
 	0,                                  /* tp_init */
 	PyType_GenericAlloc,                /* tp_alloc */
 	frozenset_new,                      /* tp_new */
-	PyObject_GC_Del,                    /* tp_free */
+	PyObject_Free,//PyObject_GC_Del,    /* tp_free */
 };
 
 
