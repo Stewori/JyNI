@@ -278,7 +278,8 @@ PyDict_Fini(void)
 	while (numfree) {
 		op = free_list[--numfree];
 		assert(PyDict_CheckExact(op));
-		PyObject_GC_Del(op);
+		//PyObject_GC_Del(op);
+		PyObject_Free(op);
 	}
 }
 
@@ -322,6 +323,7 @@ PyDict_New(void)
 	} else {
 		//puts("GC_New");
 		mp = PyObject_GC_New(PyDictObject, &PyDict_Type);
+		mp = PyObject_New(PyDictObject, &PyDict_Type);
 		if (mp == NULL)
 			return NULL;
 	}
@@ -1154,8 +1156,8 @@ dict_dealloc(register PyDictObject *mp)
 {
 	//register PyDictEntry *ep;
 	//Py_ssize_t fill = mp->ma_fill;
-	PyObject_GC_UnTrack(mp);
-	Py_TRASHCAN_SAFE_BEGIN(mp)
+	//PyObject_GC_UnTrack(mp);
+	//Py_TRASHCAN_SAFE_BEGIN(mp)
 	/*for (ep = mp->ma_table; fill > 0; ep++) {
 		if (ep->me_key) {
 			--fill;
@@ -1167,12 +1169,12 @@ dict_dealloc(register PyDictObject *mp)
 		PyMem_DEL(mp->ma_table);*/
 	if (numfree < PyDict_MAXFREELIST && Py_TYPE(mp) == &PyDict_Type)
 	{
-		JyNI_CleanUp_JyObject(AS_JY_WITH_GC(mp));
+		JyNI_CleanUp_JyObject(AS_JY_NO_GC(mp));
 		free_list[numfree++] = mp;
 	}
 	else
 		Py_TYPE(mp)->tp_free((PyObject *)mp);
-	Py_TRASHCAN_SAFE_END(mp)
+	//Py_TRASHCAN_SAFE_END(mp)
 }
 
 //static int
@@ -2510,8 +2512,8 @@ dict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		INIT_NONZERO_DICT_SLOTS(d);
 		d->ma_lookup = lookdict_string;*/
 		// The object has been implicitly tracked by tp_alloc
-		if (type == &PyDict_Type)
-			_JyNI_GC_UNTRACK(d);
+		//if (type == &PyDict_Type)
+		//	_JyNI_GC_UNTRACK(d);
 /*
 #ifdef SHOW_CONVERSION_COUNTS
 		++created;
@@ -2554,42 +2556,42 @@ PyTypeObject PyDict_Type = {
 	"dict",
 	sizeof(PyDictObject),
 	0,
-	(destructor)dict_dealloc,				   /* tp_dealloc */
-	0,//(printfunc)dict_print,					  /* tp_print */
-	0,										  /* tp_getattr */
-	0,										  /* tp_setattr */
-	0,//(cmpfunc)dict_compare,					  /* tp_compare */
-	0,//(reprfunc)dict_repr,						/* tp_repr */
-	0,										  /* tp_as_number */
-	0,//&dict_as_sequence,						  /* tp_as_sequence */
-	0,//&dict_as_mapping,						   /* tp_as_mapping */
-	(hashfunc)PyObject_HashNotImplemented,	  /* tp_hash */
-	0,										  /* tp_call */
-	0,										  /* tp_str */
-	0,// PyObject_GenericGetAttr,					/* tp_getattro */
-	0,										  /* tp_setattro */
-	0,										  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
-		Py_TPFLAGS_BASETYPE | Py_TPFLAGS_DICT_SUBCLASS,		 /* tp_flags */
-	dictionary_doc,							 /* tp_doc */
-	0,//dict_traverse,							  /* tp_traverse */
-	0,//dict_tp_clear,							  /* tp_clear */
-	0,//dict_richcompare,						   /* tp_richcompare */
-	0,										  /* tp_weaklistoffset */
-	0,//(getiterfunc)dict_iter,					 /* tp_iter */
-	0,										  /* tp_iternext */
-	0,//mapp_methods,							   /* tp_methods */
-	0,										  /* tp_members */
-	0,										  /* tp_getset */
-	0,										  /* tp_base */
-	0,										  /* tp_dict */
-	0,										  /* tp_descr_get */
-	0,										  /* tp_descr_set */
-	0,										  /* tp_dictoffset */
-	0,//dict_init,								  /* tp_init */
-	PyType_GenericAlloc,						/* tp_alloc */
-	dict_new,								   /* tp_new */
-	PyObject_GC_Del,							/* tp_free */
+	(destructor)dict_dealloc,                   /* tp_dealloc */
+	0,//(printfunc)dict_print,                  /* tp_print */
+	0,                                          /* tp_getattr */
+	0,                                          /* tp_setattr */
+	0,//(cmpfunc)dict_compare,                  /* tp_compare */
+	0,//(reprfunc)dict_repr,                    /* tp_repr */
+	0,                                          /* tp_as_number */
+	0,//&dict_as_sequence,                      /* tp_as_sequence */
+	0,//&dict_as_mapping,                       /* tp_as_mapping */
+	(hashfunc)PyObject_HashNotImplemented,      /* tp_hash */
+	0,                                          /* tp_call */
+	0,                                          /* tp_str */
+	0,// PyObject_GenericGetAttr,               /* tp_getattro */
+	0,                                          /* tp_setattro */
+	0,                                          /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | //Py_TPFLAGS_HAVE_GC |
+		Py_TPFLAGS_DICT_SUBCLASS,               /* tp_flags */
+	dictionary_doc,                             /* tp_doc */
+	0,//dict_traverse,                          /* tp_traverse */
+	0,//dict_tp_clear,                          /* tp_clear */
+	0,//dict_richcompare,                       /* tp_richcompare */
+	0,                                          /* tp_weaklistoffset */
+	0,//(getiterfunc)dict_iter,                 /* tp_iter */
+	0,                                          /* tp_iternext */
+	0,//mapp_methods,                           /* tp_methods */
+	0,                                          /* tp_members */
+	0,                                          /* tp_getset */
+	0,                                          /* tp_base */
+	0,                                          /* tp_dict */
+	0,                                          /* tp_descr_get */
+	0,                                          /* tp_descr_set */
+	0,                                          /* tp_dictoffset */
+	0,//dict_init,                              /* tp_init */
+	PyType_GenericAlloc,                        /* tp_alloc */
+	dict_new,                                   /* tp_new */
+	PyObject_Free,//PyObject_GC_Del,            /* tp_free */
 };
 
 /* For backward compatibility with old dictionary interface */

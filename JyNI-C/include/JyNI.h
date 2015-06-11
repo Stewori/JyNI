@@ -264,8 +264,8 @@
 	}
 
 /* GC-macro-replacements */
-#define _JyNI_GC_TRACK(o) _PyObject_GC_TRACK(o)
-#define _JyNI_GC_UNTRACK(o) _PyObject_GC_UNTRACK(o)
+#define _JyNI_GC_TRACK(o) PyObject_GC_Track //_PyObject_GC_TRACK(o)
+#define _JyNI_GC_UNTRACK(o) PyObject_GC_UnTrack //_PyObject_GC_UNTRACK(o)
 #define _JyNI_GC_IS_TRACKED(o) _PyObject_GC_IS_TRACKED(o)
 #define _JyNI_GC_MAY_BE_TRACKED(obj) _PyObject_GC_MAY_BE_TRACKED(obj)
 

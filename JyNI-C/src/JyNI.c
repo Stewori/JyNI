@@ -308,6 +308,11 @@ inline void initBuiltinTypes()
 	 * GC-situation is like CStub. Consider to not even mark it as
 	 * special case, but let it be treated in line with ordinary
 	 * CStubs/truncated objects.
+	 *
+	 * Later the collect_generations-method will also look for objects
+	 * inserted for tracking into the ordinary gc-head-list. This is in
+	 * case an extension uses the old _PyObject_GC_TRACK-macro (not used
+	 * by JyNI any more).
 	 */
 //	int i;
 //	for (i = 0; i < builtinTypeCount; ++i)
@@ -820,13 +825,16 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromPyType(PyTypeObject* type)
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
 		if (builtinTypes[i].py_type == type) {
-			//jputs("Found:");
-			//jputsLong(i);
-			//jputs(builtinTypes[i].py_type->tp_name);
-			//jputs(builtinTypes[i].type_name);
+//			jputs("Found:");
+//			jputsLong(i);
+//			jputsLong(&(builtinTypes[i]));
+//			jputs(builtinTypes[i].py_type->tp_name);
+//			jputs(builtinTypes[i].type_name);
 			return &(builtinTypes[i]);
 		}
 	}
+//	jputs("Not found:");
+//	jputs(type->tp_name);
 	return NULL;
 }
 
@@ -1547,14 +1555,17 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
 {
 	jobject dest = NULL;
+	//jputs(__FUNCTION__);
+	//jputsLong(__LINE__);
+	//jputsLong(tme);
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
-//		jputsLong(__LINE__);
+		//jputsLong(__LINE__);
 		if (tme->sync && tme->sync->jyInit)
 			dest = tme->sync->jyInit(src);
-//		jputsLong(__LINE__);
 	} else
 	{
+		//jputsLong(__LINE__);
 		env(NULL);
 		jmethodID cm = (*env)->GetMethodID(env, tme->jy_class, "<init>", "()V");
 		if (cm)
@@ -1565,6 +1576,7 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		} //else
 			//dest = NULL;
 	}
+	//jputsLong(__LINE__);
 	if (!dest) return NULL;
 	if (dest && (srcJy->flags & SYNC_NEEDED_MASK))
 		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);//, char flags)
@@ -1676,6 +1688,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		//jputsLong(__LINE__);
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 	}
+	//jputsLong(tme);
 	//tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 	if (tme)// != NULL
 	{

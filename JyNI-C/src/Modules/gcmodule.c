@@ -77,51 +77,53 @@
 
 // *** Global GC state ***
 
-struct gc_generation {
-	PyGC_Head head;
-	int threshold; // collection threshold
-	int count; // count of allocations or collections of younger
-			   // generations
-};
+//struct gc_generation {
+//	PyGC_Head head;
+//	int threshold; // collection threshold
+//	int count; // count of allocations or collections of younger
+//			   // generations
+//};
 
-#define NUM_GENERATIONS 3
-#define GEN_HEAD(n) (&generations[n].head)
+//#define NUM_GENERATIONS 3
+//#define GEN_HEAD(n) (&generations[n].head)
 
 // linked lists of container objects
-static struct gc_generation generations[NUM_GENERATIONS] = {
-	// PyGC_Head,							   threshold,	  count
-	{{{GEN_HEAD(0), GEN_HEAD(0), 0}},		   700,			0},
-	{{{GEN_HEAD(1), GEN_HEAD(1), 0}},		   10,			 0},
-	{{{GEN_HEAD(2), GEN_HEAD(2), 0}},		   10,			 0},
-};
+//static struct gc_generation generations[NUM_GENERATIONS] = {
+//	// PyGC_Head,							   threshold,	  count
+//	{{{GEN_HEAD(0), GEN_HEAD(0), 0}},           700,            0},
+//	{{{GEN_HEAD(1), GEN_HEAD(1), 0}},           10,             0},
+//	{{{GEN_HEAD(2), GEN_HEAD(2), 0}},           10,             0},
+//};
+//static struct gc_generation generations = {{{GEN_HEAD, GEN_HEAD, 0}}, 700, 0};
 
-PyGC_Head *_PyGC_generation0 = GEN_HEAD(0);
+static PyGC_Head generations = {{&generations, &generations, 0}};
+PyGC_Head *_PyGC_generation0 = &generations;
 
-static int enabled = 1; // automatic collection enabled?
-
-// true if we are currently running the collector
-static int collecting = 0;
-
-// list of uncollectable objects
-static PyObject *garbage = NULL;
-
-// Python string to use if unhandled exception occurs
-static PyObject *gc_str = NULL;
-
-// Python string used to look for __del__ attribute.
-static PyObject *delstr = NULL;
-
-// This is the number of objects who survived the last full collection. It
-// approximates the number of long lived objects tracked by the GC.
-
-// (by "full collection", we mean a collection of the oldest generation).
-
-static Py_ssize_t long_lived_total = 0;
-
-// This is the number of objects who survived all "non-full" collections,
-// and are awaiting to undergo a full collection for the first time.
-
-static Py_ssize_t long_lived_pending = 0;
+//static int enabled = 1; // automatic collection enabled?
+//
+//// true if we are currently running the collector
+//static int collecting = 0;
+//
+//// list of uncollectable objects
+//static PyObject *garbage = NULL;
+//
+//// Python string to use if unhandled exception occurs
+//static PyObject *gc_str = NULL;
+//
+//// Python string used to look for __del__ attribute.
+//static PyObject *delstr = NULL;
+//
+//// This is the number of objects who survived the last full collection. It
+//// approximates the number of long lived objects tracked by the GC.
+//
+//// (by "full collection", we mean a collection of the oldest generation).
+//
+//static Py_ssize_t long_lived_total = 0;
+//
+//// This is the number of objects who survived all "non-full" collections,
+//// and are awaiting to undergo a full collection for the first time.
+//
+//static Py_ssize_t long_lived_pending = 0;
 
 
 //   NOTE: about the counting of long-lived objects.
@@ -158,20 +160,20 @@ static Py_ssize_t long_lived_pending = 0;
 //	http://mail.python.org/pipermail/python-dev/2008-June/080579.html
 
 
-// set for debugging information
-#define DEBUG_STATS			 (1<<0) // print collection statistics
-#define DEBUG_COLLECTABLE	   (1<<1) // print collectable objects
-#define DEBUG_UNCOLLECTABLE	 (1<<2) // print uncollectable objects
-#define DEBUG_INSTANCES		 (1<<3) // print instances
-#define DEBUG_OBJECTS		   (1<<4) // print other objects
-#define DEBUG_SAVEALL		   (1<<5) // save all garbage in gc.garbage
-#define DEBUG_LEAK			  DEBUG_COLLECTABLE | \
-				DEBUG_UNCOLLECTABLE | \
-				DEBUG_INSTANCES | \
-				DEBUG_OBJECTS | \
-				DEBUG_SAVEALL
-static int debug;
-static PyObject *tmod = NULL;
+/* set for debugging information */
+#define DEBUG_STATS             (1<<0) /* print collection statistics */
+#define DEBUG_COLLECTABLE       (1<<1) /* print collectable objects */
+#define DEBUG_UNCOLLECTABLE     (1<<2) /* print uncollectable objects */
+#define DEBUG_INSTANCES         (1<<3) /* print instances */
+#define DEBUG_OBJECTS           (1<<4) /* print other objects */
+#define DEBUG_SAVEALL           (1<<5) /* save all garbage in gc.garbage */
+#define DEBUG_LEAK              DEBUG_COLLECTABLE | \
+                                DEBUG_UNCOLLECTABLE | \
+                                DEBUG_INSTANCES | \
+                                DEBUG_OBJECTS | \
+                                DEBUG_SAVEALL
+//static int debug;
+//static PyObject *tmod = NULL;
 
 //--------------------------------------------------------------------------
 //gc_refs values.
@@ -223,86 +225,86 @@ static PyObject *tmod = NULL;
 
 // *** list functions ***
 
-static void
-gc_list_init(PyGC_Head *list)
-{
-	list->gc.gc_prev = list;
-	list->gc.gc_next = list;
-}
+//static void
+//gc_list_init(PyGC_Head *list)
+//{
+//	list->gc.gc_prev = list;
+//	list->gc.gc_next = list;
+//}
 
-static int
-gc_list_is_empty(PyGC_Head *list)
-{
-	return (list->gc.gc_next == list);
-}
+//static int
+//gc_list_is_empty(PyGC_Head *list)
+//{
+//	return (list->gc.gc_next == list);
+//}
 
-#if 0
-// This became unused after gc_list_move() was introduced.
-// Append `node` to `list`.
-static void
-gc_list_append(PyGC_Head *node, PyGC_Head *list)
-{
-	node->gc.gc_next = list;
-	node->gc.gc_prev = list->gc.gc_prev;
-	node->gc.gc_prev->gc.gc_next = node;
-	list->gc.gc_prev = node;
-}
-#endif
+//#if 0
+//// This became unused after gc_list_move() was introduced.
+//// Append `node` to `list`.
+//static void
+//gc_list_append(PyGC_Head *node, PyGC_Head *list)
+//{
+//	node->gc.gc_next = list;
+//	node->gc.gc_prev = list->gc.gc_prev;
+//	node->gc.gc_prev->gc.gc_next = node;
+//	list->gc.gc_prev = node;
+//}
+//#endif
 
 // Remove `node` from the gc list it's currently in.
-static void
-gc_list_remove(PyGC_Head *node)
-{
-	node->gc.gc_prev->gc.gc_next = node->gc.gc_next;
-	node->gc.gc_next->gc.gc_prev = node->gc.gc_prev;
-	node->gc.gc_next = NULL; // object is not currently tracked
-}
+//static void
+//gc_list_remove(PyGC_Head *node)
+//{
+//	node->gc.gc_prev->gc.gc_next = node->gc.gc_next;
+//	node->gc.gc_next->gc.gc_prev = node->gc.gc_prev;
+//	node->gc.gc_next = NULL; // object is not currently tracked
+//}
 
 // Move `node` from the gc list it's currently in (which is not explicitly
 // named here) to the end of `list`.  This is semantically the same as
 // gc_list_remove(node) followed by gc_list_append(node, list).
 
-static void
-gc_list_move(PyGC_Head *node, PyGC_Head *list)
-{
-	PyGC_Head *new_prev;
-	PyGC_Head *current_prev = node->gc.gc_prev;
-	PyGC_Head *current_next = node->gc.gc_next;
-	// Unlink from current list.
-	current_prev->gc.gc_next = current_next;
-	current_next->gc.gc_prev = current_prev;
-	// Relink at end of new list.
-	new_prev = node->gc.gc_prev = list->gc.gc_prev;
-	new_prev->gc.gc_next = list->gc.gc_prev = node;
-	node->gc.gc_next = list;
-}
+//static void
+//gc_list_move(PyGC_Head *node, PyGC_Head *list)
+//{
+//	PyGC_Head *new_prev;
+//	PyGC_Head *current_prev = node->gc.gc_prev;
+//	PyGC_Head *current_next = node->gc.gc_next;
+//	// Unlink from current list.
+//	current_prev->gc.gc_next = current_next;
+//	current_next->gc.gc_prev = current_prev;
+//	// Relink at end of new list.
+//	new_prev = node->gc.gc_prev = list->gc.gc_prev;
+//	new_prev->gc.gc_next = list->gc.gc_prev = node;
+//	node->gc.gc_next = list;
+//}
 
 // append list `from` onto list `to`; `from` becomes an empty list
-static void
-gc_list_merge(PyGC_Head *from, PyGC_Head *to)
-{
-	PyGC_Head *tail;
-	assert(from != to);
-	if (!gc_list_is_empty(from)) {
-		tail = to->gc.gc_prev;
-		tail->gc.gc_next = from->gc.gc_next;
-		tail->gc.gc_next->gc.gc_prev = tail;
-		to->gc.gc_prev = from->gc.gc_prev;
-		to->gc.gc_prev->gc.gc_next = to;
-	}
-	gc_list_init(from);
-}
+//static void
+//gc_list_merge(PyGC_Head *from, PyGC_Head *to)
+//{
+//	PyGC_Head *tail;
+//	assert(from != to);
+//	if (!gc_list_is_empty(from)) {
+//		tail = to->gc.gc_prev;
+//		tail->gc.gc_next = from->gc.gc_next;
+//		tail->gc.gc_next->gc.gc_prev = tail;
+//		to->gc.gc_prev = from->gc.gc_prev;
+//		to->gc.gc_prev->gc.gc_next = to;
+//	}
+//	gc_list_init(from);
+//}
 
-static Py_ssize_t
-gc_list_size(PyGC_Head *list)
-{
-	PyGC_Head *gc;
-	Py_ssize_t n = 0;
-	for (gc = list->gc.gc_next; gc != list; gc = gc->gc.gc_next) {
-		n++;
-	}
-	return n;
-}
+//static Py_ssize_t
+//gc_list_size(PyGC_Head *list)
+//{
+//	PyGC_Head *gc;
+//	Py_ssize_t n = 0;
+//	for (gc = list->gc.gc_next; gc != list; gc = gc->gc.gc_next) {
+//		n++;
+//	}
+//	return n;
+//}
 
 // Append objects in a GC list to a Python list.
 // Return 0 if all OK, < 0 if error (out of memory for list).
@@ -1456,6 +1458,21 @@ void
 PyObject_GC_Track(void *op)
 {
 	_PyObject_GC_TRACK(op);
+	/*
+	 * This will do the following:
+	 *
+	 * - checkout the JyObject
+	 * - evaluate the GC-flag and the CPeer-flag and look whether the type is traversable
+	 * - in non PyCPeer-case create a GCHead. Todo: Make sure that JyNI.c creates PyCPeerGC's
+	 *   for traversable objects rather than ordinary PyCPeers.
+	 * - if the object is traversable *and* uses a traversable gc-head, traverse it and set
+	 *   up the JyGCHead accordingly
+	 * - Non-traversable objects should not be inserted into this method. Post a fatal error
+	 *   if it occurs anyway.
+	 *
+	 * What about pure CStubs? These don't need native tracking. Check whether it is feasible
+	 * to treat them as ordinary non-gc objects on native side.
+	 */
 }
 
 // for binary compatibility with 2.2
@@ -1508,18 +1525,17 @@ _PyObject_GC_Malloc(size_t basicsize)
 	g = GC_FROM_JY(jy);
 	//if (g == NULL) return PyErr_NoMemory();
 	g->gc.gc_refs = GC_UNTRACKED;
-	generations[0].count++; // number of allocated GC objects
-	if (generations[0].count > generations[0].threshold &&
-		enabled &&
-		generations[0].threshold &&
-		!collecting &&
-		!PyErr_Occurred()) {
-		collecting = 1;
-		//leave actual collection out for now (testing purposes)
-		//todo: fix/implement everything necessary to make this work
-		//collect_generations();
-		collecting = 0;
-	}
+// JyNI-todo: Implement a JyNI-compliant variant of the collection block.
+//	generations[0].count++; // number of allocated GC objects
+//	if (generations[0].count > generations[0].threshold &&
+//		enabled &&
+//		generations[0].threshold &&
+//		!collecting &&
+//		!PyErr_Occurred()) {
+//		collecting = 1;
+//		collect_generations();
+//		collecting = 0;
+//	}
 	op = FROM_GC(g);
 	JyNIDebug(JY_NATIVE_ALLOC_GC, AS_JY_WITH_GC(op), basicsize, NULL);
 	//Shortcut not feasible because generic AS_JY not yet works as it depends
@@ -1670,11 +1686,12 @@ PyObject_GC_Del(void *op)
 	JyNIDebugOp(JY_NATIVE_FREE_GC, op, -1);
 	JyNI_CleanUp_JyObject(jy);
 	PyGC_Head *g = AS_GC(op);
-	if (IS_TRACKED(op))
-		gc_list_remove(g);
-	if (generations[0].count > 0) {
-		generations[0].count--;
-	}
+// todo: Write a JyNI-compliant version of this inline clean-up:
+//	if (IS_TRACKED(op))
+//		gc_list_remove(g);
+//	if (generations[0].count > 0) {
+//		generations[0].count--;
+//	}
 	//PyObject_FREE(jy);
 	PyObject_RawFree(jy);
 }
