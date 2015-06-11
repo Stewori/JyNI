@@ -50,7 +50,7 @@
 /* Method object implementation */
 
 #include "JyNI.h"
-#include "structmember.h"
+#include "structmember_JyNI.h"
 
 /* Free list for method objects to safe malloc/free overhead
  * The m_self element is used to chain the objects.

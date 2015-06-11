@@ -62,7 +62,7 @@
 //#include "frameobject.h"
 //#include "eval.h"
 //#include "opcode.h"
-//#include "structmember.h"
+//#include "structmember_JyNI.h"
 //
 //#include <ctype.h>
 //

@@ -51,7 +51,7 @@
 
 #include "JyNI.h"
 
-#include "structmember.h"
+#include "structmember_JyNI.h"
 
 static PyObject *
 listmembers(struct memberlist *mlist)

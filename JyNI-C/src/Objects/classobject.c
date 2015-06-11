@@ -55,7 +55,7 @@
  * because it is easier, cleaner and probably more performant.
  */
 #include "JyNI.h"
-#include "structmember.h"
+#include "structmember_JyNI.h"
 
 /* Free list for method objects to save malloc/free overhead
  * The im_self element is used to chain the elements.
