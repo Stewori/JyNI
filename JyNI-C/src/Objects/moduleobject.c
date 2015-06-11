@@ -143,7 +143,7 @@ PyModule_GetName(PyObject *m)
 	}
 	jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
 	global_cstr_from_jstring(cstr, er);
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
 	return cstr;
 
@@ -178,26 +178,20 @@ PyModule_GetFilename(PyObject *m)
 	}
 	//stringIntern
 	env(NULL);
-	//puts("bis hier...");
 	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
 			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), stringIntern));
-	//puts("und noch etwas weiter");
 	if (pyStr == NULL)
 	{
 		puts("module filename missing");
 		//printf("PyExc_SystemError isException? %i\n", PyExceptionClass_Check2(PyExc_SystemError));
 		//printf("PyExc_SystemError isType? %i\n", PyType_Check(PyExc_SystemError));
-		//puts("hier nicht");
 		//todo: fix this later
 		//PyErr_SetString(PyExc_SystemError, "module filename missing");
-		//puts("und hier0?");
 		return NULL;
 	}
-	//puts("und hier?");
 	jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
 	global_cstr_from_jstring(cstr, er);
-	//puts("fast fertig...");
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
 	return cstr;
 
@@ -297,7 +291,7 @@ PyModule_GetFilename(PyObject *m)
 static void
 module_dealloc(PyModuleObject *m)
 {
-    PyObject_GC_UnTrack(m);
+    //PyObject_GC_UnTrack(m);
 //    if (m->md_dict != NULL) {
 //        _PyModule_Clear((PyObject *)m);
 //        Py_DECREF(m->md_dict);
@@ -345,43 +339,43 @@ The name must be a string; the optional doc argument can have any type.");
 
 PyTypeObject PyModule_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
-    "module",                                   // tp_name
-    sizeof(PyModuleObject),                     // tp_size
-    0,                                          // tp_itemsize
-    (destructor)module_dealloc,                 // tp_dealloc
-    0,                                          // tp_print
-    0,                                          // tp_getattr
-    0,                                          // tp_setattr
-    0,                                          // tp_compare
-    (reprfunc)module_repr,                      // tp_repr
-    0,                                          // tp_as_number
-    0,                                          // tp_as_sequence
-    0,                                          // tp_as_mapping
-    0,                                          // tp_hash
-    0,                                          // tp_call
-    0,                                          // tp_str
-    PyObject_GenericGetAttr,                    // tp_getattro
-    PyObject_GenericSetAttr,                    // tp_setattro
-    0,                                          // tp_as_buffer
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
-        Py_TPFLAGS_BASETYPE,                    // tp_flags
-    module_doc,                                 // tp_doc
-    0,//(traverseproc)module_traverse,          // tp_traverse
-    0,                                          // tp_clear
-    0,                                          // tp_richcompare
-    0,                                          // tp_weaklistoffset
-    0,                                          // tp_iter
-    0,                                          // tp_iternext
-    0,                                          // tp_methods
-    0,//module_members,                         // tp_members
-    module_getsets,                             // tp_getset
-    0,                                          // tp_base
-    0,                                          // tp_dict
-    0,                                          // tp_descr_get
-    0,                                          // tp_descr_set
-    0,//offsetof(PyModuleObject, md_dict),      // tp_dictoffset
-    0,//(initproc)module_init,                  // tp_init
-    PyType_GenericAlloc,                        // tp_alloc
-    PyType_GenericNew,                          // tp_new
-    PyObject_GC_Del,                            // tp_free
+    "module",                                   /* tp_name */
+    sizeof(PyModuleObject),                     /* tp_size */
+    0,                                          /* tp_itemsize */
+    (destructor)module_dealloc,                 /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+    0,                                          /* tp_compare */
+    (reprfunc)module_repr,                      /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    PyObject_GenericGetAttr,                    /* tp_getattro */
+    PyObject_GenericSetAttr,                    /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | //Py_TPFLAGS_HAVE_GC |
+        Py_TPFLAGS_BASETYPE,                    /* tp_flags */
+    module_doc,                                 /* tp_doc */
+    0,//(traverseproc)module_traverse,          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,//module_members,                         /* tp_members */
+    module_getsets,                             /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,//offsetof(PyModuleObject, md_dict),      /* tp_dictoffset */
+    0,//(initproc)module_init,                  /* tp_init */
+    PyType_GenericAlloc,                        /* tp_alloc */
+    PyType_GenericNew,                          /* tp_new */
+    PyObject_Free,//PyObject_GC_Del,            /* tp_free */
 };
