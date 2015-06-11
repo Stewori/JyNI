@@ -263,6 +263,11 @@
 		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
 	}
 
+/* GC-macro-replacements */
+#define _JyNI_GC_TRACK(o) _PyObject_GC_TRACK(o)
+#define _JyNI_GC_UNTRACK(o) _PyObject_GC_UNTRACK(o)
+#define _JyNI_GC_IS_TRACKED(o) _PyObject_GC_IS_TRACKED(o)
+#define _JyNI_GC_MAY_BE_TRACKED(obj) _PyObject_GC_MAY_BE_TRACKED(obj)
 
 /* define some method signatures for sync purposes: */
 

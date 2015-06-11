@@ -154,7 +154,7 @@ PyTuple_New(register Py_ssize_t size)
 #ifdef SHOW_TRACK_COUNT
 	count_tracked++;
 #endif
-	_PyObject_GC_TRACK(op);
+	_JyNI_GC_TRACK(op);
 	return (PyObject *) op;
 }
 
@@ -212,7 +212,7 @@ _PyTuple_MaybeUntrack(PyObject *op)
 	PyTupleObject *t;
 	Py_ssize_t i, n;
 
-	if (!PyTuple_CheckExact(op) || !_PyObject_GC_IS_TRACKED(op))
+	if (!PyTuple_CheckExact(op) || !_JyNI_GC_IS_TRACKED(op))
 		return;
 	t = (PyTupleObject *) op;
 	n = Py_SIZE(t);
@@ -222,14 +222,14 @@ _PyTuple_MaybeUntrack(PyObject *op)
 		   fully constructed, don't untrack
 		   them yet. */
 		if (!elt ||
-			_PyObject_GC_MAY_BE_TRACKED(elt))
+			_JyNI_GC_MAY_BE_TRACKED(elt))
 			return;
 	}
 #ifdef SHOW_TRACK_COUNT
 	count_tracked--;
 	count_untracked++;
 #endif
-	_PyObject_GC_UNTRACK(op);
+	_JyNI_GC_UNTRACK(op);
 }
 
 PyObject *
@@ -918,8 +918,8 @@ _PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
 
 	/* XXX UNREF/NEWREF interface should be more symmetrical */
 	_Py_DEC_REFTOTAL;
-	if (_PyObject_GC_IS_TRACKED(v))
-		_PyObject_GC_UNTRACK(v);
+	if (_JyNI_GC_IS_TRACKED(v))
+		_JyNI_GC_UNTRACK(v);
 	_Py_ForgetReference((PyObject *) v);
 	/* DECREF items deleted by shrinkage */
 	for (i = newsize; i < oldsize; i++) {
@@ -937,7 +937,7 @@ _PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
 		memset(&sv->ob_item[oldsize], 0,
 			   sizeof(*sv->ob_item) * (newsize - oldsize));
 	*pv = (PyObject *) sv;
-	_PyObject_GC_TRACK(sv);
+	_JyNI_GC_TRACK(sv);
 	return 0;
 }
 
@@ -989,7 +989,7 @@ typedef struct {
 static void
 tupleiter_dealloc(tupleiterobject *it)
 {
-	_PyObject_GC_UNTRACK(it);
+	_JyNI_GC_UNTRACK(it);
 	Py_XDECREF(it->it_seq);
 	PyObject_GC_Del(it);
 }
@@ -1089,6 +1089,6 @@ tuple_iter(PyObject *seq)
 	it->it_index = 0;
 	Py_INCREF(seq);
 	it->it_seq = (PyTupleObject *)seq;
-	_PyObject_GC_TRACK(it);
+	_JyNI_GC_TRACK(it);
 	return (PyObject *)it;
 }

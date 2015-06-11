@@ -912,7 +912,7 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 //		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
 //
 //	if (PyType_IS_GC(type))
-//		_PyObject_GC_TRACK(obj);
+//		_JyNI_GC_TRACK(obj);
 //	return obj;
 }
 
@@ -1106,12 +1106,12 @@ subtype_dealloc(PyObject *self)
 
 	// Maybe call finalizer; exit early if resurrected
 	if (type->tp_del) {
-		_PyObject_GC_TRACK(self);
+		_JyNI_GC_TRACK(self);
 		type->tp_del(self);
 		if (self->ob_refcnt > 0)
 			goto endlabel;			  // resurrected
 		else
-			_PyObject_GC_UNTRACK(self);
+			_JyNI_GC_UNTRACK(self);
 //			New weakrefs could be created during the finalizer call.
 //			If this occurs, clear them out without calling their
 //			finalizers since they might rely on part of the object
@@ -1153,7 +1153,7 @@ subtype_dealloc(PyObject *self)
 //	 * basedealloc knows about gc.
 
 	if (PyType_IS_GC(base))
-		_PyObject_GC_TRACK(self);
+		_JyNI_GC_TRACK(self);
 	assert(basedealloc);
 	basedealloc(self);
 
@@ -2775,7 +2775,7 @@ type_dealloc(PyTypeObject *type)
 
 	// Assert this is a heap-allocated type object
 	assert(type->tp_flags & Py_TPFLAGS_HEAPTYPE);
-	_PyObject_GC_UNTRACK(type);
+	_JyNI_GC_UNTRACK(type);
 	PyObject_ClearWeakRefs((PyObject *)type);
 	et = (PyHeapTypeObject *)type;
 	Py_XDECREF(type->tp_base);
@@ -6889,7 +6889,7 @@ super_dealloc(PyObject *self)
 {
 	superobject *su = (superobject *)self;
 
-	_PyObject_GC_UNTRACK(self);
+	_JyNI_GC_UNTRACK(self);
 	Py_XDECREF(su->obj);
 	Py_XDECREF(su->type);
 	Py_XDECREF(su->obj_type);

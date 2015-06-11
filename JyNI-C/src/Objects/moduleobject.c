@@ -127,6 +127,7 @@ PyModule_GetDict(PyObject *m)
 char *
 PyModule_GetName(PyObject *m)
 {
+	//todo: Maybe attempt to read result from JyAttributeModuleName.
 	if (!PyModule_Check(m)) {
 		PyErr_BadArgument();
 		return NULL;

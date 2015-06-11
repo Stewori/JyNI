@@ -106,7 +106,7 @@ PyFunction_New(PyObject *code, PyObject *globals)
 //	}
 //	else
 //		return NULL;
-//	_PyObject_GC_TRACK(op);
+//	_JyNI_GC_TRACK(op);
 //	return (PyObject *)op;
 }
 
@@ -558,7 +558,7 @@ func_new(PyTypeObject* type, PyObject* args, PyObject* kw)
 static void
 func_dealloc(PyFunctionObject *op)
 {
-	_PyObject_GC_UNTRACK(op);
+	_JyNI_GC_UNTRACK(op);
 //	if (op->func_weakreflist != NULL)
 //		PyObject_ClearWeakRefs((PyObject *) op);
 	Py_DECREF(op->func_code);
@@ -766,7 +766,7 @@ PyTypeObject PyFunction_Type = {
 //static void
 //cm_dealloc(classmethod *cm)
 //{
-//	_PyObject_GC_UNTRACK((PyObject *)cm);
+//	_JyNI_GC_UNTRACK((PyObject *)cm);
 //	Py_XDECREF(cm->cm_callable);
 //	Py_TYPE(cm)->tp_free((PyObject *)cm);
 //}
@@ -922,7 +922,7 @@ PyTypeObject PyFunction_Type = {
 //static void
 //sm_dealloc(staticmethod *sm)
 //{
-//	_PyObject_GC_UNTRACK((PyObject *)sm);
+//	_JyNI_GC_UNTRACK((PyObject *)sm);
 //	Py_XDECREF(sm->sm_callable);
 //	Py_TYPE(sm)->tp_free((PyObject *)sm);
 //}

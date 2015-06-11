@@ -1112,7 +1112,7 @@ frozenset_hash(PyObject *self)
 //	si->si_used = so->used;
 //	si->si_pos = 0;
 //	si->len = so->used;
-//	_PyObject_GC_TRACK(si);
+//	_JyNI_GC_TRACK(si);
 //	return (PyObject *)si;
 //}
 

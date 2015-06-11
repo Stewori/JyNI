@@ -184,7 +184,7 @@ alloc_error:
 	Py_XINCREF(op->cl_getattr);
 	Py_XINCREF(op->cl_setattr);
 	Py_XINCREF(op->cl_delattr);
-	_PyObject_GC_TRACK(op);
+	_JyNI_GC_TRACK(op);
 	return (PyObject *) op;
 }
 
@@ -241,7 +241,7 @@ class_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 class_dealloc(PyClassObject *op)
 {
-	_PyObject_GC_UNTRACK(op);
+	_JyNI_GC_UNTRACK(op);
 	if (op->cl_weakreflist != NULL)
 		PyObject_ClearWeakRefs((PyObject *) op);
 	Py_DECREF(op->cl_bases);
@@ -595,7 +595,7 @@ PyInstance_NewRaw(PyObject *klass, PyObject *dict)
 	Py_INCREF(klass);
 	inst->in_class = (PyClassObject *)klass;
 	inst->in_dict = dict;
-	_PyObject_GC_TRACK(inst);
+	_JyNI_GC_TRACK(inst);
 	return (PyObject *)inst;
 }
 
@@ -687,7 +687,7 @@ instance_dealloc(register PyInstanceObject *inst)
 	PyObject *del;
 	static PyObject *delstr;
 
-	_PyObject_GC_UNTRACK(inst);
+	_JyNI_GC_UNTRACK(inst);
 	if (inst->in_weakreflist != NULL)
 		PyObject_ClearWeakRefs((PyObject *) inst);
 
@@ -742,7 +742,7 @@ instance_dealloc(register PyInstanceObject *inst)
 		 */
 		_Py_NewReference((PyObject *)inst);
 		inst->ob_refcnt = refcnt;
-		_PyObject_GC_TRACK(inst);
+		_JyNI_GC_TRACK(inst);
 		/* If Py_REF_DEBUG, _Py_NewReference bumped _Py_RefTotal, so
 		 * we need to undo that. */
 		_Py_DEC_REFTOTAL;
@@ -2328,7 +2328,7 @@ PyMethod_New(PyObject *func, PyObject *self, PyObject *klass)
 	im->im_self = self;
 	Py_XINCREF(klass);
 	im->im_class = klass;
-	_PyObject_GC_TRACK(im);
+	_JyNI_GC_TRACK(im);
 	return (PyObject *)im;
 }
 
@@ -2438,7 +2438,7 @@ instancemethod_new(PyTypeObject* type, PyObject* args, PyObject *kw)
 static void
 instancemethod_dealloc(register PyMethodObject *im)
 {
-	_PyObject_GC_UNTRACK(im);
+	_JyNI_GC_UNTRACK(im);
 	if (im->im_weakreflist != NULL)
 		PyObject_ClearWeakRefs((PyObject *)im);
 	Py_DECREF(im->im_func);

@@ -45,14 +45,22 @@
 
 package JyNI.gc;
 
-public class SimpleGCHead implements JyGCHead {
-	protected long handle = 0;
+import org.python.core.PyObject;
 
-	public SimpleGCHead(long handle) {
+public class SimpleGCHead implements PyObjectGCHead {
+	protected long handle;
+	protected PyObject object;
+
+	public SimpleGCHead(PyObject object, long handle) {
 		this.handle = handle;
+		this.object = object;
 	}
 	
 	public long getHandle() {
 		return handle;
+	}
+
+	public PyObject getObject() {
+		return object;
 	}
 }

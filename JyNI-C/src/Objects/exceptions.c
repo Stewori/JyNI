@@ -144,7 +144,7 @@ BaseException_clear(PyBaseExceptionObject *self)
 static void
 BaseException_dealloc(PyBaseExceptionObject *self)
 {
-	_PyObject_GC_UNTRACK(self);
+	_JyNI_GC_UNTRACK(self);
 	BaseException_clear(self);
 	Py_TYPE(self)->tp_free((PyObject *)self);
 	//JyNI-note: tp_free should be okay here since we adjusted all
@@ -524,7 +524,7 @@ static PyTypeObject _PyExc_BaseException = {
 	0,                                     /*tp_print*/
 	0,                                     /*tp_getattr*/
 	0,                                     /*tp_setattr*/
-	0,                                     /* tp_compare; */
+	0,                                     /*tp_compare*/
 	(reprfunc)BaseException_repr,          /*tp_repr*/
 	0,                                     /*tp_as_number*/
 	&BaseException_as_sequence,            /*tp_as_sequence*/
@@ -720,7 +720,7 @@ SystemExit_clear(PySystemExitObject *self)
 static void
 SystemExit_dealloc(PySystemExitObject *self)
 {
-	_PyObject_GC_UNTRACK(self);
+	_JyNI_GC_UNTRACK(self);
 	SystemExit_clear(self);
 	Py_TYPE(self)->tp_free((PyObject *)self);
 }
@@ -876,7 +876,7 @@ EnvironmentError_clear(PyEnvironmentErrorObject *self)
 static void
 EnvironmentError_dealloc(PyEnvironmentErrorObject *self)
 {
-	_PyObject_GC_UNTRACK(self);
+	_JyNI_GC_UNTRACK(self);
 	EnvironmentError_clear(self);
 	Py_TYPE(self)->tp_free((PyObject *)self);
 }
@@ -1161,7 +1161,7 @@ MiddlingExtendsException(PyExc_EnvironmentError, OSError,
 //static void
 //WindowsError_dealloc(PyWindowsErrorObject *self)
 //{
-//	_PyObject_GC_UNTRACK(self);
+//	_JyNI_GC_UNTRACK(self);
 //	WindowsError_clear(self);
 //	Py_TYPE(self)->tp_free((PyObject *)self);
 //}
@@ -1457,7 +1457,7 @@ SyntaxError_clear(PySyntaxErrorObject *self)
 static void
 SyntaxError_dealloc(PySyntaxErrorObject *self)
 {
-	_PyObject_GC_UNTRACK(self);
+	_JyNI_GC_UNTRACK(self);
 	SyntaxError_clear(self);
 	Py_TYPE(self)->tp_free((PyObject *)self);
 }
@@ -2278,7 +2278,7 @@ UnicodeError_clear(PyUnicodeErrorObject *self)
 static void
 UnicodeError_dealloc(PyUnicodeErrorObject *self)
 {
-	_PyObject_GC_UNTRACK(self);
+	_JyNI_GC_UNTRACK(self);
 	UnicodeError_clear(self);
 	Py_TYPE(self)->tp_free((PyObject *)self);
 }

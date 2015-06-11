@@ -516,10 +516,10 @@ PyDict_New(void)
 //
 //#define MAINTAIN_TRACKING(mp, key, value)
 //	do {
-//		if (!_PyObject_GC_IS_TRACKED(mp)) {
-//			if (_PyObject_GC_MAY_BE_TRACKED(key) ||
-//				_PyObject_GC_MAY_BE_TRACKED(value)) {
-//				_PyObject_GC_TRACK(mp);
+//		if (!_JyNI_GC_IS_TRACKED(mp)) {
+//			if (_JyNI_GC_MAY_BE_TRACKED(key) ||
+//				_JyNI_GC_MAY_BE_TRACKED(value)) {
+//				_JyNI_GC_TRACK(mp);
 //				INCREASE_TRACK_COUNT
 //			}
 //		}
@@ -533,7 +533,7 @@ PyDict_New(void)
 //	Py_ssize_t mask, i;
 //	PyDictEntry *ep;
 //
-//	if (!PyDict_CheckExact(op) || !_PyObject_GC_IS_TRACKED(op))
+//	if (!PyDict_CheckExact(op) || !_JyNI_GC_IS_TRACKED(op))
 //		return;
 //
 //	mp = (PyDictObject *) op;
@@ -542,12 +542,12 @@ PyDict_New(void)
 //	for (i = 0; i <= mask; i++) {
 //		if ((value = ep[i].me_value) == NULL)
 //			continue;
-//		if (_PyObject_GC_MAY_BE_TRACKED(value) ||
-//			_PyObject_GC_MAY_BE_TRACKED(ep[i].me_key))
+//		if (_JyNI_GC_MAY_BE_TRACKED(value) ||
+//			_JyNI_GC_MAY_BE_TRACKED(ep[i].me_key))
 //			return;
 //	}
 //	DECREASE_TRACK_COUNT
-//	_PyObject_GC_UNTRACK(op);
+//	_JyNI_GC_UNTRACK(op);
 //}
 //
 //
@@ -2511,13 +2511,13 @@ dict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		d->ma_lookup = lookdict_string;*/
 		// The object has been implicitly tracked by tp_alloc
 		if (type == &PyDict_Type)
-			_PyObject_GC_UNTRACK(d);
+			_JyNI_GC_UNTRACK(d);
 /*
 #ifdef SHOW_CONVERSION_COUNTS
 		++created;
 #endif
 #ifdef SHOW_TRACK_COUNT
-		if (_PyObject_GC_IS_TRACKED(d))
+		if (_JyNI_GC_IS_TRACKED(d))
 			count_tracked++;
 		else
 			count_untracked++;
@@ -2727,7 +2727,7 @@ PyDict_DelItemString(PyObject *v, const char *key)
 //	}
 //	else
 //		di->di_result = NULL;
-//	_PyObject_GC_TRACK(di);
+//	_JyNI_GC_TRACK(di);
 //	return (PyObject *)di;
 //}
 //
@@ -3048,7 +3048,7 @@ PyDict_DelItemString(PyObject *v, const char *key)
 //		return NULL;
 //	Py_INCREF(dict);
 //	dv->dv_dict = (PyDictObject *)dict;
-//	_PyObject_GC_TRACK(dv);
+//	_JyNI_GC_TRACK(dv);
 //	return (PyObject *)dv;
 //}
 //

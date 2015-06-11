@@ -262,6 +262,53 @@ PyByteArrayIter_Type;
 
 inline void initBuiltinTypes()
 {
+	/*
+	 * JyNI GC-Notes:
+	 *
+	 * CStubs' heads should not contain links to gc-heads unless
+	 * it is only partly truncated and a gc-relevant native
+	 * PyObject-reference remains. Only a link to the PyObject
+	 * should exist.
+	 *
+	 * SimpleGCHeads should be replaced by ordinary ones to save
+	 * re-creation time if native objects are passed to Java.
+	 *
+	 * If weak refs are used to track collection of heads, the
+	 * handle must be contained in the ref, maybe it's feasible
+	 * to have it *only* there.
+	 *
+	 * Non-traversable native objects only need gc-heads in
+	 * GIL-free mode.
+	 *
+	 * Mirrored objects may have gc-heads even in GIL-mode to
+	 * let a SoftReference cache the Java-side object.
+	 * Traversable mirrored objects must have their gchead
+	 * track references of the native object. The mirrored
+	 * Java-PyObject shall be SoftReferenced.
+	 *
+	 * Special-case PyList:
+	 * Let JyList implement TraversableGCHead and PyObjectGCHead.
+	 * Basically the situation is the same as with PyCPeerGC, but
+	 * with JyList fulfilling the role of gc-head. The JyList should
+	 * also cause an incref to the native counterpart. This replaces
+	 * the current immortality incref in JySync.c.
+	 * Maintain a SoftReference to the PyList and gc-head links
+	 * to all native traversable elements.
+	 * Further reason whether
+	 * - to use element-access to check if heads are up to date
+	 * - to use gc-heads as cache of natively saved objects, i.e.
+	 *   saving some JNI-calls.
+	 *
+	 * Special-case PyCell:
+	 * Like PyList, but only with one element.
+	 *
+	 * Special-case PySet/PyFrozenSet:
+	 * Note that size-field sync currently might not be thread-safe.
+	 * Todo: Use native setter to inject the JySet into the PySet.
+	 * GC-situation is like CStub. Consider to not even mark it as
+	 * special case, but let it be treated in line with ordinary
+	 * CStubs/truncated objects.
+	 */
 //	int i;
 //	for (i = 0; i < builtinTypeCount; ++i)
 //	{
@@ -299,10 +346,10 @@ inline void initBuiltinTypes()
 	builtinTypes[3].jy_class = pyFileClass;
 	builtinTypes[3].flags = JY_TRUNCATE_FLAG_MASK;
 
-	//todo check traverse
+	//Would be GC-relevant, but is fully truncated.
 	builtinTypes[4].py_type = &PyModule_Type;
 	builtinTypes[4].jy_class = pyModuleClass;
-	builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_SINGLE_LINK;
+	builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK;
 
 	builtinTypes[5].py_type = &PyCell_Type;
 	builtinTypes[5].jy_class = pyCellClass;
@@ -454,9 +501,10 @@ inline void initBuiltinTypes()
 	builtinTypes[31].jy_class = pyReversedIteratorClass;
 	builtinTypes[31].flags = 0;*/
 
+	//Would be GC-relevant, but is fully truncated.
 	builtinTypes[32].py_type = &PyDict_Type;
 	builtinTypes[32].jy_class = pyDictClass;
-	builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_VAR_SIZE;
+	builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK;
 
 	//In the CPython->Java lookup direction, this is
 	//overwritten by the previous entry with pyDictClass.
@@ -465,9 +513,10 @@ inline void initBuiltinTypes()
 	//Native PyDict methods are implemented in a way that is
 	//agnostic about whether PyDictionary or PyStringMap is used
 	//on Java/Jython-side.
+	//Would be GC-relevant, but is fully truncated.
 	builtinTypes[33].py_type = &PyDict_Type;
 	builtinTypes[33].jy_class = pyStringMapClass;
-	builtinTypes[33].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_VAR_SIZE;
+	builtinTypes[33].flags = JY_TRUNCATE_FLAG_MASK;
 	char* tp_name33 = "stringmap";
 	builtinTypes[33].type_name = malloc(strlen(tp_name33)+1);
 	strcpy(builtinTypes[33].type_name, tp_name33);
@@ -508,7 +557,7 @@ inline void initBuiltinTypes()
 	builtinTypes[39].jy_class = pyGeneratorClass;
 	builtinTypes[39].flags = 0;*/
 
-	/* Code objects are not subject to GC in CPython althought they contain some links.
+	/* Code objects are not subject to GC in CPython although they contain some links.
 	 * However the contained links are always strings or string-tuples and nothing that
 	 * could lead to reference-cycles.
 	 * Todo: Check whether this simplification of GC-traversal can be applied in Jython too.
@@ -548,10 +597,10 @@ inline void initBuiltinTypes()
 	builtinTypes[43].jy_class = pySuperClass;
 	builtinTypes[43].flags = 0;*/
 
-	//todo check traverse
+	//Would be GC-relevant, but is fully truncated.
 	builtinTypes[44].py_type = (PyTypeObject*) PyExc_BaseException;
 	builtinTypes[44].jy_class = pyBaseExceptionClass;
-	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK | JY_GC_FIXED_SIZE; // 3 links
+	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK;
 
 	builtinTypes[45].py_type = &PyTraceBack_Type;
 	builtinTypes[45].jy_class = pyTracebackClass;
@@ -953,7 +1002,7 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 	PyObject_INIT(obj, tme->py_type);
 
 	if (PyType_IS_GC(tme->py_type))
-		_PyObject_GC_TRACK(obj);
+		_JyNI_GC_TRACK(obj);
 	return obj;
 }
 
@@ -1011,7 +1060,7 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 		PyObject_INIT_VAR((PyVarObject *)obj, tme->py_type, nitems);
 
 	if (PyType_IS_GC(tme->py_type))
-		_PyObject_GC_TRACK(obj);
+		_JyNI_GC_TRACK(obj);
 	return obj;
 }
 
@@ -1049,7 +1098,7 @@ inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 	PyObject_INIT(obj, type);
 
 	if (PyType_IS_GC(type))
-		_PyObject_GC_TRACK(obj);
+		_JyNI_GC_TRACK(obj);
 	return obj;
 }
 
@@ -1091,7 +1140,7 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
 
 	if (PyType_IS_GC(type))
-		_PyObject_GC_TRACK(obj);
+		_JyNI_GC_TRACK(obj);
 	return obj;
 }
 
@@ -1134,7 +1183,7 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 		PyObject_INIT_VAR((PyVarObject *)obj, eme->exc_type, 0);
 
 	if (PyType_IS_GC(eme->exc_type))
-		_PyObject_GC_TRACK(obj);
+		_JyNI_GC_TRACK(obj);
 	return obj;
 }
 
