@@ -351,7 +351,7 @@ inline void initBuiltinTypes()
 	builtinTypes[3].jy_class = pyFileClass;
 	builtinTypes[3].flags = JY_TRUNCATE_FLAG_MASK;
 
-	//Would be GC-relevant, but is fully truncated.
+	//In JyNI no GC-type since it is fully truncated.
 	builtinTypes[4].py_type = &PyModule_Type;
 	builtinTypes[4].jy_class = pyModuleClass;
 	builtinTypes[4].flags = JY_TRUNCATE_FLAG_MASK;
@@ -506,7 +506,7 @@ inline void initBuiltinTypes()
 	builtinTypes[31].jy_class = pyReversedIteratorClass;
 	builtinTypes[31].flags = 0;*/
 
-	//Would be GC-relevant, but is fully truncated.
+	//In JyNI no GC-type since it is fully truncated.
 	builtinTypes[32].py_type = &PyDict_Type;
 	builtinTypes[32].jy_class = pyDictClass;
 	builtinTypes[32].flags = JY_TRUNCATE_FLAG_MASK;
@@ -526,9 +526,10 @@ inline void initBuiltinTypes()
 	builtinTypes[33].type_name = malloc(strlen(tp_name33)+1);
 	strcpy(builtinTypes[33].type_name, tp_name33);
 
+	//In JyNI no GC-type since it is almost fully truncated.
 	builtinTypes[34].py_type = &PySet_Type;
 	builtinTypes[34].jy_class = pySetClass;
-	builtinTypes[34].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE;
+	builtinTypes[34].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS;
 	builtinTypes[34].truncate_trailing = sizeof(Py_ssize_t); //setObject.fill is covered by PyVarObject.ob_size. We add another sizeof(Py_ssize_t) to allocate space for setObject.used
 	builtinTypes[34].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[34].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JySet_From_PySet;
@@ -538,9 +539,10 @@ inline void initBuiltinTypes()
 	builtinTypes[34].jy_class = pySequenceIterClass;
 	builtinTypes[34].flags = 0;*/
 
+	//In JyNI no GC-type since it is almost fully truncated.
 	builtinTypes[35].py_type = &PyFrozenSet_Type;
 	builtinTypes[35].jy_class = pyFrozenSetClass;
-	builtinTypes[35].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE;
+	builtinTypes[35].flags = JY_TRUNCATE_FLAG_MASK | JySYNC_ON_INIT_FLAGS;
 	builtinTypes[35].truncate_trailing = sizeof(Py_ssize_t); //setObject.fill is covered by PyVarObject.ob_size. We add another sizeof(Py_ssize_t) to allocate space for setObject.used
 	builtinTypes[35].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[35].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFrozenSet_From_PyFrozenSet;
@@ -565,7 +567,8 @@ inline void initBuiltinTypes()
 	/* Code objects are not subject to GC in CPython although they contain some links.
 	 * However the contained links are always strings or string-tuples and nothing that
 	 * could lead to reference-cycles.
-	 * Todo: Check whether this simplification of GC-traversal can be applied in Jython too.
+	 * Todo: - Check whether this simplification of GC-traversal can be applied in Jython too.
+	 *       - This might need to be improved for GIL-free mode. Check this.
 	 */
 	builtinTypes[40].py_type = &PyCode_Type;
 	builtinTypes[40].jy_class = pyBytecodeClass;
@@ -602,11 +605,12 @@ inline void initBuiltinTypes()
 	builtinTypes[43].jy_class = pySuperClass;
 	builtinTypes[43].flags = 0;*/
 
-	//Would be GC-relevant, but is fully truncated.
+	//In JyNI no GC-type since it is fully truncated.
 	builtinTypes[44].py_type = (PyTypeObject*) PyExc_BaseException;
 	builtinTypes[44].jy_class = pyBaseExceptionClass;
 	builtinTypes[44].flags = JY_TRUNCATE_FLAG_MASK;
 
+	//todo: Improve PyTraceBack-implementation
 	builtinTypes[45].py_type = &PyTraceBack_Type;
 	builtinTypes[45].jy_class = pyTracebackClass;
 	builtinTypes[45].flags = JY_TRUNCATE_FLAG_MASK;
