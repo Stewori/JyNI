@@ -482,7 +482,7 @@ inline void initBuiltinTypes()
 
 	builtinTypes[27].py_type = &PyTuple_Type;
 	builtinTypes[27].jy_class = pyTupleClass;
-	builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS | JY_GC_FIXED_SIZE; // Py_SIZE(o) links
+	builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS | JY_GC_FIXED_SIZE | GC_NO_INITIAL_EXPLORE; // Py_SIZE(o) links
 	builtinTypes[27].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[27].sync->jyInit = (jyInitSync) JySync_Init_JyTuple_From_PyTuple;
 	builtinTypes[27].sync->pyInit = (pyInitSync) JySync_Init_PyTuple_From_JyTuple;
@@ -493,7 +493,8 @@ inline void initBuiltinTypes()
 
 	builtinTypes[29].py_type = &PyList_Type;
 	builtinTypes[29].jy_class = pyListClass;
-	builtinTypes[29].flags = JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE;
+	builtinTypes[29].flags = JySYNC_ON_INIT_FLAGS | JY_GC_SPECIAL_CASE |
+			GC_NO_INITIAL_EXPLORE | GC_CRITICAL;
 	builtinTypes[29].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[29].sync->jyInit = (jyInitSync) JySync_Init_JyList_From_PyList;
 	builtinTypes[29].sync->pyInit = (pyInitSync) JySync_Init_PyList_From_JyList;
@@ -955,6 +956,11 @@ inline void JyNI_SyncJy2Py(JyObject* jy, PyObject* op)
 	if (sync != NULL && sync->jy2py != NULL) sync->jy2py(jy->jy, op);
 }
 
+/*
+ * This method returns a NEW reference. Also note that the object is not yet
+ * tracked by GC.
+ */
+/*
 inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems)
 {
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
@@ -975,6 +981,7 @@ inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems)
 		else return JyNI_AllocNativeVar(type, nitems);
 	}
 }
+*/
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -1078,6 +1085,12 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
+ * Note that the resulting object is tracked by gc, but not yet explored. Though
+ * JyNI is robust against this, it is cleaner and more efficient if objects are
+ * explicitly explored by gc after they were created and fully populated.
+ * Use void JyNI_GC_Explore(PyObject* op) to let gc explore an object. Exploration
+ * is not performed on GC_TRACK, because often the values of the object were not
+ * yet populated at that time.
  */
 inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 {
@@ -1110,12 +1123,18 @@ inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 	PyObject_INIT(obj, type);
 
 	if (PyType_IS_GC(type))
-		_JyNI_GC_TRACK(obj);
+		_JyNI_GC_TRACK_NoExplore(obj);
 	return obj;
 }
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
+ * Note that the resulting object is tracked by gc, but not yet explored. Though
+ * JyNI is robust against this, it is cleaner and more efficient if objects are
+ * explicitly explored by gc after they were created and fully populated.
+ * Use void JyNI_GC_Explore(PyObject* op) to let gc explore an object. Exploration
+ * is not performed on GC_TRACK, because often the values of the object were not
+ * yet populated at that time.
  */
 inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 {
@@ -1152,7 +1171,7 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
 
 	if (PyType_IS_GC(type))
-		_JyNI_GC_TRACK(obj);
+		_JyNI_GC_TRACK_NoExplore(obj);
 	return obj;
 }
 

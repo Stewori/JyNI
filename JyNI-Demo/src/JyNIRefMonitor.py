@@ -21,6 +21,9 @@ sys.path.append('./DemoExtension/build/lib.linux-x86_64-2.7') #in case you run i
 #build with setup.py on 32 bit machine:
 sys.path.append('../../DemoExtension/build/lib.linux-i686-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it from base dir
+#build with setup.py on macosx 10.10:
+sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
+sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
 
 import DemoExtension
 

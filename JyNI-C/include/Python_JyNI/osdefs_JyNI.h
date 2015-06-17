@@ -1,11 +1,12 @@
-/*
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+/* This File is based on osdefs.h from CPython 2.7.10 release.
+ * It has been modified to suit JyNI needs.
  *
- *
- * Copyright of Python and Jython:
+ * Copyright of the original file:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
  * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
+ *
+ * Copyright of JyNI:
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -42,64 +43,66 @@
  * exception statement from your version.
  */
 
-/*
- * thread_JyNI.c
- *
- *  Created on: 09.11.2013
- *      Author: Stefan Richthofer
- */
+#ifndef Py_OSDEFS_H
+#define Py_OSDEFS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <JyNI.h>
-#include <pythread_JyNI.h>
 
-//PyAPI_FUNC(void) PyThread_init_thread(void);
-static void PyThread__init_thread(void)
-{
+/* Operating system dependencies */
 
+/* Mod by chrish: QNX has WATCOM, but isn't DOS */
+#if !defined(__QNX__)
+#if defined(MS_WINDOWS) || defined(__BORLANDC__) || defined(__WATCOMC__) || defined(__DJGPP__) || defined(PYOS_OS2)
+#if defined(PYOS_OS2) && defined(PYCC_GCC)
+#define MAXPATHLEN 260
+#define SEP '/'
+#define ALTSEP '\\'
+#else
+#define SEP '\\'
+#define ALTSEP '/'
+#define MAXPATHLEN 256
+#endif
+#define DELIM ';'
+#endif
+#endif
+
+#ifdef RISCOS
+#define SEP '.'
+#define MAXPATHLEN 256
+#define DELIM ','
+#endif
+
+
+/* Filename separator */
+#ifndef SEP
+#define SEP '/'
+#endif
+
+/* Max pathname length */
+#ifdef __hpux
+#include <sys/param.h>
+#include <limits.h>
+#ifndef PATH_MAX
+#define PATH_MAX MAXPATHLEN
+#endif
+#endif
+
+#ifndef MAXPATHLEN
+#if defined(PATH_MAX) && PATH_MAX > 1024
+#define MAXPATHLEN PATH_MAX
+#else
+#define MAXPATHLEN 1024
+#endif
+#endif
+
+/* Search path entry delimiter */
+#ifndef DELIM
+#define DELIM ':'
+#endif
+
+#ifdef __cplusplus
 }
-
-//PyAPI_FUNC(long) PyThread_start_new_thread(void (*)(void *), void *)
-long PyThread_start_new_thread(void (*func) (void *), void *arg)
-{
-	//todo: Implement
-	return 0;
-}
-
-PyAPI_FUNC(void) PyThread_exit_thread(void)
-{
-	//todo: Implement
-}
-
-PyAPI_FUNC(long) PyThread_get_thread_ident(void)
-//long PyThread_get_thread_ident(void)
-{
-	env(0);
-	return (long) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getCurrentThreadID);
-}
-
-PyAPI_FUNC(PyThread_type_lock) PyThread_allocate_lock(void)
-//PyThread_type_lock PyThread_allocate_lock(void)
-{
-	env(NULL);
-	return (PyThread_type_lock) (*env)->NewGlobalRef(env, (*env)->NewObject(env, JyLockClass, JyLockConstructor));
-}
-
-PyAPI_FUNC(void) PyThread_free_lock(PyThread_type_lock lock)
-{
-	env();
-	(*env)->DeleteGlobalRef(env, (jobject) lock);
-}
-
-PyAPI_FUNC(int) PyThread_acquire_lock(PyThread_type_lock lock, int waitflag)
-{
-	env(0);
-	return (*env)->CallBooleanMethod(env, (jobject) lock, JyLockAcquire, waitflag);//waitflag == WAIT_LOCK);
-}
-
-PyAPI_FUNC(void) PyThread_release_lock(PyThread_type_lock lock)
-{
-	env();
-	(*env)->CallVoidMethod(env, (jobject) lock, JyLockRelease);
-	if ((*env)->ExceptionOccurred(env))
-		(*env)->ExceptionClear(env); //this means, lock was already released, but we don't mind this
-}
+#endif
+#endif /* !Py_OSDEFS_H */

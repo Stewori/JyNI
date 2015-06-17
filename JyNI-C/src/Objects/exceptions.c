@@ -53,7 +53,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <JyNI.h>
 #include "structmember_JyNI.h"
-#include "osdefs.h"
+#include "osdefs_JyNI.h"
 
 #define EXC_MODULE_NAME "exceptions."
 

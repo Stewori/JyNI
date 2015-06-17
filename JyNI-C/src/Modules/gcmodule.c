@@ -99,6 +99,148 @@
 static PyGC_Head generations = {{&generations, &generations, 0}};
 PyGC_Head *_PyGC_generation0 = &generations;
 
+/* Exploration-stack implementation.
+ * Note that the stack explicitly
+ * does *not* incref or decref!
+ */
+#define EX_STACK_BLOCK_SIZE 100
+
+typedef struct Ex_Stack_Block Ex_Stack_Block; /* Forward declaration */
+struct Ex_Stack_Block {
+	int position;
+	PyObject* stack[EX_STACK_BLOCK_SIZE];
+	Ex_Stack_Block* next;
+};
+
+static Ex_Stack_Block explorationStack;
+//static int exStackGapCount = 0;
+
+static void pushExStack(PyObject* op) {
+	if (explorationStack.position < EX_STACK_BLOCK_SIZE) {
+		explorationStack.stack[explorationStack.position++] = op;
+	} else {
+		Ex_Stack_Block* stack = explorationStack.next;
+		if (stack && stack->position < EX_STACK_BLOCK_SIZE) {
+			stack->stack[stack->position++] = op;
+		} else {
+			Ex_Stack_Block* newNext = (Ex_Stack_Block*) malloc(sizeof(Ex_Stack_Block));
+			newNext->stack[newNext->position++] = op;
+			newNext->next = stack;
+			explorationStack.next = newNext;
+		}
+	}
+}
+/*
+static void cleanExStackTop() {
+	if (exStackGapCount && explorationStack.position > 0) {
+		if (explorationStack.next) {
+			jputsLong(__LINE__);
+			Ex_Stack_Block* stack = explorationStack.next;
+			while (stack && stack->position > 0 && stack->stack[stack->position-1]) {
+				--stack->position;
+				--exStackGapCount;
+				if (!stack->position) {
+					explorationStack.next = stack->next;
+					free(stack);
+					stack = explorationStack.next;
+				}
+			}
+			if (!explorationStack.next) {
+				while (explorationStack.position > 0 && !explorationStack.stack[explorationStack.position-1]) {
+					--explorationStack.position;
+					--exStackGapCount;
+				}
+			}
+		} else {
+			jputsLong(__LINE__);
+			jputsLong(explorationStack.position-1);
+			while (explorationStack.position > 0 && !explorationStack.stack[explorationStack.position-1]) {
+				--explorationStack.position;
+				--exStackGapCount;
+			}
+		}
+	}
+}*/
+
+static PyObject* popExStack() {
+//	if (explorationStack.position < EX_STACK_BLOCK_SIZE) {
+//		jputsLong(explorationStack.position);
+//		return explorationStack.stack[--explorationStack.position];
+//	} else
+	if (explorationStack.next) {
+		Ex_Stack_Block* stack = explorationStack.next;
+		if (stack->position > 1) {
+			return stack->stack[--stack->position];
+		} else {
+			PyObject* result = stack->stack[--stack->position];
+			explorationStack.next = stack->next;
+			free(stack);
+			return result;
+		}
+	} else if (explorationStack.position > 0)//explorationStack.position == EX_STACK_BLOCK_SIZE
+		return explorationStack.stack[--explorationStack.position];
+	else
+		return NULL;
+}
+
+/*static inline PyObject* popExStack() {
+	if (!explorationStack.position) return NULL;
+	PyObject* result = _popExStack();
+	while (!result && explorationStack.position)
+	{
+		result = _popExStack();
+		--exStackGapCount;
+	}
+	cleanExStackTop();
+	return result;
+}*/
+
+static jboolean removeObjectExStack(PyObject* op) {
+	int i;
+	jboolean result = JNI_FALSE;
+	for (i = explorationStack.position-1; i >= 0; --i) {
+		if (explorationStack.stack[i] == op) {
+			explorationStack.stack[i] = explorationStack.stack[--explorationStack.position];
+			result = JNI_TRUE;
+			//++exStackGapCount;
+		}
+	}
+	Ex_Stack_Block* stack = explorationStack.next;
+	while (stack) {
+		for (i = stack->position-1; i >= 0; --i) {
+			if (stack->stack[i] == op) {
+				stack->stack[i] = stack->stack[--stack->position];
+				result = JNI_TRUE;
+				//++exStackGapCount;
+			}
+		}
+		stack = stack->next;
+	}
+	return result;
+}
+
+static jboolean isExStackEmpty() {
+	return !explorationStack.next && explorationStack.position == 0;
+}
+
+static jint exStackSize() {
+	jint result = explorationStack.position;
+	Ex_Stack_Block* stack = explorationStack.next;
+	while(stack) {
+		result += stack->position;
+		stack = stack->next;
+	}
+	return result;//-exStackGapCount;
+}
+
+static jint exStackBlockCount() {
+	jint result = 1;
+	Ex_Stack_Block* stack = explorationStack.next;
+	while(stack)
+		++result;
+	return result;
+}
+
 //static int enabled = 1; // automatic collection enabled?
 //
 //// true if we are currently running the collector
@@ -217,6 +359,16 @@ PyGC_Head *_PyGC_generation0 = &generations;
 #define GC_UNTRACKED					_PyGC_REFS_UNTRACKED
 #define GC_REACHABLE					_PyGC_REFS_REACHABLE
 #define GC_TENTATIVELY_UNREACHABLE	  _PyGC_REFS_TENTATIVELY_UNREACHABLE
+
+#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
+#define GC_EXPLORING _PyGC_REFS_EXPLORING
+#define GC_EXPLORED _PyGC_REFS_EXPLORED
+
+#define IS_UNEXPLORED(op) \
+	(AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)
+
+#define IS_EXPLORED(op) \
+	(AS_GC(op)->gc.gc_refs > 0 || AS_GC(op)->gc.gc_refs < GC_EXPLORING)
 
 #define IS_TRACKED(o) ((AS_GC(o))->gc.gc_refs != GC_UNTRACKED)
 #define IS_REACHABLE(o) ((AS_GC(o))->gc.gc_refs == GC_REACHABLE)
@@ -1454,10 +1606,62 @@ _PyGC_Dump(PyGC_Head *g)
 #undef PyObject_GC_Del
 #undef _PyObject_GC_Malloc
 
-void
-PyObject_GC_Track(void *op)
+
+static int
+visit_count(PyObject *op, void *arg)
 {
-	_PyObject_GC_TRACK(op);
+	//jputs(__FUNCTION__);
+	int* count = (int*) arg;
+	//assert(op != NULL);
+	(*count) = (*count)+1;
+	//jputs("done");
+	return 0;
+}
+
+static int
+visit_explore(PyObject *op, void *arg)
+{
+	if (IS_UNEXPLORED(op))
+		pushExStack(op);
+	return 0;
+}
+
+void JyNI_GC_Explore() {
+	while (!isExStackEmpty()) {
+		PyObject* toExplore = popExStack();
+		if (IS_UNEXPLORED(toExplore))
+			JyNI_GC_ExploreObject(toExplore);
+	}
+}
+
+void JyNI_GC_ExploreObject(PyObject* op) {
+//	jputs("explore object:");
+//	jputs(Py_TYPE((PyObject*) op)->tp_name);
+//	jputsLong(op);
+//	if (AS_GC(op)->gc.gc_refs != GC_UNTRACKED) {
+//		jputs("still untracked... this will cause problems...");
+//	}
+	//jputs("count references...");
+	AS_GC(op)->gc.gc_refs = GC_EXPLORING;
+	if (Py_TYPE((PyObject*) op)->tp_traverse) {
+		int refCount = 0;
+		Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_count, &refCount);
+		//For now we only explore tracked objects. Only in GIL-free mode this will be different.
+		//Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_explore, NULL);
+//		if (Py_TYPE(op) == &PyTuple_Type) {
+//			jputs("explore tuple");
+//			jputsLong(Py_SIZE(op));
+//			//PyTuple_Size(op);
+//			jputsLong(refCount);
+//			jputsLong(op);
+//			jputs("");
+//		}
+	} //else {
+//		jputs("tp_traverse is NULL:");
+//		jputs(Py_TYPE((PyObject*) op)->tp_name);
+//		jputsLong(op);
+//	}
+	AS_GC(op)->gc.gc_refs = GC_EXPLORED;
 	/*
 	 * This will do the following:
 	 *
@@ -1475,7 +1679,31 @@ PyObject_GC_Track(void *op)
 	 */
 }
 
-// for binary compatibility with 2.2
+void
+PyObject_GC_Track(void *op)
+{
+//	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(op)->tp_name);
+//	jputsLong(op);
+	JyNI_GC_Explore();
+	JyNIDebugOp(JY_NATIVE_GC_TRACK, (PyObject*) op, -1);
+	_PyObject_GC_TRACK(op);
+	//if ((AS_JY_WITH_GC(op)->flags & GC_NO_INITIAL_EXPLORE) == 0)
+	//	JyNI_GC_Explore((PyObject*) op);
+	pushExStack((PyObject*) op);
+}
+
+void
+PyObject_GC_Track_NoExplore(void *op)
+{
+//	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(op)->tp_name);
+//	jputsLong(op);
+	JyNIDebugOp(JY_NATIVE_GC_TRACK, (PyObject*) op, -1);
+	_PyObject_GC_TRACK(op);
+}
+
+/* for binary compatibility with 2.2 */
 void
 _PyObject_GC_Track(PyObject *op)
 {
@@ -1487,9 +1715,17 @@ PyObject_GC_UnTrack(void *op)
 {
 	// Obscure:  the Py_TRASHCAN mechanism requires that we be able to
 	// call PyObject_GC_UnTrack twice on an object.
-
-	if (IS_TRACKED(op))
+//	jputs(__FUNCTION__);
+//	jputsLong(op);
+	if (IS_TRACKED(op)) {
+		if (IS_UNEXPLORED(op)) {
+			//jputs("unexplored, remove from exstack");
+			//jputsLong(removeObjectExStack(op));
+			removeObjectExStack(op);
+		}
+		JyNIDebugOp(JY_NATIVE_GC_UNTRACK, (PyObject*) op, -1);
 		_PyObject_GC_UNTRACK(op);
+	}
 }
 
 // for binary compatibility with 2.2

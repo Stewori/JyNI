@@ -835,7 +835,10 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 		}
 //		if (tme->py_type->tp_itemsize == 0) return JyNI_AllocNative(type);
 //		else return JyNI_AllocNativeVar(type, nitems);
-		return JyNI_AllocNativeVar(type, nitems);
+		PyObject* result = JyNI_AllocNativeVar(type, nitems);
+		if (PyType_IS_GC(type))
+			JyNI_GC_Explore(result);
+		return result;
 	}
 //	//JyNI-note: This method has been adjusted to alloc additional space for JyObject.
 //	PyObject *obj;

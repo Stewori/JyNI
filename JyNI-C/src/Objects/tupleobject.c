@@ -104,6 +104,8 @@ PyTuple_New(register Py_ssize_t size)
 	}
 #if PyTuple_MAXSAVESIZE > 0
 	if (size == 0 && free_list[0]) {
+		//jputs("EmptyTuple!");
+		//jputsLong(free_list[0]);
 		op = free_list[0];
 		Py_INCREF(op);
 #ifdef COUNT_ALLOCS

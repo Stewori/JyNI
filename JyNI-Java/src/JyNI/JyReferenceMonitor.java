@@ -91,12 +91,17 @@ public class JyReferenceMonitor {
 			if ((action & INC_MASK) != 0 && (action &  DEC_MASK) != 0) result.append("_REALLOC");
 			else if ((action & (INC_MASK)) != 0) result.append("_ALLOC");
 			else if ((action & (DEC_MASK)) != 0) result.append("_FREE");
-		} else {
+		} else if ((action & GC_MASK) == 0) {
 			if ((action & (INC_MASK)) != 0 && (action & (DEC_MASK)) != 0) result.append("_REF-RESTORE");
 			else if ((action & (INC_MASK)) != 0) result.append("_INCREF");
 			else if ((action & (DEC_MASK)) != 0) result.append("_DECREF");
+		} else {
+			if ((action & (INC_MASK)) != 0 && (action & (DEC_MASK)) != 0) result.append("_GC-RETRACK(??)");
+			else if ((action & (INC_MASK)) != 0) result.append("_GC-TRACK");
+			else if ((action & (DEC_MASK)) != 0) result.append("_GC-UNTRACK");
+			else result.append("_GC");
 		}
-		if ((action & GC_MASK) != 0) result.append("_GC");
+		//if ((action & GC_MASK) != 0) result.append("_GC");
 		if ((action & INLINE_MASK) != 0) result.append("_INLINE");
 		if ((action & FINALIZE_MASK) != 0 && (action & INC_MASK) != 0)  result.append("_RESURRECT");
 		else if ((action & FINALIZE_MASK) != 0) result.append("_FINALIZE");

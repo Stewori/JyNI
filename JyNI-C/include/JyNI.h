@@ -85,6 +85,7 @@
 
 #define LEAVE_JyNI0 \
 	_PyThreadState_Current = NULL; \
+	JyNI_GC_Explore(); \
 	PyEval_ReleaseLock();
 
 #define LEAVE_JyNI \
@@ -198,7 +199,7 @@
                                        */
 #define JY_CACHE                   96 /* JY_CACHE_GC_MASK | JY_CACHE_ETERNAL_MASK */
 #define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
-#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker.
+#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
 #define Is_StaticSingleton(pyObject) \
 	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented)
@@ -264,12 +265,23 @@
 	}
 
 /* GC-macro-replacements */
-#define _JyNI_GC_TRACK(o) PyObject_GC_Track //_PyObject_GC_TRACK(o)
-#define _JyNI_GC_UNTRACK(o) PyObject_GC_UnTrack //_PyObject_GC_UNTRACK(o)
+#define _JyNI_GC_TRACK(o) PyObject_GC_Track(o) //_PyObject_GC_TRACK(o)
+#define _JyNI_GC_TRACK_NoExplore(o) PyObject_GC_Track_NoExplore(o)
+#define _JyNI_GC_UNTRACK(o) PyObject_GC_UnTrack(o) //_PyObject_GC_UNTRACK(o)
 #define _JyNI_GC_IS_TRACKED(o) _PyObject_GC_IS_TRACKED(o)
 #define _JyNI_GC_MAY_BE_TRACKED(obj) _PyObject_GC_MAY_BE_TRACKED(obj)
 
-/* define some method signatures for sync purposes: */
+/* Additional values for _PyGC_REFS. For consistency we also list the orginal
+ * values here:
+ * #define _PyGC_REFS_UNTRACKED                    (-2)
+ * #define _PyGC_REFS_REACHABLE                    (-3)
+ * #define _PyGC_REFS_TENTATIVELY_UNREACHABLE      (-4)
+ */
+#define _PyGC_REFS_UNEXPLORED                      (-5)
+#define _PyGC_REFS_EXPLORING                       (-6)
+#define _PyGC_REFS_EXPLORED                        (-7)
+
+/* define some method-signatures for sync purposes: */
 
 /* jobject is src, PyObject* is dest. Src must not be modified. */
 typedef void (*jy2pySync)(jobject, PyObject*);
@@ -285,16 +297,21 @@ typedef jobject (*jyFactoryMethod)();
 typedef jlong (*pyChecksum)(PyObject*);
 typedef jlong (*jyChecksum)(jobject);
 
-/* Sync-behavior Flags: */
-#define SYNC_ON_PY_INIT_FLAG_MASK				  256
-#define SYNC_ON_JY_INIT_FLAG_MASK				  512
-#define SYNC_ON_PY_TO_JY_FLAG_MASK				 1024
-#define SYNC_ON_JY_TO_PY_FLAG_MASK				 2048
-#define SYNC_ALWAYS_COMPLETELY_FLAG_MASK		 4096
-#define SYNC_ON_PY_CHECKSUM_CHANGE_FLAG_MASK	 8192
-#define SYNC_ON_JY_CHECKSUM_CHANGE_FLAG_MASK	16384
+/* Sync-behavior flags: */
+#define SYNC_ON_PY_INIT_FLAG_MASK                 256
+#define SYNC_ON_JY_INIT_FLAG_MASK                 512
+#define SYNC_ON_PY_TO_JY_FLAG_MASK               1024
+#define SYNC_ON_JY_TO_PY_FLAG_MASK               2048
+#define SYNC_ON_PY_CHECKSUM_CHANGE_FLAG_MASK	 4096
+#define SYNC_ON_JY_CHECKSUM_CHANGE_FLAG_MASK	 8192
+//#define SYNC_ALWAYS_COMPLETELY_FLAG_MASK      16384
 #define SYNC_NEEDED_MASK	3072
 	//(SYNC_ON_PY_TO_JY_FLAG_MASK | SYNC_ON_JY_TO_PY_FLAG_MASK)
+
+/* GC-exploration-behavior flags: */
+#define GC_NO_INITIAL_EXPLORE                   16384
+#define GC_CRITICAL                             32768
+
 
 /*
  * py2jy copies everything sanely from a PyObject to a Jython jobject.
@@ -346,8 +363,8 @@ struct JyAttribute { const char* name; void* value; char flags; JyAttribute* nex
 typedef struct JyAttributeElement JyAttributeElement; /* Forward declaration */
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
 typedef struct { jweak jy; unsigned short flags; JyAttribute* attr;} JyObject;
-typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject;
-typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;
+typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject; /* only used for pre-allocated blocks */
+typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;  /* only used for pre-allocated blocks */
 /* type_name is optional and defaults to py_type->tp_name */
 typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
@@ -472,7 +489,7 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 //inline PyObject* JyNI_JyErr_Format(jobject exception, const char *format, ...);
 
 /* JyNI-Stuff: */
-inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);
+//inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);
 inline PyObject* JyNI_Alloc(TypeMapEntry* tme);
 inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems);
 inline PyObject* JyNI_AllocNative(PyTypeObject* type);
@@ -505,6 +522,11 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o);
 PyAPI_FUNC(void *) PyObject_RawMalloc(size_t);
 PyAPI_FUNC(void *) PyObject_RawRealloc(void *, size_t);
 PyAPI_FUNC(void) PyObject_RawFree(void *);
+
+/* JyNI-CG: */
+void JyNI_GC_Explore();
+void JyNI_GC_ExploreObject(PyObject* op);
+void PyObject_GC_Track_NoExplore(void *op);
 
 /* Provide header for nullstring from stringobject.c
  * This way, the nullstring can also be used from other
