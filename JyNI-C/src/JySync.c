@@ -86,12 +86,12 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 		//Py_XINCREF(item);
 		//PyTuple_SetItem(er, i, item);
 		PyTuple_SET_ITEM(er, i, item);
-		if (!item) {
-			jputs("Add null-item to tuple:");
-			jputsLong(er);
-		}
+//		if (!item) {
+//			jputs("Add null-item to tuple:");
+//			jputsLong(er);
+//		}
 	}
-	JyNI_GC_Explore(er);
+	JyNI_GC_Explore();
 	return er;
 }
 
@@ -420,7 +420,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 	//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
 	(*env)->SetObjectField(env, src, pyListBackend, jyList);
 	Py_INCREF(op); //For now we make the list immortal here. Later GC will take care of it.
-	JyNI_GC_Explore(op);
+	JyNI_GC_ExploreObject(op);
 	return op;
 }
 

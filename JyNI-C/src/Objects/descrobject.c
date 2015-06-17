@@ -668,7 +668,7 @@ descr_new(PyTypeObject *descrtype, PyTypeObject *type, const char *name)
 			Py_DECREF(descr);
 			descr = NULL;
 		}
-		JyNI_GC_Explore(descr);
+		JyNI_GC_ExploreObject(descr);
 	}
 	return descr;
 }
