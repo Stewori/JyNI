@@ -46,5 +46,14 @@
 package JyNI.gc;
 
 public interface TraversableGCHead extends JyGCHead {
+	/**
+	 * Do not call this method. It is for internal use and only
+	 * public because interfaces require this.
+	 * 
+	 * Note:
+	 * links must be of one of these types:
+	 * JyGCHead, JyGCHead[] or Iterable<JyGCHead>
+	 */
+	public void setLinks(Object links);
 	public int traverse(JyVisitproc visit, Object arg);
 }

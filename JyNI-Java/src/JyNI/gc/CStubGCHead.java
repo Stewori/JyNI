@@ -50,6 +50,12 @@ import org.python.core.PyObject;
 public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCHead {
 	protected PyObject object;
 
+	public CStubGCHead(PyObject object, long handle) {
+		super(handle);
+		this.object = object;
+	}
+
+	/*
 	public CStubGCHead(PyObject object, JyGCHead[] links, long handle) {
 		super(links, handle);
 		this.object = object;
@@ -63,7 +69,7 @@ public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCH
 	public CStubGCHead(PyObject object, JyGCHead link, long handle) {
 		super(link, handle);
 		this.object = object;
-	}
+	}*/
 
 	public PyObject getPyObject() {
 		return object;

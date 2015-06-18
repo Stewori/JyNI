@@ -1755,7 +1755,10 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 //				}
 			//jputs("opType-address:");
 			//printf("%u\n", (jlong) opType);
-			jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
+			jobject er = PyObject_IS_GC(op) ?
+					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType):
+					(*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
+			//jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
 			jy->flags |= JY_INITIALIZED_FLAG_MASK;
 			jy->flags |= JY_CPEER_FLAG_MASK;
 			jy->jy = (*env)->NewWeakGlobalRef(env, er);
@@ -2153,6 +2156,12 @@ jclass pyCPeerClass;
 jmethodID pyCPeerConstructor;
 jfieldID pyCPeerObjectHandle;
 //jfieldID pyCPeerRefHandle;
+
+jclass pyCPeerGCClass;
+jmethodID pyCPeerGCConstructor;
+//jfieldID pyCPeerLinksHandle;
+
+jmethodID traversableGCHeadSetLinks;
 
 jclass pyCPeerTypeClass;
 jmethodID pyCPeerTypeConstructor;
@@ -2732,6 +2741,13 @@ inline jint initJyNI(JNIEnv *env)
 	pyCPeerConstructor = (*env)->GetMethodID(env, pyCPeerClass, "<init>", "(JLorg/python/core/PyType;)V");
 	pyCPeerObjectHandle = (*env)->GetFieldID(env, pyCPeerClass, "objectHandle", "J");
 	//pyCPeerRefHandle = (*env)->GetFieldID(env, pyCPeerClass, "refHandle", "J");
+
+	jclass pyCPeerGCClassLocal = (*env)->FindClass(env, "JyNI/gc/PyCPeerGC");
+	pyCPeerGCClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerGCClassLocal);
+	(*env)->DeleteLocalRef(env, pyCPeerGCClassLocal);
+	pyCPeerGCConstructor = (*env)->GetMethodID(env, pyCPeerGCClass, "<init>", "(JLorg/python/core/PyType;)V");
+	//pyCPeerLinksHandle = (*env)->GetFieldID(env, pyCPeerGCClass, "links", "Ljava/lang/Object;");
+
 	jclass pyCPeerTypeClassLocal = (*env)->FindClass(env, "JyNI/PyCPeerType");
 	pyCPeerTypeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerTypeClassLocal);
 	(*env)->DeleteLocalRef(env, pyCPeerTypeClassLocal);
@@ -2739,7 +2755,10 @@ inline jint initJyNI(JNIEnv *env)
 	pyCPeerTypeWithNameAndDictConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>", "(JLjava/lang/String;Lorg/python/core/PyObject;)V");
 	pyCPeerTypeObjectHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "objectHandle", "J");
 	pyCPeerTypeRefHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "refHandle", "J");
-	//puts("  initPyCPeer done");
+
+	jclass traversableGCHeadInterface = (*env)->FindClass(env, "JyNI/gc/TraversableGCHead");
+	traversableGCHeadSetLinks = (*env)->GetMethodID(env, traversableGCHeadInterface, "setLinks", "(Ljava/lang/Object;)V");
+	(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
 
 	return JNI_VERSION_1_2;
 }

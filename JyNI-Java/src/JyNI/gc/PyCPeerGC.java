@@ -53,6 +53,16 @@ import org.python.core.PyType;
 public class PyCPeerGC extends PyCPeer implements TraversableGCHead {
 	protected Object links;
 
+	public PyCPeerGC(long objectHandle, PyType subtype) {
+		super(objectHandle, subtype);
+		links = null;
+	}
+
+	public void setLinks(Object links) {
+		this.links = links;
+	}
+
+	/*
 	public PyCPeerGC(JyGCHead[] links, long objectHandle, PyType subtype) {
 		super(objectHandle, subtype);
 		this.links = links;
@@ -68,7 +78,19 @@ public class PyCPeerGC extends PyCPeer implements TraversableGCHead {
 		this.links = link;
 	}
 
+	private void setLinks(JyGCHead[] links) {
+		this.links = links;
+	}
+
+	private void setLinks(Iterable<JyGCHead> links) {
+		this.links = links;
+	}
+
+	private void setLinks(JyGCHead link) {
+		this.links = link;
+	}*/
+
 	public int traverse(JyVisitproc visit, Object arg) {
-		return DefaultTraversableGC.traverse(links, visit, arg);
+		return DefaultTraversableGCHead.traverse(links, visit, arg);
 	}
 }

@@ -35,7 +35,7 @@ JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN)
 
 SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
 OBJECTS = $(SOURCES:.c=.o)
-JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java)
+JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 
 all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
 	@echo ''

@@ -46,10 +46,17 @@
 package JyNI.gc;
 
 import java.lang.ref.SoftReference;
+import org.python.core.PyObject;
 
 public class CMirrorGCHead extends DefaultTraversableGCHead implements PyObjectGCHead {
 	SoftReference<PyObject> object;
 
+	public CMirrorGCHead(PyObject object, long handle) {
+		super(handle);
+		this.object = new SoftReference<>(object);
+	}
+
+	/*
 	public CMirrorGCHead(PyObject object, JyGCHead[] links, long handle) {
 		super(links, handle);
 		this.object = new SoftReference<>(object);
@@ -63,7 +70,7 @@ public class CMirrorGCHead extends DefaultTraversableGCHead implements PyObjectG
 	public CMirrorGCHead(PyObject object, JyGCHead link, long handle) {
 		super(link, handle);
 		this.object = new SoftReference<>(object);
-	}
+	}*/
 
 	public PyObject getPyObject() {
 		return object.get();

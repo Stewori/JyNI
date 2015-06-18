@@ -45,9 +45,30 @@
 
 package JyNI.gc;
 
+import org.python.core.PyObject;
+
 public class DefaultTraversableGCHead extends SimpleGCHead implements TraversableGCHead {
 	protected Object gclinks;
 
+	public DefaultTraversableGCHead(long handle) {
+		super(handle);
+		gclinks = null;
+	}
+
+	public DefaultTraversableGCHead(long handle, PyObject object) {
+		super(handle, object);
+		gclinks = null;
+	}
+
+	/**
+	 * Do not call this method. It is for internal use and only public
+	 * to implement an interface.
+	 */
+	public void setLinks(Object links) {
+		gclinks = links;
+	}
+
+	/*
 	public DefaultTraversableGCHead(JyGCHead[] links, long handle) {
 		super(handle);
 		this.links = links;
@@ -61,7 +82,7 @@ public class DefaultTraversableGCHead extends SimpleGCHead implements Traversabl
 	public DefaultTraversableGCHead(JyGCHead link, long handle) {
 		super(handle);
 		this.links = link;
-	}
+	}*/
 
 	public int traverse(JyVisitproc visit, Object arg) {
 		return traverse(gclinks, visit, arg);
@@ -73,15 +94,15 @@ public class DefaultTraversableGCHead extends SimpleGCHead implements Traversabl
 				int result = 0;
 				JyGCHead[] ar = (JyGCHead[]) links;
 				for (JyGCHead h: ar) {
-					result = visit.visit(ar, arg);
+					result = visit.visit(h, arg);
 					if (result != 0) return result;
 				}
 				return result;
-			} else if (links instanceof Iterable<JyGCHead>) {
+			} else if (links instanceof Iterable) {
 				int result = 0;
 				Iterable<JyGCHead> ar = (Iterable<JyGCHead>) links;
 				for (JyGCHead h: ar) {
-					result = visit.visit(ar, arg);
+					result = visit.visit(h, arg);
 					if (result != 0) return result;
 				}
 				return result;

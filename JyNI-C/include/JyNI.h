@@ -695,6 +695,12 @@ extern jmethodID pyCPeerConstructor;
 extern jfieldID pyCPeerObjectHandle;
 //extern jfieldID pyCPeerRefHandle;
 
+extern jclass pyCPeerGCClass;
+extern jmethodID pyCPeerGCConstructor;
+//extern jfieldID pyCPeerLinksHandle;
+
+extern jmethodID traversableGCHeadSetLinks;
+
 extern jclass pyCPeerTypeClass;
 extern jmethodID pyCPeerTypeConstructor;
 extern jmethodID pyCPeerTypeWithNameAndDictConstructor;

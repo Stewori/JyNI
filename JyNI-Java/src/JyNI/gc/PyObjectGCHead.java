@@ -45,6 +45,8 @@
 
 package JyNI.gc;
 
+import org.python.core.PyObject;
+
 public interface PyObjectGCHead extends JyGCHead {
 	public PyObject getPyObject();
 }

@@ -51,7 +51,12 @@ public class SimpleGCHead implements PyObjectGCHead {
 	protected long handle;
 	protected PyObject object;
 
-	public SimpleGCHead(PyObject object, long handle) {
+	public SimpleGCHead(long handle) {
+		this.handle = handle;
+		object = null;
+	}
+
+	public SimpleGCHead(long handle, PyObject object) {
 		this.handle = handle;
 		this.object = object;
 	}
@@ -60,7 +65,7 @@ public class SimpleGCHead implements PyObjectGCHead {
 		return handle;
 	}
 
-	public PyObject getObject() {
+	public PyObject getPyObject() {
 		return object;
 	}
 }
