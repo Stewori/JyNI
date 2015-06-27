@@ -45,6 +45,7 @@
 
 package JyNI;
 
+import JyNI.gc.*;
 import org.python.core.*;
 
 import java.lang.reflect.Field;
@@ -181,10 +182,10 @@ public class JyNI {
 
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
 
-	//protected static HashMap<PyObject, JyObject> jyObjects = new HashMap();
 	//Note: nativeHandles keeps (exclusively) natively needed objects save from beeing gc'ed.
 	//JyAttribute solution lacks this currently -> fix it!
 	protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
+	
 	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
 	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
 	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
@@ -201,6 +202,8 @@ public class JyNI {
 	public static native PyObject repr(long peerHandle, long tstate);
 	public static native String PyObjectAsString(long peerHandle, long tstate);
 	public static native PyString PyObjectAsPyString(long peerHandle, long tstate);
+	public static native PyObject lookupFromHandle(long handle);
+	public static native int currentNativeRefCount(long handle);
 
 	//ThreadState-stuff:
 	public static native void setNativeRecursionLimit(int nativeRecursionLimit);
@@ -220,8 +223,10 @@ public class JyNI {
 	//Set-Stuff:
 	public static native void JySet_putSize(long handle, int size);
 
-	//ReferenceMonitor-Stuff:
+	//ReferenceMonitor- and GC-Stuff:
 	public static native void JyRefMonitor_setMemDebugFlags(int flags);
+	public static native void JyGC_clearNativeReferences(long[] nativeRefs, long tstate);
+
 	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
 	/*public static PyObject PySet_pop(BaseSet set)
 	{
@@ -319,28 +324,26 @@ public class JyNI {
 		}
 	}
 	
-	public static void setNativeHandle(PyObject object, long handle)
-	{
+	public static void setNativeHandle(PyObject object, long handle, boolean keepAlive) {
 		//no WeakReferences needed here, because clearNativeHandle is always called
 		//when a corresponding PyObject on C-Side is deallocated
-		//nativeHandles.put(object, handle);
-		nativeHandlesKeepAlive.put(object, object);
-		if (object instanceof PyCPeer)
-		{
+
+		//todo: When JyNI-gc is stable remove keepAlive mechanism and option here.
+		//Actually the keep-alive should be performed by a JyGCHead, precisely
+		//speaking by a CStubGCHead. Find out why this fails...
+		if (keepAlive) {
+			nativeHandlesKeepAlive.put(object, object);
+			//System.out.println("Keep alive: "+handle+" - "+object);
+		}
+		if (object instanceof PyCPeer) {
 			((PyCPeer) object).objectHandle = handle;
-		} else
-		{
-			//PyCPeer peer = (PyCPeer) object.__getattr__(JyNIHandleAttr);
-			//if (peer == null)
-			//object.__setattr__(JyNIHandleAttr, new PyCPeer(handle, object.getType()));
-			//nativeHandles.put(object, Long.valueOf(handle));
+		} else {
 			JyAttribute.setAttr(object, JyAttribute.JYNI_HANDLE_ATTR, handle);
 		}
 	}
 
 	//public static long lookupNativeHandle(PyObject object)
-	public static long lookupNativeHandle(PyObject object)
-	{
+	public static long lookupNativeHandle(PyObject object) {
 		//System.out.println("lookup native handle: "+object);
 		if (object == null) return 0;
 		if (object instanceof PyCPeer) return ((PyCPeer) object).objectHandle;
@@ -373,23 +376,26 @@ public class JyNI {
 		return 0;*/
 	}
 
-	public static PyObject lookupCPeerHandle(long handle)
-	{
+	public static PyObject lookupCPeerFromHandle(long handle) {
 		//Problem: When JyNI is initialized, nativeHandles have not been initialized...
 		if (handle == 0) return null;
 		else return CPeerHandles.get(handle);
 	}
 
-	public static void clearNativeHandle(PyObject object)
-	{
+	public static void clearNativeHandle(PyObject object) {
+		if (object == null) {
+			System.out.println("JyNI-Warning: clearNativeHandle called with null!");
+			return;
+		}
 		//System.out.println("java clearNativeHandle:");
 		//System.out.println(object);
 		if (object instanceof PyCPeer)
 			((PyCPeer) object).objectHandle = 0;
 		else
-			//nativeHandles.remove(object);
-			nativeHandlesKeepAlive.remove(object);
 			JyAttribute.delAttr(object, JyAttribute.JYNI_HANDLE_ATTR);
+			//nativeHandles.remove(object);
+		nativeHandlesKeepAlive.remove(object);
+			
 //		PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
 //		if (peer != null)
 //		{
@@ -411,18 +417,15 @@ public class JyNI {
 //		return callModuleFunctionGlobalReferenceMode(module, name, self, selfHandle == null ? 0 : selfHandle, args, handles);
 //	}
 	
-	public static PyObject _PyImport_FindExtension(String name, String filename)
-	{
+	public static PyObject _PyImport_FindExtension(String name, String filename) {
 		return null;
 	}
 	
-	public static PyObject PyImport_GetModuleDict()
-	{
+	public static PyObject PyImport_GetModuleDict() {
 		return Py.getSystemState().modules;
 	}
 	
-	public static PyObject PyImport_AddModule(String name)
-	{
+	public static PyObject PyImport_AddModule(String name) {
 		String nm = name.intern();
 		PySystemState pss = Py.getSystemState();
 		PyObject er = pss.modules.__finditem__(name);
@@ -439,21 +442,18 @@ public class JyNI {
 		}
 	}
 	
-	public static PyObject JyNI_GetModule(String name)
-	{
+	public static PyObject JyNI_GetModule(String name) {
 		String nm = name.intern();
 		PySystemState pss = Py.getSystemState();
 		PyObject er = pss.modules.__finditem__(name);
 		if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
-		else
-		{
+		else {
 			System.out.println("No module found: "+name);
 			return null;
 		}
 	}
 	
-	public static PyType getPyType(Class pyClass)
-	{
+	public static PyType getPyType(Class pyClass) {
 		try {
 			Field tp = pyClass.getField("TYPE");
 			PyType t = (PyType) tp.get(null);
@@ -462,22 +462,19 @@ public class JyNI {
 		} catch (Exception e) {return null;}
 	}
 	
-	public static long[] getNativeAvailableKeysAndValues(PyDictionary dict)
-	{
+	public static long[] getNativeAvailableKeysAndValues(PyDictionary dict) {
 		Map<PyObject, PyObject> map = dict.getMap();
 		Iterator<PyObject> it = map.keySet().iterator();
 		long l;
 		Vector<Long> er = new Vector<Long>();
-		while (it.hasNext())
-		{
+		while (it.hasNext()) {
 			//l = nativeHandles.get(it.next());
 			//if (l != null) er.add(l);
 			l = lookupNativeHandle(it.next());
 			if (l != 0 ) er.add(l);
 		}
 		it = map.values().iterator();
-		while (it.hasNext())
-		{
+		while (it.hasNext()) {
 			//l = nativeHandles.get(it.next());
 			//if (l != null) er.add(l);
 			l = lookupNativeHandle(it.next());
@@ -493,65 +490,54 @@ public class JyNI {
 	 * Completes the given argument list argDest. For efficiency, arguments should be allocated
 	 * directly as one list. So argDest is expected to already contain the non-keyword arguments.
 	 */
-	public static String[] prepareKeywordArgs(PyObject[] argsDest, PyDictionary keywords)
-	{
+	public static String[] prepareKeywordArgs(PyObject[] argsDest, PyDictionary keywords) {
 		String[] er = new String[keywords.size()];
 		int offset = argsDest.length-er.length;
 		Iterator<Map.Entry<PyObject, PyObject>> kw = keywords.getMap().entrySet().iterator();
 		Map.Entry<PyObject, PyObject> entry = kw.next();
-		for (int i = 0; i < er.length; ++i)
-		{
+		for (int i = 0; i < er.length; ++i) {
 			er[i] = ((PyString) entry.getKey()).asString();
 			argsDest[offset+i] = entry.getValue();
 		}
 		return er;
 	}
 	
-	public static long getCurrentThreadID()
-	{
+	public static long getCurrentThreadID() {
 		return Thread.currentThread().getId();
 	}
 	
 	protected static int lastDictIndex;
 	protected static PyDictionary lastDict;
 	protected static Iterator<Map.Entry<PyObject, PyObject>> dictIterator;
-	public static synchronized JyNIDictNextResult getPyDictionary_Next(PyDictionary dict, int index)
-	{
-		if (dict == lastDict && index == lastDictIndex && dictIterator != null)
-		{
+	public static synchronized JyNIDictNextResult getPyDictionary_Next(PyDictionary dict, int index) {
+		if (dict == lastDict && index == lastDictIndex && dictIterator != null) {
 			Map.Entry<PyObject, PyObject> me;
 			PyObject value;
-			while (dictIterator.hasNext())
-			{
+			while (dictIterator.hasNext()) {
 				++lastDictIndex;
 				me = dictIterator.next();
 				value = me.getValue();
-				if (value != null)
-				{
+				if (value != null) {
 					if (lastDictIndex == dict.size()) lastDictIndex = -lastDictIndex;
 					return new JyNIDictNextResult(lastDictIndex, me.getKey(), value);
 				}
 			}
-		} else
-		{
+		} else {
 			lastDict = dict;
 			dictIterator = dict.getMap().entrySet().iterator();
 			lastDictIndex = 0;
 			Map.Entry<PyObject, PyObject> me;
-			while (lastDictIndex < index)
-			{
+			while (lastDictIndex < index) {
 				++lastDictIndex;
 				if (!dictIterator.hasNext()) return null;
 				else dictIterator.next();
 			}
 			PyObject value;
-			while (dictIterator.hasNext())
-			{
+			while (dictIterator.hasNext()) {
 				++lastDictIndex;
 				me = dictIterator.next();
 				value = me.getValue();
-				if (value != null)
-				{
+				if (value != null) {
 					if (lastDictIndex == dict.size()) lastDictIndex = -lastDictIndex;
 					return new JyNIDictNextResult(lastDictIndex, me.getKey(), value);
 				}
@@ -563,49 +549,40 @@ public class JyNI {
 	protected static int lastSetIndex;
 	protected static BaseSet lastSet;
 	protected static Iterator<PyObject> setIterator;
-	public static synchronized JyNISetNextResult getPySet_Next(BaseSet set, int index)
-	{
-		if (set == lastSet && index == lastSetIndex && setIterator != null)
-		{
+	public static synchronized JyNISetNextResult getPySet_Next(BaseSet set, int index) {
+		if (set == lastSet && index == lastSetIndex && setIterator != null) {
 			PyObject key;
-			while (setIterator.hasNext())
-			{
+			while (setIterator.hasNext()) {
 				++lastSetIndex;
 				key = setIterator.next();
-				if (key != null)
-				{
+				if (key != null) {
 					if (lastSetIndex == set.size()) lastSetIndex = -lastSetIndex;
 					return new JyNISetNextResult(lastSetIndex, key);
 				}
 			}
-		} else
-		{
+		} else {
 			lastSet = set;
 			try {
 				Field backend = BaseSet.class.getDeclaredField("_set");
 				backend.setAccessible(true);
 				Set<PyObject> set2 = (Set<PyObject>) backend.get(set);
 				setIterator = set2.iterator();
-			} catch (Exception e)
-			{
+			} catch (Exception e) {
 				lastSet = null;
 				setIterator = null;
 				return null;
 			}
 			lastSetIndex = 0;
-			while (lastSetIndex < index)
-			{
+			while (lastSetIndex < index) {
 				++lastSetIndex;
 				if (!setIterator.hasNext()) return null;
 				else setIterator.next();
 			}
 			PyObject key;
-			while (setIterator.hasNext())
-			{
+			while (setIterator.hasNext()) {
 				++lastSetIndex;
 				key = setIterator.next();
-				if (key != null)
-				{
+				if (key != null) {
 					if (lastSetIndex == set.size()) lastSetIndex = -lastSetIndex;
 					return new JyNISetNextResult(lastSetIndex, key);
 				}
@@ -614,16 +591,14 @@ public class JyNI {
 		return null;
 	}
 	
-	public static synchronized BaseSet copyPySet(BaseSet set)
-	{
+	public static synchronized BaseSet copyPySet(BaseSet set) {
 		if (set instanceof PySet)
 			return new PySet(set);
 		else if (set instanceof PyFrozenSet) return set;
 		else return null;
 	}
 	
-	public static void printPyLong(PyObject pl)
-	{
+	public static void printPyLong(PyObject pl) {
 		System.out.println("printPyLong");
 		System.out.println(((PyLong) pl).getValue());
 	}
@@ -731,6 +706,19 @@ public class JyNI {
 		for (int i = 0; i < er.length; ++i)
 			er[i] = lookupNativeHandle(obj[i]);
 		return er;
+	}
+
+	public static void GCTrackPyCPeer(PyCPeer peer) {
+		new JyWeakReferenceGC(peer);
+	}
+
+	public static PyObjectGCHead makeGCHead(long handle, boolean forMirror, boolean gc) {
+		//Todo: Use a simpler head if object cannot have links.
+		PyObjectGCHead result;
+		if (gc) result = forMirror ? new CMirrorGCHead(handle) : new CStubGCHead(handle);
+		else result = forMirror ? new CMirrorSimpleGCHead(handle) : new CStubSimpleGCHead(handle);
+		new JyWeakReferenceGC(result);
+		return result;
 	}
 
 	//--------------errors-section-----------------
@@ -884,8 +872,7 @@ public class JyNI {
 		return null;
 	}*/
 
-	public static void PyErr_WriteUnraisable(PyObject obj)
-	{
+	public static void PyErr_WriteUnraisable(PyObject obj) {
 		//Todo: Create and use something like JyNIUnraisableError instead of UnknownError.
 		Py.writeUnraisable(new UnknownError("JyNI caused unraisable exception"), obj);
 		
@@ -953,8 +940,7 @@ public class JyNI {
 		} catch (Exception e) {}
 	}*/
 
-	public static int slice_compare(PySlice v, PySlice w)
-	{
+	public static int slice_compare(PySlice v, PySlice w) {
 		int result = 0;
 
 		//if (v == w)
@@ -980,20 +966,17 @@ public class JyNI {
 		return result;
 	}
 
-	public static String JyNI_pyCode_co_code(PyBaseCode code)
-	{
+	public static String JyNI_pyCode_co_code(PyBaseCode code) {
 		if (code instanceof PyBytecode) return new String(((PyBytecode) code).co_code);
 		else if (code instanceof PyTableCode) return ((PyTableCode) code).co_code;
 		else return null;
 	}
 
-	public static int JyNI_pyCode_co_flags(PyBaseCode code)
-	{
+	public static int JyNI_pyCode_co_flags(PyBaseCode code) {
 		return code.co_flags.toBits();
 	}
 
-	public static String JyNI_pyCode_co_lnotab(PyBytecode code)
-	{
+	public static String JyNI_pyCode_co_lnotab(PyBytecode code) {
 		return new String(code.co_lnotab);
 	}
 
@@ -1001,18 +984,15 @@ public class JyNI {
 		return PySystemState.version.asString();
 	}
 
-	public static void jPrint(String msg)
-	{
+	public static void jPrint(String msg) {
 		System.out.println(msg);
 	}
 	
-	public static void jPrint(long val)
-	{
+	public static void jPrint(long val) {
 		System.out.println(val);
 	}
 
-	public static void jPrintHash(Object val)
-	{
+	public static void jPrintHash(Object val) {
 		try {
 			System.out.println(val.hashCode()+" ("+System.identityHashCode(val)+")");
 		} catch (Exception e) {

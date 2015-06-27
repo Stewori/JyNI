@@ -204,7 +204,10 @@ PyList_New(Py_ssize_t size)
 	}
 	Py_SIZE(op) = size;
 	op->allocated = size;
+
 	_JyNI_GC_TRACK(op);
+	if (!(AS_JY_WITH_GC(op)->flags & JY_GC_VAR_SIZE))
+			jupts("list created with wrong GC-flag");
 	return (PyObject *) op;
 }
 
@@ -1948,31 +1951,31 @@ sortwrapper_dealloc(sortwrapperobject *);
 
 static PyTypeObject sortwrapper_type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"sortwrapper",							  /* tp_name */
-	sizeof(sortwrapperobject),				  /* tp_basicsize */
-	0,										  /* tp_itemsize */
+	"sortwrapper",                          /* tp_name */
+	sizeof(sortwrapperobject),              /* tp_basicsize */
+	0,                                      /* tp_itemsize */
 	/* methods */
-	(destructor)sortwrapper_dealloc,			/* tp_dealloc */
-	0,										  /* tp_print */
-	0,										  /* tp_getattr */
-	0,										  /* tp_setattr */
-	0,										  /* tp_compare */
-	0,										  /* tp_repr */
-	0,										  /* tp_as_number */
-	0,										  /* tp_as_sequence */
-	0,										  /* tp_as_mapping */
-	0,										  /* tp_hash */
-	0,										  /* tp_call */
-	0,										  /* tp_str */
-	PyObject_GenericGetAttr,					/* tp_getattro */
-	0,										  /* tp_setattro */
-	0,										  /* tp_as_buffer */
+	(destructor)sortwrapper_dealloc,        /* tp_dealloc */
+	0,                                      /* tp_print */
+	0,                                      /* tp_getattr */
+	0,                                      /* tp_setattr */
+	0,                                      /* tp_compare */
+	0,                                      /* tp_repr */
+	0,                                      /* tp_as_number */
+	0,                                      /* tp_as_sequence */
+	0,                                      /* tp_as_mapping */
+	0,                                      /* tp_hash */
+	0,                                      /* tp_call */
+	0,                                      /* tp_str */
+	PyObject_GenericGetAttr,                /* tp_getattro */
+	0,                                      /* tp_setattro */
+	0,                                      /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT |
-	Py_TPFLAGS_HAVE_RICHCOMPARE,				/* tp_flags */
-	sortwrapper_doc,							/* tp_doc */
-	0,										  /* tp_traverse */
-	0,										  /* tp_clear */
-	(richcmpfunc)sortwrapper_richcompare,	   /* tp_richcompare */
+    Py_TPFLAGS_HAVE_RICHCOMPARE,            /* tp_flags */
+	sortwrapper_doc,                        /* tp_doc */
+	0,                                      /* tp_traverse */
+	0,                                      /* tp_clear */
+	(richcmpfunc)sortwrapper_richcompare,   /* tp_richcompare */
 };
 
 
@@ -2836,42 +2839,42 @@ PyTypeObject PyList_Type = {
 	"list",
 	sizeof(PyListObject),
 	0,
-	(destructor)list_dealloc,				   /* tp_dealloc */
-	(printfunc)list_print,					  /* tp_print */
-	0,										  /* tp_getattr */
-	0,										  /* tp_setattr */
-	0,										  /* tp_compare */
-	(reprfunc)list_repr,						/* tp_repr */
-	0,										  /* tp_as_number */
-	&list_as_sequence,						  /* tp_as_sequence */
-	&list_as_mapping,						   /* tp_as_mapping */
-	(hashfunc)PyObject_HashNotImplemented,	  /* tp_hash */
-	0,										  /* tp_call */
-	0,										  /* tp_str */
-	PyObject_GenericGetAttr,					/* tp_getattro */
-	0,										  /* tp_setattro */
-	0,										  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
-		Py_TPFLAGS_BASETYPE | Py_TPFLAGS_LIST_SUBCLASS,		 /* tp_flags */
-	list_doc,								   /* tp_doc */
-	(traverseproc)list_traverse,				/* tp_traverse */
-	(inquiry)list_clear,						/* tp_clear */
-	list_richcompare,						   /* tp_richcompare */
-	0,										  /* tp_weaklistoffset */
-	list_iter,								  /* tp_iter */
-	0,										  /* tp_iternext */
-	list_methods,							   /* tp_methods */
-	0,										  /* tp_members */
-	0,										  /* tp_getset */
-	0,										  /* tp_base */
-	0,										  /* tp_dict */
-	0,										  /* tp_descr_get */
-	0,										  /* tp_descr_set */
-	0,										  /* tp_dictoffset */
-	(initproc)list_init,						/* tp_init */
-	PyType_GenericAlloc,						/* tp_alloc */
-	PyType_GenericNew,						  /* tp_new */
-	PyObject_GC_Del,							/* tp_free */
+	(destructor)list_dealloc,                   /* tp_dealloc */
+	(printfunc)list_print,                      /* tp_print */
+	0,                                          /* tp_getattr */
+	0,                                          /* tp_setattr */
+	0,                                          /* tp_compare */
+	(reprfunc)list_repr,                        /* tp_repr */
+	0,                                          /* tp_as_number */
+	&list_as_sequence,                          /* tp_as_sequence */
+	&list_as_mapping,                           /* tp_as_mapping */
+	(hashfunc)PyObject_HashNotImplemented,      /* tp_hash */
+	0,                                          /* tp_call */
+	0,                                          /* tp_str */
+	PyObject_GenericGetAttr,                    /* tp_getattro */
+	0,                                          /* tp_setattro */
+	0,                                          /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE |
+			Py_TPFLAGS_LIST_SUBCLASS,           /* tp_flags */
+	list_doc,                                   /* tp_doc */
+	(traverseproc)list_traverse,                /* tp_traverse */
+	(inquiry)list_clear,                        /* tp_clear */
+	list_richcompare,                           /* tp_richcompare */
+	0,                                          /* tp_weaklistoffset */
+	list_iter,                                  /* tp_iter */
+	0,                                          /* tp_iternext */
+	list_methods,                               /* tp_methods */
+	0,                                          /* tp_members */
+	0,                                          /* tp_getset */
+	0,                                          /* tp_base */
+	0,                                          /* tp_dict */
+	0,                                          /* tp_descr_get */
+	0,                                          /* tp_descr_set */
+	0,                                          /* tp_dictoffset */
+	(initproc)list_init,                        /* tp_init */
+	PyType_GenericAlloc,                        /* tp_alloc */
+	PyType_GenericNew,                          /* tp_new */
+	PyObject_GC_Del,                            /* tp_free */
 };
 
 
@@ -2898,35 +2901,35 @@ static PyMethodDef listiter_methods[] = {
 
 PyTypeObject PyListIter_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"listiterator",							 /* tp_name */
-	sizeof(listiterobject),					 /* tp_basicsize */
-	0,										  /* tp_itemsize */
+	"listiterator",                             /* tp_name */
+	sizeof(listiterobject),                     /* tp_basicsize */
+	0,                                          /* tp_itemsize */
 	/* methods */
-	(destructor)listiter_dealloc,			   /* tp_dealloc */
-	0,										  /* tp_print */
-	0,										  /* tp_getattr */
-	0,										  /* tp_setattr */
-	0,										  /* tp_compare */
-	0,										  /* tp_repr */
-	0,										  /* tp_as_number */
-	0,										  /* tp_as_sequence */
-	0,										  /* tp_as_mapping */
-	0,										  /* tp_hash */
-	0,										  /* tp_call */
-	0,										  /* tp_str */
-	PyObject_GenericGetAttr,					/* tp_getattro */
-	0,										  /* tp_setattro */
-	0,										  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
-	0,										  /* tp_doc */
-	(traverseproc)listiter_traverse,			/* tp_traverse */
-	0,										  /* tp_clear */
-	0,										  /* tp_richcompare */
-	0,										  /* tp_weaklistoffset */
-	PyObject_SelfIter,						  /* tp_iter */
-	(iternextfunc)listiter_next,				/* tp_iternext */
-	listiter_methods,						   /* tp_methods */
-	0,										  /* tp_members */
+	(destructor)listiter_dealloc,               /* tp_dealloc */
+	0,                                          /* tp_print */
+	0,                                          /* tp_getattr */
+	0,                                          /* tp_setattr */
+	0,                                          /* tp_compare */
+	0,                                          /* tp_repr */
+	0,                                          /* tp_as_number */
+	0,                                          /* tp_as_sequence */
+	0,                                          /* tp_as_mapping */
+	0,                                          /* tp_hash */
+	0,                                          /* tp_call */
+	0,                                          /* tp_str */
+	PyObject_GenericGetAttr,                    /* tp_getattro */
+	0,                                          /* tp_setattro */
+	0,                                          /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
+	0,                                          /* tp_doc */
+	(traverseproc)listiter_traverse,            /* tp_traverse */
+	0,                                          /* tp_clear */
+	0,                                          /* tp_richcompare */
+	0,                                          /* tp_weaklistoffset */
+	PyObject_SelfIter,                          /* tp_iter */
+	(iternextfunc)listiter_next,                /* tp_iternext */
+	listiter_methods,                           /* tp_methods */
+	0,                                          /* tp_members */
 };
 
 
@@ -3020,34 +3023,34 @@ static PyMethodDef listreviter_methods[] = {
 
 PyTypeObject PyListRevIter_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"listreverseiterator",					  /* tp_name */
-	sizeof(listreviterobject),				  /* tp_basicsize */
-	0,										  /* tp_itemsize */
+	"listreverseiterator",                    /* tp_name */
+	sizeof(listreviterobject),                /* tp_basicsize */
+	0,                                        /* tp_itemsize */
 	/* methods */
-	(destructor)listreviter_dealloc,			/* tp_dealloc */
-	0,										  /* tp_print */
-	0,										  /* tp_getattr */
-	0,										  /* tp_setattr */
-	0,										  /* tp_compare */
-	0,										  /* tp_repr */
-	0,										  /* tp_as_number */
-	0,										  /* tp_as_sequence */
-	0,										  /* tp_as_mapping */
-	0,										  /* tp_hash */
-	0,										  /* tp_call */
-	0,										  /* tp_str */
-	PyObject_GenericGetAttr,					/* tp_getattro */
-	0,										  /* tp_setattro */
-	0,										  /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
-	0,										  /* tp_doc */
-	(traverseproc)listreviter_traverse,		 /* tp_traverse */
-	0,										  /* tp_clear */
-	0,										  /* tp_richcompare */
-	0,										  /* tp_weaklistoffset */
-	PyObject_SelfIter,						  /* tp_iter */
-	(iternextfunc)listreviter_next,			 /* tp_iternext */
-	listreviter_methods,				/* tp_methods */
+	(destructor)listreviter_dealloc,          /* tp_dealloc */
+	0,                                        /* tp_print */
+	0,                                        /* tp_getattr */
+	0,                                        /* tp_setattr */
+	0,                                        /* tp_compare */
+	0,                                        /* tp_repr */
+	0,                                        /* tp_as_number */
+	0,                                        /* tp_as_sequence */
+	0,                                        /* tp_as_mapping */
+	0,                                        /* tp_hash */
+	0,                                        /* tp_call */
+	0,                                        /* tp_str */
+	PyObject_GenericGetAttr,                  /* tp_getattro */
+	0,                                        /* tp_setattro */
+	0,                                        /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,  /* tp_flags */
+	0,                                        /* tp_doc */
+	(traverseproc)listreviter_traverse,       /* tp_traverse */
+	0,                                        /* tp_clear */
+	0,                                        /* tp_richcompare */
+	0,                                        /* tp_weaklistoffset */
+	PyObject_SelfIter,                        /* tp_iter */
+	(iternextfunc)listreviter_next,           /* tp_iternext */
+	listreviter_methods,                      /* tp_methods */
 	0,
 };
 

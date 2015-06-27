@@ -25,8 +25,7 @@ sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it 
 sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
 
-import DemoExtension
-
+import time
 
 # a = 200000
 # print str(a)+" ("+str(id(a))+")"
@@ -36,17 +35,60 @@ import DemoExtension
 # print str(b)+" ("+str(id(b))+")"
 
 from JyNI import JyNI
+from JyNI import JyReferenceMonitor as monitor
+from java.lang import System
+from java.lang.ref import WeakReference
 
-l = ["Hello", "lovely", "world"]
-DemoExtension.listModifyTest(l, 2)
+import DemoExtension
+
 print "Set mem debug..."
 JyNI.JyRefMonitor_setMemDebugFlags(1)
 print "done"
-print l[1]
+
+l = (123, ["test",])
+#l[1][0] = l
+wkt = WeakReference(l[1])
+r = 124
+wkl = WeakReference(l)
+wkr = WeakReference(r)
+print "wkl: "+str(wkl.get())
+#DemoExtension.listModifyTest(l, 2)
+DemoExtension.argCountToString(l)
+#l = None
+r = None
+print "wkl2: "+str(wkl.get())
+print "wkt2: "+str(wkt.get())
+print "wkr2: "+str(wkr.get())
+#print l[1]
 #print l
 #self.assertEqual(l[2], "natively modified")
 #self.assertEqual(len(l), 3)
 
 #DemoExtension.printInt(333)
-DemoExtension.hello_world()
-print "done2"
+#DemoExtension.hello_world()
+#print "done2"
+del l
+#l = None
+#print ""
+monitor.listLeaks()
+System.gc()
+time.sleep(2)
+print "wkl3: "+str(wkl.get())
+print "wkt3: "+str(wkt.get())
+print "wkr3: "+str(wkr.get())
+
+# System.gc()
+# time.sleep(2)
+# print "wkl4: "+str(wkl.get())
+#print ""
+
+monitor.listLeaks()
+
+
+print ""
+print "----------native output:------------"
+#print str(l)+"-@-"+str(JyNI.lookupNativeHandle(l))
+#for x in l:
+#	print str(x)+"-@-"+str(JyNI.lookupNativeHandle(x))
+#DemoExtension.hello_world()
+#print "done3"

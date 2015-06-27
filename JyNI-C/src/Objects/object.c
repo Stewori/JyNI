@@ -513,7 +513,7 @@ PyObject_Repr(PyObject *v)
 //				(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(v), pyObject__repr__));
 //		}
 //	} else {
-////		jobject cPeer = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerHandle, (jlong) v);
+////		jobject cPeer = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) v);
 ////		if (cPeer == NULL) ...
 //
 //		jclass cls = JyNI_JythonClassFromPyType((PyTypeObject*) v);

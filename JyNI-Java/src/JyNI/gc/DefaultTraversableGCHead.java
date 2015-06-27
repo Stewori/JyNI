@@ -47,18 +47,20 @@ package JyNI.gc;
 
 import org.python.core.PyObject;
 
-public class DefaultTraversableGCHead extends SimpleGCHead implements TraversableGCHead {
+public class DefaultTraversableGCHead implements TraversableGCHead {
 	protected Object gclinks;
+	protected long handle;
 
 	public DefaultTraversableGCHead(long handle) {
-		super(handle);
+		//super(handle);
 		gclinks = null;
+		this.handle = handle;
 	}
 
-	public DefaultTraversableGCHead(long handle, PyObject object) {
-		super(handle, object);
-		gclinks = null;
-	}
+//	public DefaultTraversableGCHead(long handle, PyObject object) {
+//		super(handle, object);
+//		gclinks = null;
+//	}
 
 	/**
 	 * Do not call this method. It is for internal use and only public
@@ -66,6 +68,10 @@ public class DefaultTraversableGCHead extends SimpleGCHead implements Traversabl
 	 */
 	public void setLinks(Object links) {
 		gclinks = links;
+	}
+
+	public long getHandle() {
+		return handle;
 	}
 
 	/*

@@ -84,6 +84,8 @@ jobject (*JyNIrepr)(JNIEnv*, jclass, jlong, jlong);
 jstring (*JyNIPyObjectAsString)(JNIEnv*, jclass, jlong, jlong);
 jobject (*JyNIPyObjectAsPyString)(JNIEnv*, jclass, jlong, jlong);
 jint (*JyNISetAttrString)(JNIEnv*, jclass, jlong, jstring, jobject, jlong);
+jobject (*JyNIlookupFromHandle)(JNIEnv*, jclass, jlong);
+jint (*JyNIcurrentNativeRefCount)(JNIEnv*, jclass, jlong);
 void (*JyNIUnload)(JavaVM*);
 
 void (*JyTStateSetNativeRecursionLimit)(JNIEnv*, jclass, jint);
@@ -100,6 +102,7 @@ jobject (*JyList_remove)(JNIEnv*, jclass, jlong, jint);
 void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
 
 void (*JyRefMonitor_setMemDebugFlags)(JNIEnv*, jclass, jint);
+void (*JyGC_clearNativeReferences)(JNIEnv*, jclass, jlongArray, jlong);
 //void JyNI_unload(JavaVM *jvm);
 
 
@@ -163,6 +166,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyNIPyObjectAsString) = dlsym(JyNIHandle, "JyNI_PyObjectAsString");
 	*(void **) (&JyNIPyObjectAsPyString) = dlsym(JyNIHandle, "JyNI_PyObjectAsPyString");
 	*(void **) (&JyNISetAttrString) = dlsym(JyNIHandle, "JyNI_setAttrString");
+	*(void **) (&JyNIlookupFromHandle) = dlsym(JyNIHandle, "JyNIlookupFromHandle");
+	*(void **) (&JyNIcurrentNativeRefCount) = dlsym(JyNIHandle, "JyNIcurrentNativeRefCount");
 	*(void **) (&JyNIUnload) = dlsym(JyNIHandle, "JyNI_unload");
 
 	*(void **) (&JyTStateSetNativeRecursionLimit) = dlsym(JyNIHandle, "JyTState_setNativeRecursionLimit");
@@ -179,12 +184,10 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JySet_putSize) = dlsym(JyNIHandle, "JySet_putSize");
 
 	*(void **) (&JyRefMonitor_setMemDebugFlags) = dlsym(JyNIHandle, "JyRefMonitor_setMemDebugFlags");
+	*(void **) (&JyGC_clearNativeReferences) = dlsym(JyNIHandle, "JyGC_clearNativeReferences");
 
-	//puts("done");
 	jint result = (*JyNIInit)(java);
 	if (result != JNI_VERSION_1_2) puts("Init-result indicates error!");
-//	else puts("Init-result indicates success!");
-//	puts("return from init...");
 }
 
 /*
@@ -391,6 +394,37 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize(JNIEnv *env, jclass class, 
  * Method:    JyRefMonitor_setMemDebugFlags
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags(JNIEnv *env, jclass class, jint flags) {
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags(JNIEnv *env, jclass class, jint flags)
+{
 	(*JyRefMonitor_setMemDebugFlags)(env, class, flags);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_clearNativeReferences
+ * Signature: ([JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyGC_1clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate)
+{
+	(*JyGC_clearNativeReferences)(env, class, references, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    lookupFromHandle
+ * Signature: (J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_lookupFromHandle(JNIEnv *env, jclass class, jlong handle)
+{
+	return (*JyNIlookupFromHandle)(env, class, handle);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    currentNativeRefCount
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_currentNativeRefCount(JNIEnv *env, jclass class, jlong handle)
+{
+	return JyNIcurrentNativeRefCount(env, class, handle);
 }

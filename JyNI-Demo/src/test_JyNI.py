@@ -129,7 +129,7 @@ class TestJyNI(unittest.TestCase):
 		self.assertRaisesRegexp(SystemError, "This is a test exception message for JyNI.", DemoExtension.exceptionTest)
 		try:
 			DemoExtension.exceptionTest()
-			self.assertEqual(1, 2) #always would fail, but is not reached, if everything works as expected
+			self.assertEqual(1, 2) #would always fail, but is not reached, if everything works as expected
 		except SystemError:
 			exc = sys.exc_info()
 			self.assertEqual(exc[0], SystemError)

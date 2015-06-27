@@ -47,10 +47,10 @@ package JyNI;
 
 import java.util.AbstractList;
 import java.util.Collection;
-import java.util.List;
-import java.lang.reflect.Field;
 import org.python.core.PyObject;
-import org.python.core.PyList;
+
+import JyNI.gc.*;
+import java.lang.ref.WeakReference;
 
 /**
  * JyList is an implementation of java.util.List, that
@@ -94,20 +94,52 @@ import org.python.core.PyList;
  * (By the way, I am not involved in any of them, I just found them
  * and thought it would be useful here.)
  */
-public class JyList extends AbstractList<PyObject> {
+public class JyList extends AbstractList<PyObject> implements TraversableGCHead, PyObjectGCHead {
 	long backendHandle;
-	
+	Object headLinks;
+
+	/* This is actually supposed to be a SoftReference, but we use a
+	 * WeakReference for easier debugging for now.
+	 */
+	WeakReference<PyObject> frontend;
+
 	public JyList(long backendHandle) {
 		super();
 		this.backendHandle = backendHandle;
+		new JyWeakReferenceGC(this);
 	}
-	
+
 	public JyList(Collection<PyObject> c, long backendHandle) {
 		super();
 		this.backendHandle = backendHandle;
 		addAll(0, c);
+		new JyWeakReferenceGC(this);
 	}
-	
+
+	public PyObject getPyObject() {
+		return frontend != null ? frontend.get() : null;
+	}
+
+	public void setPyObject(PyObject object) {
+		frontend = new WeakReference<>(object);
+	}
+
+	public void setLinks(Object links){
+		headLinks = links;
+//		System.out.println("JyList setLinks "+this);
+//		for (PyObjectGCHead op: ((java.util.List<PyObjectGCHead>) links)) {
+//			System.out.println("   "+op+" - "+op.getPyObject());
+//		}
+	}
+
+	public int traverse(JyVisitproc visit, Object arg) {
+		return DefaultTraversableGCHead.traverse(headLinks, visit, arg);
+	}
+
+	public long getHandle() {
+		return backendHandle;
+	}
+
 	/*public void installToPyList(PyList list)
 	{
 		try
@@ -120,7 +152,7 @@ public class JyList extends AbstractList<PyObject> {
 			System.err.println("Problem modifying PyList backend: "+e);
 		}
 	}
-	
+
 	public List<PyObject> installToPyListAndGetOldBackend(PyList list)
 	{
 		try
@@ -142,19 +174,17 @@ public class JyList extends AbstractList<PyObject> {
 	}
 
 	public int size() {
-		
 		return JyNI.JyList_size(backendHandle);
-		
 	}
 
 	public PyObject set(int index, PyObject o) {
 		return JyNI.JyList_set(backendHandle, index, o, JyNI.lookupNativeHandle(o));
 	}
-	
+
 	public void add(int index, PyObject o) {
 		JyNI.JyList_add(backendHandle, index, o, JyNI.lookupNativeHandle(o));
 	}
-	
+
 	public PyObject remove(int index) {
 		return JyNI.JyList_remove(backendHandle, index);
 	}

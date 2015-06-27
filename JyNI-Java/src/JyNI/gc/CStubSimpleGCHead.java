@@ -47,10 +47,10 @@ package JyNI.gc;
 
 import org.python.core.PyObject;
 
-public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCHead {
+public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 	protected PyObject object;
 
-	public CStubGCHead(long handle) {
+	public CStubSimpleGCHead(long handle) {
 		super(handle);
 	}
 

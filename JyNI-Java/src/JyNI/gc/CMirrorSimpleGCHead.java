@@ -45,20 +45,23 @@
 
 package JyNI.gc;
 
+import java.lang.ref.WeakReference;
 import org.python.core.PyObject;
 
-public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCHead {
-	protected PyObject object;
+public class CMirrorSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
+	//SoftReference<PyObject> object; //For now use WeaReference for easier debugging.
+	WeakReference<PyObject> object; //Later change this to SoftReference
 
-	public CStubGCHead(long handle) {
+	public CMirrorSimpleGCHead(long handle) {
 		super(handle);
 	}
 
 	public void setPyObject(PyObject object) {
-		this.object = object;
+		//this.object = new SoftReference<>(object);
+		this.object = new WeakReference<>(object);
 	}
 
 	public PyObject getPyObject() {
-		return object;
+		return object.get();
 	}
 }

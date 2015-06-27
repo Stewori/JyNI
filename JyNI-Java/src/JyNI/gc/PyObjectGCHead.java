@@ -49,4 +49,5 @@ import org.python.core.PyObject;
 
 public interface PyObjectGCHead extends JyGCHead {
 	public PyObject getPyObject();
+	public void setPyObject(PyObject object);
 }

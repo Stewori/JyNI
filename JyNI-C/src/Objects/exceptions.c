@@ -414,7 +414,7 @@ BaseException_set_args(PyBaseExceptionObject *self, PyObject *val)
 		return -1;
 	}
 	jobject jself = JyNI_JythonPyObject_FromPyObject((PyObject*) self);
-	JyNI_Py_CLEAR((*env)->GetObjectField(env, jself, pyBaseExceptionArgs)); //JyNI todo: Check whether Py_Clear would be needed here
+	//JyNI_Py_CLEAR((*env)->GetObjectField(env, jself, pyBaseExceptionArgs)); //JyNI todo: Check whether Py_Clear would be needed here
 	(*env)->CallVoidMethod(env, jself,
 		pyBaseExceptionSetArgs, JyNI_JythonPyObject_FromPyObject(val));
 	if ((*env)->ExceptionCheck(env))
@@ -470,8 +470,8 @@ BaseException_set_message(PyBaseExceptionObject *self, PyObject *val)
 {
 	env(-1);
 	jobject jself = JyNI_JythonPyObject_FromPyObject((PyObject*) self);
-	jobject msg = (*env)->CallObjectMethod(env, jself, pyBaseExceptionGetMessage);
-	if (msg) JyNI_Py_CLEAR(msg); //JyNI todo: Check whether Py_Clear would be needed here
+	//jobject msg = (*env)->CallObjectMethod(env, jself, pyBaseExceptionGetMessage);
+	//if (msg) JyNI_Py_CLEAR(msg); //JyNI todo: Check whether Py_Clear would be needed here
 	(*env)->CallVoidMethod(env, jself,
 			pyBaseExceptionSetMessage, JyNI_JythonPyObject_FromPyObject(val));
 	if ((*env)->ExceptionCheck(env))

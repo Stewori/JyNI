@@ -45,27 +45,32 @@
 
 package JyNI.gc;
 
-import org.python.core.PyObject;
+//import org.python.core.PyObject;
 
-public class SimpleGCHead implements PyObjectGCHead {
+/**
+ * Intended for use with native non-GC PyObjects in GIL-free mode.
+ *
+ * @author Stefan Richthofer
+ */
+public class SimpleGCHead implements JyGCHead {//PyObjectGCHead {
 	protected long handle;
-	protected PyObject object;
+	//protected PyObject object;
 
 	public SimpleGCHead(long handle) {
 		this.handle = handle;
-		object = null;
 	}
 
-	public SimpleGCHead(long handle, PyObject object) {
-		this.handle = handle;
-		this.object = object;
-	}
-	
 	public long getHandle() {
 		return handle;
 	}
 
+	/*
+	public SimpleGCHead(long handle, PyObject object) {
+		this.handle = handle;
+		this.object = object;
+	}
+
 	public PyObject getPyObject() {
 		return object;
-	}
+	}*/
 }

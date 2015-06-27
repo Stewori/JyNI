@@ -99,6 +99,22 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyObjectAsPyString
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    lookupFromHandle
+ * Signature: (J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_lookupFromHandle
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    currentNativeRefCount
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_currentNativeRefCount
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    setNativeRecursionLimit
  * Signature: (I)V
  */
@@ -192,6 +208,14 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize
  */
 JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags
   (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_clearNativeReferences
+ * Signature: ([JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyGC_1clearNativeReferences
+  (JNIEnv *, jclass, jlongArray, jlong);
 
 #ifdef __cplusplus
 }

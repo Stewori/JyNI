@@ -59,7 +59,15 @@
  */
 jobject JyList_get(JNIEnv *env, jclass class, jlong handle, jint index)
 {
-	return JyNI_JythonPyObject_FromPyObject(PyList_GET_ITEM((PyObject*) handle, index));
+//	jputs(__FUNCTION__);
+//	jputsLong(handle);
+//	jputsLong(index);
+	// PyList_GET_ITEM returns a borrowed reference, so no need to decref it here.
+	PyObject* result = PyList_GET_ITEM((PyObject*) handle, index);
+//	if (!result) jputs("result is NULL");
+//	jputsLong(__LINE__);
+//	jputs(Py_TYPE(result)->tp_name);
+	return JyNI_JythonPyObject_FromPyObject(result);
 }
 
 /*

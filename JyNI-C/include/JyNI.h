@@ -84,8 +84,8 @@
 	_PyThreadState_Current = tstate;
 
 #define LEAVE_JyNI0 \
-	_PyThreadState_Current = NULL; \
 	JyNI_GC_Explore(); \
+	_PyThreadState_Current = NULL; \
 	PyEval_ReleaseLock();
 
 #define LEAVE_JyNI \
@@ -192,14 +192,11 @@
 #define JY_CPEER_FLAG_MASK          8
 #define JY_CACHE_GC_FLAG_MASK      16
 #define JY_CACHE_ETERNAL_FLAG_MASK 32
-#define JY_GC_SINGLE_LINK          64
-#define JY_GC_FIXED_SIZE          128 /* Only meaningful if JY_GC_SINGLE_LINK is turned off.
-                                       * Then it distinguishes array-like vs list-like links.
-                                       * Otherwise it is interpreted as JY_GC_SPECIAL_CASE.
-                                       */
-#define JY_CACHE                   96 /* JY_CACHE_GC_MASK | JY_CACHE_ETERNAL_MASK */
-#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
-#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
+//#define JY_GC_SINGLE_LINK        64
+#define JY_GC_VAR_SIZE            128 /* This distinguishes array-like vs list-like links. */
+#define JY_CACHE                   48 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
+//#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
+//#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
 #define Is_StaticSingleton(pyObject) \
 	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented)
@@ -232,21 +229,21 @@
 		(*env0)->DeleteLocalRef(env0, jobjectRef); \
 	}
 
-#define JyNIToGlobalRef0(jobjectRef, flags, env0) \
-	if (!(flags & JY_CACHE)) { \
-		jobjectTmp0 = jobjectRef; \
-		jobjectRef = (*env0)->NewGlobalRef(env0, jobjectRef); \
-		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
-	}
-
-#define JyNIToGlobalRef(jobjectRef, pyObject, env0) \
-	if (!Is_Static_PyObject(pyObject)) { \
-		JyNIToGlobalRef0(jobjectRef, AS_JY(pyObject)->flags, env0) \
-	} else if (Is_StaticTypeObject(pyObject)) { \
-		jobjectTmp0 = jobjectRef; \
-		jobjectRef = (*env0)->NewGlobalRef(env0, jobjectRef); \
-		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
-	}
+//#define JyNIToGlobalRef0(jobjectRef, flags, env0) \
+//	if (!(flags & JY_CACHE)) { \
+//		jobjectTmp0 = jobjectRef; \
+//		jobjectRef = (*env0)->NewGlobalRef(env0, jobjectRef); \
+//		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
+//	}
+//
+//#define JyNIToGlobalRef(jobjectRef, pyObject, env0) \
+//	if (!Is_Static_PyObject(pyObject)) { \
+//		JyNIToGlobalRef0(jobjectRef, AS_JY(pyObject)->flags, env0) \
+//	} else if (Is_StaticTypeObject(pyObject)) { \
+//		jobjectTmp0 = jobjectRef; \
+//		jobjectRef = (*env0)->NewGlobalRef(env0, jobjectRef); \
+//		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
+//	}
 
 #define JyNIToWeakGlobalRef0(jobjectRef, flags, env0) \
 	if (!(flags & JY_CACHE)) { \
@@ -309,7 +306,7 @@ typedef jlong (*jyChecksum)(jobject);
 	//(SYNC_ON_PY_TO_JY_FLAG_MASK | SYNC_ON_JY_TO_PY_FLAG_MASK)
 
 /* GC-exploration-behavior flags: */
-#define GC_NO_INITIAL_EXPLORE                   16384
+//#define GC_NO_INITIAL_EXPLORE                   16384
 #define GC_CRITICAL                             32768
 
 
@@ -355,9 +352,11 @@ extern const char* JyAttributeModuleName;
 extern const char* JyAttributeTypeName;
 extern const char* JyAttributeStringInterned;
 extern const char* JyAttributeSetEntry;
+extern const char* JyAttributeJyGCHead;
 //extern const char* JyAttributeTruncateSize;
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1
 #define JY_ATTR_VAR_SIZE_FLAG_MASK 2
+#define JY_ATTR_JWEAK_VALUE_FLAG_MASK 4
 typedef struct JyAttribute JyAttribute; /* Forward declaration */
 struct JyAttribute { const char* name; void* value; char flags; JyAttribute* next;};
 typedef struct JyAttributeElement JyAttributeElement; /* Forward declaration */
@@ -368,6 +367,25 @@ typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;  /* only us
 /* type_name is optional and defaults to py_type->tp_name */
 typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
+
+#define JyObject_HasJyGCHead(pyObject, jyObject) \
+	JyNI_HasJyAttribute(jyObject, JyAttributeJyGCHead)
+
+#define JyObject_AddOrSetJyGCHead(pyObject, jyObject, head) \
+	JyNI_AddOrSetJyAttributeWithFlags(jyObject, JyAttributeJyGCHead, head, \
+			JY_ATTR_OWNS_VALUE_FLAG_MASK | JY_ATTR_JWEAK_VALUE_FLAG_MASK)
+
+#define JyObject_AddJyGCHead(pyObject, jyObject, head) \
+	JyNI_AddJyAttributeWithFlags(jyObject, JyAttributeJyGCHead, head, \
+			JY_ATTR_OWNS_VALUE_FLAG_MASK | JY_ATTR_JWEAK_VALUE_FLAG_MASK)
+
+#define JyObject_GetJyGCHead(pyObject, jyObject) \
+	JyNI_GetJyAttribute(jyObject, JyAttributeJyGCHead)
+
+#define JyObject_DelJyGCHead(pyObject, jyObject) \
+	JyNI_ClearJyAttribute(jyObject, JyAttributeJyGCHead)
+
+#define UNKNOWN_FIXED_GC_SIZE -2
 
 #include "JyRefMonitor.h"
 
@@ -415,8 +433,12 @@ jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, j
 jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong tstate);
+jobject JyNIlookupFromHandle(JNIEnv *env, jclass class, jlong handle);
+jint JyNIcurrentNativeRefCount(JNIEnv *env, jclass class, jlong handle);
+//In gcmodule (declared here to preserve original gcmodule.h):
+void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate);
 
-#define builtinTypeCount 50
+#define builtinTypeCount 46
 extern TypeMapEntry builtinTypes[builtinTypeCount];
 
 /* "Hidden" PyTypes: */
@@ -500,7 +522,7 @@ inline void JyNI_CleanUp_JyObject(JyObject* obj);
 inline jobject JyNI_GetJythonDelegate(PyObject* v);
 //Should be used as replacement for PyObject_Del, taking care of JyObjects:
 //void JyNI_Del(void * obj);
-inline void JyNI_Py_CLEAR(jobject obj);
+//inline void JyNI_Py_CLEAR(jobject obj);
 //inline char* PyLongToJavaSideString(PyObject* pl);
 //inline void JyNI_printJ(jobject obj);
 inline void JyNI_printJInfo(jobject obj);
@@ -595,6 +617,10 @@ extern jmethodID objectGetClass;
 extern jclass classClass;
 extern jmethodID classEquals;
 
+extern jclass arrayListClass;
+extern jmethodID arrayListConstructor;
+extern jmethodID listAdd;
+
 //extern jclass systemClass;
 //extern jmethodID arraycopy;
 
@@ -617,7 +643,7 @@ extern jclass JyNIClass;
 extern jmethodID JyNISetNativeHandle;
 extern jmethodID JyNILookupNativeHandle;
 extern jmethodID JyNIClearNativeHandle;
-extern jmethodID JyNILookupCPeerHandle;
+extern jmethodID JyNILookupCPeerFromHandle;
 extern jmethodID JyNIGetDLOpenFlags;
 extern jmethodID JyNIGetDLVerbose;
 extern jmethodID JyNIGetJyObjectByName;
@@ -642,6 +668,7 @@ extern jmethodID JyNI_jPrint;
 extern jmethodID JyNI_jPrintLong;
 extern jmethodID JyNI_jPrintHash;
 //extern jmethodID JyNIPySet_pop;
+extern jmethodID JyNI_makeGCHead;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;
@@ -699,7 +726,9 @@ extern jclass pyCPeerGCClass;
 extern jmethodID pyCPeerGCConstructor;
 //extern jfieldID pyCPeerLinksHandle;
 
+extern jclass jyGCHeadClass;
 extern jmethodID traversableGCHeadSetLinks;
+extern jmethodID pyObjectGCHeadSetObject;
 
 extern jclass pyCPeerTypeClass;
 extern jmethodID pyCPeerTypeConstructor;

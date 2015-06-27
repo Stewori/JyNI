@@ -156,6 +156,7 @@ PyTuple_New(register Py_ssize_t size)
 #ifdef SHOW_TRACK_COUNT
 	count_tracked++;
 #endif
+	//_JyNI_GC_TRACK_NoExplore(op);
 	_JyNI_GC_TRACK(op);
 	return (PyObject *) op;
 }
@@ -288,6 +289,7 @@ tupledealloc(register PyTupleObject *op)
 		}
 #endif
 	}
+	JyNI_CleanUp_JyObject(AS_JY_WITH_GC(op));
 	Py_TYPE(op)->tp_free((PyObject *)op);
 done:
 	Py_TRASHCAN_SAFE_END(op)

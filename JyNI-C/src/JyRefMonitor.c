@@ -72,8 +72,10 @@ void JyRefMonitor_addAction(jshort action, JyObject* object, size_t size, char* 
 	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
 	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
 	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
+	jweak jop = NULL;
+	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK)) jop = object->jy;
 	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorAddAction, action, NULL, (jlong) FROM_JY(object), NULL, jtp, jcm, jfl, line);
+			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), NULL, jtp, jcm, jfl, line);
 }
 
 void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2, size_t size,
@@ -83,7 +85,9 @@ void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2,
 	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
 	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
 	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
+	jweak jop = NULL;
+	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK)) jop = object->jy;
 	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorAddAction, action, NULL, (jlong) FROM_JY(object), (jlong) FROM_JY(object2),
+			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), (jlong) FROM_JY(object2),
 			jtp, jcm, jfl, line);
 }

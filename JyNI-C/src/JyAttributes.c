@@ -57,6 +57,7 @@ const char* JyAttributeModuleName = "modn";
 const char* JyAttributeTypeName = "typn";
 const char* JyAttributeStringInterned = "strI";
 const char* JyAttributeSetEntry = "setE";
+const char* JyAttributeJyGCHead = "jyGC";
 
 //defaults to 0; note that on alloc this value is added to the anyway allocated size sizeof(PyObjectHead)
 //const char* JyAttributeTruncateSize = "trSi";
@@ -88,11 +89,20 @@ inline void JyNI_ClearJyAttributeValue(JyAttribute* att)
 			{
 				JyAttributeElement* tmp = elem;
 				elem = elem->next;
-				free(tmp->value);
+				if (att->flags & JY_ATTR_JWEAK_VALUE_FLAG_MASK) {
+					env();
+					(*env)->DeleteWeakGlobalRef(env, (jweak) tmp->value);
+				} else
+					free(tmp->value);
 				free(tmp);
 			}
-		} else
-			free(att->value);
+		} else {
+			if (att->flags & JY_ATTR_JWEAK_VALUE_FLAG_MASK) {
+				env();
+				(*env)->DeleteWeakGlobalRef(env, (jweak) att->value);
+			} else
+				free(att->value);
+		}
 	}
 }
 
