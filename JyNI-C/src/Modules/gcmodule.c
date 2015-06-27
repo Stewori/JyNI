@@ -1758,6 +1758,17 @@ visit_exploreListLink(PyObject *op, void *arg)
 }
 
 static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
+	//jputs(__FUNCTION__);
+	//jputs(Py_TYPE(op)->tp_name);
+	if (PyType_CheckExact(op)) {
+		//jputs(((PyTypeObject*) op)->tp_name);
+		//if (((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE) jputs("heapType");
+		//else jputs("No heaptype");
+		//For now we don't explore types. Todo: Add this feature soon.
+		//Note: With current behavior, an attempt to explore type-objects would e.g.
+		//break Tkinter support.
+		return NULL;
+	}
 	//jputsLong(__LINE__);
 	if (!(jy->flags & JY_GC_VAR_SIZE)) {
 		//jputsLong(__LINE__);
@@ -1793,6 +1804,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 //				jputsLong(__LINE__);
 				JyObject* jy = AS_JY(singleLink);
 				jobject result0 = obtainJyGCHead(env, singleLink, jy);
+				//jputsLong(__LINE__);
 				return result0;
 				//return obtainJyGCHead(env, singleLink, AS_JY(singleLink));
 			} else {
@@ -1804,6 +1816,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 				//jputs("obt expl...");
 				Py_TYPE((PyObject*) op)->tp_traverse(op, visit_exploreArrayLink, &expl);
 				//jputs("obt done");
+				//jputsLong(__LINE__);
 				return result;
 			}
 		}
@@ -1822,6 +1835,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	jobject result = (*env)->NewObject(env, arrayListClass, arrayListConstructor, initSize);
 	exploreJNI expl = {env, result, 0};
 	Py_TYPE((PyObject*) op)->tp_traverse(op, visit_exploreListLink, &expl);
+	//jputsLong(__LINE__);
 	return result;
 }
 
@@ -1882,12 +1896,8 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 
 		//perform exploration here and add all reachable JyGCHeads as links to jyHead.
 		//If the object is JyNI-GC-Var, use a list or something as head-links.
-
-	//The following two lines cause Tkinter-Demo to fail for some reason. However they
-	//are crucial for GC-support. To avoid regressions we comment them out for commits
-	//until we fixed this issue.
-//		jobject linkHeads = exploreJyGCHeadLinks(env, op, jy);
-//		(*env)->CallVoidMethod(env, jyHead, traversableGCHeadSetLinks, linkHeads);
+		jobject linkHeads = exploreJyGCHeadLinks(env, op, jy);
+		(*env)->CallVoidMethod(env, jyHead, traversableGCHeadSetLinks, linkHeads);
 	}
 
 	/*
