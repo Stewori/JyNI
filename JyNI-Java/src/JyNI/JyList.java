@@ -170,10 +170,12 @@ public class JyList extends AbstractList<PyObject> implements TraversableGCHead,
 	}*/
 
 	public PyObject get(int index) {
+		//System.out.println(backendHandle+" JyList-get "+index);
 		return JyNI.JyList_get(backendHandle, index);
 	}
 
 	public int size() {
+		//System.out.println(backendHandle+" JyList-size");
 		return JyNI.JyList_size(backendHandle);
 	}
 

@@ -648,6 +648,7 @@ list_repeat(PyListObject *a, Py_ssize_t n)
 static int
 list_clear(PyListObject *a)
 {
+	JyNIDebugOp(JY_NATIVE_CLEAR, a, -1);
 	Py_ssize_t i;
 	PyObject **item = a->ob_item;
 	if (item != NULL) {

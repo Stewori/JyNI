@@ -52,19 +52,19 @@ import sys
 #DemoExtension.so could be located in various build scenarios. If you use different
 #scenarios in parallel, select the one to be used by setting some of the paths as comments.
 
-#build with an IDE in debug mode:
+#built with an IDE in debug mode:
 sys.path.append('../../DemoExtension/Debug') #in case you run it from src dir
 sys.path.append('./DemoExtension/Debug') #in case you run it from base dir
-#build with an IDE in release mode:
+#built with an IDE in release mode:
 sys.path.append('../../DemoExtension/Release') #in case you run it from src dir
 sys.path.append('./DemoExtension/Release') #in case you run it from base dir
-#build with setup.py on 64 bit machine:
+#built with setup.py on 64 bit machine:
 sys.path.append('../../DemoExtension/build/lib.linux-x86_64-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.linux-x86_64-2.7') #in case you run it from base dir
-#build with setup.py on 32 bit machine:
+#built with setup.py on 32 bit machine:
 sys.path.append('../../DemoExtension/build/lib.linux-i686-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it from base dir
-#build with setup.py on macosx 10.10:
+#built with setup.py on macosx 10.10:
 sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
 
@@ -102,6 +102,32 @@ class TestJyNI(unittest.TestCase):
 		DemoExtension.listModifyTest(l, 2)
 		self.assertEqual(l[2], "natively modified")
 		self.assertEqual(len(l), 3)
+
+	#Passing self-containing objects to native code used to crash JyNI.
+	#This test proofs that this is fixed.
+	def test_native_list_selfcontaining(self):
+		l = ["Hello", "lovely", "world"]
+		l[1] = l
+		DemoExtension.listModifyTest(l, 0)
+		self.assertEqual(l[0], "natively modified")
+		self.assertEqual(len(l), 3)
+		self.assertEqual(str(l), "['natively modified', [...], 'world']")
+
+	def test_native_tuple_selfcontaining(self):
+		l = ["Hello", "lovely", "world"]
+		l[1] = (11, 12, l)
+		DemoExtension.listModifyTest(l, 2)
+		self.assertEqual(l[2], "natively modified")
+		self.assertEqual(len(l), 3)
+		self.assertEqual(str(l), "['Hello', (11, 12, [...]), 'natively modified']")
+
+	def test_native_create_list_selfcontaining(self):
+		l = DemoExtension.createListSelfContaining()
+		self.assertEqual(str(l), "['element1', 'element2', [...]]")
+
+	def test_native_create_tuple_selfcontaining(self):
+		l = DemoExtension.createTupleSelfContaining()
+		self.assertEqual(str(l), "('tp1', 'tp2', ['lst1', ('tp1', 'tp2', [...])])")
 
 	def test_native_set(self):
 		basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']

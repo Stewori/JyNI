@@ -197,6 +197,37 @@ unicodeTest(PyObject* self, PyObject* args)
 	return PyUnicode_FromUnicode(unc, PyUnicode_GET_SIZE(uni));
 }
 
+PyObject*
+createListSelfContaining(PyObject* self, PyObject* args)
+{
+	char* text1 = "element1";
+	char* text2 = "element2";
+	PyObject* list = PyList_New(3);
+	PyList_SET_ITEM(list, 0, PyString_FromString(text1));
+	PyList_SET_ITEM(list, 1, PyString_FromString(text2));
+	PyList_SET_ITEM(list, 2, list);
+	return list;
+}
+
+PyObject*
+createTupleSelfContaining(PyObject* self, PyObject* args)
+{
+	char* text1 = "tp1";
+	char* text2 = "tp2";
+	char* textl1 = "lst1";
+	PyObject* tuple = PyTuple_New(3);
+	PyObject* list = PyList_New(2);
+	//In Python it is not allowed for tuples to directly self-contain.
+	//So we construct the loop indirectly via a list.
+	PyTuple_SET_ITEM(tuple, 0, PyString_FromString(text1));
+	PyTuple_SET_ITEM(tuple, 1, PyString_FromString(text2));
+	PyTuple_SET_ITEM(tuple, 2, list);
+	PyList_SET_ITEM(list, 0, PyString_FromString(textl1));
+	PyList_SET_ITEM(list, 1, tuple);
+	//printf("createListSelfContaining %llu  %llu\n", list, PyList_GET_ITEM(list, 0));
+	return tuple;
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
@@ -212,6 +243,8 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"keywordTest", keywordTest, METH_VARARGS | METH_KEYWORDS, "Tests working with keywords."},
 	{"exceptionTest", exceptionTest, METH_NOARGS, "Raise an exception to test JyNI's exception support."},
 	{"unicodeTest", unicodeTest, METH_VARARGS, "Test JyNI's unicode support by converting forth and back."},
+	{"createListSelfContaining", createListSelfContaining, METH_NOARGS, "Natively create a self-containing list."},
+	{"createTupleSelfContaining", createTupleSelfContaining, METH_NOARGS, "Natively create a self-containing tuple."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

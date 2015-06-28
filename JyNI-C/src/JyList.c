@@ -60,14 +60,21 @@
 jobject JyList_get(JNIEnv *env, jclass class, jlong handle, jint index)
 {
 //	jputs(__FUNCTION__);
+//	jputsLong(((PyObject*) handle)->ob_refcnt);
 //	jputsLong(handle);
 //	jputsLong(index);
 	// PyList_GET_ITEM returns a borrowed reference, so no need to decref it here.
-	PyObject* result = PyList_GET_ITEM((PyObject*) handle, index);
-//	if (!result) jputs("result is NULL");
-//	jputsLong(__LINE__);
+	//PyObject* result = PyList_GET_ITEM((PyObject*) handle, index);
+	//if (!result) jputs("result is NULL");
+	//jputsLong(PyList_GET_ITEM((PyObject*) handle, 0));
 //	jputs(Py_TYPE(result)->tp_name);
-	return JyNI_JythonPyObject_FromPyObject(result);
+	//jobject er = JyNI_JythonPyObject_FromPyObject(result);
+//	if ((*env)->ExceptionCheck(env)) {
+//		jputs("Exception happened....");
+//		(*env)->ExceptionDescribe(env);
+//	}
+//	if ((*env)->IsSameObject(env, er, NULL)) jputs("er is NULL");
+	return JyNI_JythonPyObject_FromPyObject(PyList_GET_ITEM((PyObject*) handle, index));
 }
 
 /*
@@ -87,6 +94,9 @@ jint JyList_size(JNIEnv *env, jclass class, jlong handle)
  */
 jobject JyList_set(JNIEnv *env, jclass class, jlong handle, jint index, jobject obj, jlong pyObj)
 {
+//	jputs(__FUNCTION__);
+//	jputsLong(handle);
+//	jputsLong(index);
 	jobject old = JyNI_JythonPyObject_FromPyObject(PyList_GET_ITEM((PyObject*) handle, index));
 	PyList_SET_ITEM((PyObject*) handle, index, pyObj != NULL ? (PyObject*) pyObj : JyNI_PyObject_FromJythonPyObject(obj));
 	return old;
@@ -99,6 +109,9 @@ jobject JyList_set(JNIEnv *env, jclass class, jlong handle, jint index, jobject 
  */
 void JyList_add(JNIEnv *env, jclass class, jlong handle, jint index, jobject obj, jlong pyObj)
 {
+//	jputs(__FUNCTION__);
+//	jputsLong(handle);
+//	jputsLong(index);
 	PyList_Append((PyObject*) handle, pyObj != NULL ? (PyObject*) pyObj : JyNI_PyObject_FromJythonPyObject(obj));
 }
 
@@ -109,6 +122,9 @@ void JyList_add(JNIEnv *env, jclass class, jlong handle, jint index, jobject obj
  */
 jobject JyList_remove(JNIEnv *env, jclass class, jlong handle, jint index)
 {
+//	jputs(__FUNCTION__);
+//	jputsLong(handle);
+//	jputsLong(index);
 	//list_ass_slice(self, i, i+1, (PyObject *)NULL)
 	PyList_SetSlice((PyObject*) handle, index, index+1, (PyObject *) NULL);
 }

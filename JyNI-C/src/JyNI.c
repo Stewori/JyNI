@@ -249,6 +249,10 @@ jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong t
  */
 jobject JyNIlookupFromHandle(JNIEnv *env, jclass class, jlong handle)
 {
+	/*Note: If this method crashes the JVM, it is most likely because
+	 *      it was called with an already freed handle.
+	 */
+	if (!handle) return NULL;
 	if (Is_Static_PyObject((PyObject*) handle)) return NULL;
 	JyObject* jop = AS_JY((PyObject*) handle);
 	if (jop->flags & JY_INITIALIZED_FLAG_MASK) return jop->jy;
@@ -1278,7 +1282,10 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 	JyObject* jy = AS_JY(obj);
 	env(NULL);
 	jy->jy = (*env)->NewWeakGlobalRef(env, src);
+	//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
 	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj, jy->flags & JY_TRUNCATE_FLAG_MASK);
+	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	//}
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	if (PyType_IS_GC(eme->exc_type))
 		JyNI_GC_ExploreObject(obj);
@@ -1348,7 +1355,10 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
 		env(NULL);
 		jy->jy = (*env)->NewWeakGlobalRef(env, src);
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest, jy->flags & JY_TRUNCATE_FLAG_MASK);
+		if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest, jy->flags & JY_TRUNCATE_FLAG_MASK);
+			jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+		}
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
 		if (PyObject_IS_GC(dest)) {
 //			if (jy->flags & JY_INITIALIZED_FLAG_MASK) {
@@ -1391,6 +1401,9 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		Py_INCREF(Py_NotImplemented);
 		return Py_NotImplemented;
 	}
+	//Todo: Maybe the check for nullstring and unicode_empty is not needed
+	//here and should be processed via usual lookup. (Since these singletons
+	//are on the heap)
 	if ((*env)->IsSameObject(env, jythonPyObject, JyEmptyString) && nullstring)
 	{
 		Py_INCREF(nullstring);
@@ -1628,7 +1641,10 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 	if (!dest) return NULL;
 
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some exc_factories might already init this
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
 	return srcJy->jy;
 }
@@ -1666,7 +1682,10 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);//, char flags)
 	env(NULL);
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some sync-on-init methods might already init this
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
 	return dest;//srcJy->jy;
 }
@@ -2070,7 +2089,7 @@ inline void JyNI_CleanUp_JyObject(JyObject* obj)
 	if (obj->jy && (obj->flags & JY_INITIALIZED_FLAG_MASK))
 	{
 		env();
-		if (!(*env)->IsSameObject(env, obj->jy, NULL))
+		if ((obj->flags & JY_HAS_JHANDLE_FLAG_MASK) && !(*env)->IsSameObject(env, obj->jy, NULL))
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIClearNativeHandle, obj->jy);
 //		if (obj->flags & JY_CPEER_FLAG_MASK)
 //			(*env)->DeleteWeakGlobalRef(env, obj->jy);

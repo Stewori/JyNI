@@ -78,6 +78,8 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 	jint srcSize = (*env)->CallIntMethod(env, src, pyTupleSize);
 	//jputs("### creating tuple...");
 	PyObject* er = PyTuple_New(srcSize);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) er, JNI_FALSE);
+	AS_JY_WITH_GC(er)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	//jputs("### created tuple...");
 	//Py_XINCREF(er);
 	//if (srcSize != PyTuple_GET_SIZE(dest)) //...throw exception since tuple is immutable
@@ -390,9 +392,29 @@ jobject JySync_Init_JyLong_From_PyLong(PyObject* src)
 
 jobject JySync_Init_JyList_From_PyList(PyObject* src)
 {
+	//jputs(__FUNCTION__);
+	//Since it is likely that src was created by an extension, we
+	//explicitly explore it here:
+	JyNI_GC_ExploreObject(src);
+	//JyNI_GC_ExploreObject should have initialized JyGCHead to a JyList-object.
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, pyListClass, pyListFromList,
-			(*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src));
+	jobject jyList = (*env)->NewLocalRef(env, (jobject) JyObject_GetJyGCHead(src, AS_JY_WITH_GC(src)));
+	if (!jyList || (*env)->IsSameObject(env, jyList, NULL)) {
+		jputs("This should not happen! JyList gc-head was deleted after explore.");
+		jputs(__FUNCTION__);
+		if (!jyList) jputs("truely NULL");
+		else (*env)->DeleteWeakGlobalRef(env, jyList);
+		jputs("Restore it...");
+		jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src);
+		JyObject_AddOrSetJyGCHead(src, AS_JY_WITH_GC(src), (*env)->NewWeakGlobalRef(env, jyList));
+		JyNI_GC_ExploreObject(src);
+	}
+//	jobject jylist = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src);
+//	if ((*env)->ExceptionCheck(env)) {
+//		jputs("Exception happened converting list:");
+//		(*env)->ExceptionDescribe(env);
+//	}
+	return (*env)->CallStaticObjectMethod(env, pyListClass, pyListFromList, jyList);
 }
 
 
@@ -408,27 +430,35 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 	jarray handles = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupNativeHandles, src);
 	jsize size = (*env)->GetArrayLength(env, handles);
 	PyObject* op = PyList_New((Py_ssize_t) size);
-	jlong* arr = (*env)->GetLongArrayElements(env, handles, NULL);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) op, JNI_FALSE);
+	AS_JY_WITH_GC(op)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	jsize i;
 	PyObject* v;
+	jlong* arr = (*env)->GetLongArrayElements(env, handles, NULL);
 	for (i = 0; i < size; ++i)
 	{
 		v = (PyObject*) arr[i];
-		if (!v) v = _JyNI_PyObject_FromJythonPyObject(
-				(*env)->CallObjectMethod(env, src, pyListPyGet, i), JNI_FALSE, JNI_FALSE, JNI_TRUE);
+		if (!v) v = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyListPyGet, i));
+		else Py_INCREF(v);
+//		if (!v) v = _JyNI_PyObject_FromJythonPyObject(
+//				(*env)->CallObjectMethod(env, src, pyListPyGet, i), JNI_FALSE, JNI_FALSE, JNI_TRUE);
 //JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType)
 		PyList_SET_ITEM(op, i, v);
 	}
+	//jputsLong(__LINE__);
 	(*env)->ReleaseLongArrayElements(env, handles, arr, JNI_ABORT);
 	JyNI_GC_ExploreObject(op);
 	//JyNI_GC_ExploreObject should have initialized JyGCHead to a JyList-object.
 	jobject jyList = (*env)->NewLocalRef(env, (jobject) JyObject_GetJyGCHead(op, AS_JY_WITH_GC(op)));
 	if (!jyList || (*env)->IsSameObject(env, jyList, NULL)) {
 		jputs("This should not happen! JyList gc-head was deleted after explore.");
+		jputs(__FUNCTION__);
 		if (!jyList) jputs("truely NULL");
+		else (*env)->DeleteWeakGlobalRef(env, jyList);
 		jputs("Restore it...");
-		jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) op);
-		JyNI_GC_ExploreObject(op);
+		jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src);
+		JyObject_AddOrSetJyGCHead(src, AS_JY_WITH_GC(src), (*env)->NewWeakGlobalRef(env, jyList));
+		JyNI_GC_ExploreObject(src);
 	}
 	//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
 	(*env)->SetObjectField(env, src, pyListBackend, jyList);
@@ -437,6 +467,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 
 	//Py_INCREF(op); //For now we make the list immortal here. Later GC will take care of it.
 	//(should now work without this)
+	//jputsLong(__LINE__);
 	return op;
 }
 

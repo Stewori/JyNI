@@ -1930,17 +1930,27 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate)
 {
 	ENTER_JyNI
+	inquiry clear;
 	//Here we decref the associated native objects.
 	jsize size = (*env)->GetArrayLength(env, references);
-	jlong* arr = (*env)->GetLongArrayElements(env, references, NULL);
 	jsize i;
-	for (i = 0; i < size; ++i)
-		Py_DECREF((PyObject*) arr[i]);
-	(*env)->ReleaseLongArrayElements(env, references, arr, JNI_ABORT);
+	jlong* arr = (*env)->GetLongArrayElements(env, references, NULL);
 
-	//Note that this is not yet enough.
 	//We will add code here to check whether all references are
 	//self-contained and then break ref-cycles/free the entire graph.
+
+	for (i = 0; i < size; ++i) {
+		//todo: implement a JyNI-compliant version of this stuff
+	//	assert(IS_TENTATIVELY_UNREACHABLE(op));
+	//	if (debug & DEBUG_SAVEALL) {
+	//		PyList_Append(garbage, op);
+	//	}
+		if (((PyObject*) arr[i])->ob_refcnt > 1 &&
+				(clear = Py_TYPE((PyObject*) arr[i])->tp_clear))
+			clear((PyObject*) arr[i]);
+		Py_DECREF((PyObject*) arr[i]);
+	}
+	(*env)->ReleaseLongArrayElements(env, references, arr, JNI_ABORT);
 	LEAVE_JyNI
 }
 

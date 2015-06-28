@@ -10,19 +10,19 @@ import sys
 #DemoExtension.so could be located in various build scenarios. If you use different
 #scenarios in parallel, select the one to be used by setting some of the paths as comments.
 
-#build with an IDE in debug mode:
+#built with an IDE in debug mode:
 sys.path.append('../../DemoExtension/Debug') #in case you run it from src dir
 sys.path.append('./DemoExtension/Debug') #in case you run it from base dir
-#build with an IDE in release mode:
+#built with an IDE in release mode:
 sys.path.append('../../DemoExtension/Release') #in case you run it from src dir
 sys.path.append('./DemoExtension/Release') #in case you run it from base dir
-#build with setup.py on 64 bit machine:
+#built with setup.py on 64 bit machine:
 sys.path.append('../../DemoExtension/build/lib.linux-x86_64-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.linux-x86_64-2.7') #in case you run it from base dir
-#build with setup.py on 32 bit machine:
+#built with setup.py on 32 bit machine:
 sys.path.append('../../DemoExtension/build/lib.linux-i686-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it from base dir
-#build with setup.py on macosx 10.10:
+#built with setup.py on macosx 10.10:
 sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
 

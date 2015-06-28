@@ -186,15 +186,16 @@
 
 /* General Flags: */
 #define JY_INITIALIZED_FLAG_MASK    1
-#define JY_GC_FLAG_MASK             2
-#define JY_TRUNCATE_FLAG_MASK       4
+#define JY_HAS_JHANDLE_FLAG_MASK    2
+#define JY_GC_FLAG_MASK             4
+#define JY_TRUNCATE_FLAG_MASK       8
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
-#define JY_CPEER_FLAG_MASK          8
-#define JY_CACHE_GC_FLAG_MASK      16
-#define JY_CACHE_ETERNAL_FLAG_MASK 32
+#define JY_CPEER_FLAG_MASK         16
+#define JY_CACHE_GC_FLAG_MASK      32
+#define JY_CACHE_ETERNAL_FLAG_MASK 64
 //#define JY_GC_SINGLE_LINK        64
 #define JY_GC_VAR_SIZE            128 /* This distinguishes array-like vs list-like links. */
-#define JY_CACHE                   48 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
+#define JY_CACHE                   96 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
 //#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
 //#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
