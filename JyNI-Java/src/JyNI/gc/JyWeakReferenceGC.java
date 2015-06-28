@@ -55,6 +55,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
+	public static boolean nativecollectionEnabled = true;
+	public static boolean monitorNativeCollection = false;
 	protected static ReferenceQueue<JyGCHead> refQueue = new ReferenceQueue<>();
 	protected static HashSet<JyWeakReferenceGC> refList = new HashSet<>();
 	protected static GCReaperThread reaper = new GCReaperThread();
@@ -107,11 +109,14 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 					clearRefs[pos++] = ref0.nativeRef;
 				}
 				refCache.clear();
-//				System.out.println("gonna clear refs:");
-//				for (long l: clearRefs)
-//					System.out.println(l);
-				JyNI.JyGC_clearNativeReferences(clearRefs,
-						JyTState.prepareNativeThreadState(Py.getThreadState()));
+				if (monitorNativeCollection) {
+					for (long l: clearRefs)
+						JyReferenceMonitor.notifyJyNIFree(l);
+				}
+				if (nativecollectionEnabled) {
+					JyNI.JyGC_clearNativeReferences(clearRefs,
+							JyTState.prepareNativeThreadState(Py.getThreadState()));
+				}
 			}
 		}
 	}

@@ -224,7 +224,7 @@ createTupleSelfContaining(PyObject* self, PyObject* args)
 	PyTuple_SET_ITEM(tuple, 2, list);
 	PyList_SET_ITEM(list, 0, PyString_FromString(textl1));
 	PyList_SET_ITEM(list, 1, tuple);
-	//printf("createListSelfContaining %llu  %llu\n", list, PyList_GET_ITEM(list, 0));
+	//printf("createTupleSelfContaining %llu  %llu\n", list, PyList_GET_ITEM(list, 0));
 	return tuple;
 }
 

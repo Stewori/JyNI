@@ -153,6 +153,7 @@ public class JyReferenceMonitor {
 		String immortalFunc;
 		boolean inline = false;
 		long jyWeakRef = 0;
+		long JyNIFree = 0;
 		/* to save the old log if a memory position is reused */
 		ObjectLog previousLife = null;
 
@@ -171,11 +172,11 @@ public class JyReferenceMonitor {
 			 */
 			if (object != null) {
 				PyObject op = object.get();
-				os = op == null ? "[jfreed]" : "\""+op.toString()+"\"";
+				os = op == null ? "-jfreed-" : "\""+op.toString()+"\"";
 			} else
 				os = "n/a";
 			String inGC = gc ? "_GC" : "";
-			if (jyWeakRef != 0) inGC += "J";
+			if (jyWeakRef != 0) inGC += "_J";
 			return nativeRef+inGC+" ("+nativeType+") #"+
 					JyNI.currentNativeRefCount(nativeRef)+
 					": "+os+" *"+(nativeAlloc-startTime);
@@ -319,6 +320,16 @@ public class JyReferenceMonitor {
 		}
 	}
 
+	public static void notifyJyNIFree(long handle) {
+		ObjectLog log = nativeObjects.get(handle);
+		if (log != null) {
+			if (log.JyNIFree != 0) {
+				System.out.println("JyNIFree already present!");
+			}
+			log.JyNIFree = System.currentTimeMillis();
+		}
+	}
+
 //	public static void addAction(short action, PyObject obj) {
 //		
 //	}
@@ -367,12 +378,31 @@ public class JyReferenceMonitor {
 		boolean leaksFound = false;
 		for (ObjectLog log: tmp) {
 			if (log.isLeak()) {
-				leaksFound = true;
+				if (!leaksFound) {
+					leaksFound = true;
+					System.out.println("Current native leaks:");
+				}
 				log.updatePyObject();
 				System.out.println(log);
 			}
 		}
 		if (!leaksFound) System.out.println("no leaks recorded");
+	}
+
+	public static void listWouldDeleteNative() {
+		ArrayList<ObjectLog> tmp = new ArrayList<>(nativeObjects.values());
+		boolean found = false;
+		for (ObjectLog log: tmp) {
+			if (log.JyNIFree != 0) {
+				if (!found) {
+					found = true;
+					System.out.println("Native delete-attempts:");
+				}
+				log.updatePyObject();
+				System.out.println(log);
+			}
+		}
+		if (!found) System.out.println("no native delete-attempts recorded");
 	}
 
 	public static void listFreed() {
