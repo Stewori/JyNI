@@ -66,6 +66,7 @@ print ""
 # _J means that a JyNI-GC-head exists, but the object is not actually treated by GC
 # This can serve monitoring purposes or soft-keep-alive (c.f. java.lang.ref.SoftReference)
 # for caching.
+print "Leaks before GC:"
 monitor.listLeaks()
 print ""
 
@@ -73,12 +74,14 @@ print ""
 # leaks would persist if JyNI-GC is not working:
 #JyWeakReferenceGC.nativecollectionEnabled = False
 
+print "calling Java-GC..."
 System.gc()
 time.sleep(2)
 print "weak(l) after GC: "+str(wkl.get())
 print ""
 monitor.listWouldDeleteNative()
 print ""
+print "leaks after GC:"
 monitor.listLeaks()
 
 print ""
