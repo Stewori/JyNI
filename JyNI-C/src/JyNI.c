@@ -3616,11 +3616,20 @@ inline void JyNI_jprintHash(jobject obj) {
 
 inline void JyNI_jprintJ(jobject obj)
 {
+	//jputs(__FUNCTION__);
 	if (obj)
 	{
+		//jputsLong(__LINE__);
 		env();
-		jstring msg = (*env)->CallObjectMethod(env, obj, objectToString);
-		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrint, msg);
+		if ((*env)->GetObjectRefType(env, obj)) {
+			if (!(*env)->IsSameObject(env, obj, NULL)) {
+				//jputsLong(__LINE__);
+				jstring msg = (*env)->CallObjectMethod(env, obj, objectToString);
+				//jputsLong(__LINE__);
+				(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrint, msg);
+				//jputsLong(__LINE__);
+			} else jputs("NULL (equal)");
+		} else jputs("Invalid reference");
 	} else jputs("NULL");
 }
 

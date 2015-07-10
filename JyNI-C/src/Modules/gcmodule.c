@@ -1662,13 +1662,21 @@ void JyNI_GC_Explore() //{}
 		PyObject* toExplore = popExStack();
 //		jputs("explore next");
 //		jputs(Py_TYPE(toExplore)->tp_name);
-		if (IS_UNEXPLORED(toExplore)) {
-			JyNI_GC_ExploreObject(toExplore);
+		if (!Is_Static_PyObject(toExplore)) {
+//			jputs("JyNI-Warning: JyNI_GC_Explore found non-heap object.");
+//			jputs(Py_TYPE(toExplore)->tp_name);
+//		} else {
+			if (IS_UNEXPLORED(toExplore)) {
+				JyNI_GC_ExploreObject(toExplore);
+			}
 		}
 	}
 }
 
 static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy) {
+	if (Is_Static_PyObject(op)) {
+		jputs("JyNI-Warning: obtainJyGCHead was called with non-heap object.");
+	}
 //	return NULL;
 //}
 //static jobject obtainJyGCHead0(JNIEnv* env, PyObject* op, JyObject* jy) {
@@ -1740,26 +1748,31 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy) {
 static int
 visit_exploreArrayLink(PyObject *op, void *arg)
 {
-	jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
-	(*((exploreJNI*) arg)->env)->SetObjectArrayElement(((exploreJNI*) arg)->env,
-			((exploreJNI*) arg)->dest, ((exploreJNI*) arg)->pos++, head);
-	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
+	if (!Is_Static_PyObject(op)) {
+		jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+		(*((exploreJNI*) arg)->env)->SetObjectArrayElement(((exploreJNI*) arg)->env,
+				((exploreJNI*) arg)->dest, ((exploreJNI*) arg)->pos++, head);
+		(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
+	}
 	return 0;
 }
 
 static int
 visit_exploreListLink(PyObject *op, void *arg)
 {
-	jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
-	(*((exploreJNI*) arg)->env)->CallBooleanMethod(((exploreJNI*) arg)->env,
-			((exploreJNI*) arg)->dest, listAdd, head);
-	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
+	if (!Is_Static_PyObject(op)) {
+		jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+		(*((exploreJNI*) arg)->env)->CallBooleanMethod(((exploreJNI*) arg)->env,
+				((exploreJNI*) arg)->dest, listAdd, head);
+		(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
+	}
 	return 0;
 }
 
 static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	//jputs(__FUNCTION__);
 	//jputs(Py_TYPE(op)->tp_name);
+	//JyNI_jprintJ(jy->jy);
 	if (PyType_CheckExact(op)) {
 		//jputs(((PyTypeObject*) op)->tp_name);
 		//if (((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE) jputs("heapType");
@@ -1799,14 +1812,17 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 					jputsLong(op);//PyTuple_GET_ITEM(op, 0));
 				}
 //				if (Is_Static_PyObject(singleLink))
-//					jputs("static!");
+//					jputs("JyNI-Warning: Obtained non-heap single link.");
 //				else jputs("non-static");
 //				jputsLong(__LINE__);
-				JyObject* jy = AS_JY(singleLink);
-				jobject result0 = obtainJyGCHead(env, singleLink, jy);
-				//jputsLong(__LINE__);
-				return result0;
-				//return obtainJyGCHead(env, singleLink, AS_JY(singleLink));
+				if (!Is_Static_PyObject(singleLink)) {
+					JyObject* jy = AS_JY(singleLink);
+					jobject result0 = obtainJyGCHead(env, singleLink, jy);
+					//jputsLong(__LINE__);
+					return result0;
+					//return obtainJyGCHead(env, singleLink, AS_JY(singleLink));
+				} else
+					return NULL;
 			} else {
 				//jputsLong(__LINE__);
 				//jputs("obt...");
@@ -1842,6 +1858,11 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 void JyNI_GC_ExploreObject(PyObject* op) //{}
 //void JyNI_GC_ExploreObject0(PyObject* op)
 {
+	if (Is_Static_PyObject(op)) {
+		//jputs("JyNI-Warning: JyNI_GC_ExploreObject called with non-heap object.");
+		//jputs(Py_TYPE(op)->tp_name);
+		return;
+	}
 	if (IS_UNEXPLORED(op))
 	{
 //		jputs("explore object:");
@@ -1969,6 +1990,10 @@ PyObject_GC_Track(void *op)
 	 * new tuples.
 	 */
 	//JyNI_GC_Explore();
+	if (Is_Static_PyObject(op)) {
+		//jputs("JyNI-Warning: PyObject_GC_Track called with non-heap object.");
+		return;
+	}
 	JyNIDebugOp(JY_NATIVE_GC_TRACK, (PyObject*) op, -1);
 	_PyObject_GC_TRACK(op);
 	//if ((AS_JY_WITH_GC(op)->flags & GC_NO_INITIAL_EXPLORE) == 0)

@@ -587,6 +587,11 @@ func_repr(PyFunctionObject *op)
 static int
 func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
 {
+//	if (f->func_code == Py_None) jputs("code is None");
+//	if (f->func_globals == Py_None) jputs("globals is None");
+//	if (f->func_module == Py_None) jputs("module is None");
+//	if (f->func_defaults == Py_None) jputs("defaults is None");
+//	if (f->func_closure == Py_None) jputs("closure is None");
 	Py_VISIT(f->func_code);
 	Py_VISIT(f->func_globals);
 	Py_VISIT(f->func_module);

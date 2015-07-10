@@ -73,7 +73,12 @@ public class PyCPeer extends PyObject implements JyGCHead, FinalizableBuiltin {
 	}
 	
 	public PyObject __call__(PyObject[] args, String[] keywords) {
-//		System.out.println("CPeer called...");
+//		StringBuilder  bl = new StringBuilder("(");
+//		for (PyObject arg: args) {
+//			bl.append(arg); bl.append(", ");
+//		}
+//		bl.setCharAt(bl.length()-1, ')');
+//		System.out.println("CPeer called... "+this+bl);
 //		System.out.println(objectHandle);
 //		System.out.println(getType().getName());
 		//System.out.println("args: "+args);

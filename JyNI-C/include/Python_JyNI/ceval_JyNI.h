@@ -162,7 +162,7 @@ PyAPI_DATA(int) _Py_CheckInterval;
 PyAPI_FUNC(PyThreadState *) PyEval_SaveThread(void);
 PyAPI_FUNC(void) PyEval_RestoreThread(PyThreadState *);
 
-#ifdef WITH_THREAD
+//#ifdef WITH_THREAD
 
 PyAPI_FUNC(int)  PyEval_ThreadsInitialized(void);
 PyAPI_FUNC(void) PyEval_InitThreads(void);
@@ -191,14 +191,14 @@ PyAPI_FUNC(void) PyEval_ReInitThreads(void);
                  }
 
 
-#else /* !WITH_THREAD */
-
-#define Py_BEGIN_ALLOW_THREADS {
-#define Py_BLOCK_THREADS
-#define Py_UNBLOCK_THREADS
-#define Py_END_ALLOW_THREADS }
-
-#endif /* !WITH_THREAD */
+//#else /* !WITH_THREAD */
+//
+//#define Py_BEGIN_ALLOW_THREADS {
+//#define Py_BLOCK_THREADS
+//#define Py_UNBLOCK_THREADS
+//#define Py_END_ALLOW_THREADS }
+//
+//#endif /* !WITH_THREAD */
 
 PyAPI_FUNC(int) _PyEval_SliceIndex(PyObject *, Py_ssize_t *);
 
