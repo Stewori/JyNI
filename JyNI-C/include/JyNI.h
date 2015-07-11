@@ -642,6 +642,7 @@ extern jmethodID bigIntToStringRadix;
 
 extern jclass JyNIClass;
 extern jmethodID JyNISetNativeHandle;
+extern jmethodID JyNIRegisterNativeStaticTypeDict;
 extern jmethodID JyNILookupNativeHandle;
 extern jmethodID JyNIClearNativeHandle;
 extern jmethodID JyNILookupCPeerFromHandle;

@@ -183,8 +183,13 @@ public class JyNI {
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
 
 	//Note: nativeHandles keeps (exclusively) natively needed objects save from beeing gc'ed.
-	//JyAttribute solution lacks this currently -> fix it!
-	protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
+	//protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
+
+	/*
+	 * Maybe this can later be an IdentityHashMap<PyType, PyDictionary>. It might allow
+	 * a more direct lookup for PyCPeer/PyCPeerType.
+	 */
+	protected static HashMap<String, PyDictionary> nativeStaticTypeDicts = new HashMap<>();
 	
 	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
 	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
@@ -323,18 +328,25 @@ public class JyNI {
 			}
 		}
 	}
-	
-	public static void setNativeHandle(PyObject object, long handle, boolean keepAlive) {
+
+	public static void registerNativeStaticTypeDict(String type, PyDictionary dict) {
+		//System.out.println("JyNI Registered type-dict: "+type+" - "+lookupNativeHandle(dict));
+		if (nativeStaticTypeDicts.get(type) != null)
+			System.out.println("Warning: Registered type-dict twice: "+type);
+		nativeStaticTypeDicts.put(type,  dict);
+	}
+
+	public static void setNativeHandle(PyObject object, long handle) {//, boolean keepAlive) {
 		//no WeakReferences needed here, because clearNativeHandle is always called
 		//when a corresponding PyObject on C-Side is deallocated
 
 		//todo: When JyNI-gc is stable remove keepAlive mechanism and option here.
-		//Actually the keep-alive should be performed by a JyGCHead, precisely
-		//speaking by a CStubGCHead. Find out why this fails...
-		if (keepAlive) {
-			nativeHandlesKeepAlive.put(object, object);
-			//System.out.println("Keep alive: "+handle+" - "+object);
-		}
+		//Was only needed for type-dicts of static types, which don't get JyGCHeads.
+		//Now nativeStaticTypeDicts serves this purpose more explicitly.
+//		if (keepAlive) {
+//			nativeHandlesKeepAlive.put(object, object);
+//			//System.out.println("Would keep alive: "+handle+" - "+object);
+//		}
 		if (object instanceof PyCPeer) {
 			((PyCPeer) object).objectHandle = handle;
 		} else {
@@ -394,7 +406,7 @@ public class JyNI {
 		else
 			JyAttribute.delAttr(object, JyAttribute.JYNI_HANDLE_ATTR);
 			//nativeHandles.remove(object);
-		nativeHandlesKeepAlive.remove(object);
+		//nativeHandlesKeepAlive.remove(object);
 			
 //		PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
 //		if (peer != null)

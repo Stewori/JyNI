@@ -2179,6 +2179,7 @@ jmethodID listAdd;
 
 jclass JyNIClass;
 jmethodID JyNISetNativeHandle;
+jmethodID JyNIRegisterNativeStaticTypeDict;
 jmethodID JyNILookupNativeHandle;
 jmethodID JyNILookupCPeerFromHandle;
 jmethodID JyNIClearNativeHandle;
@@ -2740,7 +2741,8 @@ inline jint initJyNI(JNIEnv *env)
 	jclass JyNIClassLocal = (*env)->FindClass(env, "JyNI/JyNI");
 	JyNIClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNIClassLocal);
 	(*env)->DeleteLocalRef(env, JyNIClassLocal);
-	JyNISetNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "setNativeHandle", "(Lorg/python/core/PyObject;JZ)V");
+	JyNISetNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "setNativeHandle", "(Lorg/python/core/PyObject;J)V");
+	JyNIRegisterNativeStaticTypeDict = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticTypeDict", "(Ljava/lang/String;Lorg/python/core/PyDictionary;)V");
 	JyNILookupNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "lookupNativeHandle", "(Lorg/python/core/PyObject;)J");
 	JyNIClearNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "clearNativeHandle", "(Lorg/python/core/PyObject;)V");
 	JyNILookupCPeerFromHandle = (*env)->GetStaticMethodID(env, JyNIClass, "lookupCPeerFromHandle", "(J)Lorg/python/core/PyObject;");

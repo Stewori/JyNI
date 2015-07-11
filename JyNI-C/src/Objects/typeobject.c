@@ -2226,9 +2226,9 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 									 &PyDict_Type, &dict))
 		return NULL;
 
-	jputs("type_new:");
-	if (name) jputs(name);
-	else jputs("name is NULL");
+//	jputs("type_new:");
+//	if (name) jputs(name);
+//	else jputs("name is NULL");
 	env(NULL);
 	jarray jbases = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(bases), pyObjectClass, NULL);
 	int i;
@@ -2625,6 +2625,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 PyObject *
 _PyType_Lookup(PyTypeObject *type, PyObject *name)
 {
+	//jputs(__FUNCTION__);
 	Py_ssize_t i, n;
 	PyObject *mro, *res, *base, *dict;
 	unsigned int h;
@@ -2650,16 +2651,22 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 	n = PyTuple_GET_SIZE(mro);
 	for (i = 0; i < n; i++) {
 		base = PyTuple_GET_ITEM(mro, i);
-		if (PyClass_Check(base))
+		if (PyClass_Check(base)) {
 			dict = ((PyClassObject *)base)->cl_dict;
-		else {
+			//jputs("classdict");
+		} else {
 			assert(PyType_Check(base));
+			//jputs("tp_dict");
+			//jputs(((PyTypeObject *)base)->tp_name);
 			dict = ((PyTypeObject *)base)->tp_dict;
 		}
 		assert(dict && PyDict_Check(dict));
+		//jputsLong(__LINE__);
+		//jputsLong(dict);
 		res = PyDict_GetItem(dict, name);
 		if (res != NULL)
 			break;
+		//else jputs("res is NULL");
 	}
 	if (MCACHE_CACHEABLE_NAME(name)) //&& assign_version_tag(type))
 	{
@@ -4262,6 +4269,13 @@ PyType_Ready(PyTypeObject *type)
 		if (dict == NULL)
 			goto error;
 		type->tp_dict = dict;
+		env(-1);
+		jstring tpn = (*env)->NewStringUTF(env, type->tp_name);
+		jobject jdict = JyNI_JythonPyObject_FromPyObject(dict);
+		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIRegisterNativeStaticTypeDict,
+				tpn, jdict);
+		(*env)->DeleteLocalRef(env, tpn);
+		(*env)->DeleteLocalRef(env, jdict);
 	}
 
 	/*JyNI todo: clean this up...*/

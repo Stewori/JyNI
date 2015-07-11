@@ -346,11 +346,11 @@ PyTypeObject PyCFunction_Type = {
 	PyObject_GenericGetAttr,                    /* tp_getattro */
 	0,                                          /* tp_setattro */
 	0,                                          /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
 	0,                                          /* tp_doc */
 	(traverseproc)meth_traverse,                /* tp_traverse */
 	0,                                          /* tp_clear */
-	meth_richcompare,                                           /* tp_richcompare */
+	meth_richcompare,                           /* tp_richcompare */
 	0,                                          /* tp_weaklistoffset */
 	0,                                          /* tp_iter */
 	0,                                          /* tp_iternext */

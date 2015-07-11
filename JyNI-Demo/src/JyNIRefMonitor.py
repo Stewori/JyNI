@@ -46,6 +46,8 @@ JyWeakReferenceGC.monitorNativeCollection = True
 
 l = (123, [0, "test"])
 l[1][0] = l
+#l = (123, {'a': 0, 'b': "test"})
+#l[1]['a'] = l
 #We create weak reference to l to monitor collection by Java-GC:
 wkl = WeakReference(l)
 print "weak(l): "+str(wkl.get())

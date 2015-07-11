@@ -127,7 +127,11 @@ class TestJyNI(unittest.TestCase):
 
 	def test_native_create_tuple_selfcontaining(self):
 		l = DemoExtension.createTupleSelfContaining()
-		self.assertEqual(str(l), "('tp1', 'tp2', ['lst1', ('tp1', 'tp2', [...])])")
+		self.assertEqual(str(l[:2]), "('tp1', 'tp2')")
+		self.assertEqual(str(l[2]), "['lst1', ('tp1', 'tp2', [...])]")
+		#This output differs between Jython and CPython: (Why?)
+		#(slightly different output-recursion depth)
+# 		self.assertEqual(str(l), "('tp1', 'tp2', ['lst1', ('tp1', 'tp2', [...])])")
 
 	def test_native_set(self):
 		basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
