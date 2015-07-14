@@ -33,6 +33,16 @@ from JyNI.gc import JyWeakReferenceGC
 from java.lang import System
 from java.lang.ref import WeakReference
 
+#JyNI.JyRefMonitor_setMemDebugFlags(1)
+#JyWeakReferenceGC.monitorNativeCollection = True
+
+# PyType  <- Make native ref-cycle test with heap type to test partly-stub-mode.
+# PySet, but no native link to other PyObject
+# PyFrozenSet, "
+# PyCode, not GC-relevant in CPython
+# 
+# Todo: Don't count objects reachable from registered type-dicts or dynModule-list as leaks.
+
 import DemoExtension
 
 #Note:
@@ -57,6 +67,10 @@ print "weak(l): "+str(wkl.get())
 # correspond to l and its elements. We will then track the life-cycle of these.
 print "make l native..."
 DemoExtension.argCountToString(l)
+#print "argCountToString.__doc__-address: "+str(JyNI.lookupNativeHandle(DemoExtension.argCountToString.__doc__))
+#print DemoExtension.argCountToString.__doc__
+print "Native type-dicts initialized so far:"
+print JyNI.nativeStaticTypeDicts.keySet()
 
 print "Delete l... (but GC not yet ran)"
 del l

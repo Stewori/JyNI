@@ -73,9 +73,13 @@ void JyRefMonitor_addAction(jshort action, JyObject* object, size_t size, char* 
 	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
 	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
 	jweak jop = NULL;
+	jstring repr = NULL;
+	//if (PyString_CheckExact(FROM_JY(object))) jputsLong(__LINE__);
+	//if (type && strcmp(type, "str")) jputsLong(__LINE__);
+//		repr = (*env)->NewStringUTF(env, PyString_AS_STRING(FROM_JY(object)));
 	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK)) jop = object->jy;
 	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), NULL, jtp, jcm, jfl, line);
+			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), NULL, jtp, jcm, jfl, line, repr);
 }
 
 void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2, size_t size,
@@ -85,9 +89,12 @@ void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2,
 	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
 	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
 	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
+	jstring repr = NULL;
+//	if (PyString_Check(FROM_JY(object)))
+//		repr = (*env)->NewStringUTF(env, PyString_AS_STRING(FROM_JY(object)));
 	jweak jop = NULL;
 	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK)) jop = object->jy;
 	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
 			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), (jlong) FROM_JY(object2),
-			jtp, jcm, jfl, line);
+			jtp, jcm, jfl, line, repr);
 }

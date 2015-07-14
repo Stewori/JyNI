@@ -608,8 +608,8 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
 
 /* singletons: */
 extern JavaVM* java;
-extern jobject length0StringArray;
-extern jobject length0PyObjectArray;
+extern jweak length0StringArray;
+extern jweak length0PyObjectArray;
 
 extern jclass objectClass;
 extern jmethodID objectToString;

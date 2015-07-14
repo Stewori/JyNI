@@ -90,7 +90,7 @@ public class PyCPeerGC extends PyCPeer implements TraversableGCHead {
 		this.links = link;
 	}*/
 
-	public int traverse(JyVisitproc visit, Object arg) {
-		return DefaultTraversableGCHead.traverse(links, visit, arg);
+	public int jyTraverse(JyVisitproc visit, Object arg) {
+		return DefaultTraversableGCHead.jyTraverse(links, visit, arg);
 	}
 }

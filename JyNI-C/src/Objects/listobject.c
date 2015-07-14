@@ -181,6 +181,7 @@ PyList_New(Py_ssize_t size)
 		numfree--;
 		op = free_list[numfree];
 		_Py_NewReference((PyObject *)op);
+		//JyNI todo: Insert RefMonitor notification here!
 #ifdef SHOW_ALLOC_COUNT
 		count_reuse++;
 #endif
@@ -207,7 +208,7 @@ PyList_New(Py_ssize_t size)
 
 	_JyNI_GC_TRACK(op);
 	if (!(AS_JY_WITH_GC(op)->flags & JY_GC_VAR_SIZE))
-			jupts("list created with wrong GC-flag");
+			jputs("list created with wrong GC-flag");
 	return (PyObject *) op;
 }
 

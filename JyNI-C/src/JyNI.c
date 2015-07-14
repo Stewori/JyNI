@@ -165,7 +165,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	}
 	Py_XDECREF(jargs);
 	Py_XDECREF(jkw);
-	Py_XDECREF(jres); //Todo: Reason about this line!
+	Py_XDECREF(jres);
 	LEAVE_JyNI
 	return er;
 }
@@ -181,7 +181,9 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 	if (handle == 0) return NULL;
 	cstr_from_jstring(cName, name);
 	ENTER_JyNI
-	jobject er = JyNI_JythonPyObject_FromPyObject(PyObject_GetAttrString((PyObject*) handle, cName));//PyObject_GetAttrString((PyObject*) handle, cName));
+	PyObject* jres = PyObject_GetAttrString((PyObject*) handle, cName);
+	jobject er = JyNI_JythonPyObject_FromPyObject(jres);//PyObject_GetAttrString((PyObject*) handle, cName));
+	Py_XDECREF(jres);
 	LEAVE_JyNI
 	return er;
 }
@@ -196,7 +198,9 @@ jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, j
 	if (handle == 0) return 0;
 	cstr_from_jstring(cName, name);
 	ENTER_JyNI
-	jint er = PyObject_SetAttrString((PyObject*) handle, cName, JyNI_PyObject_FromJythonPyObject(value));
+	PyObject* vl = JyNI_PyObject_FromJythonPyObject(value);
+	jint er = PyObject_SetAttrString((PyObject*) handle, cName, vl);
+	Py_XDECREF(vl);
 	LEAVE_JyNI
 	return er;
 }
@@ -209,7 +213,9 @@ jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, j
 jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
 	ENTER_JyNI
-	jobject er = JyNI_JythonPyObject_FromPyObject(PyObject_Repr((PyObject*) handle));
+	PyObject* res = PyObject_Repr((PyObject*) handle);
+	jobject er = JyNI_JythonPyObject_FromPyObject(res);
+	Py_XDECREF(res);
 	LEAVE_JyNI
 	return er;
 }
@@ -222,8 +228,11 @@ jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
 	//jputs("JyNI_PyObjectAsString");
+	if (!((PyObject*) handle)->ob_refcnt) return NULL;
 	ENTER_JyNI
-	jstring er = JyNI_jstring_FromPyStringObject(env, (PyStringObject*) PyObject_Str((PyObject*) handle));
+	PyStringObject* ps = (PyStringObject*) PyObject_Str((PyObject*) handle);
+	jstring er = JyNI_jstring_FromPyStringObject(env, ps);
+	Py_XDECREF(ps);
 	LEAVE_JyNI
 	return er;
 }
@@ -237,7 +246,9 @@ jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong t
 {
 	//jputs("JyNI_PyObjectAsPyString");
 	ENTER_JyNI
-	jobject er = JyNI_JythonPyObject_FromPyObject(PyObject_Str((PyObject*) handle));
+	PyObject* res = PyObject_Str((PyObject*) handle);
+	jobject er = JyNI_JythonPyObject_FromPyObject(res);
+	Py_XDECREF(res);
 	LEAVE_JyNI
 	return er;
 }
@@ -267,6 +278,19 @@ jobject JyNIlookupFromHandle(JNIEnv *env, jclass class, jlong handle)
 jint JyNIcurrentNativeRefCount(JNIEnv *env, jclass class, jlong handle)
 {
 	return (jint) ((PyObject*) handle)->ob_refcnt;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    getNativeTypeName
+ * Signature: (J)Ljava/lang/String;
+ */
+jstring JyNIgetNativeTypeName(JNIEnv *env, jclass class, jlong handle)
+{
+	if (handle) {
+		return (*env)->NewStringUTF(env, Py_TYPE((PyObject*) handle)->tp_name);
+	} else
+		return NULL;
 }
 
 //PySys_GetObject creates new object
@@ -470,7 +494,7 @@ inline void initBuiltinTypes()
 	builtinTypes[18].sync->jyInit = (jyInitSync) JySync_Init_JyInt_From_PyInt;
 	builtinTypes[18].sync->pyInit = (pyInitSync) JySync_Init_PyInt_From_JyInt;
 
-	//for computational efficiency we mirror PyLong, although it could also be wrappered
+	//for computational efficiency we mirror PyLong, although it could also be wrapped
 	//later we are going to offer both options by a configuration-parameter in JyNI.
 	builtinTypes[19].py_type = &PyLong_Type;
 	builtinTypes[19].jy_class = pyLongClass;
@@ -2153,11 +2177,12 @@ jweak JyEllipsis;
 jweak JyEmptyFrozenSet;
 jweak JyEmptyString;
 jweak JyEmptyUnicode;
+jweak JyEmptyTuple;
 //PyUnicodeObject* unicode_empty;
 PyObject* PyTrue;
 PyObject* PyFalse;
-jobject length0StringArray;
-jobject length0PyObjectArray;
+jweak length0StringArray;
+jweak length0PyObjectArray;
 
 jclass objectClass;
 jmethodID objectToString;
@@ -2847,7 +2872,7 @@ inline jint initJyNI(JNIEnv *env)
 	JyReferenceMonitorClass = (jclass) (*env)->NewWeakGlobalRef(env, JyReferenceMonitorClassLocal);
 	(*env)->DeleteLocalRef(env, JyReferenceMonitorClassLocal);
 	JyRefMonitorAddAction = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "addNativeAction",
-			"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
+			"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V");
 
 	//Peer stuff:
 	jclass pyCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyCPeer");
@@ -3496,9 +3521,16 @@ inline jint initSingletons(JNIEnv *env)
 	JyEmptyString = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyString));
 	jfieldID jyEmptyUnicode = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyUnicode", "Lorg/python/core/PyUnicode;");
 	JyEmptyUnicode = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyUnicode));
+	jfieldID jyEmptyTuple = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyTuple", "Lorg/python/core/PyTuple;");
+	JyEmptyTuple = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyTuple));
+	jfieldID jyEmptyStringArray = (*env)->GetStaticFieldID(env, pyPyClass, "NoKeywords", "[Ljava/lang/String;");
+	length0StringArray = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyStringArray));
+	jfieldID jyEmptyPyObjArray = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyObjects", "[Lorg/python/core/PyObject;");
+	length0PyObjectArray = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyPyObjArray));
 
-	length0StringArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, stringClass, NULL));
-	length0PyObjectArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, pyObjectClass, NULL));
+
+//	length0StringArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, stringClass, NULL));
+//	length0PyObjectArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, pyObjectClass, NULL));
 
 //	jfieldID jyMemoryErrorInst = (*env)->GetStaticFieldID(env, pyPyClass, );
 //	PyExc_MemoryErrorInst = JyNI_PyObject_FromJythonPyObject();
@@ -3596,8 +3628,8 @@ void JyNI_unload(JavaVM *jvm)
 	(*env)->DeleteWeakGlobalRef(env, JyEmptyString);
 	(*env)->DeleteWeakGlobalRef(env, JyEmptyUnicode);
 
-	(*env)->DeleteGlobalRef(env, length0StringArray);
-	(*env)->DeleteGlobalRef(env, length0PyObjectArray);
+	(*env)->DeleteWeakGlobalRef(env, length0StringArray);
+	(*env)->DeleteWeakGlobalRef(env, length0PyObjectArray);
 }
 
 //inline void JyNI_printJ(jobject obj)

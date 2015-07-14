@@ -55,5 +55,5 @@ public interface TraversableGCHead extends JyGCHead {
 	 * JyGCHead, JyGCHead[] or Iterable<JyGCHead>
 	 */
 	public void setLinks(Object links);
-	public int traverse(JyVisitproc visit, Object arg);
+	public int jyTraverse(JyVisitproc visit, Object arg);
 }

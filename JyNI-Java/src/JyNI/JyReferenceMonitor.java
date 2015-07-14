@@ -44,9 +44,11 @@
 
 package JyNI;
 
-import java.lang.ref.*;
 import org.python.core.*;
+
+import JyNI.gc.*;
 import java.util.*;
+import java.lang.ref.*;
 
 public class JyReferenceMonitor {
 //	0000 00## - 01=increase, 10=decrease, 11=realloc, 00=other
@@ -154,6 +156,7 @@ public class JyReferenceMonitor {
 		boolean inline = false;
 		long jyWeakRef = 0;
 		long JyNIFree = 0;
+		String repr = "n/a";
 		/* to save the old log if a memory position is reused */
 		ObjectLog previousLife = null;
 
@@ -162,8 +165,30 @@ public class JyReferenceMonitor {
 			this.nativeRef = initialRef;
 		}
 
+		public String repr() {
+			if (object != null) {
+				PyObject op = object.get();
+				if (op != null) {
+					String rp = op.toString();
+					if (rp != null) {
+						repr = "\""+rp+"\"_j";
+						return repr;
+					}
+				}
+			}
+			if (nativeType != null && nativeType.equals("str")) {
+				String rp = JyNI.PyObjectAsString(nativeRef,
+						JyTState.prepareNativeThreadState(Py.getThreadState()));
+				if (rp != null) {
+					repr = "\""+rp+"\"_n";
+				}
+			}
+			return repr;
+		}
+
 		public String toString() {
-			String os;
+			String os = repr();
+			if (os == null) os = "n/a";
 			/* We intentionally don't use "null" as descriptor for
 			 * a missing reference. object being null just means
 			 * that no information is available - the native object
@@ -172,9 +197,21 @@ public class JyReferenceMonitor {
 			 */
 			if (object != null) {
 				PyObject op = object.get();
-				os = op == null ? "-jfreed-" : "\""+op.toString()+"\"";
-			} else
-				os = "n/a";
+				os = op == null ? os+"-jfreed-" : os;
+			}
+//			else if (nativeType != null) {
+//				if (nativeType.equals("str")) {
+//					os = "\""+JyNI.PyObjectAsString(nativeRef,
+//							JyTState.prepareNativeThreadState(Py.getThreadState()) )+"\"_n";
+//				}
+//			}
+			if (nativeType == null) {
+				String nt = JyNI.getNativeTypeName(nativeRef);
+				System.out.println("JyNI-Warning: Null-type discovered: "+nt);
+				System.out.println("object: "+JyNI.lookupFromHandle(nativeRef));
+				if (nt != null)
+					nativeType = nt+"_n";
+			}
 			String inGC = gc ? "_GC" : "";
 			if (jyWeakRef != 0) inGC += "_J";
 			return nativeRef+inGC+" ("+nativeType+") #"+
@@ -197,7 +234,14 @@ public class JyReferenceMonitor {
 		}
 
 		public void updateInfo(short action, PyObject obj, long nativeRef1, long nativeRef2,
-			String nativeType, String cMethod, String cFile, int line) throws ObjectLogException {
+				String nativeType, String cMethod, String cFile, int line, String repr)
+				throws ObjectLogException {
+//			if (nativeType == null) {
+//				System.out.println("JyNI-Warning: RefMonitor called with null-type.");
+//				System.out.println("    "+cFile);
+//				System.out.println("    "+cMethod);
+//				System.out.println("    "+line);
+//			}
 			if (obj != null) {
 				if (object != null && object.get() != obj) {
 					throw new ObjectLogException(
@@ -267,6 +311,7 @@ public class JyReferenceMonitor {
 			if ((action & INLINE_MASK) != 0) {
 				inline = true;
 			}
+			if (repr != null) this.repr = repr;
 		}
 	}
 
@@ -335,7 +380,7 @@ public class JyReferenceMonitor {
 //	}
 
 	public static void addNativeAction(short action, PyObject obj, long nativeRef1, long nativeRef2,
-			String nativeType, String cMethod, String cFile, int line) {
+			String nativeType, String cMethod, String cFile, int line, String nativeRepr) {
 		//System.out.println(actionToString(action)+" - "+action+" ("+cMethod+", "+nativeRef1+")");
 		ObjectLog log = nativeObjects.get(nativeRef1);
 		if (log == null) {
@@ -348,7 +393,8 @@ public class JyReferenceMonitor {
 			log = log2;
 		}
 		try {
-			log.updateInfo(action, obj, nativeRef1, nativeRef2, nativeType, cMethod, cFile, line);
+			log.updateInfo(action, obj, nativeRef1, nativeRef2, nativeType, cMethod, cFile, line,
+					nativeRepr);
 		} catch (ObjectLogException ole) {
 			System.err.println(ole.getMessage());
 		}
@@ -375,15 +421,28 @@ public class JyReferenceMonitor {
 
 	public static void listLeaks() {
 		ArrayList<ObjectLog> tmp = new ArrayList<>(nativeObjects.values());
+		Map<Long, Object> lsrc = new HashMap<>(tmp.size());
+		for (ObjectLog obl: tmp) {
+			lsrc.put(obl.nativeRef, obl);
+		}
+		Map<Long, Object> ldest = new HashMap<>();
+		moveStaticallyReachable(lsrc, ldest);
 		boolean leaksFound = false;
 		for (ObjectLog log: tmp) {
-			if (log.isLeak()) {
+			if (lsrc.containsKey(log.nativeRef) && log.isLeak()) {
 				if (!leaksFound) {
 					leaksFound = true;
 					System.out.println("Current native leaks:");
 				}
 				log.updatePyObject();
 				System.out.println(log);
+			} else if (ldest.containsKey(log.nativeRef) && log.isLeak()) {
+				if (!leaksFound) {
+					leaksFound = true;
+					System.out.println("Current native leaks:");
+				}
+				log.updatePyObject();
+				System.out.println("  ["+log+"]");
 			}
 		}
 		if (!leaksFound) System.out.println("no leaks recorded");
@@ -431,5 +490,71 @@ public class JyReferenceMonitor {
 			log.updatePyObject();
 			System.out.println(log);
 		}
+	}
+
+	static class ReachableJyGCHeadFinder implements Visitproc, JyVisitproc {
+		Stack<Object> searchList = new Stack<>();
+		IdentityHashMap<Object, Object> alreadySearched = new IdentityHashMap<>();
+		Map<Long, Object> src, dest;
+
+		public ReachableJyGCHeadFinder(Map<Long, Object> src, Map<Long, Object> dest) {
+			this.src = src;
+			this.dest = dest;
+		}
+
+		public void addToSearch(Object obj) {
+			if ((obj instanceof Traverseproc || obj instanceof TraversableGCHead)
+					&& !alreadySearched.containsKey(obj))
+				searchList.push(obj);
+		}
+
+		public int search() {
+			int counter = 0;
+			Object obj;
+			while (!searchList.isEmpty()) {
+				obj = searchList.pop();
+				alreadySearched.put(obj, obj);
+				if (obj instanceof Traverseproc) {
+					((Traverseproc) obj).traverse(this, null);
+				}
+				if (obj instanceof TraversableGCHead) {
+					((TraversableGCHead) obj).jyTraverse(this, null);
+				}
+			}
+			return counter;
+		}
+
+		public int jyVisit(JyGCHead object, Object arg) {
+			long handle = object.getHandle();
+			Object op = src.remove(handle);
+			if (op != null) dest.put(handle, op);
+			addToSearch(object);
+			return 0;
+		}
+
+		public int visit(PyObject object, Object arg) {
+			if (object instanceof JyGCHead) {
+				long handle = ((JyGCHead) object).getHandle();
+				Object op = src.remove(handle);
+				if (op != null) dest.put(handle, op);
+			} else {
+				long handle = JyNI.lookupNativeHandle(object);
+				if (handle != 0) {
+					Object op = src.remove(handle);
+					if (op != null) dest.put(handle, op);
+				}
+			}
+			addToSearch(object);
+			return 0;
+		}
+	}
+
+	public static void moveStaticallyReachable(Map<Long, Object> src, Map<Long, Object> dest) {
+		ReachableJyGCHeadFinder searcher = new ReachableJyGCHeadFinder(src, dest);
+		for (PyDictionary obj: JyNI.nativeStaticTypeDicts.values())
+			searcher.addToSearch(obj);
+		for (JyNIModuleInfo obj: JyNIImporter.dynModules.values())
+			searcher.addToSearch(obj.module);
+		searcher.search();
 	}
 }

@@ -115,6 +115,14 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_currentNativeRefCount
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    getNativeTypeName
+ * Signature: (J)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_JyNI_JyNI_getNativeTypeName
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    setNativeRecursionLimit
  * Signature: (I)V
  */

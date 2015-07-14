@@ -60,6 +60,7 @@ extern jweak JyEllipsis;
 extern jweak JyEmptyFrozenSet;
 extern jweak JyEmptyString;
 extern jweak JyEmptyUnicode;
+extern jweak JyEmptyTuple;
 
 extern jclass pyObjectClass;
 extern jmethodID pyObjectGetType;

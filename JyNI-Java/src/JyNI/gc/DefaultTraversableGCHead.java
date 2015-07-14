@@ -90,17 +90,17 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 		this.links = link;
 	}*/
 
-	public int traverse(JyVisitproc visit, Object arg) {
-		return traverse(gclinks, visit, arg);
+	public int jyTraverse(JyVisitproc visit, Object arg) {
+		return jyTraverse(gclinks, visit, arg);
 	}
 
-	public static int traverse(Object links, JyVisitproc visit, Object arg) {
+	public static int jyTraverse(Object links, JyVisitproc visit, Object arg) {
 		if (links != null) {
 			if (links instanceof JyGCHead[]) {
 				int result = 0;
 				JyGCHead[] ar = (JyGCHead[]) links;
 				for (JyGCHead h: ar) {
-					result = visit.visit(h, arg);
+					result = visit.jyVisit(h, arg);
 					if (result != 0) return result;
 				}
 				return result;
@@ -108,12 +108,12 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 				int result = 0;
 				Iterable<JyGCHead> ar = (Iterable<JyGCHead>) links;
 				for (JyGCHead h: ar) {
-					result = visit.visit(h, arg);
+					result = visit.jyVisit(h, arg);
 					if (result != 0) return result;
 				}
 				return result;
 			} else if (links instanceof JyGCHead) {
-				return visit.visit((JyGCHead) links, arg);
+				return visit.jyVisit((JyGCHead) links, arg);
 			}
 		}
 		return 0;

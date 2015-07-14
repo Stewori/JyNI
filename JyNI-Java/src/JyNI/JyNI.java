@@ -189,10 +189,13 @@ public class JyNI {
 	 * Maybe this can later be an IdentityHashMap<PyType, PyDictionary>. It might allow
 	 * a more direct lookup for PyCPeer/PyCPeerType.
 	 */
-	protected static HashMap<String, PyDictionary> nativeStaticTypeDicts = new HashMap<>();
+	public static HashMap<String, PyDictionary> nativeStaticTypeDicts = new HashMap<>();
 	
 	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
 	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
+	/*
+	 * Todo: Make this a weak HashMap to allow PyCPeers to be mortal.
+	 */
 	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
 
 	public static native void initJyNI(String JyNILibPath);
@@ -209,6 +212,7 @@ public class JyNI {
 	public static native PyString PyObjectAsPyString(long peerHandle, long tstate);
 	public static native PyObject lookupFromHandle(long handle);
 	public static native int currentNativeRefCount(long handle);
+	public static native String getNativeTypeName(long handle);
 
 	//ThreadState-stuff:
 	public static native void setNativeRecursionLimit(int nativeRecursionLimit);

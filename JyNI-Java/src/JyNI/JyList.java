@@ -132,8 +132,8 @@ public class JyList extends AbstractList<PyObject> implements TraversableGCHead,
 //		}
 	}
 
-	public int traverse(JyVisitproc visit, Object arg) {
-		return DefaultTraversableGCHead.traverse(headLinks, visit, arg);
+	public int jyTraverse(JyVisitproc visit, Object arg) {
+		return DefaultTraversableGCHead.jyTraverse(headLinks, visit, arg);
 	}
 
 	public long getHandle() {

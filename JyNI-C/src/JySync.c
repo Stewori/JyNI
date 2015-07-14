@@ -103,16 +103,23 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 
 jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src)
 {
-	env(NULL);
-	jarray back = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(src), pyObjectClass, NULL);
-	//if (srcSize != PyTuple_GET_SIZE(dest)) //...throw exception since tuple is immutable
-	int i;
-	for (i = 0; i < PyTuple_GET_SIZE(src); ++i)
+	if (PyTuple_GET_SIZE(src) == 0)
 	{
-		(*env)->SetObjectArrayElement(env, back, i, JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(src, i)));
-		//Py_XINCREF(PyTuple_GET_ITEM(src, i));
+		return JyEmptyTuple;
+	} else {
+		env(NULL);
+		jarray back = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(src), pyObjectClass, NULL);
+		//if (srcSize != PyTuple_GET_SIZE(dest)) //...throw exception since tuple is immutable
+		int i;
+		for (i = 0; i < PyTuple_GET_SIZE(src); ++i)
+		{
+			(*env)->SetObjectArrayElement(env, back, i, JyNI_JythonPyObject_FromPyObject(
+					PyTuple_GET_ITEM(src, i)));
+			//Py_XINCREF(PyTuple_GET_ITEM(src, i));
+		}
+		return (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor,
+				back, JNI_FALSE);
 	}
-	return (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor, back, JNI_FALSE);
 }
 
 jboolean isPreAllocatedJythonString(jobject obj, char value)//jchar value)

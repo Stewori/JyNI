@@ -48,5 +48,5 @@ package JyNI.gc;
 //import org.python.core.Visitproc;
 
 public interface JyVisitproc { //extends Visitproc {
-	public int visit(JyGCHead object, Object arg);
+	public int jyVisit(JyGCHead object, Object arg);
 }

@@ -86,6 +86,7 @@ jobject (*JyNIPyObjectAsPyString)(JNIEnv*, jclass, jlong, jlong);
 jint (*JyNISetAttrString)(JNIEnv*, jclass, jlong, jstring, jobject, jlong);
 jobject (*JyNIlookupFromHandle)(JNIEnv*, jclass, jlong);
 jint (*JyNIcurrentNativeRefCount)(JNIEnv*, jclass, jlong);
+jstring (*JyNIgetNativeTypeName)(JNIEnv*, jclass, jlong);
 void (*JyNIUnload)(JavaVM*);
 
 void (*JyTStateSetNativeRecursionLimit)(JNIEnv*, jclass, jint);
@@ -168,6 +169,7 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyNISetAttrString) = dlsym(JyNIHandle, "JyNI_setAttrString");
 	*(void **) (&JyNIlookupFromHandle) = dlsym(JyNIHandle, "JyNIlookupFromHandle");
 	*(void **) (&JyNIcurrentNativeRefCount) = dlsym(JyNIHandle, "JyNIcurrentNativeRefCount");
+	*(void **) (&JyNIgetNativeTypeName) = dlsym(JyNIHandle, "JyNIgetNativeTypeName");
 	*(void **) (&JyNIUnload) = dlsym(JyNIHandle, "JyNI_unload");
 
 	*(void **) (&JyTStateSetNativeRecursionLimit) = dlsym(JyNIHandle, "JyTState_setNativeRecursionLimit");
@@ -427,4 +429,14 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_lookupFromHandle(JNIEnv *env, jclass cl
 JNIEXPORT jint JNICALL Java_JyNI_JyNI_currentNativeRefCount(JNIEnv *env, jclass class, jlong handle)
 {
 	return JyNIcurrentNativeRefCount(env, class, handle);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    getNativeTypeName
+ * Signature: (J)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_JyNI_JyNI_getNativeTypeName(JNIEnv *env, jclass class, jlong handle)
+{
+	return JyNIgetNativeTypeName(env, class, handle);
 }
