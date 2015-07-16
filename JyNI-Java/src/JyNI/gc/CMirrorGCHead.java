@@ -62,6 +62,10 @@ public class CMirrorGCHead extends DefaultTraversableGCHead implements PyObjectG
 	}
 
 	public PyObject getPyObject() {
-		return object.get();
+//		if (object == null) {
+//			System.out.println("JyNI-Warning: In CMirrorGCHead object not set!");
+//			System.out.println(handle+" ("+JyNI.JyNI.getNativeTypeName(handle)+")");
+//		}
+		return object != null ? object.get() : null;
 	}
 }

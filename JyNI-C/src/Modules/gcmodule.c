@@ -1616,6 +1616,7 @@ static inline jsize JyObject_FixedGCSize(PyObject* pyObject)
 	if (Py_TYPE(pyObject) == &PyMethod_Type)   return 3;
 	if (Py_TYPE(pyObject) == &PyClass_Type)    return 6;
 	if (Py_TYPE(pyObject) == &PyCell_Type)     return 1;
+	if (Is_StaticTypeObject(pyObject))         return 7;
 	return UNKNOWN_FIXED_GC_SIZE;
 }
 
@@ -1673,56 +1674,90 @@ void JyNI_GC_Explore() //{}
 	}
 }
 
-static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy) {
-	if (Is_Static_PyObject(op)) {
-		jputs("JyNI-Warning: obtainJyGCHead was called with non-heap object.");
+static int
+statictype_traverse(PyObject* type, visitproc visit, void *arg)
+{
+	Py_VISIT(((PyTypeObject*) type)->tp_dict);
+	Py_VISIT(((PyTypeObject*) type)->tp_bases);
+	Py_VISIT(((PyTypeObject*) type)->tp_mro);
+	Py_VISIT(((PyTypeObject*) type)->tp_base);
+	Py_VISIT(((PyTypeObject*) type)->tp_subclasses);
+	Py_VISIT(((PyTypeObject*) type)->tp_weaklist);
+	Py_VISIT(((PyTypeObject*) type)->tp_cache);
+	return 0;
+}
+
+static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
+{
+	if (Is_Static_PyObject(op))
+	{
+		//jputs("JyNI-Warning: obtainJyGCHead was called with non-heap object.");
+		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass,
+				JyNI_getNativeStaticJyGCHead, (jlong) op);
+		if (!result || (*env)->IsSameObject(env, result, NULL)) {
+			result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_makeStaticGCHead,
+					(jlong) op, Is_StaticTypeObject(op) || PyObject_IS_GC(op));
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_registerNativeStaticJyGCHead,
+					(jlong) op, result);
+		}
+		return result;
 	}
 //	return NULL;
 //}
 //static jobject obtainJyGCHead0(JNIEnv* env, PyObject* op, JyObject* jy) {
-	if (jy->flags & JY_CPEER_FLAG_MASK) {
+	if (jy->flags & JY_CPEER_FLAG_MASK)
+	{
 //		if (!(jy->flags & JY_INITIALIZED_FLAG_MASK))
 //			jputs("JyNI-Warning: uninitialized CPeer at explore!");
 		return JyNI_JythonPyObject_FromPyObject(op);
-	} else {
+	} else
+	{
 		jboolean hasHeadAttr = JyObject_HasJyGCHead(op, jy);
 		jobject result = NULL;
-		if (hasHeadAttr) {
+		if (hasHeadAttr)
+		{
 			result = (*env)->NewLocalRef(env, JyObject_GetJyGCHead(op, jy));
 		}
-		if (!result || (*env)->IsSameObject(env, result, NULL)) {
-			if (result) {
+		if (!result || (*env)->IsSameObject(env, result, NULL))
+		{
+			if (result)
+			{
 				jputs("Still needed JyGCHead was collected!");
 				jputs("This should not happen and would be fatal for GIL-free mode. Debug!");
 				(*env)->DeleteLocalRef(env, result);
 			}
 			//create the right c-head here...
 			//First check for special-case PyList:
-			if (Py_TYPE(op) == &PyList_Type) {
+			if (Py_TYPE(op) == &PyList_Type)
+			{
 				/* Set up JyGCHead before we call track: */
 				result = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) op);
 //				if ((*env)->ExceptionCheck(env)) {
 //					jputs("exception occurred creating JyList:");
 //					(*env)->ExceptionDescribe(env);
 //				}
-			} else {
+			} else
+			{
 				//Use DefaultTraversableGCHead for now unless mirror mode.
 				//We determine mirror-mode by lack of truncate-flag.
 				result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_makeGCHead,
 						(jlong) op, !(jy->flags & JY_TRUNCATE_FLAG_MASK),
 						PyObject_IS_GC(op));
-//				jputs("Created JyWeakRefGC for ");
-//				jputs(Py_TYPE(op)->tp_name);
+				//jputs("Created JyGCHead for ");
+				//jputs(Py_TYPE(op)->tp_name);
 //				if (PyString_Check(op)) {
 //					jputs(PyString_AS_STRING(op));
 //				}
-				if ((jy->flags & JY_INITIALIZED_FLAG_MASK)) {
+				if ((jy->flags & JY_INITIALIZED_FLAG_MASK))
+				{
 					jobject jjy = (*env)->NewLocalRef(env, jy->jy);
 					//jobjectRefType rt = (*env)->GetObjectRefType(env, jy->jy);
-					//jputs("RefType0:");
+					//jputs("RefType0");
 					//jputsLong((*env)->GetObjectRefType(env, jy->jy));
-					if (!(*env)->IsSameObject(env, jjy, NULL))
+					if (!(*env)->IsSameObject(env, jjy, NULL)) {
+						//jputs("RefType1");
 						(*env)->CallVoidMethod(env, result, pyObjectGCHeadSetObject, jjy);
+					}
 					(*env)->DeleteLocalRef(env, jjy);
 				}
 			}
@@ -1735,9 +1770,11 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy) {
 //				jputs("jy uninitialized");
 //			}
 
-			if (hasHeadAttr) {
+			if (hasHeadAttr)
+			{
 				JyObject_AddOrSetJyGCHead(op, jy, (*env)->NewWeakGlobalRef(env, result));
-			} else {
+			} else
+			{
 				JyObject_AddJyGCHead(op, jy, (*env)->NewWeakGlobalRef(env, result));
 			}
 		}
@@ -1773,17 +1810,21 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	//jputs(__FUNCTION__);
 	//jputs(Py_TYPE(op)->tp_name);
 	//JyNI_jprintJ(jy->jy);
-	if (PyType_CheckExact(op)) {
-		//jputs(((PyTypeObject*) op)->tp_name);
-		//if (((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE) jputs("heapType");
-		//else jputs("No heaptype");
-		//For now we don't explore types. Todo: Add this feature soon.
-		//Note: With current behavior, an attempt to explore type-objects would e.g.
-		//break Tkinter support.
-		return NULL;
-	}
+//	if (PyType_CheckExact(op) && ((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE)) {
+//		//jputs(((PyTypeObject*) op)->tp_name);
+//		//if (((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE) jputs("heapType");
+//		//else jputs("No heaptype");
+//		//For now we don't explore types. Todo: Add this feature soon.
+//		//Note: With current behavior, an attempt to explore type-objects would e.g.
+//		//break Tkinter support.
+//		return NULL;
+//	}
 	//jputsLong(__LINE__);
 	if (!(jy->flags & JY_GC_VAR_SIZE)) {
+		traverseproc trav;
+		if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+			trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+		else trav = Py_TYPE((PyObject*) op)->tp_traverse;
 		//jputsLong(__LINE__);
 		jsize fixedSize = JyObject_FixedGCSize(op);
 		if (fixedSize == UNKNOWN_FIXED_GC_SIZE &&
@@ -1792,8 +1833,8 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 			//Is most likely fixed-size anyway, but we must
 			//obtain the size by traverse-counting.
 			fixedSize = 0;
-			Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op,
-					(visitproc)visit_count, &fixedSize);
+
+			trav((PyObject*) op, (visitproc)visit_count, &fixedSize);
 		}
 		//jputsLong(__LINE__);
 		if (fixedSize != UNKNOWN_FIXED_GC_SIZE)
@@ -1802,8 +1843,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 			if (fixedSize == 1) {
 				//jputsLong(__LINE__);
 				PyObject* singleLink;
-				Py_TYPE((PyObject*) op)->tp_traverse(op,
-						(visitproc)visit_exploreSingleLink, &singleLink);
+				trav(op, (visitproc)visit_exploreSingleLink, &singleLink);
 				//jputsLong(__LINE__);
 				//jputs(Py_TYPE(op)->tp_name);
 				//jputs(Py_TYPE(singleLink)->tp_name);
@@ -1830,7 +1870,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 				//jputs("obt result...");
 				exploreJNI expl = {env, result, 0};
 				//jputs("obt expl...");
-				Py_TYPE((PyObject*) op)->tp_traverse(op, visit_exploreArrayLink, &expl);
+				trav(op, visit_exploreArrayLink, &expl);
 				//jputs("obt done");
 				//jputsLong(__LINE__);
 				return result;
@@ -1858,13 +1898,13 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 void JyNI_GC_ExploreObject(PyObject* op) //{}
 //void JyNI_GC_ExploreObject0(PyObject* op)
 {
-	if (Is_Static_PyObject(op)) {
-		//jputs("JyNI-Warning: JyNI_GC_ExploreObject called with non-heap object.");
-		//jputs(Py_TYPE(op)->tp_name);
-		return;
-	}
-	if (IS_UNEXPLORED(op))
-	{
+//	if (Is_Static_PyObject(op)) {
+//		//jputs("JyNI-Warning: JyNI_GC_ExploreObject called with non-heap object.");
+//		//jputs(Py_TYPE(op)->tp_name);
+//		return;
+//	}
+	if (Is_Static_PyObject(op) || IS_UNEXPLORED(op))
+	{ //For now we force re-exploration of static PyObjects whenever it occurs.
 //		jputs("explore object:");
 //		jputs(Py_TYPE((PyObject*) op)->tp_name);
 	//	jputsLong(op);

@@ -307,7 +307,7 @@ PyDict_New(void)
 		assert (mp != NULL);
 		assert (Py_TYPE(mp) == &PyDict_Type);
 		_Py_NewReference((PyObject *)mp);
-		//JyNI-todo: Insert RefMonitor-notification here!
+		JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, mp, -1);
 		/*if (mp->ma_fill) {
 			EMPTY_TO_MINSIZE(mp);
 		} else {
@@ -1156,6 +1156,7 @@ PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
 static void
 dict_dealloc(register PyDictObject *mp)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, mp, -1);
 	//register PyDictEntry *ep;
 	//Py_ssize_t fill = mp->ma_fill;
 	//PyObject_GC_UnTrack(mp);
@@ -1171,9 +1172,9 @@ dict_dealloc(register PyDictObject *mp)
 		PyMem_DEL(mp->ma_table);*/
 	if (numfree < PyDict_MAXFREELIST && Py_TYPE(mp) == &PyDict_Type)
 	{
-		//JyNI-todo: RefMonitor
 		JyNI_CleanUp_JyObject(AS_JY_NO_GC(mp));
 		free_list[numfree++] = mp;
+		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, mp, -1);
 	}
 	else
 		Py_TYPE(mp)->tp_free((PyObject *)mp);

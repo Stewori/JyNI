@@ -33,8 +33,8 @@ from JyNI.gc import JyWeakReferenceGC
 from java.lang import System
 from java.lang.ref import WeakReference
 
-#JyNI.JyRefMonitor_setMemDebugFlags(1)
-#JyWeakReferenceGC.monitorNativeCollection = True
+JyNI.JyRefMonitor_setMemDebugFlags(1)
+JyWeakReferenceGC.monitorNativeCollection = True
 
 # PyType  <- Make native ref-cycle test with heap type to test partly-stub-mode.
 # PySet, but no native link to other PyObject
@@ -51,8 +51,8 @@ import DemoExtension
 # So we use java.lang.ref.WeakReference and java.lang.System.gc to monitor
 # and control Java-gc.
 
-JyNI.JyRefMonitor_setMemDebugFlags(1)
-JyWeakReferenceGC.monitorNativeCollection = True
+#JyNI.JyRefMonitor_setMemDebugFlags(1)
+#JyWeakReferenceGC.monitorNativeCollection = True
 
 l = (123, [0, "test"])
 l[1][0] = l
@@ -68,9 +68,10 @@ print "weak(l): "+str(wkl.get())
 print "make l native..."
 DemoExtension.argCountToString(l)
 #print "argCountToString.__doc__-address: "+str(JyNI.lookupNativeHandle(DemoExtension.argCountToString.__doc__))
-#print DemoExtension.argCountToString.__doc__
-print "Native type-dicts initialized so far:"
-print JyNI.nativeStaticTypeDicts.keySet()
+print "We access a method-doc as this used to cause problems with GC:"
+print "    "+DemoExtension.argCountToString.__doc__
+#print "Native static objects so far:"
+#print JyNI.nativeStaticPyObjectHeads.keySet()
 
 print "Delete l... (but GC not yet ran)"
 del l
@@ -100,6 +101,10 @@ print ""
 print "leaks after GC:"
 monitor.listLeaks()
 
+#print "------"
+#print DemoExtension.argCountToString.__doc__
+#monitor.listFreeStatus("dict")
+#monitor.listAll()
 print ""
 print "===="
 print "exit"

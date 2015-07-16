@@ -165,6 +165,10 @@ public class JyReferenceMonitor {
 			this.nativeRef = initialRef;
 		}
 
+		public PyObject getJythonObject() {
+			return object != null ? object.get() : null;
+		}
+
 		public String repr() {
 			if (object != null) {
 				PyObject op = object.get();
@@ -184,6 +188,14 @@ public class JyReferenceMonitor {
 				}
 			}
 			return repr;
+		}
+
+		public String getNativeTypeName() {
+			if (nativeType == null) {
+				String nt = JyNI.getNativeTypeName(nativeRef);
+				if (nt != null) return nt;
+				else return "type n/a";
+			} else return nativeType;
 		}
 
 		public String toString() {
@@ -436,14 +448,14 @@ public class JyReferenceMonitor {
 				}
 				log.updatePyObject();
 				System.out.println(log);
-			} else if (ldest.containsKey(log.nativeRef) && log.isLeak()) {
-				if (!leaksFound) {
-					leaksFound = true;
-					System.out.println("Current native leaks:");
-				}
-				log.updatePyObject();
-				System.out.println("  ["+log+"]");
-			}
+			} //else if (ldest.containsKey(log.nativeRef) && log.isLeak()) {
+//				if (!leaksFound) {
+//					leaksFound = true;
+//					System.out.println("Current native leaks:");
+//				}
+//				log.updatePyObject();
+//				System.out.println("  ["+log+"]");
+//			}
 		}
 		if (!leaksFound) System.out.println("no leaks recorded");
 	}
@@ -470,6 +482,16 @@ public class JyReferenceMonitor {
 			if (log.nativeFree != 0) {
 				log.updatePyObject();
 				System.out.println(log);
+			}
+		}
+	}
+
+	public static void listFreeStatus(String typeName) {
+		ArrayList<ObjectLog> tmp = new ArrayList<>(nativeObjects.values());
+		for (ObjectLog log: tmp) {
+			if (log.getNativeTypeName().equals(typeName)) {
+				log.updatePyObject();
+				System.out.println(log.nativeRef+": "+log.nativeFree+" "+log.getJythonObject());
 			}
 		}
 	}
@@ -503,9 +525,27 @@ public class JyReferenceMonitor {
 		}
 
 		public void addToSearch(Object obj) {
-			if ((obj instanceof Traverseproc || obj instanceof TraversableGCHead)
+			if ((obj instanceof Traverseproc || obj instanceof TraversableGCHead
+					|| obj instanceof PyObjectGCHead)
 					&& !alreadySearched.containsKey(obj))
 				searchList.push(obj);
+			else
+				move(obj);
+		}
+
+		void move(Object obj) {
+			//System.out.println("Move obj "+obj.getClass());
+			if (obj instanceof JyGCHead) {
+				long handle = ((JyGCHead) obj).getHandle();
+				Object op = src.remove(handle);
+				if (op != null) dest.put(handle, op);
+			} else if (obj instanceof PyObject) {
+				long handle = JyNI.lookupNativeHandle((PyObject) obj);
+				if (handle != 0) {
+					Object op = src.remove(handle);
+					if (op != null) dest.put(handle, op);
+				}
+			}
 		}
 
 		public int search() {
@@ -514,36 +554,48 @@ public class JyReferenceMonitor {
 			while (!searchList.isEmpty()) {
 				obj = searchList.pop();
 				alreadySearched.put(obj, obj);
-				if (obj instanceof Traverseproc) {
+				move(obj);
+//				if (obj instanceof CStubSimpleGCHead) {
+//					System.out.println("expl CStubSimpleGCHead");
+//				}
+				if (obj instanceof Traverseproc)
 					((Traverseproc) obj).traverse(this, null);
-				}
-				if (obj instanceof TraversableGCHead) {
+				if (obj instanceof TraversableGCHead)
 					((TraversableGCHead) obj).jyTraverse(this, null);
+				if (obj instanceof PyObjectGCHead) {
+					//System.out.println("expl PyObjectGCHead");
+					PyObject pop = ((PyObjectGCHead) obj).getPyObject();
+					if (pop != null) {
+						//System.out.println("Explore single object: "+pop.getType().getName());
+						addToSearch(pop);
+					} //else {
+//						System.out.println("pop null "+obj.getClass());
+//					}
 				}
 			}
 			return counter;
 		}
 
 		public int jyVisit(JyGCHead object, Object arg) {
-			long handle = object.getHandle();
-			Object op = src.remove(handle);
-			if (op != null) dest.put(handle, op);
+//			long handle = object.getHandle();
+//			Object op = src.remove(handle);
+//			if (op != null) dest.put(handle, op);
 			addToSearch(object);
 			return 0;
 		}
 
 		public int visit(PyObject object, Object arg) {
-			if (object instanceof JyGCHead) {
-				long handle = ((JyGCHead) object).getHandle();
-				Object op = src.remove(handle);
-				if (op != null) dest.put(handle, op);
-			} else {
-				long handle = JyNI.lookupNativeHandle(object);
-				if (handle != 0) {
-					Object op = src.remove(handle);
-					if (op != null) dest.put(handle, op);
-				}
-			}
+//			if (object instanceof JyGCHead) {
+//				long handle = ((JyGCHead) object).getHandle();
+//				Object op = src.remove(handle);
+//				if (op != null) dest.put(handle, op);
+//			} else {
+//				long handle = JyNI.lookupNativeHandle(object);
+//				if (handle != 0) {
+//					Object op = src.remove(handle);
+//					if (op != null) dest.put(handle, op);
+//				}
+//			}
 			addToSearch(object);
 			return 0;
 		}
@@ -551,10 +603,14 @@ public class JyReferenceMonitor {
 
 	public static void moveStaticallyReachable(Map<Long, Object> src, Map<Long, Object> dest) {
 		ReachableJyGCHeadFinder searcher = new ReachableJyGCHeadFinder(src, dest);
-		for (PyDictionary obj: JyNI.nativeStaticTypeDicts.values())
-			searcher.addToSearch(obj);
+//		for (PyDictionary obj: JyNI.nativeStaticTypeDicts.values())
+//			searcher.addToSearch(obj);
+		for (JyGCHead jgh: JyNI.nativeStaticPyObjectHeads.values())
+			searcher.addToSearch(jgh);
 		for (JyNIModuleInfo obj: JyNIImporter.dynModules.values())
 			searcher.addToSearch(obj.module);
+		if (JyNI.nativeInternedStrings != null)
+			searcher.addToSearch(JyNI.nativeInternedStrings);
 		searcher.search();
 	}
 }

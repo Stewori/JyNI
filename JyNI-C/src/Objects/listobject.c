@@ -181,7 +181,7 @@ PyList_New(Py_ssize_t size)
 		numfree--;
 		op = free_list[numfree];
 		_Py_NewReference((PyObject *)op);
-		//JyNI todo: Insert RefMonitor notification here!
+		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(op), size, PyList_Type.tp_name);
 #ifdef SHOW_ALLOC_COUNT
 		count_reuse++;
 #endif

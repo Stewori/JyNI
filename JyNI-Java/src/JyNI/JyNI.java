@@ -186,10 +186,17 @@ public class JyNI {
 	//protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
 
 	/*
-	 * Maybe this can later be an IdentityHashMap<PyType, PyDictionary>. It might allow
-	 * a more direct lookup for PyCPeer/PyCPeerType.
+	 * This keeps alive objects (especially CStub-backends) reachable from PyObjects
+	 * allocated on the C-stack rather than on the heap.
 	 */
-	public static HashMap<String, PyDictionary> nativeStaticTypeDicts = new HashMap<>();
+	public static HashMap<Long, JyGCHead> nativeStaticPyObjectHeads = new HashMap<>();
+
+	/*
+	 * This is to keep the backend of the native interned string-dict alive.
+	 * Todo: Arrange that this is a PyStringMap rather than PyDictionary.
+	 * Todo: Join this with nativeStaticPyObjectHeads using a CStub(Simple?)GCHead.
+	 */
+	public static PyObject nativeInternedStrings = null;
 	
 	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
 	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
@@ -333,11 +340,19 @@ public class JyNI {
 		}
 	}
 
-	public static void registerNativeStaticTypeDict(String type, PyDictionary dict) {
-		//System.out.println("JyNI Registered type-dict: "+type+" - "+lookupNativeHandle(dict));
-		if (nativeStaticTypeDicts.get(type) != null)
-			System.out.println("Warning: Registered type-dict twice: "+type);
-		nativeStaticTypeDicts.put(type,  dict);
+//	public static void registerNativeStaticTypeDict(String type, PyDictionary dict) {
+//		//System.out.println("JyNI Registered type-dict: "+type+" - "+lookupNativeHandle(dict));
+//		if (nativeStaticTypeDicts.get(type) != null)
+//			System.out.println("Warning: Registered type-dict twice: "+type);
+//		nativeStaticTypeDicts.put(type,  dict);
+//	}
+
+	public static void registerNativeStaticJyGCHead(long handle, JyGCHead head) {
+		nativeStaticPyObjectHeads.put(handle, head);
+	}
+
+	public static JyGCHead getNativeStaticJyGCHead(long handle) {
+		return nativeStaticPyObjectHeads.get(handle);
 	}
 
 	public static void setNativeHandle(PyObject object, long handle) {//, boolean keepAlive) {
@@ -735,6 +750,10 @@ public class JyNI {
 		else result = forMirror ? new CMirrorSimpleGCHead(handle) : new CStubSimpleGCHead(handle);
 		new JyWeakReferenceGC(result);
 		return result;
+	}
+
+	public static JyGCHead makeStaticGCHead(long handle, boolean gc) {
+		return gc ? new DefaultTraversableGCHead(handle) : new SimpleGCHead(handle);
 	}
 
 	//--------------errors-section-----------------

@@ -642,7 +642,9 @@ extern jmethodID bigIntToStringRadix;
 
 extern jclass JyNIClass;
 extern jmethodID JyNISetNativeHandle;
-extern jmethodID JyNIRegisterNativeStaticTypeDict;
+//extern jmethodID JyNIRegisterNativeStaticTypeDict;
+extern jmethodID JyNI_registerNativeStaticJyGCHead;
+extern jmethodID JyNI_getNativeStaticJyGCHead;
 extern jmethodID JyNILookupNativeHandle;
 extern jmethodID JyNIClearNativeHandle;
 extern jmethodID JyNILookupCPeerFromHandle;
@@ -671,6 +673,7 @@ extern jmethodID JyNI_jPrintLong;
 extern jmethodID JyNI_jPrintHash;
 //extern jmethodID JyNIPySet_pop;
 extern jmethodID JyNI_makeGCHead;
+extern jmethodID JyNI_makeStaticGCHead;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;

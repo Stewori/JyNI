@@ -1752,6 +1752,8 @@ mro_external(PyObject *self)
 static int
 mro_internal(PyTypeObject *type)
 {
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
 	PyObject *mro, *result, *tuple;
 	int checkit = 0;
 
@@ -2640,7 +2642,9 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 
 	// Look in tp_dict of types in MRO
 	mro = type->tp_mro;
-
+//	jputsLong(__LINE__);
+//	jputsLong(mro);
+//	jputsLong(mro->ob_refcnt);
 //	   If mro is NULL, the type is either not yet initialized
 //	   by PyType_Ready(), or already cleared by type_clear().
 //	   Either way the safest thing to do is to return NULL.
@@ -2668,6 +2672,7 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 			break;
 		//else jputs("res is NULL");
 	}
+	//jputsLong(__LINE__);
 	if (MCACHE_CACHEABLE_NAME(name)) //&& assign_version_tag(type))
 	{
 		h = MCACHE_HASH_METHOD(type, name);
@@ -2682,6 +2687,8 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 		}
 		method_cache[h].name = name;
 	}
+//	jputsLong(__LINE__);
+//	jputsLong(mro->ob_refcnt);
 	return res;
 }
 
@@ -2912,6 +2919,12 @@ type_clear(PyTypeObject *type)
 static int
 type_is_gc(PyTypeObject *type)
 {
+	/*
+	 * JyNI-note: In sense of JyNI's GC all types are subject to
+	 * GC. For consistent behavior with CPython we keep this
+	 * method in original state, but check for non-heaptypes
+	 * in gc-module as a special case.
+	 */
 	return type->tp_flags & Py_TPFLAGS_HEAPTYPE;
 }
 
@@ -4197,8 +4210,8 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
 int
 PyType_Ready(PyTypeObject *type)
 {
-	//puts("PyType_Ready:");
-	//puts(type->tp_name);
+//	jputs("PyType_Ready:");
+//	jputs(type->tp_name);
 	PyObject *dict, *bases;
 	PyTypeObject *base;
 	Py_ssize_t i, n;
@@ -4259,6 +4272,8 @@ PyType_Ready(PyTypeObject *type)
 			goto error;
 		type->tp_bases = bases;
 	}
+//	jputs("bases:");
+//	jputsLong(bases);
 
 	// Initialize tp_dict
 	//puts("init tp_dict");
@@ -4269,13 +4284,14 @@ PyType_Ready(PyTypeObject *type)
 		if (dict == NULL)
 			goto error;
 		type->tp_dict = dict;
-		env(-1);
-		jstring tpn = (*env)->NewStringUTF(env, type->tp_name);
-		jobject jdict = JyNI_JythonPyObject_FromPyObject(dict);
-		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIRegisterNativeStaticTypeDict,
-				tpn, jdict);
-		(*env)->DeleteLocalRef(env, tpn);
-		(*env)->DeleteLocalRef(env, jdict);
+//		env(-1);
+//		jstring tpn = (*env)->NewStringUTF(env, type->tp_name);
+//		jobject jdict = JyNI_JythonPyObject_FromPyObject(dict);
+//		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIRegisterNativeStaticTypeDict,
+//				tpn, jdict);
+//		(*env)->DeleteLocalRef(env, tpn);
+//		(*env)->DeleteLocalRef(env, jdict);
+//		Now this is done by letting gc-module explore static types.
 	}
 
 	/*JyNI todo: clean this up...*/
@@ -4301,6 +4317,8 @@ PyType_Ready(PyTypeObject *type)
 	if (mro_internal(type) < 0) {
 		goto error;
 	}
+//	jputs("MRO:");
+//	jputsLong(type->tp_mro);
 
 	// Inherit special flags from dominant base
 	if (type->tp_base != NULL)
@@ -4384,8 +4402,8 @@ PyType_Ready(PyTypeObject *type)
 	// All done -- set the ready flag
 	//puts("All done -- set the ready flag");
 	assert(type->tp_dict != NULL);
-	type->tp_flags =
-		(type->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
+	type->tp_flags = (type->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
+	JyNI_GC_ExploreObject(type);
 	return 0;
 
   error:

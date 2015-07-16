@@ -62,6 +62,10 @@ public class CMirrorSimpleGCHead extends SimpleGCHead implements PyObjectGCHead 
 	}
 
 	public PyObject getPyObject() {
-		return object.get();
+//		if (object == null) {
+//			System.out.println("JyNI-Warning: In CMirrorSimpleGCHead object not set!");
+//			System.out.println(handle+" ("+JyNI.JyNI.getNativeTypeName(handle)+")");
+//		}
+		return object != null ? object.get() : null;
 	}
 }

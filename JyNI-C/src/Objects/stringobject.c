@@ -4821,6 +4821,10 @@ PyString_InternInPlace(PyObject **p)
 		if (interned == NULL) {
 			PyErr_Clear(); /* Don't leave an exception */
 			return;
+		} else {
+			env();
+			jfieldID jyInterned = (*env)->GetStaticFieldID(env, JyNIClass, "nativeInternedStrings", "Lorg/python/core/PyObject;");
+			(*env)->SetStaticObjectField(env, JyNIClass, jyInterned, JyNI_JythonPyObject_FromPyObject(interned));
 		}
 	}
 	t = PyDict_GetItem(interned, (PyObject *)s);
@@ -4830,7 +4834,6 @@ PyString_InternInPlace(PyObject **p)
 		*p = t;
 		return;
 	}
-
 	if (PyDict_SetItem(interned, (PyObject *)s, (PyObject *)s) < 0) {
 		PyErr_Clear();
 		return;
@@ -4868,7 +4871,10 @@ PyString_InternImmortal(PyObject **p)
 PyObject *
 PyString_InternFromString(const char *cp)
 {
+	//jputs(__FUNCTION__);
+	//jputs(cp);
 	PyObject *s = PyString_FromString(cp);
+	//jputsLong(s);
 	if (s == NULL)
 		return NULL;
 	PyString_InternInPlace(&s);

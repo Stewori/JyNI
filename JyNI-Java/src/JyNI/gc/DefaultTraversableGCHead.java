@@ -45,8 +45,6 @@
 
 package JyNI.gc;
 
-import org.python.core.PyObject;
-
 public class DefaultTraversableGCHead implements TraversableGCHead {
 	protected Object gclinks;
 	protected long handle;
@@ -100,16 +98,20 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 				int result = 0;
 				JyGCHead[] ar = (JyGCHead[]) links;
 				for (JyGCHead h: ar) {
-					result = visit.jyVisit(h, arg);
-					if (result != 0) return result;
+					if (h != null) {
+						result = visit.jyVisit(h, arg);
+						if (result != 0) return result;
+					}
 				}
 				return result;
 			} else if (links instanceof Iterable) {
 				int result = 0;
 				Iterable<JyGCHead> ar = (Iterable<JyGCHead>) links;
 				for (JyGCHead h: ar) {
-					result = visit.jyVisit(h, arg);
-					if (result != 0) return result;
+					if (h != null) {
+						result = visit.jyVisit(h, arg);
+						if (result != 0) return result;
+					}
 				}
 				return result;
 			} else if (links instanceof JyGCHead) {

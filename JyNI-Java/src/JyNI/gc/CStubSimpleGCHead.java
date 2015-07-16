@@ -55,6 +55,7 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 	}
 
 	public void setPyObject(PyObject object) {
+		//System.out.println("CStubSimpleGCHead.setPyObject: "+object.getType().getName());
 		this.object = object;
 	}
 

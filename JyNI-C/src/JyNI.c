@@ -144,7 +144,7 @@ void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, j
  */
 jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate)
 {
-//	jputs("JyNI_callPyCPeer called");
+	//jputs("JyNI_callPyCPeer called");
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
@@ -177,11 +177,15 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
  */
 jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jlong tstate)
 {
-//	jputs("JyNI_getAttrString");
+	//jputs("JyNI_getAttrString");
 	if (handle == 0) return NULL;
 	cstr_from_jstring(cName, name);
 	ENTER_JyNI
+	//jputs("JyNI_getAttrString-Handle:");
+	//jputsLong(handle);
 	PyObject* jres = PyObject_GetAttrString((PyObject*) handle, cName);
+	//jputs("JyNI_getAttrString-Result:");
+	//jputsLong(jres);
 	jobject er = JyNI_JythonPyObject_FromPyObject(jres);//PyObject_GetAttrString((PyObject*) handle, cName));
 	Py_XDECREF(jres);
 	LEAVE_JyNI
@@ -2204,7 +2208,9 @@ jmethodID listAdd;
 
 jclass JyNIClass;
 jmethodID JyNISetNativeHandle;
-jmethodID JyNIRegisterNativeStaticTypeDict;
+//jmethodID JyNIRegisterNativeStaticTypeDict;
+jmethodID JyNI_registerNativeStaticJyGCHead;
+jmethodID JyNI_getNativeStaticJyGCHead;
 jmethodID JyNILookupNativeHandle;
 jmethodID JyNILookupCPeerFromHandle;
 jmethodID JyNIClearNativeHandle;
@@ -2248,6 +2254,7 @@ jmethodID JyNI_jPrintLong;
 jmethodID JyNI_jPrintHash;
 //jmethodID JyNIPySet_pop;
 jmethodID JyNI_makeGCHead;
+jmethodID JyNI_makeStaticGCHead;
 
 jclass JyTStateClass;
 jmethodID JyTState_setRecursionLimit;
@@ -2767,7 +2774,9 @@ inline jint initJyNI(JNIEnv *env)
 	JyNIClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNIClassLocal);
 	(*env)->DeleteLocalRef(env, JyNIClassLocal);
 	JyNISetNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "setNativeHandle", "(Lorg/python/core/PyObject;J)V");
-	JyNIRegisterNativeStaticTypeDict = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticTypeDict", "(Ljava/lang/String;Lorg/python/core/PyDictionary;)V");
+	//JyNIRegisterNativeStaticTypeDict = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticTypeDict", "(Ljava/lang/String;Lorg/python/core/PyDictionary;)V");
+	JyNI_registerNativeStaticJyGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticJyGCHead", "(JLJyNI/gc/JyGCHead;)V");
+	JyNI_getNativeStaticJyGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "getNativeStaticJyGCHead", "(J)LJyNI/gc/JyGCHead;");
 	JyNILookupNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "lookupNativeHandle", "(Lorg/python/core/PyObject;)J");
 	JyNIClearNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "clearNativeHandle", "(Lorg/python/core/PyObject;)V");
 	JyNILookupCPeerFromHandle = (*env)->GetStaticMethodID(env, JyNIClass, "lookupCPeerFromHandle", "(J)Lorg/python/core/PyObject;");
@@ -2796,6 +2805,7 @@ inline jint initJyNI(JNIEnv *env)
 	JyNI_jPrintHash = (*env)->GetStaticMethodID(env, JyNIClass, "jPrintHash", "(Ljava/lang/Object;)V");
 	//JyNIPySet_pop = (*env)->GetStaticMethodID(env, JyNIClass, "PySet_pop", "(Lorg/python/core/BaseSet;)Lorg/python/core/PyObject;");
 	JyNI_makeGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeGCHead", "(JZZ)LJyNI/gc/PyObjectGCHead;");
+	JyNI_makeStaticGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeStaticGCHead", "(JZ)LJyNI/gc/JyGCHead;");
 
 	//Error stuff:
 	//JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
