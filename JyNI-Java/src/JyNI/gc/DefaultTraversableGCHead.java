@@ -45,6 +45,10 @@
 
 package JyNI.gc;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Collection;
+
 public class DefaultTraversableGCHead implements TraversableGCHead {
 	protected Object gclinks;
 	protected long handle;
@@ -64,10 +68,12 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 	 * Do not call this method. It is for internal use and only public
 	 * to implement an interface.
 	 */
+	@Override
 	public void setLinks(Object links) {
 		gclinks = links;
 	}
 
+	@Override
 	public long getHandle() {
 		return handle;
 	}
@@ -88,6 +94,119 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 		this.links = link;
 	}*/
 
+	@Override
+	public int setLink(int index, JyGCHead link) {
+		return setLink(gclinks, index, link);
+	}
+
+	public static int setLink(Object links, int index, JyGCHead link) {
+		if (links == null) return -2;
+		if (links instanceof JyGCHead[]) {
+			JyGCHead[] ar = (JyGCHead[]) links;
+			if (index >= ar.length) return -1;
+			ar[index] = link;
+			return 0;
+		} else if (links instanceof Iterable) {
+			if (links instanceof List) {
+				((List<JyGCHead>) links).set(index, link);
+				return 0;
+			} else if (links instanceof Collection) {
+				int result = clearLink(links, index);
+				if (result == 0)
+					((Collection<JyGCHead>) links).add(link);
+				return result;
+			} else throw new UnsupportedOperationException();
+		} else if (links instanceof JyGCHead) {
+			if (index > 0) return -1;
+			links = link;
+			return 0;
+		} else return -3;
+	}
+
+	@Override
+	public int clearLink(int index) {
+		return clearLink(gclinks, index);
+	}
+
+	public static int clearLink(Object links, int index) {
+		if (links == null) return -2;
+		if (links instanceof JyGCHead[]) {
+			JyGCHead[] ar = (JyGCHead[]) links;
+			if (index >= ar.length) return -1;
+			ar[index] = null;
+			return 0;
+		} else if (links instanceof Iterable) {
+			if (links instanceof List) {
+				List<JyGCHead> ls = (List<JyGCHead>) links;
+				if (index >= ls.size()) return -1;
+				ls.remove(index);
+				return 0;
+			} else {
+				Iterator<JyGCHead> ar = ((Iterable<JyGCHead>) links).iterator();
+				for (int i = 0; i < index; ++i) {
+					if (!ar.hasNext()) return -1;
+					else ar.next();
+				}
+				if (!ar.hasNext()) return -1;
+				else {
+					ar.next();
+					ar.remove();
+					return 0;
+				}
+			}
+		} else if (links instanceof JyGCHead) {
+			if (index > 0) return -1;
+			links = null;
+			return 0;
+		} else return -3;
+	}
+
+	@Override
+	public int clearLinksFromIndex(int startIndex) {
+		return clearLinksFromIndex(gclinks, startIndex);
+	}
+
+	public static int clearLinksFromIndex(Object links, int startIndex) {
+		if (links == null) return -2;
+		if (links instanceof JyGCHead[]) {
+			JyGCHead[] ar = (JyGCHead[]) links;
+			if (startIndex >= ar.length) return -1;
+			for (int i = startIndex; i < ar.length; ++i)
+				ar[i] = null;
+			return ar.length-startIndex;
+		} else if (links instanceof Iterable) {
+			if (links instanceof List) {
+				List<JyGCHead> ls = (List<JyGCHead>) links;
+				if (startIndex >= ls.size()) return -1;
+				int result = ls.size()-startIndex;
+				for (int i = 0; i < result; ++i)
+				/* For various list-implementations removing the last element is
+				 * typically cheaper than removing in the middle:
+				 */
+					ls.remove(ls.size()-1);
+				return result;
+			} else {
+				Iterator<JyGCHead> ar = ((Iterable<JyGCHead>) links).iterator();
+				for (int i = 0; i < startIndex; ++i) {
+					if (!ar.hasNext()) return -1;
+					else ar.next();
+				}
+				int result = 0;
+				while (ar.hasNext()) {
+					++result;
+					ar.next();
+					ar.remove();
+				}
+				return result;
+			}
+		} else if (links instanceof JyGCHead) {
+			if (startIndex > 0) return -1;
+			links = null;
+			return 1;
+		} else return -3;
+	}
+
+	@Override
 	public int jyTraverse(JyVisitproc visit, Object arg) {
 		return jyTraverse(gclinks, visit, arg);
 	}

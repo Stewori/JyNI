@@ -50,6 +50,7 @@ import java.util.Collection;
 import org.python.core.PyObject;
 
 import JyNI.gc.*;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -132,10 +133,27 @@ public class JyList extends AbstractList<PyObject> implements TraversableGCHead,
 //		}
 	}
 
+	@Override
+	public int setLink(int index, JyGCHead link) {
+		return DefaultTraversableGCHead.setLink(headLinks, index, link);
+	}
+
+	@Override
+	public int clearLink(int index) {
+		return DefaultTraversableGCHead.clearLink(headLinks, index);
+	}
+
+	@Override
+	public int clearLinksFromIndex(int startIndex) {
+		return DefaultTraversableGCHead.clearLinksFromIndex(headLinks, startIndex);
+	}
+
+	@Override
 	public int jyTraverse(JyVisitproc visit, Object arg) {
 		return DefaultTraversableGCHead.jyTraverse(headLinks, visit, arg);
 	}
 
+	@Override
 	public long getHandle() {
 		return backendHandle;
 	}

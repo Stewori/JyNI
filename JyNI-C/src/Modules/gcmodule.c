@@ -1702,9 +1702,6 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 		}
 		return result;
 	}
-//	return NULL;
-//}
-//static jobject obtainJyGCHead0(JNIEnv* env, PyObject* op, JyObject* jy) {
 	if (jy->flags & JY_CPEER_FLAG_MASK)
 	{
 //		if (!(jy->flags & JY_INITIALIZED_FLAG_MASK))
@@ -1785,46 +1782,62 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 static int
 visit_exploreArrayLink(PyObject *op, void *arg)
 {
-	if (!Is_Static_PyObject(op)) {
-		jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
-		(*((exploreJNI*) arg)->env)->SetObjectArrayElement(((exploreJNI*) arg)->env,
-				((exploreJNI*) arg)->dest, ((exploreJNI*) arg)->pos++, head);
-		(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
-	}
+	/* JyNI-note:
+	 * It is hard to decide whether to explore non-heap-objects here or not.
+	 * On one hand they should be kept alive anyway. However there might be
+	 * cases where this principle is broken and some of them could be avoided
+	 * by exploring non-heap objects here.
+	 * Note that AS_JY would *not* segfault on non-heap objects, but it returns
+	 * an invalid position that would cause a segfault if FROM_JY was applied
+	 * on it again (because FROM_JY must look at a flag; FROM_JY_WITH_GC or
+	 * FROM_JY_NO_GC would not be affected, but are not feasible here).
+	 * However, for non-heap objects obtainJyGCHead ignores th JyObject-param,
+	 * so an invalid pointer causes no harm.
+	 */
+	//if (!Is_Static_PyObject(op)) {
+	jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+	(*((exploreJNI*) arg)->env)->SetObjectArrayElement(((exploreJNI*) arg)->env,
+			((exploreJNI*) arg)->dest, ((exploreJNI*) arg)->pos++, head);
+	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
+	//}
 	return 0;
 }
 
 static int
 visit_exploreListLink(PyObject *op, void *arg)
 {
-	if (!Is_Static_PyObject(op)) {
-		jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
-		(*((exploreJNI*) arg)->env)->CallBooleanMethod(((exploreJNI*) arg)->env,
-				((exploreJNI*) arg)->dest, listAdd, head);
-		(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
-	}
+	/* JyNI-note:
+	 * See note in visit_exploreArrayLink.
+	 */
+	//if (!Is_Static_PyObject(op)) {
+	jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+	(*((exploreJNI*) arg)->env)->CallBooleanMethod(((exploreJNI*) arg)->env,
+			((exploreJNI*) arg)->dest, listAdd, head);
+	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
+	//}
+	return 0;
+}
+
+static int
+visit_updateLinks(PyObject *op, void *arg)
+{
+	jobject head = obtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+	(*((exploreJNI*) arg)->env)->CallIntMethod(((exploreJNI*) arg)->env,
+			((exploreJNI*) arg)->dest, traversableGCHeadSetLink,
+			((exploreJNI*) arg)->pos++, head);
+	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
 	return 0;
 }
 
 static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	//jputs(__FUNCTION__);
 	//jputs(Py_TYPE(op)->tp_name);
-	//JyNI_jprintJ(jy->jy);
-//	if (PyType_CheckExact(op) && ((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE)) {
-//		//jputs(((PyTypeObject*) op)->tp_name);
-//		//if (((PyTypeObject*) op)->tp_flags & Py_TPFLAGS_HEAPTYPE) jputs("heapType");
-//		//else jputs("No heaptype");
-//		//For now we don't explore types. Todo: Add this feature soon.
-//		//Note: With current behavior, an attempt to explore type-objects would e.g.
-//		//break Tkinter support.
-//		return NULL;
-//	}
-	//jputsLong(__LINE__);
+	traverseproc trav;
+	if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+	else trav = Py_TYPE((PyObject*) op)->tp_traverse;
+
 	if (!(jy->flags & JY_GC_VAR_SIZE)) {
-		traverseproc trav;
-		if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
-			trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
-		else trav = Py_TYPE((PyObject*) op)->tp_traverse;
 		//jputsLong(__LINE__);
 		jsize fixedSize = JyObject_FixedGCSize(op);
 		if (fixedSize == UNKNOWN_FIXED_GC_SIZE &&
@@ -1885,14 +1898,37 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 		initSize = Py_SIZE(op);
 	else {
 		initSize = 0;
-		Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op,
+		trav((PyObject*) op,
 				(visitproc)visit_count, &initSize);
 	}
 	jobject result = (*env)->NewObject(env, arrayListClass, arrayListConstructor, initSize);
 	exploreJNI expl = {env, result, 0};
-	Py_TYPE((PyObject*) op)->tp_traverse(op, visit_exploreListLink, &expl);
+	trav(op, visit_exploreListLink, &expl);
 	//jputsLong(__LINE__);
 	return result;
+}
+
+int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
+		PyObject* newItem, JyObject* newItemJy)
+{
+	jobject gcHead = obtainJyGCHead(env, op, jy);
+	jobject linkHead = obtainJyGCHead(env, newItem, newItemJy);
+	return (*env)->CallIntMethod(env, gcHead, traversableGCHeadSetLink, index, linkHead);
+}
+
+void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
+	//jputs(__FUNCTION__);
+	//jputs(Py_TYPE(op)->tp_name);
+	traverseproc trav;
+	if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+	else trav = Py_TYPE((PyObject*) op)->tp_traverse;
+
+	jobject destHead = obtainJyGCHead(env, op, jy);
+	exploreJNI expl = {env, destHead, 0};
+	trav(op, visit_updateLinks, &expl);
+	(*env)->CallIntMethod(env, destHead, traversableGCHeadClearLinksFromIndex, expl.pos);
+	(*env)->DeleteLocalRef(env, destHead);
 }
 
 void JyNI_GC_ExploreObject(PyObject* op) //{}

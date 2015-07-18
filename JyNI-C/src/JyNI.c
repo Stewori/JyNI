@@ -2299,6 +2299,9 @@ jmethodID pyCPeerGCConstructor;
 
 jclass jyGCHeadClass;
 jmethodID traversableGCHeadSetLinks;
+jmethodID traversableGCHeadSetLink;
+jmethodID traversableGCHeadClearLink;
+jmethodID traversableGCHeadClearLinksFromIndex;
 jmethodID pyObjectGCHeadSetObject;
 
 jclass pyCPeerTypeClass;
@@ -2908,6 +2911,9 @@ inline jint initJyNI(JNIEnv *env)
 
 	jclass traversableGCHeadInterface = (*env)->FindClass(env, "JyNI/gc/TraversableGCHead");
 	traversableGCHeadSetLinks = (*env)->GetMethodID(env, traversableGCHeadInterface, "setLinks", "(Ljava/lang/Object;)V");
+	traversableGCHeadSetLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "setLink", "(ILJyNI/gc/JyGCHead;)I");
+	traversableGCHeadClearLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "clearLink", "(I)I");
+	traversableGCHeadClearLinksFromIndex = (*env)->GetMethodID(env, traversableGCHeadInterface, "clearLinksFromIndex", "(I)I");
 	(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
 
 	jclass jyGCHeadClassLocal = (*env)->FindClass(env, "JyNI/gc/JyGCHead");

@@ -550,6 +550,9 @@ PyAPI_FUNC(void) PyObject_RawFree(void *);
 void JyNI_GC_Explore();
 void JyNI_GC_ExploreObject(PyObject* op);
 void PyObject_GC_Track_NoExplore(void *op);
+//int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
+//		PyObject* newItem, JyObject* newItemJy);
+//void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy);
 
 /* Provide header for nullstring from stringobject.c
  * This way, the nullstring can also be used from other
@@ -733,6 +736,9 @@ extern jmethodID pyCPeerGCConstructor;
 
 extern jclass jyGCHeadClass;
 extern jmethodID traversableGCHeadSetLinks;
+extern jmethodID traversableGCHeadSetLink;
+extern jmethodID traversableGCHeadClearLink;
+extern jmethodID traversableGCHeadClearLinksFromIndex;
 extern jmethodID pyObjectGCHeadSetObject;
 
 extern jclass pyCPeerTypeClass;

@@ -55,5 +55,43 @@ public interface TraversableGCHead extends JyGCHead {
 	 * JyGCHead, JyGCHead[] or Iterable<JyGCHead>
 	 */
 	public void setLinks(Object links);
+
+	/**
+	 * Do not call this method. It is for internal use and only
+	 * public because interfaces require this.
+	 *
+	 * In var-size case this operation is only supported if the
+	 * backend is a Collection. (Since an arbitrary iterable has
+	 * no add- or set-operation.)
+	 *
+	 * @return -2 if links == null, -1 for invalid index, 0 otherwise.
+	 */
+	public int setLink(int index, JyGCHead link);
+	
+	/**
+	 * Do not call this method. It is for internal use and only
+	 * public because interfaces require this.
+	 *
+	 * Removes the indexed element from GC's responsibility.
+	 * In var-size case, this actually removes the element.
+	 * In fixed-size case this sets the element-position to null.
+	 * In single-link case it sets the links-variable to null.
+	 *
+	 * @return -2 if links == null, -1 for invalid index, 0 otherwise.
+	 */
+	public int clearLink(int index);
+	
+	/**
+	 * Do not call this method. It is for internal use and only
+	 * public because interfaces require this.
+	 *
+	 * Removes the all elements with index >= startIndex from GC's responsibility.
+	 * In var-size case, this actually removes the elements.
+	 * In fixed-size case this sets the element-positions to null.
+	 * In single-link case it sets the links-variable to null.
+	 *
+	 * @return -2 if links == null, -1 for invalid startIndex, number of cleared indices otherwise.
+	 */
+	public int clearLinksFromIndex(int startIndex);
 	public int jyTraverse(JyVisitproc visit, Object arg);
 }

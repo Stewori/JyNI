@@ -69,6 +69,7 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 	if (op != NULL) {
 		free_list = (PyCFunctionObject *)(op->m_self);
 		PyObject_INIT(op, &PyCFunction_Type);
+		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(op), -1, PyCFunction_Type.tp_name);
 		numfree--;
 	}
 	else {
@@ -178,10 +179,13 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 static void
 meth_dealloc(PyCFunctionObject *m)
 {
+	JyNIDebugOp(JY_NATIVE_FINALIZE, m, -1);
 	_JyNI_GC_UNTRACK(m);
 	Py_XDECREF(m->m_self);
 	Py_XDECREF(m->m_module);
 	if (numfree < PyCFunction_MAXFREELIST) {
+		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, m, -1);
+		JyNI_CleanUp_JyObject(AS_JY_WITH_GC(m));
 		m->m_self = (PyObject *)free_list;
 		free_list = m;
 		numfree++;

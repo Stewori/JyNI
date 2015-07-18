@@ -348,7 +348,7 @@ list_dealloc(PyListObject *op)
 {
 	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	Py_ssize_t i;
-	PyObject_GC_UnTrack(op);
+	_JyNI_GC_UNTRACK(op);
 	Py_TRASHCAN_SAFE_BEGIN(op)
 	if (op->ob_item != NULL) {
 		/* Do it backwards, for Christian Tismer.
@@ -364,6 +364,7 @@ list_dealloc(PyListObject *op)
 	if (numfree < PyList_MAXFREELIST && PyList_CheckExact(op))
 	{
 		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, op, -1);
+		JyNI_CleanUp_JyObject(AS_JY_WITH_GC(op));
 		free_list[numfree++] = op;
 	} else
 		Py_TYPE(op)->tp_free((PyObject *)op);
