@@ -180,8 +180,9 @@ PyList_New(Py_ssize_t size)
 	if (numfree) {
 		numfree--;
 		op = free_list[numfree];
+		_PyObject_GC_InitJy(op, &(builtinTypes[LIST_INDEX_TME]));
 		_Py_NewReference((PyObject *)op);
-		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(op), size, PyList_Type.tp_name);
+		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, op, AS_JY_WITH_GC(op), size, PyList_Type.tp_name);
 #ifdef SHOW_ALLOC_COUNT
 		count_reuse++;
 #endif
@@ -266,6 +267,9 @@ PyList_SetItem(register PyObject *op, register Py_ssize_t i,
 	olditem = *p;
 	*p = newitem;
 	Py_XDECREF(olditem);
+	env(-1);
+	//updateJyGCHeadLink(env, op, AS_JY_WITH_GC(op), i, newitem, AS_JY(newitem));
+	//updateJyGCHeadLinks(env, op, AS_JY_WITH_GC(op));
 	return 0;
 }
 
@@ -373,7 +377,7 @@ list_dealloc(PyListObject *op)
 
 static int
 list_print(PyListObject *op, FILE *fp, int flags)
-{
+{ //Todo: Make print-outs JNI-conform; re-insert ALLOW_THREADS-macros
 	int rc;
 	Py_ssize_t i;
 	PyObject *item;

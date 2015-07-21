@@ -288,7 +288,7 @@ func_set_dict(PyFunctionObject *op, PyObject *value)
 	(*env)->CallObjectMethod(env, jFunc, pyObjectSetDict, jDict);
 	if ((*env)->ExceptionCheck(env))
 	{
-		puts("Exception in func_set_dict");
+		jputs("Exception in func_set_dict");
 		(*env)->ExceptionClear(env);
 		return -1;
 	}
@@ -340,7 +340,7 @@ func_set_code(PyFunctionObject *op, PyObject *value)
 	(*env)->CallObjectMethod(env, jFunc, pyFunctionSetCode, jCode);
 	if ((*env)->ExceptionCheck(env))
 	{
-		puts("Exception in func_set_code");
+		jputs("Exception in func_set_code");
 		(*env)->ExceptionClear(env);
 		return -1;
 	}
@@ -382,7 +382,7 @@ func_set_name(PyFunctionObject *op, PyObject *value)
 	(*env)->CallObjectMethod(env, jFunc, pyFunctionSetCode, jName);
 	if ((*env)->ExceptionCheck(env))
 	{
-		puts("Exception in func_set_name");
+		jputs("Exception in func_set_name");
 		(*env)->ExceptionClear(env);
 		return -1;
 	}
@@ -428,7 +428,7 @@ func_set_defaults(PyFunctionObject *op, PyObject *value)
 	(*env)->CallObjectMethod(env, jFunc, pyFunctionSetFuncDefaults, jDefaults);
 	if ((*env)->ExceptionCheck(env))
 	{
-		puts("Exception in func_set_defaults");
+		jputs("Exception in func_set_defaults");
 		(*env)->ExceptionClear(env);
 		return -1;
 	}

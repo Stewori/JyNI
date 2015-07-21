@@ -77,14 +77,14 @@
 
 #define IsJyNIDebug(flags) Jy_memDebugFlags
 
-#define JyNIDebug(flags, ref, size, tpName) \
-	if (Jy_memDebugFlags) JyRefMonitor_addAction(flags, ref, size, tpName, __FUNCTION__, __FILE__, __LINE__)
+#define JyNIDebug(flags, pref, ref, size, tpName) \
+	if (Jy_memDebugFlags) JyRefMonitor_addAction(flags, pref, ref, size, tpName, __FUNCTION__, __FILE__, __LINE__)
 
 #define JyNIDebug2(flags, ref1, ref2, size, tpName) \
 	if (Jy_memDebugFlags) JyRefMonitor_addAction2(flags, ref1, ref2, size, tpName, __FUNCTION__, __FILE__, __LINE__)
 
 #define JyNIDebugOp(flags, op, size) \
-	JyNIDebug(flags, AS_JY(op), size, Py_TYPE(op) ? Py_TYPE(op)->tp_name : NULL)
+	JyNIDebug(flags, op, AS_JY(op), size, Py_TYPE(op) ? Py_TYPE(op)->tp_name : NULL)
 
 #define JyNIDebugOp2(flags, op, ref2, size) \
 	JyNIDebug2(flags, AS_JY(op), ref2, size, Py_TYPE(op) ? Py_TYPE(op)->tp_name : NULL)
@@ -95,7 +95,7 @@ extern jint Jy_memDebugFlags;
 void JyRefMonitor_setMemDebug(JNIEnv *env, jclass class, jint flags);
 
 // Memory-tracking
-void JyRefMonitor_addAction(jshort action, JyObject* object, size_t size,
-		char* type, char* function, char* file, jint line);
+void JyRefMonitor_addAction(jshort action, PyObject* op, JyObject* object,
+		size_t size, char* type, char* function, char* file, jint line);
 void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2,
 		size_t size, char* type, char* function, char* file, jint line);

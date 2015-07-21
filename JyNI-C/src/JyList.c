@@ -98,7 +98,9 @@ jobject JyList_set(JNIEnv *env, jclass class, jlong handle, jint index, jobject 
 //	jputsLong(handle);
 //	jputsLong(index);
 	jobject old = JyNI_JythonPyObject_FromPyObject(PyList_GET_ITEM((PyObject*) handle, index));
-	PyList_SET_ITEM((PyObject*) handle, index, pyObj != NULL ? (PyObject*) pyObj : JyNI_PyObject_FromJythonPyObject(obj));
+	PyList_SetItem((PyObject*) handle, index,
+			pyObj != NULL ? (PyObject*) pyObj : JyNI_PyObject_FromJythonPyObject(obj));
+	//PyList_SET_ITEM((PyObject*) handle, index, pyObj != NULL ? (PyObject*) pyObj : JyNI_PyObject_FromJythonPyObject(obj));
 	return old;
 }
 

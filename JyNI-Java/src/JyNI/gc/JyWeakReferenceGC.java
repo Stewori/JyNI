@@ -106,6 +106,7 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 				pos = 0;
 				for (JyWeakReferenceGC ref0: refCache) {
 					refList.remove(ref0);
+					JyReferenceMonitor.clearJyWeakRef(ref0.nativeRef);
 					clearRefs[pos++] = ref0.nativeRef;
 				}
 				refCache.clear();

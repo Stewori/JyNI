@@ -1786,12 +1786,13 @@ visit_exploreArrayLink(PyObject *op, void *arg)
 	 * It is hard to decide whether to explore non-heap-objects here or not.
 	 * On one hand they should be kept alive anyway. However there might be
 	 * cases where this principle is broken and some of them could be avoided
-	 * by exploring non-heap objects here.
+	 * by exploring non-heap objects here. (So we do it.)
 	 * Note that AS_JY would *not* segfault on non-heap objects, but it returns
 	 * an invalid position that would cause a segfault if FROM_JY was applied
-	 * on it again (because FROM_JY must look at a flag; FROM_JY_WITH_GC or
-	 * FROM_JY_NO_GC would not be affected, but are not feasible here).
-	 * However, for non-heap objects obtainJyGCHead ignores th JyObject-param,
+	 * on it again or one accessed it any other way (because FROM_JY must look
+	 * at a flag; FROM_JY_WITH_GC or FROM_JY_NO_GC would not be affected, but
+	 * are not feasible here).
+	 * However, for non-heap objects obtainJyGCHead ignores the JyObject-param,
 	 * so an invalid pointer causes no harm.
 	 */
 	//if (!Is_Static_PyObject(op)) {
@@ -1911,24 +1912,37 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
 		PyObject* newItem, JyObject* newItemJy)
 {
-	jobject gcHead = obtainJyGCHead(env, op, jy);
-	jobject linkHead = obtainJyGCHead(env, newItem, newItemJy);
-	return (*env)->CallIntMethod(env, gcHead, traversableGCHeadSetLink, index, linkHead);
+	if (IS_UNEXPLORED(op))
+	{
+		jputs("JyNI-Warning: updateJyGCHeadLink called on unexplored object!");
+		JyNI_GC_ExploreObject(op);
+		return 0;
+	} else {
+		jobject gcHead = obtainJyGCHead(env, op, jy);
+		jobject linkHead = obtainJyGCHead(env, newItem, newItemJy);
+		return (*env)->CallIntMethod(env, gcHead, traversableGCHeadSetLink, index, linkHead);
+	}
 }
 
 void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	//jputs(__FUNCTION__);
 	//jputs(Py_TYPE(op)->tp_name);
-	traverseproc trav;
-	if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
-		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
-	else trav = Py_TYPE((PyObject*) op)->tp_traverse;
+	if (IS_UNEXPLORED(op))
+	{
+		jputs("JyNI-Warning: updateJyGCHeadLinks called on unexplored object!");
+		JyNI_GC_ExploreObject(op);
+	} else {
+		traverseproc trav;
+		if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+			trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+		else trav = Py_TYPE((PyObject*) op)->tp_traverse;
 
-	jobject destHead = obtainJyGCHead(env, op, jy);
-	exploreJNI expl = {env, destHead, 0};
-	trav(op, visit_updateLinks, &expl);
-	(*env)->CallIntMethod(env, destHead, traversableGCHeadClearLinksFromIndex, expl.pos);
-	(*env)->DeleteLocalRef(env, destHead);
+		jobject destHead = obtainJyGCHead(env, op, jy);
+		exploreJNI expl = {env, destHead, 0};
+		trav(op, visit_updateLinks, &expl);
+		(*env)->CallIntMethod(env, destHead, traversableGCHeadClearLinksFromIndex, expl.pos);
+		(*env)->DeleteLocalRef(env, destHead);
+	}
 }
 
 void JyNI_GC_ExploreObject(PyObject* op) //{}
@@ -1941,6 +1955,7 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 //	}
 	if (Is_Static_PyObject(op) || IS_UNEXPLORED(op))
 	{ //For now we force re-exploration of static PyObjects whenever it occurs.
+
 //		jputs("explore object:");
 //		jputs(Py_TYPE((PyObject*) op)->tp_name);
 	//	jputsLong(op);
@@ -2164,7 +2179,7 @@ _PyObject_GC_Malloc(size_t basicsize)
 //		collecting = 0;
 //	}
 	op = FROM_GC(g);
-	JyNIDebug(JY_NATIVE_ALLOC_GC, AS_JY_WITH_GC(op), basicsize, NULL);
+	JyNIDebug(JY_NATIVE_ALLOC_GC, op, AS_JY_WITH_GC(op), basicsize, NULL);
 	//Shortcut not feasible because generic AS_JY not yet works as it depends
 	//on a properly configured Py_TYPE(op):
 	//JyNIDebugOp(JY_NATIVE_ALLOC_GC, op, basicsize);
@@ -2177,6 +2192,32 @@ _PyObject_GC_New(PyTypeObject *tp)
 	return _JyObject_GC_New(tp, JyNI_JythonTypeEntry_FromPyType(tp));
 }
 
+/*
+ * This method is also intended for "public" (in the sense of not in gcmodule.c)
+ * use in some cases. Whenever GC-relevant objects use a free_list this method
+ * should be used to re-initialize the corresponding JyObject.
+ */
+inline void _PyObject_GC_InitJy(PyObject *op, TypeMapEntry* tme)
+{
+	JyObject* jy = AS_JY_WITH_GC(op);
+	/*
+	 * We abuse the jy-field here to cache the already
+	 * looked-up tme for later use. Methods in JyNI are
+	 * aware of this and check for a cached tme in the
+	 * jy-field before another look-up is performed.
+	 * A non-NULL jy-field and lacking the INITIALIZED-flag
+	 * indicate that a tme was stored in the jy-field.
+	 */
+	if (tme)
+	{
+		jy->jy = (jweak) tme;
+		jy->flags = JY_GC_FLAG_MASK | tme->flags;
+	} else
+		jy->flags = JY_GC_FLAG_MASK;
+	//jy->attr = NULL;
+	//JyNI_SetUpJyObject((JyObject*) op);
+}
+
 PyObject *
 _JyObject_GC_New(PyTypeObject *tp, TypeMapEntry* tme)
 {
@@ -2187,20 +2228,9 @@ _JyObject_GC_New(PyTypeObject *tp, TypeMapEntry* tme)
 		op = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp));
 		if (op != NULL)
 		{
-			JyObject* jy = AS_JY_WITH_GC(op);
-			/*
-			 * We abuse the jy-field here to cache the already
-			 * looked-up tme for later use. Methods in JyNI are
-			 * aware of this and check for a cached tme in the
-			 * jy-field before another look-up is performed.
-			 * A non-NULL jy-field and lacking the INITIALIZED-flag
-			 * indicate that a tme was stored in the jy-field.
-			 */
-			jy->jy = (jweak) tme;
-			jy->flags |= tme->flags;
+			_PyObject_GC_InitJy(op, tme);
 			op = PyObject_INIT(op, tp);
 		}
-		//JyNI_SetUpJyObject((JyObject*) op);
 	}
 	else
 	{

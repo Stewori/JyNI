@@ -241,7 +241,11 @@ public class JyReferenceMonitor {
 		}
 
 		public void forceUpdatePyObject() {
+//			System.out.println("forceUpdatePyObject");//Free on non-allocated ref!
+//			System.out.println("Src-func: "+nativeAllocFunc);
+//			System.out.println("type: "+this.nativeType);
 			PyObject op = JyNI.lookupFromHandle(nativeRef);
+//			System.out.println("forceUpdatePyObject done");
 			if (op != null) object = new WeakReference<>(op);
 		}
 
@@ -371,9 +375,19 @@ public class JyReferenceMonitor {
 		ObjectLog log = nativeObjects.get(handle);
 		if (log != null) {
 			if (log.jyWeakRef != 0) {
-				System.out.println("JyWeakRef already present!");
+				System.out.println("addJyWeakRef: JyWeakRef already present!");
 			}
 			log.jyWeakRef = System.currentTimeMillis();
+		}
+	}
+
+	public static void clearJyWeakRef(long handle) {
+		ObjectLog log = nativeObjects.get(handle);
+		if (log != null) {
+			if (log.jyWeakRef == 0) {
+				System.out.println("clearJyWeakRef: No JyWeakRef present!");
+			}
+			log.jyWeakRef = 0;
 		}
 	}
 
@@ -403,6 +417,7 @@ public class JyReferenceMonitor {
 			log2.previousLife = log;
 			nativeObjects.put(nativeRef1, log2);
 			log = log2;
+			//System.out.println("Replace log for reference "+nativeRef1+" ("+nativeType+") freed? "+log.nativeFree);
 		}
 		try {
 			log.updateInfo(action, obj, nativeRef1, nativeRef2, nativeType, cMethod, cFile, line,
@@ -431,7 +446,7 @@ public class JyReferenceMonitor {
 		}*/
 	}
 
-	public static void listLeaks() {
+	public static List<ObjectLog> getCurrentNativeLeaks() {
 		ArrayList<ObjectLog> tmp = new ArrayList<>(nativeObjects.values());
 		Map<Long, Object> lsrc = new HashMap<>(tmp.size());
 		for (ObjectLog obl: tmp) {
@@ -439,16 +454,27 @@ public class JyReferenceMonitor {
 		}
 		Map<Long, Object> ldest = new HashMap<>();
 		moveStaticallyReachable(lsrc, ldest);
-		boolean leaksFound = false;
+		ArrayList<ObjectLog> result = new ArrayList<>();
 		for (ObjectLog log: tmp) {
 			if (lsrc.containsKey(log.nativeRef) && log.isLeak()) {
-				if (!leaksFound) {
-					leaksFound = true;
-					System.out.println("Current native leaks:");
-				}
-				log.updatePyObject();
-				System.out.println(log);
-			} //else if (ldest.containsKey(log.nativeRef) && log.isLeak()) {
+				result.add(log);
+			}
+		}
+		return result;
+	}
+
+	public static void listLeaks() {
+		List<ObjectLog> tmp = getCurrentNativeLeaks();
+		boolean leaksFound = false;
+		for (ObjectLog log: tmp) {
+			//if (lsrc.containsKey(log.nativeRef) && log.isLeak()) {
+			if (!leaksFound) {
+				leaksFound = true;
+				System.out.println("Current native leaks:");
+			}
+			log.updatePyObject();
+			System.out.println(log);
+			//} //else if (ldest.containsKey(log.nativeRef) && log.isLeak()) {
 //				if (!leaksFound) {
 //					leaksFound = true;
 //					System.out.println("Current native leaks:");

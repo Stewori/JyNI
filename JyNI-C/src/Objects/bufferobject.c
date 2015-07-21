@@ -269,6 +269,7 @@ PyBuffer_New(Py_ssize_t size)
 
 	o = FROM_JY_NO_GC(jy);
 	b = (PyBufferObject *) PyObject_INIT(o, &PyBuffer_Type);
+	JyNIDebug(JY_NATIVE_ALLOC, o, jy, sizeof(*b) + size + sizeof(JyObject), PyBuffer_Type.tp_name);
 
 	b->b_base = NULL;
 	b->b_ptr = (void *)(b + 1);

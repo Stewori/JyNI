@@ -61,13 +61,15 @@ jint Jy_memDebugFlags = 0;
 void JyRefMonitor_setMemDebugFlags(JNIEnv *env, jclass class, jint flags)
 {
 	Jy_memDebugFlags = flags;
-	if (flags) jputs("JyNI: memDebug enabled!");
-	else jputs("JyNI: memDebug disabled!");
+//	if (flags) jputs("JyNI: memDebug enabled!");
+//	else jputs("JyNI: memDebug disabled!");
 }
 
-void JyRefMonitor_addAction(jshort action, JyObject* object, size_t size, char* type,
-		char* function, char* file, jint line)
+void JyRefMonitor_addAction(jshort action, PyObject* op, JyObject* object,
+		size_t size, char* type, char* function, char* file, jint line)
 {
+	if (op)
+		assert(op == FROM_JY(object));
 	env();
 	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
 	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);

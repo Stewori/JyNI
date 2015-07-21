@@ -1034,4 +1034,9 @@ public class JyNI {
 			System.out.println("("+System.identityHashCode(val)+")");
 		}
 	}
+
+	public static void jPrintInfo(Object val) {
+		System.out.println("Object: "+val);
+		System.out.println("Class: "+val.getClass());
+	}
 }

@@ -269,7 +269,10 @@
 #define _JyNI_GC_IS_TRACKED(o) _PyObject_GC_IS_TRACKED(o)
 #define _JyNI_GC_MAY_BE_TRACKED(obj) _PyObject_GC_MAY_BE_TRACKED(obj)
 
-/* Additional values for _PyGC_REFS. For consistency we also list the orginal
+#define JYNI_GC_TUPLE_EXPLORE(tp) JyNI_GC_ExploreObject(tp)
+#define JYNI_GC_LIST_EXPLORE(tp) JyNI_GC_ExploreObject(tp)
+
+/* Additional values for _PyGC_REFS. For consistency we also list the original
  * values here:
  * #define _PyGC_REFS_UNTRACKED                    (-2)
  * #define _PyGC_REFS_REACHABLE                    (-3)
@@ -442,6 +445,14 @@ void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references
 #define builtinTypeCount 46
 extern TypeMapEntry builtinTypes[builtinTypeCount];
 
+#define  METHOD_INDEX_TME   8
+#define   FLOAT_INDEX_TME  17
+#define     INT_INDEX_TME  18
+#define UNICODE_INDEX_TME  21
+#define   TUPLE_INDEX_TME  27
+#define    LIST_INDEX_TME  29
+#define    DICT_INDEX_TME  32
+
 /* "Hidden" PyTypes: */
 extern PyTypeObject PyNone_Type;
 extern PyTypeObject PyNotImplemented_Type;
@@ -533,8 +544,10 @@ inline void jputs(const char* msg);
 inline void jputsLong(jlong val);
 
 /* To save lookups: */
+inline void _PyObject_GC_InitJy(PyObject *op, TypeMapEntry* tme);
 PyObject* _JyObject_GC_New(PyTypeObject *tp, TypeMapEntry* tme);
 PyVarObject* _JyObject_GC_NewVar(PyTypeObject *tp, Py_ssize_t nitems, TypeMapEntry* tme);
+inline void _PyObject_InitJy(PyObject *op, TypeMapEntry* tme);
 inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme);
 jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp);
 inline int PyModule_AddStringConstantJy(jobject m, const char *name, const char *value);
@@ -550,9 +563,9 @@ PyAPI_FUNC(void) PyObject_RawFree(void *);
 void JyNI_GC_Explore();
 void JyNI_GC_ExploreObject(PyObject* op);
 void PyObject_GC_Track_NoExplore(void *op);
-//int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
-//		PyObject* newItem, JyObject* newItemJy);
-//void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy);
+int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
+		PyObject* newItem, JyObject* newItemJy);
+void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy);
 
 /* Provide header for nullstring from stringobject.c
  * This way, the nullstring can also be used from other

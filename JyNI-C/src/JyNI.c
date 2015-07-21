@@ -448,6 +448,12 @@ inline void initBuiltinTypes()
 	builtinTypes[8].sync->jyInit = (jyInitSync) JySync_Init_JyMethod_From_PyMethod;
 	builtinTypes[8].sync->pyInit = (pyInitSync) JySync_Init_PyMethod_From_JyMethod;
 
+	//Note: PyFunction is actually truncated in the sense that JyNI does not populate
+	//all fields. However no memory can be saved because e.g. the last field func_module
+	//is mirrored. This is needed e.g. for the PyFunction_GET_MODULE-macro.
+	//Todo: Make sure that gcmodule gets this right as a partly CStub. We will have to add
+	//a truncate-flag and full length as truncate_trailing. (So there is actually no
+	//truncation, but the flag tells gcmodule what to do.)
 	builtinTypes[9].py_type = &PyFunction_Type;
 	builtinTypes[9].jy_class = pyFunctionClass;
 	//builtinTypes[9].flags = JY_GC_FIXED_SIZE; // 5 (8) links
@@ -1087,6 +1093,7 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 		jy->flags = tme->flags;
 		jy->attr = NULL;
 		obj = (PyObject*) FROM_JY_NO_GC(jy);
+		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), tme->py_type->tp_name);
 	}
 
 	//if (obj == NULL) return PyErr_NoMemory();
@@ -1143,6 +1150,7 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 		jy->flags = tme->flags;
 		jy->attr = NULL;
 		obj = (PyObject*) FROM_JY_NO_GC(jy);
+		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), tme->py_type->tp_name);
 	}
 
 	//if (obj == NULL) return PyErr_NoMemory();
@@ -1190,6 +1198,7 @@ inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 		jy->attr = NULL;
 		jy->jy = NULL;
 		obj = (PyObject*) FROM_JY_NO_GC(jy);
+		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
 	}
 
 	//if (obj == NULL) return PyErr_NoMemory();
@@ -1235,6 +1244,7 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 		jy->attr = NULL;
 		jy->jy = NULL;
 		obj = (PyObject*) FROM_JY_NO_GC(jy);
+		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
 	}
 
 	//if (obj == NULL) return PyErr_NoMemory();
@@ -1277,6 +1287,7 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 		jy->flags = JY_TRUNCATE_FLAG_MASK;
 		jy->attr = NULL;
 		obj = (PyObject*) FROM_JY_NO_GC(jy);
+		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, sizeof(PyVarObject)+sizeof(JyObject), eme->exc_type->tp_name);
 	}
 
 	//if (obj == NULL) return PyErr_NoMemory();

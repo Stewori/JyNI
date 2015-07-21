@@ -124,8 +124,15 @@ PyTuple_New(register Py_ssize_t size)
 		Py_SIZE(op) = size;
 		Py_TYPE(op) = &PyTuple_Type;
 #endif
+		_PyObject_GC_InitJy(op, &(builtinTypes[TUPLE_INDEX_TME]));
 		_Py_NewReference((PyObject *)op);
-		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(op), size, PyTuple_Type.tp_name);
+//		jputs(__FUNCTION__);
+//		jputsLong(__LINE__);
+//		jputsLong(size);
+//		jputsLong((jlong) op);
+		//jputsLong(Py_TYPE(op));
+		//jputsLong(&PyTuple_Type);
+		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, op, AS_JY_WITH_GC(op), size, PyTuple_Type.tp_name);
 	}
 	else
 #endif
@@ -149,7 +156,7 @@ PyTuple_New(register Py_ssize_t size)
 		free_list[0] = op;
 		++numfree[0];
 		JyNIDebug(JY_NATIVE_INCREF | JY_IMMORTAL_MASK | JY_PRE_MASK,
-				AS_JY_WITH_GC(op), size, PyTuple_Type.tp_name);
+				op, AS_JY_WITH_GC(op), size, PyTuple_Type.tp_name);
 		Py_INCREF(op);          /* extra INCREF so that this is never freed */
 	}
 #endif
@@ -285,6 +292,9 @@ tupledealloc(register PyTupleObject *op)
 			op->ob_item[0] = (PyObject *) free_list[len];
 			numfree[len]++;
 			free_list[len] = op;
+//			jputs("Release tuple to free_list");
+//			jputsLong(len);
+//			jputsLong((jlong) op);
 			goto done; /* return */
 		}
 #endif
@@ -297,7 +307,7 @@ done:
 
 static int
 tupleprint(PyTupleObject *op, FILE *fp, int flags)
-{
+{ //Todo: Make print-outs JNI-conform.
 	Py_ssize_t i;
 	Py_BEGIN_ALLOW_THREADS
 	fprintf(fp, "(");
@@ -398,7 +408,7 @@ Done:
 
 static long
 tuplehash(PyTupleObject *v)
-{
+{ //JyNI-Todo: Check if this is/should be consistent with java-hash.
 	register long x, y;
 	register Py_ssize_t len = Py_SIZE(v);
 	register PyObject **p;

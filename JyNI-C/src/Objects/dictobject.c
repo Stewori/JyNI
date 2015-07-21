@@ -302,10 +302,14 @@ PyDict_New(void)
 #endif
 	}*/
 	if (numfree) {
-		//puts("from free");
+		//jputs("from free");
 		mp = free_list[--numfree];
 		assert (mp != NULL);
 		assert (Py_TYPE(mp) == &PyDict_Type);
+		/* JyNI-note: Here we assume that the caller would not intend
+		 * to create a stringmap-dict.
+		 */
+		_PyObject_InitJy(mp, &(builtinTypes[DICT_INDEX_TME]));
 		_Py_NewReference((PyObject *)mp);
 		JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, mp, -1);
 		/*if (mp->ma_fill) {

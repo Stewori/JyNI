@@ -69,7 +69,8 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 	if (op != NULL) {
 		free_list = (PyCFunctionObject *)(op->m_self);
 		PyObject_INIT(op, &PyCFunction_Type);
-		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(op), -1, PyCFunction_Type.tp_name);
+		_PyObject_GC_InitJy(op, NULL);
+		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, op, AS_JY_WITH_GC(op), -1, PyCFunction_Type.tp_name);
 		numfree--;
 	}
 	else {

@@ -1388,7 +1388,7 @@ PyObject_Malloc(size_t n)
 	er->attr = NULL;
 	er->flags = 0;
 	er->jy = NULL;
-	JyNIDebug(JY_NATIVE_ALLOC, er, n, NULL);
+	JyNIDebug(JY_NATIVE_ALLOC, FROM_JY_NO_GC(er), er, n, NULL);
 	return FROM_JY_NO_GC(er);
 }
 
@@ -1412,7 +1412,7 @@ PyObject_Free(void *p)
 {
 	//JyNI-note: this is identical with former JyNI_Del.
 	JyObject* jy = AS_JY_NO_GC(p);
-	JyNIDebug(JY_NATIVE_FREE, jy, -1, NULL);
+	JyNIDebug(JY_NATIVE_FREE, (PyObject*) p, jy, -1, NULL);
 	JyNI_CleanUp_JyObject(jy);
 	PyObject_RawFree(jy);
 }

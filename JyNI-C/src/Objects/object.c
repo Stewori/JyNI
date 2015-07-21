@@ -291,6 +291,28 @@ _PyObject_New(PyTypeObject *tp)
 	return _JyObject_New(tp, tme);
 }
 
+/*
+ * This method is also intended for "public" (in the sense of not in object.c)
+ * use in some cases. Whenever non-GC-relevant objects use a free_list this method
+ * should be used to re-initialize the corresponding JyObject.
+ */
+inline void _PyObject_InitJy(PyObject *op, TypeMapEntry* tme)
+{
+	JyObject* jy = AS_JY_NO_GC(op);
+	/*
+	 * We abuse the jy-field here to cache the already
+	 * looked-up tme for later use. Methods in JyNI are
+	 * aware of this and check for a cached tme in the
+	 * jy-field before another look-up is performed.
+	 * A non-NULL jy-field and lacking the INITIALIZED-flag
+	 * indicate that a tme was stored in the jy-field.
+	 */
+	jy->jy = (jweak) tme;
+	jy->flags = tme->flags;
+	//jy->attr = NULL;
+	//JyNI_SetUpJyObject((JyObject*) op);
+}
+
 inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme)
 {
 	PyObject *op;
@@ -302,12 +324,13 @@ inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme)
 		//jy = (JyObject*) PyObject_MALLOC(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)) );
 		jy = (JyObject*) PyObject_RawMalloc(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)) );
 		if (jy == NULL) return PyErr_NoMemory();
-		jy->jy = (jobject) tme;//tme->jy_class;
-		jy->flags = tme->flags;
+		//jy->jy = (jobject) tme;//tme->jy_class;
+		//jy->flags = tme->flags;
 		jy->attr = NULL;
 		op = FROM_JY_NO_GC(jy);
+		_PyObject_InitJy(op, tme);
 		op = PyObject_INIT(op, tp);
-		JyNIDebug(JY_NATIVE_ALLOC, jy,
+		JyNIDebug(JY_NATIVE_ALLOC, op, jy,
 				sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)),
 				tp->tp_name);
 		if (PyObject_IS_GC(op)) jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_New");
@@ -324,7 +347,7 @@ inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme)
 		op = FROM_JY_NO_GC(jy);
 		//if (op == NULL) return PyErr_NoMemory();
 		op = PyObject_INIT(op, tp);
-		JyNIDebug(JY_NATIVE_ALLOC, jy, sizeof(JyObject)+_PyObject_SIZE(tp), tp->tp_name);
+		JyNIDebug(JY_NATIVE_ALLOC, op, jy, sizeof(JyObject)+_PyObject_SIZE(tp), tp->tp_name);
 		if (PyObject_IS_GC(op)) jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_New");
 		return op;
 	}
@@ -342,12 +365,13 @@ _PyObject_NewVar(PyTypeObject *tp, Py_ssize_t nitems)
 		//jy = (JyObject *) PyObject_MALLOC(size);
 		jy = (JyObject *) PyObject_RawMalloc(size);
 		if (jy == NULL) return (PyVarObject *) PyErr_NoMemory();
-		jy->jy = (jobject) tme;//->jy_class;
-		jy->flags = tme->flags;
+		//jy->jy = (jobject) tme;//->jy_class;
+		//jy->flags = tme->flags;
 		jy->attr = NULL;
 		op = (PyVarObject*) FROM_JY_NO_GC(jy);
+		_PyObject_InitJy(op, tme);
 		op = PyObject_INIT_VAR(op, tp, nitems);
-		JyNIDebug(JY_NATIVE_ALLOC, jy, size, tp->tp_name);
+		JyNIDebug(JY_NATIVE_ALLOC, op, jy, size, tp->tp_name);
 		//JyNI_SetUpJyVarObject((JyVarObject*) op);
 		////if (PyObject_IS_GC(op)) puts("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_NewVar");
 		return op;
@@ -364,7 +388,7 @@ _PyObject_NewVar(PyTypeObject *tp, Py_ssize_t nitems)
 		op = (PyVarObject*) FROM_JY_NO_GC(jy);
 		//if (op == NULL) return (PyVarObject *) PyErr_NoMemory();
 		op = PyObject_INIT_VAR(op, tp, nitems);
-		JyNIDebug(JY_NATIVE_ALLOC, jy, size, tp->tp_name);
+		JyNIDebug(JY_NATIVE_ALLOC, op, jy, size, tp->tp_name);
 		//if (PyObject_IS_GC(op)) puts("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_NewVar");
 		return op;
 	}
@@ -376,7 +400,8 @@ void
 _PyObject_Del(PyObject *op)
 {
 	JyObject* jy = AS_JY(op);
-	if (JyObject_IS_GC(jy)) puts("conflict: _PyObject_Del was called with an object that seems to have a GC header.");
+	if (JyObject_IS_GC(jy))
+		jputs("conflict: _PyObject_Del was called with an object that seems to have a GC header.");
 	JyNI_CleanUp_JyObject(jy);
 	PyObject_RawFree(jy);
 
