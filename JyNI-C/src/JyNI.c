@@ -2297,6 +2297,7 @@ jmethodID JyLockAcquire;
 jmethodID JyLockRelease;
 
 jclass JyReferenceMonitorClass;
+jmethodID JyRefMonitorMakeDebugInfo;
 jmethodID JyRefMonitorAddAction;
 
 jclass pyCPeerClass;
@@ -2895,8 +2896,11 @@ inline jint initJyNI(JNIEnv *env)
 	jclass JyReferenceMonitorClassLocal = (*env)->FindClass(env, "JyNI/JyReferenceMonitor");
 	JyReferenceMonitorClass = (jclass) (*env)->NewWeakGlobalRef(env, JyReferenceMonitorClassLocal);
 	(*env)->DeleteLocalRef(env, JyReferenceMonitorClassLocal);
+	JyRefMonitorMakeDebugInfo = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "makeDebugInfo",
+			"(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)LJyNI/JyReferenceMonitor$ObjectLogDebugInfo;");
 	JyRefMonitorAddAction = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "addNativeAction",
-			"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V");
+			//"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V");
+			"(SLorg/python/core/PyObject;JJLJyNI/JyReferenceMonitor$ObjectLogDebugInfo;)V");
 
 	//Peer stuff:
 	jclass pyCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyCPeer");

@@ -116,6 +116,23 @@ public class JyReferenceMonitor {
 		return result.substring(1);
 	}
 
+	public static class ObjectLogDebugInfo {
+		public String cTypeName;
+		public String cMethod;
+		public int line;
+		public String cFile;
+	}
+
+	public static ObjectLogDebugInfo makeDebugInfo(String cTypeName, String cMethod,
+			int line, String cFile) {
+		ObjectLogDebugInfo result = new ObjectLogDebugInfo();
+		result.cTypeName = cTypeName;
+		result.cMethod = cMethod;
+		result.line = line;
+		result.cFile = cFile;
+		return result;
+	}
+
 	public static class ObjectLogException extends Exception {
 		public ObjectLog src;
 		public String cMethod;
@@ -250,7 +267,7 @@ public class JyReferenceMonitor {
 		}
 
 		public void updateInfo(short action, PyObject obj, long nativeRef1, long nativeRef2,
-				String nativeType, String cMethod, String cFile, int line, String repr)
+				String nativeType, String cMethod, String cFile, int line)//, String repr)
 				throws ObjectLogException {
 //			if (nativeType == null) {
 //				System.out.println("JyNI-Warning: RefMonitor called with null-type.");
@@ -327,7 +344,7 @@ public class JyReferenceMonitor {
 			if ((action & INLINE_MASK) != 0) {
 				inline = true;
 			}
-			if (repr != null) this.repr = repr;
+			//if (repr != null) this.repr = repr;
 		}
 	}
 
@@ -406,7 +423,8 @@ public class JyReferenceMonitor {
 //	}
 
 	public static void addNativeAction(short action, PyObject obj, long nativeRef1, long nativeRef2,
-			String nativeType, String cMethod, String cFile, int line, String nativeRepr) {
+			ObjectLogDebugInfo debugInfo) {
+			//String nativeType, String cMethod, String cFile, int line, String nativeRepr) {
 		//System.out.println(actionToString(action)+" - "+action+" ("+cMethod+", "+nativeRef1+")");
 		ObjectLog log = nativeObjects.get(nativeRef1);
 		if (log == null) {
@@ -420,8 +438,9 @@ public class JyReferenceMonitor {
 			//System.out.println("Replace log for reference "+nativeRef1+" ("+nativeType+") freed? "+log.nativeFree);
 		}
 		try {
-			log.updateInfo(action, obj, nativeRef1, nativeRef2, nativeType, cMethod, cFile, line,
-					nativeRepr);
+			log.updateInfo(action, obj, nativeRef1, nativeRef2,
+					debugInfo.cTypeName, debugInfo.cMethod, debugInfo.cFile, debugInfo.line);
+					//nativeType, cMethod, cFile, line, nativeRepr);
 		} catch (ObjectLogException ole) {
 			System.err.println(ole.getMessage());
 		}

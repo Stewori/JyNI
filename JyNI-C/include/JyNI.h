@@ -736,6 +736,7 @@ extern jmethodID JyLockAcquire;
 extern jmethodID JyLockRelease;
 
 extern jclass JyReferenceMonitorClass;
+extern jmethodID JyRefMonitorMakeDebugInfo;
 extern jmethodID JyRefMonitorAddAction;
 
 extern jclass pyCPeerClass;
