@@ -560,12 +560,19 @@ PyAPI_FUNC(void *) PyObject_RawRealloc(void *, size_t);
 PyAPI_FUNC(void) PyObject_RawFree(void *);
 
 /* JyNI-CG: */
+#define GC_OBJECT_UNEXPLORED  -4
+#define GC_OBJECT_NOHEAD      -5
+#define GC_OBJECT_INVALIDHEAD -6
+#define GC_OBJECT_JNIFAIL     -7
 void JyNI_GC_Explore();
 void JyNI_GC_ExploreObject(PyObject* op);
 void PyObject_GC_Track_NoExplore(void *op);
-int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
+int updateJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		PyObject* newItem, JyObject* newItemJy);
-void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy);
+int updateClearJyGCHeadLinks(PyObject* op, JyObject* jy, jsize startIndex);
+int updateInsertJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
+		PyObject* newItem, JyObject* newItemJy);
+int updateJyGCHeadLinks(PyObject* op, JyObject* jy);
 
 /* Provide header for nullstring from stringobject.c
  * This way, the nullstring can also be used from other
@@ -751,6 +758,7 @@ extern jmethodID pyCPeerGCConstructor;
 extern jclass jyGCHeadClass;
 extern jmethodID traversableGCHeadSetLinks;
 extern jmethodID traversableGCHeadSetLink;
+extern jmethodID traversableGCHeadInsertLink;
 extern jmethodID traversableGCHeadClearLink;
 extern jmethodID traversableGCHeadClearLinksFromIndex;
 extern jmethodID pyObjectGCHeadSetObject;

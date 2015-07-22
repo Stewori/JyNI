@@ -267,9 +267,8 @@ PyList_SetItem(register PyObject *op, register Py_ssize_t i,
 	olditem = *p;
 	*p = newitem;
 	Py_XDECREF(olditem);
-	env(-1);
-	//updateJyGCHeadLink(env, op, AS_JY_WITH_GC(op), i, newitem, AS_JY(newitem));
-	//updateJyGCHeadLinks(env, op, AS_JY_WITH_GC(op));
+	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), i, newitem, AS_JY(newitem));
+	//updateJyGCHeadLinks(op, AS_JY_WITH_GC(op));
 	return 0;
 }
 
@@ -303,6 +302,7 @@ ins1(PyListObject *self, Py_ssize_t where, PyObject *v)
 		items[i+1] = items[i];
 	Py_INCREF(v);
 	items[where] = v;
+	updateInsertJyGCHeadLink(self, AS_JY_WITH_GC(self), where, v, AS_JY(v));
 	return 0;
 }
 
@@ -333,6 +333,10 @@ app1(PyListObject *self, PyObject *v)
 
 	Py_INCREF(v);
 	PyList_SET_ITEM(self, n, v);
+//	jputs(__FUNCTION__);
+//	jputsLong((jlong) self);
+	updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
+	//updateInsertJyGCHeadLink(self, AS_JY_WITH_GC(self), n, v, AS_JY(v));
 	return 0;
 }
 
@@ -669,6 +673,9 @@ list_clear(PyListObject *a)
 		}
 		PyMem_FREE(item);
 	}
+	env(-1);
+//	jputs(__FUNCTION__);
+//	jputsLong(updateClearJyGCHeadLinks(env, a, AS_JY_WITH_GC(a), 0));
 	/* Never fails; the return value can be ignored.
 	   Note that there is no guarantee that the list is actually empty
 	   at this point, because XDECREF may have populated it again! */
@@ -771,6 +778,7 @@ list_ass_slice(PyListObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
 	for (k = norig - 1; k >= 0; --k)
 		Py_XDECREF(recycle[k]);
 	result = 0;
+	updateJyGCHeadLinks(a, AS_JY_WITH_GC(a));
  Error:
 	if (recycle != recycle_on_stack)
 		PyMem_FREE(recycle);
@@ -825,6 +833,7 @@ list_inplace_repeat(PyListObject *self, Py_ssize_t n)
 		}
 	}
 	Py_INCREF(self);
+	updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
 	return (PyObject *)self;
 }
 
@@ -842,6 +851,7 @@ list_ass_item(PyListObject *a, Py_ssize_t i, PyObject *v)
 	Py_INCREF(v);
 	old_value = a->ob_item[i];
 	a->ob_item[i] = v;
+	updateJyGCHeadLink(a, AS_JY_WITH_GC(a), i, v, AS_JY(v));
 	Py_DECREF(old_value);
 	return 0;
 }
@@ -869,10 +879,10 @@ listappend(PyListObject *self, PyObject *v)
 static PyObject *
 listextend(PyListObject *self, PyObject *b)
 {
-	PyObject *it;	  /* iter(v) */
-	Py_ssize_t m;				  /* size of self */
-	Py_ssize_t n;				  /* guess for size of b */
-	Py_ssize_t mn;				 /* m + n */
+	PyObject *it;      /* iter(v) */
+	Py_ssize_t m;      /* size of self */
+	Py_ssize_t n;      /* guess for size of b */
+	Py_ssize_t mn;     /* m + n */
 	Py_ssize_t i;
 	PyObject *(*iternext)(PyObject *);
 
@@ -910,6 +920,7 @@ listextend(PyListObject *self, PyObject *b)
 			dest[i] = o;
 		}
 		Py_DECREF(b);
+		updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
 		Py_RETURN_NONE;
 	}
 
@@ -968,6 +979,7 @@ listextend(PyListObject *self, PyObject *b)
 		list_resize(self, Py_SIZE(self));  /* shrinking can't fail */
 
 	Py_DECREF(it);
+	updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
 	Py_RETURN_NONE;
 
   error:
@@ -2285,6 +2297,8 @@ dsu_fail:
 	}
 	Py_XDECREF(compare);
 	Py_XINCREF(result);
+	if (result)
+		updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
 	return result;
 }
 #undef IFLT
@@ -2308,7 +2322,11 @@ static PyObject *
 listreverse(PyListObject *self)
 {
 	if (Py_SIZE(self) > 1)
+	{
 		reverse_slice(self->ob_item, self->ob_item + Py_SIZE(self));
+		//JyNI-Todo: Optimize this:
+		updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
+	}
 	Py_RETURN_NONE;
 }
 
@@ -2322,7 +2340,11 @@ PyList_Reverse(PyObject *v)
 		return -1;
 	}
 	if (Py_SIZE(self) > 1)
+	{
 		reverse_slice(self->ob_item, self->ob_item + Py_SIZE(self));
+		//JyNI-Todo: Optimize this:
+		updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
+	}
 	return 0;
 }
 
@@ -2761,7 +2783,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
 				Py_DECREF(garbage[i]);
 			}
 			PyMem_FREE(garbage);
-
+			updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
 			return 0;
 		}
 		else {
@@ -2823,7 +2845,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
 
 			PyMem_FREE(garbage);
 			Py_DECREF(seq);
-
+			updateJyGCHeadLinks(self, AS_JY_WITH_GC(self));
 			return 0;
 		}
 	}

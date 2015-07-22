@@ -124,6 +124,21 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 	}
 
 	@Override
+	public int insertLink(int index, JyGCHead link) {
+		return insertLink(gclinks, index, link);
+	}
+
+	public static int insertLink(Object links, int index, JyGCHead link) {
+		if (links == null) return -2;
+		if (links instanceof List) {
+			if (index < 0 || index > ((List<JyGCHead>) links).size())
+				return -1;
+			((List<JyGCHead>) links).add(index, link);
+			return 0;
+		} else throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public int clearLink(int index) {
 		return clearLink(gclinks, index);
 	}

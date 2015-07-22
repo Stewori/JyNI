@@ -1687,6 +1687,17 @@ statictype_traverse(PyObject* type, visitproc visit, void *arg)
 	return 0;
 }
 
+static jboolean hasJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
+{
+	if (Is_Static_PyObject(op))
+	{
+		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass,
+				JyNI_getNativeStaticJyGCHead, (jlong) op);
+		return result != NULL;
+	} else
+		return JyObject_HasJyGCHead(op, jy);
+}
+
 static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 {
 	if (Is_Static_PyObject(op))
@@ -1909,29 +1920,99 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	return result;
 }
 
-int updateJyGCHeadLink(JNIEnv* env, PyObject* op, JyObject* jy, jsize index,
+int updateJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		PyObject* newItem, JyObject* newItemJy)
 {
 	if (IS_UNEXPLORED(op))
 	{
-		jputs("JyNI-Warning: updateJyGCHeadLink called on unexplored object!");
-		JyNI_GC_ExploreObject(op);
-		return 0;
+		/* Attempts to update are not necessarily good places to perform
+		 * object exploration. For now we refrain from it.
+		 */
+		//jputs("JyNI-Warning: updateJyGCHeadLink called on unexplored object!");
+		//JyNI_GC_ExploreObject(op);
+		return GC_OBJECT_UNEXPLORED;
 	} else {
+		env(GC_OBJECT_JNIFAIL);
 		jobject gcHead = obtainJyGCHead(env, op, jy);
 		jobject linkHead = obtainJyGCHead(env, newItem, newItemJy);
 		return (*env)->CallIntMethod(env, gcHead, traversableGCHeadSetLink, index, linkHead);
 	}
 }
 
-void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
+int updateClearJyGCHeadLinks(PyObject* op, JyObject* jy, jsize startIndex)
+{
+	if (IS_UNEXPLORED(op))
+	{
+		/* Attempts to update are not necessarily good places to perform
+		 * object exploration. For now we refrain from it.
+		 */
+		//jputs("JyNI-Warning: updateJyGCHeadLink called on unexplored object!");
+		//JyNI_GC_ExploreObject(op);
+		return GC_OBJECT_UNEXPLORED;
+	}
+	env(GC_OBJECT_JNIFAIL);
+	if (!hasJyGCHead(env, op, jy))
+	{
+		return GC_OBJECT_NOHEAD;
+	} else
+	{
+		/* In this method we must care for the case that the head was gc'ed and
+		 * we don't wanna recreate it.
+		 */
+
+		jobject gcHead;
+		if (Is_Static_PyObject(op))
+		{
+			gcHead = (*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNI_getNativeStaticJyGCHead, (jlong) op);
+		} else
+		{
+			gcHead = (*env)->NewLocalRef(env, JyObject_GetJyGCHead(op, jy));
+		}
+		if (!gcHead || (*env)->IsSameObject(env, gcHead, NULL))
+		{
+			(*env)->DeleteLocalRef(env, gcHead);
+			return GC_OBJECT_INVALIDHEAD;
+		}
+		int result = (*env)->CallIntMethod(env, gcHead,
+				traversableGCHeadClearLinksFromIndex, startIndex);
+		(*env)->DeleteLocalRef(env, gcHead);
+		return result;
+	}
+}
+
+int updateInsertJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
+		PyObject* newItem, JyObject* newItemJy)
+{
+	if (IS_UNEXPLORED(op))
+	{
+		/* Attempts to update are not necessarily good places to perform
+		 * object exploration. For now we refrain from it.
+		 */
+		//jputs("JyNI-Warning: updateJyGCHeadLink called on unexplored object!");
+		//JyNI_GC_ExploreObject(op);
+		return GC_OBJECT_UNEXPLORED;;
+	} else {
+		env(GC_OBJECT_JNIFAIL);
+		jobject gcHead = obtainJyGCHead(env, op, jy);
+		jobject linkHead = obtainJyGCHead(env, newItem, newItemJy);
+		return (*env)->CallIntMethod(env, gcHead, traversableGCHeadInsertLink, index, linkHead);
+	}
+}
+
+int updateJyGCHeadLinks(PyObject* op, JyObject* jy) {
 	//jputs(__FUNCTION__);
 	//jputs(Py_TYPE(op)->tp_name);
 	if (IS_UNEXPLORED(op))
 	{
-		jputs("JyNI-Warning: updateJyGCHeadLinks called on unexplored object!");
-		JyNI_GC_ExploreObject(op);
+		/* Attempts to update are not necessarily good places to perform
+		 * object exploration. For now we refrain from it.
+		 */
+		//jputs("JyNI-Warning: updateJyGCHeadLinks called on unexplored object!");
+		//JyNI_GC_ExploreObject(op);
+		return GC_OBJECT_UNEXPLORED;
 	} else {
+		env(GC_OBJECT_JNIFAIL);
 		traverseproc trav;
 		if (PyType_CheckExact(op))// && !Py_TYPE((PyObject*) op)->tp_traverse)
 			trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
@@ -1942,6 +2023,7 @@ void updateJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 		trav(op, visit_updateLinks, &expl);
 		(*env)->CallIntMethod(env, destHead, traversableGCHeadClearLinksFromIndex, expl.pos);
 		(*env)->DeleteLocalRef(env, destHead);
+		return 0;
 	}
 }
 

@@ -139,6 +139,11 @@ public class JyList extends AbstractList<PyObject> implements TraversableGCHead,
 	}
 
 	@Override
+	public int insertLink(int index, JyGCHead link) {
+		return DefaultTraversableGCHead.insertLink(headLinks, index, link);
+	}
+
+	@Override
 	public int clearLink(int index) {
 		return DefaultTraversableGCHead.clearLink(headLinks, index);
 	}

@@ -208,4 +208,5 @@ def run2():
 	print "===="
 
 
-run1()
+run2()
+#System.getProperties().list(System.out)

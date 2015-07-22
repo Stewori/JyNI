@@ -67,6 +67,17 @@ public interface TraversableGCHead extends JyGCHead {
 	 * @return -2 if links == null, -1 for invalid index, 0 otherwise.
 	 */
 	public int setLink(int index, JyGCHead link);
+
+	/**
+	 * Do not call this method. It is for internal use and only
+	 * public because interfaces require this.
+	 *
+	 * In var-size case this operation is only supported if the
+	 * backend is a List. In other cases it is not supported at all.
+	 *
+	 * @return -2 if links == null, -1 for invalid index, 0 otherwise.
+	 */
+	public int insertLink(int index, JyGCHead link);
 	
 	/**
 	 * Do not call this method. It is for internal use and only

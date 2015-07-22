@@ -107,10 +107,10 @@ class TestJyNI_gc(unittest.TestCase):
 		wkl = WeakReference(l)
 		DemoExtension.argCountToString(l)
 		del l
-		self.assertNotEqual(wkl.get(), None)
+		self.assertIsNotNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
 		runGC()
-		self.assertEqual(wkl.get(), None)
+		self.assertIsNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		del wkl
 
@@ -120,14 +120,14 @@ class TestJyNI_gc(unittest.TestCase):
 		#We create weak reference to l to monitor collection by Java-GC:
 		wkl = WeakReference(l2)
 		DemoExtension.argCountToString(l2)
-		self.assertNotEqual(wkl.get(), None)
+		self.assertIsNotNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
 		runGC()
-		self.assertNotEqual(wkl.get(), None)
+		self.assertIsNotNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 3)
 		del l2
 		runGC()
-		self.assertEqual(wkl.get(), None)
+		self.assertIsNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		del wkl
 
@@ -138,15 +138,57 @@ class TestJyNI_gc(unittest.TestCase):
 		wkl = WeakReference(l)
 		DemoExtension.argCountToString(l)
 		del l
-		self.assertNotEqual(wkl.get(), None)
+		self.assertIsNotNone(wkl.get())
 		#monitor.listLeaks()
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 3)
 		runGC()
-		self.assertEqual(wkl.get(), None)
+		self.assertIsNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		#print ""
 		#monitor.listLeaks()
 		del wkl
+
+	def test_gc_list_modify_pre(self):
+		l = [0, "test1"]
+		d = {'a': 7, 'b': "test6"}
+		#We create weak reference to l to monitor collection by Java-GC:
+		wkl = WeakReference(l)
+		wkd = WeakReference(d)
+		l[0] = d
+		DemoExtension.argCountToString(l)
+		#l[0] = d
+		del d
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
+		runGC()
+		self.assertIsNotNone(wkl.get())
+		self.assertIsNotNone(wkd.get())
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 3)
+		del l
+		runGC()
+		self.assertIsNone(wkl.get())
+		self.assertIsNone(wkd.get())
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
+
+	def test_gc_list_modify_update(self):
+		l = [0, "test1"]
+		d = {'a': 7, 'b': "test6"}
+		#We create weak reference to l to monitor collection by Java-GC:
+		wkl = WeakReference(l)
+		wkd = WeakReference(d)
+		#l[0] = d
+		DemoExtension.argCountToString(l)
+		l[0] = d
+		del d
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
+		runGC()
+		self.assertIsNotNone(wkl.get())
+		self.assertIsNotNone(wkd.get())
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 3)
+		del l
+		runGC()
+		self.assertIsNone(wkl.get())
+		self.assertIsNone(wkd.get())
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 
 if __name__ == '__main__':
 	unittest.main()
