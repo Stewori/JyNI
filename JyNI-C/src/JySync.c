@@ -95,7 +95,7 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 			jputsLong(er);
 		}
 	}
-	JYNI_GC_TUPLE_EXPLORE(er);
+	//JYNI_GC_TUPLE_EXPLORE(er);
 	return er;
 }
 

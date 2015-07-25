@@ -346,6 +346,8 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
  * JyAttribute value pointer. Specify the JY_ATTR_VAR_SIZE-flag,
  * which tells JyNI to tidy up everything in the end (i.e. call free
  * for every element in the value-chain).
+ * Note that maintaining JGCHead and JyGCRefTmp as JyAttributes
+ * is a temporary solution and might be improved in future.
  * Currently the only possible attributes are the following:
  */
 extern const char* JyAttributePyChecksum;
@@ -357,6 +359,7 @@ extern const char* JyAttributeTypeName;
 extern const char* JyAttributeStringInterned;
 extern const char* JyAttributeSetEntry;
 extern const char* JyAttributeJyGCHead;
+extern const char* JyAttributeJyGCRefTmp;
 //extern const char* JyAttributeTruncateSize;
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1
 #define JY_ATTR_VAR_SIZE_FLAG_MASK 2
@@ -401,6 +404,11 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 //#define JyObject_IS_CPEERTYPE(o) (((JyObject *) o)->flags & JY_CPEER_FLAG_MASK) && (JyObject_IS_TYPE(o))
 #define JyObject_IS_CPEER(o) (((JyObject *) o)->flags & JY_CPEER_FLAG_MASK)
 #define JyNI_FROM_GC(o) ((PyObject *)(((PyGC_Head *)o)+1))
+
+//We determine mirror-mode by lack of truncate-flag.
+//This currently fails for PyFunction, so we treat it as special case for now.
+//Todo: Find better solution.
+#define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op))
 
 #define AS_JY(o) ((JyObject *)(  (PyObject_IS_GC(o)) ? _Py_AS_GC(o) : (o)  )-1)
 #define FROM_JY(o) ((JyObject_IS_GC(o)) ? JyNI_FROM_GC((((JyObject *)(o))+1)) : ((PyObject *)(((JyObject *)(o))+1)))

@@ -51,6 +51,16 @@
 //#include "eval_JyNI.h"
 #include "structmember_JyNI.h"
 
+/* JyNI-GC */
+#define func_code_gcindex     0
+#define func_globals_gcindex  1
+#define func_module_gcindex   2
+#define func_defaults_gcindex 3
+//#define func_doc_gcindex   -1
+//#define func_name_gcindex  -1
+//#define func_dict_gcindex  -1
+#define func_closure_gcindex  4
+
 PyObject *
 PyFunction_New(PyObject *code, PyObject *globals)
 {
@@ -168,6 +178,8 @@ PyFunction_SetDefaults(PyObject *op, PyObject *defaults)
 	}
 	Py_XDECREF(((PyFunctionObject *) op) -> func_defaults);
 	((PyFunctionObject *) op) -> func_defaults = defaults;
+	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), func_defaults_gcindex,
+			defaults, AS_JY_WITH_GC(defaults));
 
 	env(-1);
 	jobject jOp = JyNI_JythonPyObject_FromPyObject(op);
@@ -207,6 +219,8 @@ PyFunction_SetClosure(PyObject *op, PyObject *closure)
 	}
 	Py_XDECREF(((PyFunctionObject *) op) -> func_closure);
 	((PyFunctionObject *) op) -> func_closure = closure;
+	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), func_closure_gcindex,
+				closure, AS_JY_WITH_GC(closure));
 
 	env(-1);
 	jobject jOp = JyNI_JythonPyObject_FromPyObject(op);
@@ -347,6 +361,8 @@ func_set_code(PyFunctionObject *op, PyObject *value)
 	tmp = op->func_code;
 	Py_INCREF(value);
 	op->func_code = value;
+	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), func_code_gcindex,
+					value, AS_JY_NO_GC(value));
 	Py_DECREF(tmp);
 	return 0;
 }
@@ -435,6 +451,8 @@ func_set_defaults(PyFunctionObject *op, PyObject *value)
 	tmp = op->func_defaults;
 	Py_XINCREF(value);
 	op->func_defaults = value;
+	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), func_defaults_gcindex,
+						value, AS_JY_WITH_GC(value));
 	Py_XDECREF(tmp);
 	return 0;
 }

@@ -69,6 +69,21 @@ static int numfree = 0;
 #define TP_DESCR_GET(t) \
 	(PyType_HasFeature(t, Py_TPFLAGS_HAVE_CLASS) ? (t)->tp_descr_get : NULL)
 
+/* JyNI-GC */
+#define cl_bases_gcindex   0
+#define cl_dict_gcindex    1
+#define cl_name_gcindex    2
+#define cl_getattr_gcindex 3
+#define cl_setattr_gcindex 4
+#define cl_delattr_gcindex 5
+
+#define in_class_gcindex   0
+#define in_dict_gcindex    1
+
+#define im_func_gcindex    0
+#define im_self_gcindex    1
+#define im_class_gcindex   2
+
 /* Forward */
 static PyObject *class_lookup(PyClassObject *, PyObject *,
 							  PyClassObject **);
@@ -341,9 +356,15 @@ set_attr_slots(PyClassObject *c)
 {
 	PyClassObject *dummy;
 
-	set_slot(&c->cl_getattr, class_lookup(c, getattrstr, &dummy));
-	set_slot(&c->cl_setattr, class_lookup(c, setattrstr, &dummy));
-	set_slot(&c->cl_delattr, class_lookup(c, delattrstr, &dummy));
+	PyObject* getslt = class_lookup(c, getattrstr, &dummy);
+	PyObject* setslt = class_lookup(c, setattrstr, &dummy);
+	PyObject* delslt = class_lookup(c, delattrstr, &dummy);
+	set_slot(&c->cl_getattr, getslt);
+	set_slot(&c->cl_setattr, setslt);
+	set_slot(&c->cl_delattr, delslt);
+	updateJyGCHeadLink(c, AS_JY_WITH_GC(c), cl_getattr_gcindex, getslt, AS_JY_WITH_GC(getslt));
+	updateJyGCHeadLink(c, AS_JY_WITH_GC(c), cl_setattr_gcindex, setslt, AS_JY_WITH_GC(setslt));
+	updateJyGCHeadLink(c, AS_JY_WITH_GC(c), cl_delattr_gcindex, delslt, AS_JY_WITH_GC(delslt));
 }
 
 static char *
@@ -352,6 +373,7 @@ set_dict(PyClassObject *c, PyObject *v)
 	if (v == NULL || !PyDict_Check(v))
 		return "__dict__ must be a dictionary object";
 	set_slot(&c->cl_dict, v);
+	updateJyGCHeadLink(c, AS_JY_WITH_GC(c), cl_dict_gcindex, v, AS_JY_NO_GC(v));
 	set_attr_slots(c);
 	return "";
 }
@@ -372,6 +394,7 @@ set_bases(PyClassObject *c, PyObject *v)
 			return "a __bases__ item causes an inheritance cycle";
 	}
 	set_slot(&c->cl_bases, v);
+	updateJyGCHeadLink(c, AS_JY_WITH_GC(c), cl_bases_gcindex, v, AS_JY_WITH_GC(v));
 	set_attr_slots(c);
 	return "";
 }
@@ -384,6 +407,7 @@ set_name(PyClassObject *c, PyObject *v)
 	if (strlen(PyString_AS_STRING(v)) != (size_t)PyString_GET_SIZE(v))
 		return "__name__ must not contain null bytes";
 	set_slot(&c->cl_name, v);
+	updateJyGCHeadLink(c, AS_JY_WITH_GC(c), cl_name_gcindex, v, AS_JY_NO_GC(v));
 	return "";
 }
 
@@ -412,11 +436,18 @@ class_setattr(PyClassObject *op, PyObject *name, PyObject *v)
 			else if (strcmp(sname, "__name__") == 0)
 				err = set_name(op, v);
 			else if (strcmp(sname, "__getattr__") == 0)
+			{
 				set_slot(&op->cl_getattr, v);
-			else if (strcmp(sname, "__setattr__") == 0)
+				updateJyGCHeadLink(op, AS_JY_WITH_GC(op), cl_getattr_gcindex, v, AS_JY_WITH_GC(v));
+			} else if (strcmp(sname, "__setattr__") == 0)
+			{
 				set_slot(&op->cl_setattr, v);
-			else if (strcmp(sname, "__delattr__") == 0)
+				updateJyGCHeadLink(op, AS_JY_WITH_GC(op), cl_setattr_gcindex, v, AS_JY_WITH_GC(v));
+			} else if (strcmp(sname, "__delattr__") == 0)
+			{
 				set_slot(&op->cl_delattr, v);
+				updateJyGCHeadLink(op, AS_JY_WITH_GC(op), cl_delattr_gcindex, v, AS_JY_WITH_GC(v));
+			}
 			/* For the last three, we fall through to update the
 			   dictionary as well. */
 			if (err != NULL) {
@@ -908,6 +939,8 @@ instance_setattr(PyInstanceObject *inst, PyObject *name, PyObject *v)
 				tmp = inst->in_dict;
 				Py_INCREF(v);
 				inst->in_dict = v;
+				updateJyGCHeadLink(inst, AS_JY_WITH_GC(inst), in_dict_gcindex,
+						v, AS_JY_NO_GC(v));
 				Py_DECREF(tmp);
 				return 0;
 			}
@@ -925,6 +958,8 @@ instance_setattr(PyInstanceObject *inst, PyObject *name, PyObject *v)
 				tmp = (PyObject *)(inst->in_class);
 				Py_INCREF(v);
 				inst->in_class = (PyClassObject *)v;
+				updateJyGCHeadLink(inst, AS_JY_WITH_GC(inst), in_class_gcindex,
+						v, AS_JY_WITH_GC(v));
 				Py_DECREF(tmp);
 				return 0;
 			}

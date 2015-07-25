@@ -87,6 +87,8 @@ PyCell_Set(PyObject *op, PyObject *obj)
 	oldobj = PyCell_GET(op);
 	Py_XINCREF(obj);
 	PyCell_SET(op, obj);
+	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), 0,
+				obj, obj ? AS_JY(obj) : NULL);
 	Py_XDECREF(oldobj);
 	JyObject* jy = AS_JY_WITH_GC(op);
 	if (JyObject_IS_INITIALIZED(jy))

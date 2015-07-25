@@ -1747,10 +1747,8 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 			} else
 			{
 				//Use DefaultTraversableGCHead for now unless mirror mode.
-				//We determine mirror-mode by lack of truncate-flag.
 				result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_makeGCHead,
-						(jlong) op, !(jy->flags & JY_TRUNCATE_FLAG_MASK),
-						PyObject_IS_GC(op));
+						(jlong) op, JyObject_IS_MIRROR(op, jy), PyObject_IS_GC(op));
 				//jputs("Created JyGCHead for ");
 				//jputs(Py_TYPE(op)->tp_name);
 //				if (PyString_Check(op)) {
@@ -1923,6 +1921,11 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 int updateJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		PyObject* newItem, JyObject* newItemJy)
 {
+	if (!newItem) {
+		env(GC_OBJECT_JNIFAIL);
+		jobject gcHead = obtainJyGCHead(env, op, jy);
+		return (*env)->CallIntMethod(env, gcHead, traversableGCHeadClearLink, index);
+	}
 	if (IS_UNEXPLORED(op))
 	{
 		/* Attempts to update are not necessarily good places to perform

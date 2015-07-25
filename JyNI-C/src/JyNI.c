@@ -451,12 +451,14 @@ inline void initBuiltinTypes()
 	//Note: PyFunction is actually truncated in the sense that JyNI does not populate
 	//all fields. However no memory can be saved because e.g. the last field func_module
 	//is mirrored. This is needed e.g. for the PyFunction_GET_MODULE-macro.
-	//Todo: Make sure that gcmodule gets this right as a partly CStub. We will have to add
-	//a truncate-flag and full length as truncate_trailing. (So there is actually no
-	//truncation, but the flag tells gcmodule what to do.)
+	//In order to let the gcmodule get this right as a partly CStub, we still mark it
+	//truncated and supply full length as truncate_trailing.
 	builtinTypes[9].py_type = &PyFunction_Type;
 	builtinTypes[9].jy_class = pyFunctionClass;
 	//builtinTypes[9].flags = JY_GC_FIXED_SIZE; // 5 (8) links
+	//This variant currently fails with delegation. Todo: Fix this.
+	//builtinTypes[9].flags = JY_TRUNCATE_FLAG_MASK;
+	//builtinTypes[9].truncate_trailing = 9*sizeof(PyObject*);
 	builtinTypes[9].sync = malloc(sizeof(SyncFunctions));
 	//builtinTypes[9].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFunction_From_PyFunction;
 	//builtinTypes[9].sync->pyInit = (pyInitSync) JySync_Init_PyFunction_From_JyFunction;
@@ -2016,6 +2018,7 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 
 //Delegate in every case but CPeer-case:
 //(actually the preferred variant, but lets JyNITkinterTest fail for some reason)
+//For instance letting PyFunction be delegated causes Tkinter to fail. (Why?)
 
 /*
  * JY_DELEGATE:
