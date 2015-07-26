@@ -283,7 +283,7 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
 //	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
 //}
 
-jboolean isPreAllocatedJythonInt(jobject obj, jint value)
+static inline jboolean isPreAllocatedJythonInt(jobject obj, jint value)
 {
 	if (value < -NSMALLNEGINTSJYTHON || value >= NSMALLPOSINTSJYTHON)
 		return JNI_FALSE;

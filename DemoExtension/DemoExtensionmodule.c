@@ -135,6 +135,19 @@ listModifyTest(PyObject* self, PyObject* args)
 }
 
 PyObject*
+listSetIndex(PyObject* self, PyObject* args)
+{
+	PyObject* list = PyTuple_GET_ITEM(args, 0);
+	PyObject* index = PyTuple_GET_ITEM(args, 1);
+	PyObject* value = PyTuple_GET_ITEM(args, 2);
+	long i = PyInt_AS_LONG(index);
+	Py_XDECREF(PyList_GET_ITEM(list, i));
+	PyList_SET_ITEM(list, i, value);
+	//PyList_Append(list, PyString_FromString(appendText));
+	Py_RETURN_NONE;
+}
+
+PyObject*
 setTest(PyObject* self, PyObject* args)
 {
 	char* plumText = "plum";
@@ -233,6 +246,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
 	{"listReadTest", listReadTest, METH_VARARGS, "Prints out the strings from a three-string sequence."},
 	{"listModifyTest", listModifyTest, METH_VARARGS, "Modifies a list."},
+	{"listSetIndex", listSetIndex, METH_VARARGS, "Sets an element of a list to a new value."},
 	{"setTest", setTest, METH_VARARGS, "Performs some tests on a given PySet object."},
 	{"setPopTest", setPopTest, METH_VARARGS, "Pops the given number of elements from the set."},
 	{"printInt", printInt, METH_VARARGS, "Prints out the int and returns nothing."},

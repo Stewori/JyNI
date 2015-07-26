@@ -100,6 +100,8 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 	}
 
 	public static int setLink(Object links, int index, JyGCHead link) {
+//		System.out.println("setLink");
+//		System.out.println(index);
 		if (links == null) return -2;
 		if (links instanceof JyGCHead[]) {
 			JyGCHead[] ar = (JyGCHead[]) links;
@@ -108,7 +110,10 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			return 0;
 		} else if (links instanceof Iterable) {
 			if (links instanceof List) {
+//				System.out.println("Old length: "+((List<JyGCHead>) links).size());
+//				System.out.println("set list");
 				((List<JyGCHead>) links).set(index, link);
+//				System.out.println("New length: "+((List<JyGCHead>) links).size());
 				return 0;
 			} else if (links instanceof Collection) {
 				int result = clearLink(links, index);

@@ -2119,6 +2119,120 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 	 */
 }
 
+static int
+visit_refCheckDec(PyObject *op, void *arg)
+{
+	int pos = (int) JyNI_GetJyAttribute(AS_JY(op), JyAttributeJyGCRefTmp);
+	if (pos > 0)
+		--(((jint*) arg)[pos-1]);
+	return 0;
+}
+
+static int
+visit_refCheckInc(PyObject *op, void *arg)
+{
+	int pos = (int) JyNI_GetJyAttribute(AS_JY(op), JyAttributeJyGCRefTmp);
+	if (pos > 0)
+		++(((jint*) arg)[pos-1]);
+	return 0;
+}
+
+/*
+ * Note that one must be holding the GIL to call this method.
+ * Also, result won't contain actual refcount, but contains
+ * zero if no refs exist and >0 if at least one ref exists.
+ * The algorithm only looks for has/has not ref, but then does
+ * *not* investigate the exact count. This is sufficient to
+ * know what can be safely deleted and what needs to be explored
+ * again. Exact ref-count is trivially available via ob_refcnt.
+ */
+static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint* result) {
+	//JyAttributeJyGCRefTmp
+	int i;
+	//jint* refTmp;
+	//First we initialize refTmp-attributes with current object index
+	//and result with current refcount.
+//	jputs("Initial ref");
+	for (i = 0; i < size; ++i)
+	{
+//		if (PyObject_IS_GC(refPool[i]))
+//		{
+		result[i] = refPool[i]->ob_refcnt;
+		if (AS_JY(refPool[i])->flags & JY_CACHE_ETERNAL_FLAG_MASK)
+			--result[i];
+//		jputsLong(refPool[i]);
+//		jputsLong(result[i]);
+		JyNI_AddOrSetJyAttribute(AS_JY(refPool[i]), JyAttributeJyGCRefTmp, (void*) (i+1));
+//		}
+	}
+	//Now we decref the tmp-refcount copy of all referees.
+	for (i = 0; i < size; ++i)
+	{
+		if (PyObject_IS_GC(refPool[i]))
+		{
+//			jputs("DecTraverse:");
+//			jputsLong(refPool[i]);
+			Py_TYPE(refPool[i])->tp_traverse(refPool[i], (visitproc)visit_refCheckDec, result);
+		}
+	}
+//	jputs(__FUNCTION__);
+//	for (i = 0; i < size; ++i)
+//	{
+//		jputsLong(refPool[i]);
+//		jputsLong(result[i]);
+//	}
+//	jputs("");
+	jboolean graphInvalid = JNI_FALSE;
+	for (i = 0; i < size; ++i)
+	{
+		if (result[i] > 1)
+		{
+			graphInvalid = JNI_TRUE;
+			break;
+		} else if (result[i] < 1)
+			jputs("JyNI-Error: negative ref-count encountered!");
+	}
+	if (graphInvalid)
+	{
+		jputs("JyNI-Note: Invalid reference graph encountered!");
+		jint restoreStack[size];
+		jint restoreRefs[size];
+		int stackTop = 0;
+		for (i = 0; i < size; ++i)
+		{
+			if (result[i] > 1) restoreStack[stackTop++] = i;
+			restoreRefs[i] = 0;
+		}
+		while (stackTop)
+		{
+			for (i = 0; i < stackTop; ++i)
+			{
+				Py_TYPE(refPool[restoreStack[i]])->tp_traverse(refPool[restoreStack[i]],
+						(visitproc)visit_refCheckInc, restoreRefs);
+			}
+			stackTop = 0;
+			for (i = 0; i < size; ++i)
+			{
+				if (result[i] == 1 && restoreRefs > 0)
+				{
+					result[i] += restoreRefs[i];
+					restoreStack[stackTop++] = i;
+				}
+				restoreRefs[i] = 0;
+			}
+		}
+	}
+	for (i = 0; i < size; ++i)
+	{
+//		if (PyObject_IS_GC(refPool[i]))
+//		{
+		result[i] = refPool[i]->ob_refcnt;
+		JyNI_AddOrSetJyAttribute(AS_JY(refPool[i]), JyAttributeJyGCRefTmp, (void*) (-1));
+//		}
+	}
+	return graphInvalid;
+}
+
 /*
  * Class:     JyNI_JyNI
  * Method:    JyGC_clearNativeReferences
@@ -2131,23 +2245,27 @@ void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references
 	//Here we decref the associated native objects.
 	jsize size = (*env)->GetArrayLength(env, references);
 	jsize i;
+	PyObject* refPool[size];
+	jint graphResult[size];
 	jlong* arr = (*env)->GetLongArrayElements(env, references, NULL);
-
-	//We will add code here to check whether all references are
-	//self-contained and then break ref-cycles/free the entire graph.
-
-	for (i = 0; i < size; ++i) {
+	memcpy(refPool, arr, size*sizeof(PyObject*));
+	(*env)->ReleaseLongArrayElements(env, references, arr, JNI_ABORT);
+//	jputs(__FUNCTION__);
+	jboolean graphInvalid = checkReferenceGraph(refPool, size, graphResult);
+//	if (graphInvalid) jputs("Invalid graph!");
+//	else jputs("Valid graph :)");
+	for (i = 0; i < size; ++i)
+	{
 		//todo: implement a JyNI-compliant version of this stuff
 	//	assert(IS_TENTATIVELY_UNREACHABLE(op));
 	//	if (debug & DEBUG_SAVEALL) {
 	//		PyList_Append(garbage, op);
 	//	}
-		if (((PyObject*) arr[i])->ob_refcnt > 1 &&
-				(clear = Py_TYPE((PyObject*) arr[i])->tp_clear))
-			clear((PyObject*) arr[i]);
-		Py_DECREF((PyObject*) arr[i]);
+		if ((refPool[i])->ob_refcnt > 1 &&
+				(clear = Py_TYPE(refPool[i])->tp_clear))
+			clear(refPool[i]);
+		Py_DECREF(refPool[i]);
 	}
-	(*env)->ReleaseLongArrayElements(env, references, arr, JNI_ABORT);
 	LEAVE_JyNI
 }
 

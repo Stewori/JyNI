@@ -105,6 +105,7 @@ jobject JyList_set(JNIEnv *env, jclass class, jlong handle, jint index, jobject 
 	//PyList_SetItem((PyObject*) handle, index, op);
 	PyList_SET_ITEM((PyObject*) handle, index, op);
 	updateJyGCHeadLink((PyObject*) handle, AS_JY_WITH_GC((PyObject*) handle), index, op, AS_JY(op));
+	//updateJyGCHeadLinks((PyObject*) handle, AS_JY_WITH_GC((PyObject*) handle));
 	return old;
 }
 

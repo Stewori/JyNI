@@ -568,6 +568,7 @@ PyAPI_FUNC(void *) PyObject_RawRealloc(void *, size_t);
 PyAPI_FUNC(void) PyObject_RawFree(void *);
 
 /* JyNI-CG: */
+//some error-int-return constants:
 #define GC_OBJECT_UNEXPLORED  -4
 #define GC_OBJECT_NOHEAD      -5
 #define GC_OBJECT_INVALIDHEAD -6

@@ -96,11 +96,13 @@ class TestJyNI_gc(unittest.TestCase):
 		#JyWeakReferenceGC.monitorNativeCollection = False
 
 	def test_gc_doc(self):
+		#print "test_gc_doc"
 		doc = DemoExtension.argCountToString.__doc__
 		#monitor.listLeaks()
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 
 	def test_gc_list_cycle(self):
+		#print "test_gc_list_cycle"
 		l = (123, [0, "test1"])
 		l[1][0] = l
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -115,6 +117,7 @@ class TestJyNI_gc(unittest.TestCase):
 		del wkl
 
 	def test_gc_list_cycle2(self):
+		#print "test_gc_list_cycle2"
 		l2 = (127, [0, "test2"])
 		l2[1][0] = l2
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -132,6 +135,7 @@ class TestJyNI_gc(unittest.TestCase):
 		del wkl
 
 	def test_gc_dict_cycle(self):
+		#print "test_gc_dict_cycle"
 		l = (123, {'a': 0, 'b': "test3"})
 		l[1]['a'] = l
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -149,6 +153,7 @@ class TestJyNI_gc(unittest.TestCase):
 		del wkl
 
 	def test_gc_list_modify_pre(self):
+		#print "test_gc_list_modify_pre"
 		l = [0, "test1"]
 		d = {'a': 7, 'b': "test6"}
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -170,6 +175,7 @@ class TestJyNI_gc(unittest.TestCase):
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 
 	def test_gc_list_modify_update(self):
+		#print "test_gc_list_modify_update"
 		l = [0, "test1"]
 		d = {'a': 7, 'b': "test6"}
 		#We create weak reference to l to monitor collection by Java-GC:

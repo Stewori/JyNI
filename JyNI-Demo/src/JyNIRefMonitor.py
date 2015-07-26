@@ -56,9 +56,10 @@ def run1():
 	
 	#JyNI.JyRefMonitor_setMemDebugFlags(1)
 	#JyWeakReferenceGC.monitorNativeCollection = True
-	
-	l = (123,)# [0, "test"])
-	#l[1][0] = l
+
+	#l = (123,)
+	l = ([0, "test"],)
+	l[0][0] = l
 	#l = (123, {'a': 0, 'b': "test"})
 	#l[1]['a'] = l
 	#We create weak reference to l to monitor collection by Java-GC:
@@ -157,11 +158,12 @@ def run2():
 	# native call. Inserting it after the call tests PyList's capability to update
 	# the reference graph while inserting it before yields the should-be-result.
 	# If both variants lead to the same post-GC output, JyNI works fine.
+	#l[0] = d
 	DemoExtension.argCountToString(l)
 	l[0] = d
 	#print "argCountToString.__doc__-address: "+str(JyNI.lookupNativeHandle(DemoExtension.argCountToString.__doc__))
-	print "We access a method-doc as this used to cause problems with GC:"
-	print "    "+DemoExtension.argCountToString.__doc__
+	#print "We access a method-doc as this used to cause problems with GC:"
+	#print "    "+DemoExtension.argCountToString.__doc__
 	#print "Native static objects so far:"
 	#print JyNI.nativeStaticPyObjectHeads.keySet()
 	

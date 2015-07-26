@@ -541,6 +541,10 @@ public class JyReferenceMonitor {
 		}
 	}
 
+	public static ObjectLog getLog(long nativeReference) {
+		return nativeObjects.get(nativeReference);
+	}
+
 	public static void listImmortal() {
 		ArrayList<ObjectLog> tmp = new ArrayList<>(nativeObjects.values());
 		for (ObjectLog log: tmp) {

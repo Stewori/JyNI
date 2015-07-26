@@ -104,10 +104,13 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 				}
 				clearRefs = new long[refCache.size()];
 				pos = 0;
+				//System.out.println("Attempt native clear:");
 				for (JyWeakReferenceGC ref0: refCache) {
 					refList.remove(ref0);
 					JyReferenceMonitor.clearJyWeakRef(ref0.nativeRef);
 					clearRefs[pos++] = ref0.nativeRef;
+					//System.out.println("  "+JyReferenceMonitor.getLog(ref0.nativeRef));
+					//System.out.println("  "+ref0.nativeRef+" "+JyNI.lookupFromHandle(ref0.nativeRef));
 				}
 				refCache.clear();
 				if (monitorNativeCollection) {

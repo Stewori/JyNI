@@ -2459,7 +2459,12 @@ list_traverse(PyListObject *o, visitproc visit, void *arg)
 {
 	Py_ssize_t i;
 
-	for (i = Py_SIZE(o); --i >= 0; )
+	//for (i = Py_SIZE(o); --i >= 0; )
+	/* In JyNI, updating GC-heads by list-index would get
+	 * unnecessarily complicated if list is traversed in
+	 * reverse order.
+	 */
+	for (i = 0; i < Py_SIZE(o); ++i)
 		Py_VISIT(o->ob_item[i]);
 	return 0;
 }

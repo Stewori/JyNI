@@ -19,10 +19,11 @@ JAVA_HOME = /usr/lib/jvm/default-java
 #The symlink "default-java" does not exist on every system. If gnumake tells you that the header
 #jni.h is missing, please adjust JAVA_HOME appropriately. Example for Java 7, 64 bit:
 #JAVA_HOME = /usr/lib/jvm/java-7-openjdk-amd64
+PLATFORM = linux
 
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
-INCLUDES = -I./JyNI-C/include -I./JyNI-C/include/Python_JyNI -I./JyNI-Java/include -I$(JAVA_HOME)/include -I$(PY_INCLUDE)
+INCLUDES = -I./JyNI-C/include -I./JyNI-C/include/Python_JyNI -I./JyNI-Java/include -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM) -I$(PY_INCLUDE)
 CFLAGS = -fPIC -Wl,--add-stdcall-alias -c $(INCLUDES)
 LDFLAGS = -shared
 JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN)
