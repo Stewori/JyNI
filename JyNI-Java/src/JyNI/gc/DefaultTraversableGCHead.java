@@ -47,6 +47,7 @@ package JyNI.gc;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class DefaultTraversableGCHead implements TraversableGCHead {
@@ -258,5 +259,49 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			}
 		}
 		return 0;
+	}
+
+	public long[] toHandleArray() {
+		return toHandleArray(gclinks);
+	}
+
+	public static long[] toHandleArray(Object links) {
+		if (links != null) {
+			if (links instanceof JyGCHead[]) {
+				JyGCHead[] ar = (JyGCHead[]) links;
+				long[] result = new long[ar.length];
+				for (int i = 0; i < ar.length; ++i) {
+					if (ar[i] != null) {
+						result[i] = ar[i].getHandle();
+					}
+				}
+				return result;
+			} else if (links instanceof Iterable) {
+				Collection<JyGCHead> col;
+				if (links instanceof Collection) {
+					col = (Collection<JyGCHead>) links;
+				} else {
+					col = new ArrayList<JyGCHead>();
+					Iterable<JyGCHead> ar = (Iterable<JyGCHead>) links;
+					for (JyGCHead h: ar) {
+						col.add(h);
+					}
+				}
+				long[] result = new long[col.size()];
+				int pos = 0;
+				for (JyGCHead h: col) {
+					if (h != null) {
+						result[pos++] = h.getHandle();
+					} else
+						++pos;
+				}
+				return result;
+			} else if (links instanceof JyGCHead) {
+				long[] result = new long[1];
+				result[0] = ((JyGCHead) links).getHandle();
+				return result;
+			}
+		}
+		return null;
 	}
 }

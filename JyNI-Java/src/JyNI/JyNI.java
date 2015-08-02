@@ -47,6 +47,10 @@ package JyNI;
 
 import JyNI.gc.*;
 import org.python.core.*;
+import org.python.core.finalization.FinalizeTrigger;
+import org.python.modules.gc;
+import org.python.modules._weakref.GlobalRef;
+import org.python.modules.gc.CycleMarkAttr;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -150,7 +154,7 @@ public class JyNI {
 			}
 		} catch (Exception ex)
 		{
-			System.out.println("Ex in initializer: "+ex);
+			System.err.println("JyNI: Exception in initializer: "+ex);
 		}
 	}
 	
@@ -190,6 +194,7 @@ public class JyNI {
 	 * allocated on the C-stack rather than on the heap.
 	 */
 	public static HashMap<Long, JyGCHead> nativeStaticPyObjectHeads = new HashMap<>();
+	public static Set<Long> JyNICriticalObjectSet = new HashSet<>();
 
 	/*
 	 * This is to keep the backend of the native interned string-dict alive.
@@ -208,9 +213,12 @@ public class JyNI {
 	public static native void initJyNI(String JyNILibPath);
 	public static native void clearPyCPeer(long objectHandle, long refHandle);
 	public static native PyModule loadModule(String moduleName, String modulePath, long tstate);
-	//public static native JyObject callModuleFunctionGlobalReferenceMode(CPythonModule module, String name, JyObject self, JyObject... args);
-	//public static native PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject[] args, long[] handles);
-	//public static native PyObject callModuleFunctionLocalReferenceMode(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject... args);
+	//public static native JyObject callModuleFunctionGlobalReferenceMode(CPythonModule module, String name,
+			//JyObject self, JyObject... args);
+	//public static native PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name,
+			//PyObject self, long selfNativeHandle, PyObject[] args, long[] handles);
+	//public static native PyObject callModuleFunctionLocalReferenceMode(JyNIModule module, String name,
+			//PyObject self, long selfNativeHandle, PyObject... args);
 	public static native PyObject callPyCPeer(long peerHandle, PyObject args, PyObject kw, long tstate);
 	public static native PyObject getAttrString(long peerHandle, String name, long tstate);
 	public static native int setAttrString(long peerHandle, String name, PyObject value, long tstate);
@@ -241,7 +249,24 @@ public class JyNI {
 
 	//ReferenceMonitor- and GC-Stuff:
 	public static native void JyRefMonitor_setMemDebugFlags(int flags);
-	public static native void JyGC_clearNativeReferences(long[] nativeRefs, long tstate);
+
+	/**
+	 * Returns true, if the whole graph could be deleted (valid graph).
+	 * Returns false, if at least one object had to be resurrected (invalid graph).
+	 */
+	public static native boolean JyGC_clearNativeReferences(long[] nativeRefs, long tstate);
+
+	/**
+	 * Note that this method won't acquire the GIL, because it is only called while
+	 * JyGC_clearNativeReferences is holding the GIL for it anyway.
+	 * JyGC_clearNativeReferences waits (via waitForCStubs) until all CStub-finalizers
+	 * are done.
+	 */
+	public static native void JyGC_restoreCStubBackend(long handle, PyObject backend, JyGCHead newHead);
+	//public static native long[] JyGC_validateGCHead(long handle, long[] oldLinks);
+	public static native boolean JyGC_validateGCHead(long handle, long[] oldLinks);
+	public static native long[] JyGC_nativeTraverse(long handle);
+	//public static native JyGCHead JyGC_lookupGCHead(long handle);
 
 	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
 	/*public static PyObject PySet_pop(BaseSet set)
@@ -355,6 +380,14 @@ public class JyNI {
 		return nativeStaticPyObjectHeads.get(handle);
 	}
 
+	public static void addJyNICriticalObject(long handle) {
+		JyNICriticalObjectSet.add(handle);
+	}
+
+	public static void removeJyNICriticalObject(long handle) {
+		JyNICriticalObjectSet.remove(handle);
+	}
+
 	public static void setNativeHandle(PyObject object, long handle) {//, boolean keepAlive) {
 		//no WeakReferences needed here, because clearNativeHandle is always called
 		//when a corresponding PyObject on C-Side is deallocated
@@ -415,7 +448,7 @@ public class JyNI {
 
 	public static void clearNativeHandle(PyObject object) {
 		if (object == null) {
-			System.out.println("JyNI-Warning: clearNativeHandle called with null!");
+			System.err.println("JyNI-Warning: clearNativeHandle called with null!");
 			return;
 		}
 		//System.out.println("java clearNativeHandle:");
@@ -479,7 +512,7 @@ public class JyNI {
 		PyObject er = pss.modules.__finditem__(name);
 		if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
 		else {
-			System.out.println("No module found: "+name);
+			System.out.println("JyNI: No module found: "+name);
 			return null;
 		}
 	}
@@ -630,7 +663,7 @@ public class JyNI {
 	}
 	
 	public static void printPyLong(PyObject pl) {
-		System.out.println("printPyLong");
+		//System.out.println("printPyLong");
 		System.out.println(((PyLong) pl).getValue());
 	}
 	
@@ -770,8 +803,8 @@ public class JyNI {
 //			System.out.println("class: "+er.getClass());
 			return er;
 		} catch (Exception e) {
-			System.out.println("Could not obtain Exception: "+name);
-			System.out.println("Reason: "+e);
+			System.err.println("JyNI-Warning: Could not obtain Exception: "+name);
+			System.err.println("  Reason: "+e);
 			return null;
 		}
 	}
@@ -1038,5 +1071,259 @@ public class JyNI {
 	public static void jPrintInfo(Object val) {
 		System.out.println("Object: "+val);
 		System.out.println("Class: "+val.getClass());
+	}
+
+//---------gc-section-----------
+	/*
+	 * Stuff here is actually no public API, but partly
+	 * declared public for interaction with JyNI.gc-package.
+	 * Todo: Maybe move it to JyNI.-package and make it
+	 *       protected or package-scoped.
+	 */
+	public static final int JYNI_GC_CONFIRMED_FLAG = 1;
+	public static final int JYNI_GC_RESURRECTION_FLAG = 2;
+	public static final int JYNI_GC_LAST_CONFIRMATION_FLAG = 4;
+	//public static final int JYNI_GC_HANDLE_NO_CONFIRMATIONS = -1;
+
+	//Confirm deletion of C-Stubs:
+	static long[] confirmedDeletions, resurrections;
+	static int confirmationsUnconsumed = 0;
+	
+	private static void gcDeletionReport(long[] confirmed, long[] resurrected) {
+		boolean postProcess = false;
+
+		//some debug-info:
+		//System.out.println("gcDeletionReport");
+//		if (confirmed != null) {
+//			System.out.println("confirmed cstub deletions:");
+//			for (int i = 0; i < confirmed.length; ++i) {
+//				System.out.println("  "+confirmed[i]);
+//			}
+//		} else System.out.println("no confirmed cstub deletions");
+//		if (resurrected != null) {
+//			System.out.println("resurrections:");
+//			for (int i = 0; i < resurrected.length; ++i) {
+//				System.out.println("  "+resurrected[i]);
+//			}
+//		} else System.out.println("no cstub resurretions");
+		
+		synchronized (CStubGCHead.class) {
+			if (confirmationsUnconsumed > 0) {
+				/*
+				 * This might happen if gc-runs overlap (i.e. a gc-run overlaps the
+				 * finalization-phase of the previous one - depending on implementation
+				 * details this can happen or not), which should not (cannot?) happen in
+				 * usual operation, but maybe one can provoke it by calling System.gc in
+				 * high frequency. Just in case - maybe we just wait a bit if this
+				 * occurs (but release the monitor to let CStub-finalizers catch up).
+				 * Or it is due to a JyNI-bug. Both cases should be investigated, so we
+				 * notify the user:
+				 */
+				System.err.println("JyNI-warning: There are unconsumed gc-confirmations!");
+				while (confirmationsUnconsumed > 0) {
+					try {
+						CStubGCHead.class.wait();
+					} catch (InterruptedException ie) {}
+				}
+			}
+			confirmedDeletions = confirmed;
+			resurrections = resurrected;
+			confirmationsUnconsumed =
+					(confirmedDeletions == null ? 0 : confirmedDeletions.length) +
+					(resurrections == null ? 0 : resurrections.length);
+			if (confirmationsUnconsumed == 0)
+				postProcess = true;
+			else
+				CStubGCHead.class.notify();
+		}
+		//System.out.println("unconsumed: "+confirmationsUnconsumed);
+		if (postProcess) postProcessCStubGCCycle();
+	}
+
+	/**
+	 * Do not call this method, it is internal API.
+	 */
+	public static int consumeConfirmation(long handle) {
+		synchronized (CStubGCHead.class) {
+			while (confirmationsUnconsumed == 0) {
+				try {
+					//System.out.println("consumeConfirmation waiting... "+handle);
+					CStubGCHead.class.wait();
+				} catch(InterruptedException ie) {}
+			}
+			//System.out.println("consumeConfirmation resume "+handle);
+			int i;
+			if (confirmedDeletions != null) {
+				for (i = 0; i < confirmedDeletions.length; ++i) {
+					if (confirmedDeletions[i] == handle) {
+						int result = --confirmationsUnconsumed != 0 ?
+								JYNI_GC_CONFIRMED_FLAG :
+								(JYNI_GC_CONFIRMED_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
+						//System.out.println("consumeConfirmation "+handle+" is deletion");
+						CStubGCHead.class.notify();
+						return result;
+					}
+				}
+			}
+			if (resurrections != null) {
+				for (i = 0; i < resurrections.length; ++i) {
+					if (resurrections[i] == handle) {
+						CStubGCHead.class.notify();
+						int result = --confirmationsUnconsumed != 0 ?
+								(JYNI_GC_RESURRECTION_FLAG) :
+								(JYNI_GC_RESURRECTION_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
+						//System.out.println("consumeConfirmation "+handle+" is resurrection");
+						CStubGCHead.class.notify();
+						return result;
+					}
+				}
+			}
+			//System.out.println("consumeConfirmation "+handle+" not consumed anything");
+			return 0;
+		}
+	}
+
+	public static void waitForCStubs() {
+		synchronized (CStubGCHead.class) {
+			while (confirmationsUnconsumed > 0) {
+				try {
+					//System.out.println("waitForCStubs "+confirmationsUnconsumed);
+					CStubGCHead.class.wait();
+				} catch(InterruptedException ie) {}
+			}
+			//System.out.println("waitForCStubs done");
+		}
+	}
+
+	protected static class visitRestoreCStubReachables implements Visitproc {
+		static visitRestoreCStubReachables defaultInstance
+				= new visitRestoreCStubReachables();
+
+		Set<PyObject> alreadyExplored = new HashSet<>();
+		public Stack<PyObject> explorationStack = new Stack<>();
+		
+		public static void clear() {
+			defaultInstance.alreadyExplored.clear();
+		}
+
+		@Override
+		public int visit(PyObject object, Object arg) {
+			if (alreadyExplored.contains(object))
+				return 0;
+			if (continueCStubExplore(object)) {
+				explorationStack.push(object);
+			}
+			alreadyExplored.add(object);
+			CStubReachableRestore(object);
+			return 0;
+		}
+	}
+
+	protected static boolean continueCStubExplore(PyObject obj) {
+		if (JyNICriticalObjectSet.contains(obj)) return false;
+		if (!gc.isTraversable(obj)) return false;
+		long handle = lookupNativeHandle(obj);
+		JyWeakReferenceGC headRef = JyWeakReferenceGC.lookupJyGCHead(handle);
+		if (headRef == null) return true;
+		JyGCHead head = headRef.get();
+		return head == null || !(head instanceof CStubGCHead || head instanceof CStubSimpleGCHead);
+	}
+
+	protected static void CStubReachableRestore(PyObject obj) {
+		//System.out.println("Resotre: "+obj);
+		gc.abortDelayedFinalization(obj);
+		//gc.restoreFinalizer(obj); (done in abortDelayedFinalization)
+		gc.restoreWeakReferences(obj);
+	}
+
+	/**
+	 * Do not call this method, it is internal API.
+	 */
+	public static void CStubRestoreAllReachables(PyObject CStubBackend) {
+		CStubReachableRestore(CStubBackend);
+		if (gc.isTraversable(CStubBackend)) {
+			gc.traverse(CStubBackend, visitRestoreCStubReachables.defaultInstance, null);
+			while (!visitRestoreCStubReachables.defaultInstance.explorationStack.empty()) {
+				gc.traverse(visitRestoreCStubReachables.defaultInstance.explorationStack.pop(),
+						visitRestoreCStubReachables.defaultInstance, null);
+			}
+		}
+	}
+
+	/**
+	 * Do not call this method, it is internal API.
+	 */
+	public static void postProcessCStubGCCycle() {
+		/*
+		 * Note: This method is *not* triggered by gc-module postFinalization process.
+		 * Instead we know (do we?) from JyWeakReferenceGC how many CStub-finalizers
+		 * are expected.
+		 */
+		visitRestoreCStubReachables.clear();
+		//Should be done automatically:
+		//GlobalRef.processDelayedCallbacks();
+		//gc.notifyPostFinalization(); (maybe include this later)
+	}
+
+	/**
+	 * Do not call this method, it is internal API.
+	 */
+	public static void preProcessCStubGCCycle() {
+		/* We pretend to be another finalizer here ending in postProcessCStubGCCycle().
+		 * We can do that, because we know when the last CStub finalizer is processed.
+		 */
+		//gc.notifyPreFinalization(); (maybe include this later)
+		gc.removeJythonGCFlags(gc.FORCE_DELAYED_FINALIZATION);
+		//Here we care to repair the referenceGraph and to restore weak references.
+		//System.out.println("preProcessCStubGCCycle");
+		JyWeakReferenceGC headRef;
+		JyGCHead head;
+		boolean delayFinalization = false;
+		for (long handle: JyNICriticalObjectSet) {
+			//System.out.println("  "+handle);
+			headRef = JyWeakReferenceGC.lookupJyGCHead(handle);
+			/*
+			 * Evaluate JyGC_validateGCHead first, since it has the side-effect to
+			 * update the JyNI-critical's GCHead if necessary. This is also the reason
+			 * why we cannot break this loop on early success.
+			 */
+//			if (headRef == null) {
+//				System.out.println("unexplored!");
+//				//delayFinalization = JyGC_validateGCHead(handle, null) || delayFinalization;
+//			} else {
+			if (headRef == null) {
+				head = headRef.get();
+//				if (head == null) {
+//					System.out.println("j-deleted!");
+//				} else
+				if (head != null && head instanceof TraversableGCHead) {
+					delayFinalization = JyGC_validateGCHead(handle,
+							((TraversableGCHead) head).toHandleArray()) || delayFinalization;
+//					boolean tmp = JyGC_validateGCHead(handle,
+//							((TraversableGCHead) head).toHandleArray());
+//					delayFinalization = tmp || delayFinalization;
+//					if (tmp)
+//						System.out.println("check update repair: "+JyGC_validateGCHead(handle, ((TraversableGCHead) head).toHandleArray()));
+				} else System.err.println(
+						"JyNI-error: Encountered JyNI-critical with non-traversable JyGCHead!");
+			}
+		}
+		if (delayFinalization) {//enable delayed finalization in GC-module
+			//System.out.println("Force delayed finalization...");
+			gc.addJythonGCFlags(gc.FORCE_DELAYED_FINALIZATION);
+		}
+	}
+
+	protected static void suspendPyInstanceFinalizer(PyInstance inst) {
+		FinalizeTrigger ft =
+				   (FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
+		if (ft != null) ft.clear();
+	}
+
+	protected static void restorePyInstanceFinalizer(PyInstance inst) {
+		FinalizeTrigger ft =
+				   (FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
+		if (ft != null && (ft.flags & FinalizeTrigger.FINALIZED_FLAG) == 0) ft.trigger(inst);
+		else gc.restoreFinalizer(inst);
 	}
 }

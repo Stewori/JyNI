@@ -87,6 +87,9 @@ public class JyReferenceMonitor {
 
 	public static long startTime = System.currentTimeMillis();
 	public static HashMap<Long, ObjectLog> nativeObjects = new HashMap<>();
+	public static long lastClearRefTime = 0;
+	public static long lastGCRun = 0;
+	public static boolean lastClearGraphValid = false;
 
 	public static String actionToString(short action) {
 		StringBuilder result = new StringBuilder();
@@ -258,7 +261,7 @@ public class JyReferenceMonitor {
 		}
 
 		public void forceUpdatePyObject() {
-//			System.out.println("forceUpdatePyObject");//Free on non-allocated ref!
+			//System.out.println("forceUpdatePyObject "+nativeRef);//Free on non-allocated ref!
 //			System.out.println("Src-func: "+nativeAllocFunc);
 //			System.out.println("type: "+this.nativeType);
 			PyObject op = JyNI.lookupFromHandle(nativeRef);
@@ -276,9 +279,9 @@ public class JyReferenceMonitor {
 //				System.out.println("    "+line);
 //			}
 			if (obj != null) {
-				if (object != null && object.get() != obj) {
+				if (object != null && object.get() != null && object.get() != obj) {
 					throw new ObjectLogException(
-						"Log-Object error: Contradictionary PyObject: "+obj+" vs "+object.get(),
+						"Log-Object error: Contradictory PyObject: "+obj+" vs "+object.get(),
 						this, action, cMethod, line, cFile);
 				} else if (object == null) {
 					object = new WeakReference<>(obj);
@@ -287,7 +290,7 @@ public class JyReferenceMonitor {
 			if (nativeType != null) {
 				if (this.nativeType != null && !this.nativeType.equals(nativeType)) {
 					throw new ObjectLogException(
-						"Log-Type error: Contradictionary native type-strings!",
+						"Log-Type error: Contradictory native type-strings!",
 						this, action, cMethod, line, cFile);
 				} else {
 					this.nativeType = nativeType;
@@ -408,6 +411,19 @@ public class JyReferenceMonitor {
 		}
 	}
 
+	public static void notifyResurrect(long handle, PyObject obj) {
+		ObjectLog log = nativeObjects.get(handle);
+		if (log != null) {
+			// We keep this warning silent for now, since it appears to
+			// happen due to natural Java-GC-behavior.
+//			if (log.JyNIFree == 0) {
+//				System.out.println("Resurrection on non-deleted object!");
+//			}
+			log.JyNIFree = 0;
+			log.object = new WeakReference<>(obj);
+		}
+	}
+
 	public static void notifyJyNIFree(long handle) {
 		ObjectLog log = nativeObjects.get(handle);
 		if (log != null) {
@@ -415,7 +431,26 @@ public class JyReferenceMonitor {
 				System.out.println("JyNIFree already present!");
 			}
 			log.JyNIFree = System.currentTimeMillis();
+			//System.out.println("jnfr: "+log.JyNIFree);
 		}
+	}
+
+	public static void notifyGCRun() {
+		lastGCRun = System.currentTimeMillis();
+		//System.out.println("lgcr: "+lastGCRun);
+	}
+
+	public static void notifyClearReferences(long[] refs, boolean validGraph) {
+		lastClearRefTime = System.currentTimeMillis();
+		lastClearGraphValid = validGraph;
+//		for (long l: refs) {
+//			ObjectLog log = nativeObjects.get(l);
+//			if (log != null) {
+//				if (log.JyNIFree != 0) {
+//				}
+//				log.JyNIFree = System.currentTimeMillis();
+//			}
+//		}
 	}
 
 //	public static void addAction(short action, PyObject obj) {
@@ -509,7 +544,7 @@ public class JyReferenceMonitor {
 		ArrayList<ObjectLog> tmp = new ArrayList<>(nativeObjects.values());
 		boolean found = false;
 		for (ObjectLog log: tmp) {
-			if (log.JyNIFree != 0) {
+			if (log.JyNIFree != 0 && log.JyNIFree >= lastGCRun) {
 				if (!found) {
 					found = true;
 					System.out.println("Native delete-attempts:");

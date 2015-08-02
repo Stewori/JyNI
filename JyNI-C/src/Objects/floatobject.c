@@ -117,7 +117,7 @@ PyFloat_GetMin(void)
 	return DBL_MIN;
 }
 
-static PyTypeObject FloatInfoType = {0, 0, 0, 0, 0, 0};
+PyTypeObject FloatInfoType = {0, 0, 0, 0, 0, 0};
 
 PyDoc_STRVAR(floatinfo__doc__,
 "sys.float_info\n\

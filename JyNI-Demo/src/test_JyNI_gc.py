@@ -41,7 +41,7 @@
  * exception statement from your version.
 
 
-Created on 02.09.2014
+Created on 10.07.2015
 
 @author: Stefan Richthofer
 '''
@@ -73,6 +73,7 @@ sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
 import DemoExtension
 import unittest
 import time
+import weakref
 
 from JyNI import JyNI
 from JyNI import JyReferenceMonitor as monitor
@@ -195,6 +196,50 @@ class TestJyNI_gc(unittest.TestCase):
 		self.assertIsNone(wkl.get())
 		self.assertIsNone(wkd.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
+
+	def test_gc_list_modify_silent(self):
+		#print "test_gc_list_modify_silent"
+		l = [0, "test1"]
+		d = {'a': 7, 'b': "test6"}
+		wkl = WeakReference(l)
+		wkd = WeakReference(d)
+		wkl2 = weakref.ref(l)
+		wkd2 = weakref.ref(d)
+		self.assertIsNotNone(wkl.get())
+		self.assertIsNotNone(wkd.get())
+		self.assertIsNotNone(wkl2())
+		self.assertIsNotNone(wkd2())
+		DemoExtension.listSetIndex(l, 0, d)
+		del d
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
+		#print "run1"
+		runGC()
+		#print "run1 done"
+		self.assertFalse(monitor.lastClearGraphValid)
+		self.assertIsNotNone(wkl.get())
+		self.assertIsNone(wkd.get())
+		self.assertIsNotNone(wkl2())
+		self.assertIsNotNone(wkd2())
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 3)
+		self.assertIsNotNone(l[0])
+		self.assertEqual(len(l[0]), 2)
+		del l
+		#print "run2"
+		runGC()
+		#print "run2 done"
+		self.assertTrue(monitor.lastClearGraphValid)
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
+		self.assertIsNone(wkl2())
+		# For some reason resurrected objects persist one more
+		# gc-cycle in principle. So we have to run gc again before
+		# we can observe wkd2 to die. It is currently unclear whether
+		# this behavior is a JyNI-bug or natural Java-gc behavior,
+		# but for now (with some evidence) we assume the latter.
+		#print "run3"
+		runGC()
+		#print "run3 done"
+		self.assertIsNone(wkd2())
+
 
 if __name__ == '__main__':
 	unittest.main()

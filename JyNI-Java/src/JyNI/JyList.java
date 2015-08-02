@@ -159,6 +159,11 @@ public class JyList extends AbstractList<PyObject> implements TraversableGCHead,
 	}
 
 	@Override
+	public long[] toHandleArray() {
+		return DefaultTraversableGCHead.toHandleArray(headLinks);
+	}
+
+	@Override
 	public long getHandle() {
 		return backendHandle;
 	}

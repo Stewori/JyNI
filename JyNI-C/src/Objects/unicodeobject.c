@@ -4387,7 +4387,7 @@ encoding_map_dealloc(PyObject* o)
 }
 
 //JyNI-todo: Check how to deal with this type. Is there a Jython equivalent?
-static PyTypeObject EncodingMapType = {
+PyTypeObject EncodingMapType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"EncodingMap",          /*tp_name*/
 	sizeof(struct encoding_map),   /*tp_basicsize*/

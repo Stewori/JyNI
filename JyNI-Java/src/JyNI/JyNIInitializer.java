@@ -45,17 +45,39 @@
 
 package JyNI;
 
+import JyNI.gc.JyGCHead;
+import JyNI.gc.JyWeakReferenceGC;
+import JyNI.gc.JyNIFinalizeTriggerFactory;
 import java.util.Properties;
 import org.python.core.JythonInitializer;
 import org.python.core.PySystemState;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.util.PythonInterpreter;
+import org.python.modules.gc;
 
 public class JyNIInitializer implements JythonInitializer {
-	public void initialize(Properties preProperties, Properties postProperties, String[] argv, ClassLoader classLoader, ExtensiblePyObjectAdapter adapter)
+
+	static class SentinelFinalizer implements JyGCHead {
+		public SentinelFinalizer() {
+			new JyWeakReferenceGC(this);
+		}
+
+		protected void finalize() throws Throwable {
+			gc.notifyPreFinalization();
+			new SentinelFinalizer();
+			gc.notifyPostFinalization();
+		}
+
+		public long getHandle() {return 0;}
+	}
+
+	public void initialize(Properties preProperties, Properties postProperties, String[] argv,
+			ClassLoader classLoader, ExtensiblePyObjectAdapter adapter)
 	{
 		//System.out.println("Init JyNI...");
-		PySystemState initState = PySystemState.doInitialize(preProperties, postProperties, argv, classLoader, adapter);
+		PySystemState initState = PySystemState.doInitialize(preProperties,
+				postProperties, argv, classLoader, adapter);
 		//add the JyNI-Importer to list of import hooks:
 		initState.path_hooks.append(new JyNIImporter());
 
@@ -71,6 +93,12 @@ public class JyNIInitializer implements JythonInitializer {
 		pint.exec("sys.setdlopenflags = setdlopenflags");
 		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
 		pint.cleanup();
+		FinalizeTrigger.factory = new JyNIFinalizeTriggerFactory();
+		new SentinelFinalizer();
+		gc.addJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS);
+		gc.registerPreFinalizationProcess(new Runnable(){
+				public void run() {JyNI.preProcessCStubGCCycle();}});
 		//System.out.println("Init JyNI done");
+		
 	}
 }

@@ -56,19 +56,19 @@
  */
 
 #include <JyNI_JyNI.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+//#include <sys/types.h>
+//#include <sys/stat.h>
 //#include <stdio.h>
 #include <string.h>
 
-#if defined(__NetBSD__)
-#include <sys/param.h>
-#if (NetBSD < 199712)
-#include <nlist.h>
-#include <link.h>
-#define dlerror() "error in dynamic linking"
-#endif
-#endif /* NetBSD */
+//#if defined(__NetBSD__)
+//#include <sys/param.h>
+//#if (NetBSD < 199712)
+//#include <nlist.h>
+//#include <link.h>
+//#define dlerror() "error in dynamic linking"
+//#endif
+//#endif /* NetBSD */
 
 #include <dlfcn.h>
 
@@ -103,7 +103,11 @@ jobject (*JyList_remove)(JNIEnv*, jclass, jlong, jint);
 void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
 
 void (*JyRefMonitor_setMemDebugFlags)(JNIEnv*, jclass, jint);
-void (*JyGC_clearNativeReferences)(JNIEnv*, jclass, jlongArray, jlong);
+jboolean (*JyGC_clearNativeReferences)(JNIEnv*, jclass, jlongArray, jlong);
+void (*JyGC_restoreCStubBackend)(JNIEnv*, jclass, jlong, jobject, jobject);
+//jlongArray (*JyGC_validateGCHead)(JNIEnv*, jclass, jlong, jlongArray);
+jboolean (*JyGC_validateGCHead)(JNIEnv*, jclass, jlong, jlongArray);
+jlongArray (*JyGC_nativeTraverse)(JNIEnv*, jclass, jlong);
 //void JyNI_unload(JavaVM *jvm);
 
 
@@ -187,6 +191,9 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 
 	*(void **) (&JyRefMonitor_setMemDebugFlags) = dlsym(JyNIHandle, "JyRefMonitor_setMemDebugFlags");
 	*(void **) (&JyGC_clearNativeReferences) = dlsym(JyNIHandle, "JyGC_clearNativeReferences");
+	*(void **) (&JyGC_restoreCStubBackend) = dlsym(JyNIHandle, "JyGC_restoreCStubBackend");
+	*(void **) (&JyGC_validateGCHead) = dlsym(JyNIHandle, "JyGC_validateGCHead");
+	*(void **) (&JyGC_nativeTraverse) = dlsym(JyNIHandle, "JyGC_nativeTraverse");
 
 	jint result = (*JyNIInit)(java);
 	if (result != JNI_VERSION_1_2) puts("Init-result indicates error!");
@@ -336,7 +343,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_clearNativeThreadState
  * Method:    JyList_get
  * Signature: (JI)Lorg/python/core/PyObject;
  */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1get(JNIEnv *env, jclass class, jlong handle, jint index)
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1get(JNIEnv *env, jclass class,
+		jlong handle, jint index)
 {
 	return (*JyList_get)(env, class, handle, index);
 }
@@ -356,7 +364,8 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyList_1size(JNIEnv *env, jclass class, jl
  * Method:    JyList_set
  * Signature: (JILorg/python/core/PyObject;J)Lorg/python/core/PyObject;
  */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1set(JNIEnv *env, jclass class, jlong handle, jint index, jobject obj, jlong pyObj)
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1set(JNIEnv *env, jclass class,
+		jlong handle, jint index, jobject obj, jlong pyObj)
 {
 	return (*JyList_set)(env, class, handle, index, obj, pyObj);
 }
@@ -366,7 +375,8 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1set(JNIEnv *env, jclass class, 
  * Method:    JyList_add
  * Signature: (JILorg/python/core/PyObject;J)V
  */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JyList_1add(JNIEnv *env, jclass class, jlong handle, jint index, jobject obj, jlong pyObj)
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyList_1add(JNIEnv *env, jclass class,
+		jlong handle, jint index, jobject obj, jlong pyObj)
 {
 	(*JyList_add)(env, class, handle, index, obj, pyObj);
 }
@@ -376,7 +386,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JyList_1add(JNIEnv *env, jclass class, jlo
  * Method:    JyList_remove
  * Signature: (JI)Lorg/python/core/PyObject;
  */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove(JNIEnv *env, jclass class, jlong handle, jint index)
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove(JNIEnv *env, jclass class,
+		jlong handle, jint index)
 {
 	return (*JyList_remove)(env, class, handle, index);
 }
@@ -386,7 +397,8 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove(JNIEnv *env, jclass clas
  * Method:    JySet_putSize
  * Signature: (JI)V
  */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize(JNIEnv *env, jclass class, jlong handle, jint size)
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize(JNIEnv *env, jclass class,
+		jlong handle, jint size)
 {
 	(*JySet_putSize)(env, class, handle, size);
 }
@@ -396,7 +408,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize(JNIEnv *env, jclass class, 
  * Method:    JyRefMonitor_setMemDebugFlags
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags(JNIEnv *env, jclass class, jint flags)
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags(JNIEnv *env,
+		jclass class, jint flags)
 {
 	(*JyRefMonitor_setMemDebugFlags)(env, class, flags);
 }
@@ -404,11 +417,12 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags(JNIEnv *env
 /*
  * Class:     JyNI_JyNI
  * Method:    JyGC_clearNativeReferences
- * Signature: ([JJ)V
+ * Signature: ([JJ)Z
  */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JyGC_1clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate)
+JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyGC_1clearNativeReferences(JNIEnv *env,
+		jclass class, jlongArray references, jlong tstate)
 {
-	(*JyGC_clearNativeReferences)(env, class, references, tstate);
+	return (*JyGC_clearNativeReferences)(env, class, references, tstate);
 }
 
 /*
@@ -439,4 +453,44 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_currentNativeRefCount(JNIEnv *env, jclass 
 JNIEXPORT jstring JNICALL Java_JyNI_JyNI_getNativeTypeName(JNIEnv *env, jclass class, jlong handle)
 {
 	return JyNIgetNativeTypeName(env, class, handle);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_restoreCStubBackend
+ * Signature: (JLorg/python/core/PyObject;LJyNI/gc/JyGCHead;)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyGC_1restoreCStubBackend(JNIEnv *env, jclass class,
+		jlong handle, jobject backend, jobject newHead)
+{
+	JyGC_restoreCStubBackend(env, class, handle, backend, newHead);
+}
+
+///*
+// * Class:     JyNI_JyNI
+// * Method:    JyGC_validateGCHead
+// * Signature: (J[J)[J
+// */
+//JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1validateGCHead(JNIEnv *env, jclass class,
+//		jlong handle, jlongArray oldLinks)
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_validateGCHead
+ * Signature: (J[J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyGC_1validateGCHead(JNIEnv *env, jclass class,
+		jlong handle, jlongArray oldLinks)
+{
+	return JyGC_validateGCHead(env, class, handle, oldLinks);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_nativeTraverse
+ * Signature: (J)[J
+ */
+JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse(JNIEnv *env, jclass class,
+		jlong handle)
+{
+	return JyGC_nativeTraverse(env, class, handle);
 }

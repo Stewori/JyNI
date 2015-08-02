@@ -105,4 +105,6 @@ public interface TraversableGCHead extends JyGCHead {
 	 */
 	public int clearLinksFromIndex(int startIndex);
 	public int jyTraverse(JyVisitproc visit, Object arg);
+
+	public long[] toHandleArray();
 }

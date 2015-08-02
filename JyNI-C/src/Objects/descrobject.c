@@ -473,7 +473,7 @@ descr_traverse(PyObject *self, visitproc visit, void *arg)
 	return 0;
 }
 
-static PyTypeObject PyMethodDescr_Type = {
+PyTypeObject PyMethodDescr_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"method_descriptor",
 	sizeof(PyMethodDescrObject),
@@ -511,7 +511,7 @@ static PyTypeObject PyMethodDescr_Type = {
 };
 
 /* This is for METH_CLASS in C, not for "f = classmethod(f)" in Python! */
-static PyTypeObject PyClassMethodDescr_Type = {
+PyTypeObject PyClassMethodDescr_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"classmethod_descriptor",
 	sizeof(PyMethodDescrObject),
@@ -1107,7 +1107,7 @@ wrapper_traverse(PyObject *self, visitproc visit, void *arg)
 	return 0;
 }
 
-static PyTypeObject wrappertype = {
+PyTypeObject wrappertype = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"method-wrapper",                           /* tp_name */
 	sizeof(wrapperobject),                      /* tp_basicsize */

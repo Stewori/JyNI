@@ -25,6 +25,12 @@ extern "C" {
 #define JyNI_JyNI_RTLD_NODELETE 4096L
 #undef JyNI_JyNI_RTLD_JyNI_DEFAULT
 #define JyNI_JyNI_RTLD_JyNI_DEFAULT 257L
+#undef JyNI_JyNI_JYNI_GC_CONFIRMED_FLAG
+#define JyNI_JyNI_JYNI_GC_CONFIRMED_FLAG 1L
+#undef JyNI_JyNI_JYNI_GC_RESURRECTION_FLAG
+#define JyNI_JyNI_JYNI_GC_RESURRECTION_FLAG 2L
+#undef JyNI_JyNI_JYNI_GC_LAST_CONFIRMATION_FLAG
+#define JyNI_JyNI_JYNI_GC_LAST_CONFIRMATION_FLAG 4L
 /*
  * Class:     JyNI_JyNI
  * Method:    initJyNI
@@ -220,10 +226,34 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags
 /*
  * Class:     JyNI_JyNI
  * Method:    JyGC_clearNativeReferences
- * Signature: ([JJ)V
+ * Signature: ([JJ)Z
  */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JyGC_1clearNativeReferences
+JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyGC_1clearNativeReferences
   (JNIEnv *, jclass, jlongArray, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_restoreCStubBackend
+ * Signature: (JLorg/python/core/PyObject;LJyNI/gc/JyGCHead;)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyGC_1restoreCStubBackend
+  (JNIEnv *, jclass, jlong, jobject, jobject);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_validateGCHead
+ * Signature: (J[J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyGC_1validateGCHead
+  (JNIEnv *, jclass, jlong, jlongArray);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_nativeTraverse
+ * Signature: (J)[J
+ */
+JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse
+  (JNIEnv *, jclass, jlong);
 
 #ifdef __cplusplus
 }

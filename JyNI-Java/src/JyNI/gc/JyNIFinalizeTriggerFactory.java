@@ -42,36 +42,36 @@
  * exception statement from your version.
  */
 
-
 package JyNI.gc;
 
-//import org.python.core.PyObject;
+import JyNI.JyNI;
+import org.python.core.PyObject;
+import org.python.core.PyInstance;
+import org.python.core.finalization.*;
 
-/**
- * Intended for use with native non-GC PyObjects in GIL-free mode.
- *
- * @author Stefan Richthofer
- */
-public class SimpleGCHead implements JyGCHead {//PyObjectGCHead {
-	protected long handle;
-	//protected PyObject object;
+public class JyNIFinalizeTriggerFactory implements FinalizeTriggerFactory {
 
-	public SimpleGCHead(long handle) {
-		this.handle = handle;
+	static class JyNIFinalizeTrigger extends FinalizeTrigger {
+		protected JyNIFinalizeTrigger(PyObject obj) {
+			super(obj);
+		}
 	}
 
 	@Override
-	public long getHandle() {
-		return handle;
+	public FinalizeTrigger makeTrigger(PyObject toFinalize) {
+		FinalizeTrigger result = new JyNIFinalizeTrigger(toFinalize);
+		if (toFinalize instanceof PyInstance) {
+			if (JyNI.lookupNativeHandle(toFinalize) != 0)
+			/*
+			 * In this case we deactivate the trigger, because the native
+			 * object is responsible for finalization on its dealloc-method.
+			 * If the Java-object toFinalize is still valid and alive when
+			 * its native counter-part dies, the native object detects this
+			 * and won't perform finalization, but instead reactivates this
+			 * finalizeTrigger.
+			 */
+				result.clear();
+		}
+		return result;
 	}
-
-	/*
-	public SimpleGCHead(long handle, PyObject object) {
-		this.handle = handle;
-		this.object = object;
-	}
-
-	public PyObject getPyObject() {
-		return object;
-	}*/
 }

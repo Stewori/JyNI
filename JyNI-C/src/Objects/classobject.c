@@ -721,38 +721,46 @@ instance_dealloc(register PyInstanceObject *inst)
 	static PyObject *delstr;
 
 	_JyNI_GC_UNTRACK(inst);
-	if (inst->in_weakreflist != NULL)
-		PyObject_ClearWeakRefs((PyObject *) inst);
 
-	/* Temporarily resurrect the object. */
-	assert(inst->ob_type == &PyInstance_Type);
-	assert(inst->ob_refcnt == 0);
-	inst->ob_refcnt = 1;
+	env();
+	JyObject* jy = AS_JY_WITH_GC(inst);
+	if (JyObject_IS_INITIALIZED(jy) && !(*env)->IsSameObject(env, jy->jy, NULL))
+	{
+		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_restorePyInstanceFinalizer, jy->jy);
+	} else
+	{
+//		if (inst->in_weakreflist != NULL)
+//				PyObject_ClearWeakRefs((PyObject *) inst);
 
-	/* Save the current exception, if any. */
-	PyErr_Fetch(&error_type, &error_value, &error_traceback);
-	/* Execute __del__ method, if any. */
-	if (delstr == NULL) {
-		delstr = PyString_InternFromString("__del__");
-		if (delstr == NULL)
-			PyErr_WriteUnraisable((PyObject*)inst);
-	}
-	if (delstr && (del = instance_getattr2(inst, delstr)) != NULL) {
-		PyObject *res = PyEval_CallObject(del, (PyObject *)NULL);
-		if (res == NULL)
-			PyErr_WriteUnraisable(del);
-		else
-			Py_DECREF(res);
-		Py_DECREF(del);
-	}
-	/* Restore the saved exception. */
-	PyErr_Restore(error_type, error_value, error_traceback);
+		/* Temporarily resurrect the object. */
+		assert(inst->ob_type == &PyInstance_Type);
+		assert(inst->ob_refcnt == 0);
+		inst->ob_refcnt = 1;
 
-	/* Undo the temporary resurrection; can't use DECREF here, it would
-	 * cause a recursive call.
-	 */
-	assert(inst->ob_refcnt > 0);
-	if (--inst->ob_refcnt == 0) {
+		/* Save the current exception, if any. */
+		PyErr_Fetch(&error_type, &error_value, &error_traceback);
+		/* Execute __del__ method, if any. */
+		if (delstr == NULL) {
+			delstr = PyString_InternFromString("__del__");
+			if (delstr == NULL)
+				PyErr_WriteUnraisable((PyObject*)inst);
+		}
+		if (delstr && (del = instance_getattr2(inst, delstr)) != NULL) {
+			PyObject *res = PyEval_CallObject(del, (PyObject*) NULL);
+			if (res == NULL)
+				PyErr_WriteUnraisable(del);
+			else
+				Py_DECREF(res);
+			Py_DECREF(del);
+		}
+		/* Restore the saved exception. */
+		PyErr_Restore(error_type, error_value, error_traceback);
+
+		/* Undo the temporary resurrection; can't use DECREF here, it would
+		 * cause a recursive call.
+		 */
+		assert(inst->ob_refcnt > 0);
+		if (--inst->ob_refcnt == 0) {
 
 		/* New weakrefs could be created during the finalizer call.
 			If this occurs, clear them out without calling their
@@ -764,31 +772,41 @@ instance_dealloc(register PyInstanceObject *inst)
 //                              (inst->in_weakreflist));
 //      }
 
-		Py_DECREF(inst->in_class);
-		Py_XDECREF(inst->in_dict);
-		PyObject_GC_Del(inst);
-	}
-	else {
-		Py_ssize_t refcnt = inst->ob_refcnt;
-		/* __del__ resurrected it!  Make it look like the original
-		 * Py_DECREF never happened.
-		 */
-		_Py_NewReference((PyObject *)inst);
-		inst->ob_refcnt = refcnt;
-		_JyNI_GC_TRACK(inst);
-		/* If Py_REF_DEBUG, _Py_NewReference bumped _Py_RefTotal, so
-		 * we need to undo that. */
-		_Py_DEC_REFTOTAL;
-		/* If Py_TRACE_REFS, _Py_NewReference re-added self to the
-		 * object chain, so no more to do there.
-		 * If COUNT_ALLOCS, the original decref bumped tp_frees, and
-		 * _Py_NewReference bumped tp_allocs: both of those need to be
-		 * undone.
-		 */
-#ifdef COUNT_ALLOCS
-		--inst->ob_type->tp_frees;
-		--inst->ob_type->tp_allocs;
-#endif
+			Py_DECREF(inst->in_class);
+			Py_XDECREF(inst->in_dict);
+			PyObject_GC_Del(inst);
+		}
+		else {
+			/*
+			 * JyNI-note:
+			 * With JyNI this brach is unlikely to happen. The __del__
+			 * method would be processed on Java-side and if this
+			 * instance was resurrected, this would be as a Java-object.
+			 * If needed on native side, this Java object would simply
+			 * be converted again. Todo: Test this scenario and take care
+			 * for flags, id etc.
+			 */
+			Py_ssize_t refcnt = inst->ob_refcnt;
+			/* __del__ resurrected it!  Make it look like the original
+			 * Py_DECREF never happened.
+			 */
+			_Py_NewReference((PyObject *)inst);
+			inst->ob_refcnt = refcnt;
+			_JyNI_GC_TRACK(inst);
+			/* If Py_REF_DEBUG, _Py_NewReference bumped _Py_RefTotal, so
+			 * we need to undo that. */
+			_Py_DEC_REFTOTAL;
+			/* If Py_TRACE_REFS, _Py_NewReference re-added self to the
+			 * object chain, so no more to do there.
+			 * If COUNT_ALLOCS, the original decref bumped tp_frees, and
+			 * _Py_NewReference bumped tp_allocs: both of those need to be
+			 * undone.
+			 */
+	#ifdef COUNT_ALLOCS
+			--inst->ob_type->tp_frees;
+			--inst->ob_type->tp_allocs;
+	#endif
+		}
 	}
 }
 

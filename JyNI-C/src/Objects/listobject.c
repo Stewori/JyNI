@@ -1968,7 +1968,7 @@ sortwrapper_richcompare(sortwrapperobject *, sortwrapperobject *, int);
 static void
 sortwrapper_dealloc(sortwrapperobject *);
 
-static PyTypeObject sortwrapper_type = {
+PyTypeObject sortwrapper_type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"sortwrapper",                          /* tp_name */
 	sizeof(sortwrapperobject),              /* tp_basicsize */
@@ -2087,7 +2087,7 @@ cmpwrapper_call(cmpwrapperobject *co, PyObject *args, PyObject *kwds)
 
 PyDoc_STRVAR(cmpwrapper_doc, "cmp() wrapper for sort with custom keys.");
 
-static PyTypeObject cmpwrapper_type = {
+PyTypeObject cmpwrapper_type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"cmpwrapper",							   /* tp_name */
 	sizeof(cmpwrapperobject),				   /* tp_basicsize */

@@ -4400,7 +4400,7 @@ PyTypeObject PyLong_Type = {
 	PyObject_Free,                              /* tp_free */
 };
 
-static PyTypeObject Long_InfoType;
+PyTypeObject Long_InfoType;
 
 PyDoc_STRVAR(long_info__doc__,
 "sys.long_info\n\

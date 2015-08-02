@@ -205,6 +205,9 @@
 #define Is_StaticTypeObject(pyObject) \
 	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))
 
+#define Is_JyNICriticalType(tp) \
+	(tp == &PyList_Type || tp == &PyCell_Type || !JyNI_IsBuiltinPyType(tp))
+
 #define Has_Dealloc(pyObject) \
 	(Py_TYPE(pyObject)->tp_dealloc)
 
@@ -398,7 +401,8 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 
 #define JyObject_IS_GC(o) (((JyObject *) o)->flags & JY_GC_FLAG_MASK)
 #define JyObject_IS_INITIALIZED(o) (((JyObject *) o)->flags & JY_INITIALIZED_FLAG_MASK)
-#define JyObject_IS_TRUNCATED(o) (((JyObject *) o)->flags & JY_TRUNCATE_FLAG_MASK)
+#define JyObject_IS_TRUNCATED(o) ((((JyObject *) o)->flags & JY_TRUNCATE_FLAG_MASK) || PyFunction_Check(FROM_JY(o)))
+#define PyObject_IS_TRUNCATED(o) ((AS_JY(o)->flags & JY_TRUNCATE_FLAG_MASK) || PyFunction_Check(o))
 //#define JyObject_IS_TYPE(o) ((JyObject *) o)->flags & JY_TYPE_FLAG_MASK
 //#define JyObject_IS_CPEER(o) (JyObject_IS_TYPE(o) == 0) && (((JyObject *) o)->flags & JY_CPEER_FLAG_MASK)
 //#define JyObject_IS_CPEERTYPE(o) (((JyObject *) o)->flags & JY_CPEER_FLAG_MASK) && (JyObject_IS_TYPE(o))
@@ -448,7 +452,11 @@ jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong t
 jobject JyNIlookupFromHandle(JNIEnv *env, jclass class, jlong handle);
 jint JyNIcurrentNativeRefCount(JNIEnv *env, jclass class, jlong handle);
 //In gcmodule (declared here to preserve original gcmodule.h):
-void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate);
+jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate);
+void JyGC_restoreCStubBackend(JNIEnv *env, jclass class, jlong handle, jobject backend, jobject newHead);
+//jlongArray JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks);
+jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks);
+jlongArray JyGC_nativeTraverse(JNIEnv *env, jclass class, jlong handle);
 
 #define builtinTypeCount 46
 extern TypeMapEntry builtinTypes[builtinTypeCount];
@@ -469,9 +477,15 @@ extern PyTypeObject PyTupleIter_Type; /* jython uses PyFastSequenceIter. */
 extern PyTypeObject PyListIter_Type; /* jython uses PyFastSequenceIter. */
 extern PyTypeObject PyListRevIter_Type; /* jython uses PyReversedSequenceIter. */
 extern PyTypeObject PySetIter_Type; /* jython uses inline subclass of PyIterator. */
-//extern PyTypeObject PyMethodDescr_Type;
-//extern PyTypeObject PyClassMethodDescr_Type;
+extern PyTypeObject PyMethodDescr_Type;
+extern PyTypeObject PyClassMethodDescr_Type;
 extern PyTypeObject PyTraceBack_Type;
+extern PyTypeObject Long_InfoType;
+extern PyTypeObject FloatInfoType;
+extern PyTypeObject EncodingMapType;
+extern PyTypeObject wrappertype;
+extern PyTypeObject cmpwrapper_type;
+extern PyTypeObject sortwrapper_type;
 
 /* Type-Lookup: */
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type);
@@ -706,6 +720,12 @@ extern jmethodID JyNI_jPrintHash;
 //extern jmethodID JyNIPySet_pop;
 extern jmethodID JyNI_makeGCHead;
 extern jmethodID JyNI_makeStaticGCHead;
+extern jmethodID JyNI_gcDeletionReport;
+extern jmethodID JyNI_waitForCStubs;
+extern jmethodID JyNI_addJyNICriticalObject;
+extern jmethodID JyNI_removeJyNICriticalObject;
+extern jmethodID JyNI_suspendPyInstanceFinalizer;
+extern jmethodID JyNI_restorePyInstanceFinalizer;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;

@@ -2194,39 +2194,51 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 	}
 	if (graphInvalid)
 	{
-		jputs("JyNI-Note: Invalid reference graph encountered!");
+		//jputs("JyNI-Note: Invalid reference graph encountered!");
 		jint restoreStack[size];
 		jint restoreRefs[size];
 		int stackTop = 0;
+		//jputsLong(__LINE__);
 		for (i = 0; i < size; ++i)
 		{
-			if (result[i] > 1) restoreStack[stackTop++] = i;
+			if (result[i] > 1 && PyObject_IS_GC(refPool[i]))
+				restoreStack[stackTop++] = i;
 			restoreRefs[i] = 0;
 		}
+//		jputsLong(__LINE__);
+//		jputs("stackTop:");
+//		jputsLong(stackTop);
+//		jputsLong(refPool[restoreStack[stackTop-1]]);
+//		jputs(Py_TYPE(refPool[restoreStack[stackTop-1]])->tp_name);
+//		jputsLong(Py_TYPE(refPool[restoreStack[stackTop-1]])->tp_traverse);
 		while (stackTop)
 		{
+			//jputsLong(__LINE__);
 			for (i = 0; i < stackTop; ++i)
 			{
 				Py_TYPE(refPool[restoreStack[i]])->tp_traverse(refPool[restoreStack[i]],
 						(visitproc)visit_refCheckInc, restoreRefs);
 			}
+			//jputsLong(__LINE__);
 			stackTop = 0;
 			for (i = 0; i < size; ++i)
 			{
 				if (result[i] == 1 && restoreRefs > 0)
 				{
 					result[i] += restoreRefs[i];
-					restoreStack[stackTop++] = i;
+					if (PyObject_IS_GC(refPool[i]))
+						restoreStack[stackTop++] = i;
 				}
 				restoreRefs[i] = 0;
 			}
 		}
 	}
+	//jputsLong(__LINE__);
 	for (i = 0; i < size; ++i)
 	{
 //		if (PyObject_IS_GC(refPool[i]))
 //		{
-		result[i] = refPool[i]->ob_refcnt;
+		//result[i] = refPool[i]->ob_refcnt;
 		JyNI_AddOrSetJyAttribute(AS_JY(refPool[i]), JyAttributeJyGCRefTmp, (void*) (-1));
 //		}
 	}
@@ -2236,10 +2248,11 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 /*
  * Class:     JyNI_JyNI
  * Method:    JyGC_clearNativeReferences
- * Signature: ([JJ)V
+ * Signature: ([JJ)Z
  */
-void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate)
+jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate)
 {
+	//jputs(__FUNCTION__);
 	ENTER_JyNI
 	inquiry clear;
 	//Here we decref the associated native objects.
@@ -2250,10 +2263,61 @@ void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references
 	jlong* arr = (*env)->GetLongArrayElements(env, references, NULL);
 	memcpy(refPool, arr, size*sizeof(PyObject*));
 	(*env)->ReleaseLongArrayElements(env, references, arr, JNI_ABORT);
-//	jputs(__FUNCTION__);
 	jboolean graphInvalid = checkReferenceGraph(refPool, size, graphResult);
-//	if (graphInvalid) jputs("Invalid graph!");
-//	else jputs("Valid graph :)");
+	if (graphInvalid)
+	{
+//		jputs("Invalid graph!");
+		jsize confirmCount = 0, resurrectCount = 0;
+		for (i = 0; i < size; ++i)
+		{
+			if (PyObject_IS_TRUNCATED(refPool[i])) {
+				if (graphResult[i] > 1) ++resurrectCount;
+				else ++confirmCount;
+			}
+		}
+		jlongArray confirmArr = confirmCount ? (*env)->NewLongArray(env, confirmCount) : NULL;
+		jlongArray resurrectArr = resurrectCount ? (*env)->NewLongArray(env, resurrectCount) : NULL;
+		jsize confirmPos = 0, resurrectPos = 0;
+		jlong* confirmArr2 = confirmArr ? (*env)->GetLongArrayElements(env, confirmArr, NULL) : NULL;
+		jlong* resurrectArr2 = resurrectArr ? (*env)->GetLongArrayElements(env, resurrectArr, NULL) : NULL;
+		for (i = 0; i < size; ++i)
+		{
+			if (PyObject_IS_TRUNCATED(refPool[i])) {
+				if (graphResult[i] > 1) resurrectArr2[resurrectPos++] = (jlong) refPool[i];
+				else confirmArr2[confirmPos++] = (jlong) refPool[i];
+			}
+		}
+		if (resurrectArr) (*env)->ReleaseLongArrayElements(env, resurrectArr, resurrectArr2, JNI_COMMIT);
+		if (confirmArr) (*env)->ReleaseLongArrayElements(env, confirmArr, confirmArr2, JNI_COMMIT);
+		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_gcDeletionReport, confirmArr, resurrectArr);
+		if (resurrectArr)
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_waitForCStubs);
+	}
+	else {
+//		jputs("Valid graph :)");
+//		jputsLong(size);
+		//Todo: Provide a quicker gcDeletionReport-method for this "trivial" case.
+		jsize confirmCount = 0;
+		for (i = 0; i < size; ++i)
+		{
+			if (PyObject_IS_TRUNCATED(refPool[i])) {
+				++confirmCount;
+			}
+		}
+		jlongArray confirmArr = confirmCount ? (*env)->NewLongArray(env, confirmCount) : NULL;
+		jsize confirmPos = 0;
+		jlong* confirmArr2 = confirmArr ? (*env)->GetLongArrayElements(env, confirmArr, NULL) : NULL;
+		for (i = 0; i < size; ++i)
+		{
+			if (PyObject_IS_TRUNCATED(refPool[i])) {
+				confirmArr2[confirmPos++] = (jlong) refPool[i];
+			}
+		}
+		if (confirmArr) (*env)->ReleaseLongArrayElements(env, confirmArr, confirmArr2, JNI_COMMIT);
+		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_gcDeletionReport, confirmArr, NULL);
+		//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_waitForCStubs);
+	}
+//	jputs("delete native objects...");
 	for (i = 0; i < size; ++i)
 	{
 		//todo: implement a JyNI-compliant version of this stuff
@@ -2261,12 +2325,239 @@ void JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references
 	//	if (debug & DEBUG_SAVEALL) {
 	//		PyList_Append(garbage, op);
 	//	}
-		if ((refPool[i])->ob_refcnt > 1 &&
+		if (graphResult[i] == 1 && (refPool[i])->ob_refcnt > 1 &&
+		//if ((refPool[i])->ob_refcnt > 1 &&
 				(clear = Py_TYPE(refPool[i])->tp_clear))
 			clear(refPool[i]);
 		Py_DECREF(refPool[i]);
 	}
 	LEAVE_JyNI
+	//jputsLong(__LINE__);
+	return !graphInvalid;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_restoreCStubBackend
+ * Signature: (JLorg/python/core/PyObject;LJyNI/gc/JyGCHead;)V
+ */
+void JyGC_restoreCStubBackend(JNIEnv *env, jclass class, jlong handle,
+		jobject backend, jobject newHead)
+{
+	/*
+	 * Actually it appears that native weak references persist object
+	 * resurrection, but just in case this behavior differs between
+	 * implementations, we explicitly check/re-create the weak references
+	 * here. Also. The gc-head must be replaced in any case.
+	 */
+//	jputs(__FUNCTION__);
+	Py_INCREF((PyObject*) handle);
+
+	//Something of these commands causes sporadical JVM-crashes
+	//(segfault in JVM-code (V))
+	JyObject* jy = AS_JY((PyObject*) handle);
+	//if ((*env)->IsSameObject(env, jy->jy, NULL)) {
+	jobject tmp = jy->jy;
+	jy->jy = (*env)->NewWeakGlobalRef(env, backend);
+	(*env)->DeleteWeakGlobalRef(env, tmp);
+	//}
+	JyObject_AddOrSetJyGCHead((PyObject*) handle, jy,
+			(*env)->NewWeakGlobalRef(env, newHead));
+}
+
+typedef struct {
+	jlong* oldLinks;
+	jsize size;
+	jsize pos;
+	jint changes;
+} countChanges;
+
+typedef struct {
+	jlong* oldLinks;
+	jlong* changedNewLinks;
+	jsize size;
+	jsize pos;
+	jint changePos;
+} findChanges;
+
+static int
+visit_countChanges(PyObject *op, void *arg)
+{
+	countChanges* ec = (countChanges*) arg;
+	if (ec->pos >= ec->size || op != ec->oldLinks[ec->pos++])
+		++(ec->changes);
+	return 0;
+}
+
+static int
+visit_findChanges(PyObject *op, void *arg)
+{
+	findChanges* ec = (findChanges*) arg;
+	if (ec->pos >= ec->size || op != ec->oldLinks[ec->pos++])
+		ec->changedNewLinks[ec->changePos++] = (jlong) op;
+	return 0;
+}
+
+static jboolean longArrayContains(jlong* array, jsize size, jlong value)
+{
+	jsize i = 0;
+	for (; i < size; ++i) {
+		if (array[i] == value) return JNI_TRUE;
+	}
+	return JNI_FALSE;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_validateGCHead
+ * Signature: (J[J)Z
+ */
+jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks)
+{
+	jputs(__FUNCTION__);
+	assert(handle);
+
+	traverseproc trav;
+	if (PyType_CheckExact((PyObject*) handle))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+	else trav = Py_TYPE((PyObject*) handle)->tp_traverse;
+
+	countChanges changeCount = {NULL, 0, 0, 0};
+	if (oldLinks) {
+		changeCount.size = (*env)->GetArrayLength(env, oldLinks);
+		if (changeCount.size)
+			changeCount.oldLinks = (*env)->GetLongArrayElements(env, oldLinks, NULL);
+	}
+	trav((PyObject*) handle, visit_countChanges, &changeCount);
+	if (!changeCount.changes) {
+		//nothing to do...
+		if (changeCount.size)
+			(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
+		return JNI_FALSE;
+	}
+	jputsLong(__LINE__);
+	jputsLong(changeCount.changes);
+	jlong* potentialChanges[changeCount.changes];
+	findChanges changes = {changeCount.oldLinks, potentialChanges, changeCount.size, 0, 0};
+	trav((PyObject*) handle, visit_findChanges, &changes);
+	jboolean result = JNI_FALSE;
+	if (changeCount.size) { //Otherwise all potential changes are actual changes.
+		for (changeCount.pos = 0; changeCount.pos < changeCount.changes; ++changeCount.pos)
+		{
+			if (!longArrayContains(changeCount.oldLinks, changeCount.size,
+					changes.changedNewLinks[changeCount.pos]))
+			{
+				result = JNI_TRUE;
+				break;
+			}
+		}
+	} else
+		result = JNI_TRUE;
+	if (changeCount.size)
+		(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
+	//We do this update as soon as possible, but not while the JVM is exposing an array
+	//(i.e. might not be at full power):
+	updateJyGCHeadLinks((PyObject*) handle, AS_JY((PyObject*) handle));
+	return result;
+}
+
+///*
+// * Class:     JyNI_JyNI
+// * Method:    JyGC_validateGCHead
+// * Signature: (J[J)[J
+// */
+//jlongArray JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks)
+//{
+//	assert(handle);
+//
+//	traverseproc trav;
+//	if (PyType_CheckExact((PyObject*) handle))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+//		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+//	else trav = Py_TYPE((PyObject*) handle)->tp_traverse;
+//
+//	jlong* newLinks;
+//	jsize newLinkCount = 0;
+//	countChanges changeCount = {NULL,0 , 0, 0};
+//	if (oldLinks) {
+//		changeCount.size = (*env)->GetArrayLength(env, oldLinks);
+//		if (changeCount.size)
+//			changeCount.oldLinks = (*env)->GetLongArrayElements(env, oldLinks, NULL);
+//	}
+//	trav((PyObject*) handle, visit_countChanges, &changeCount);
+//	if (!changeCount.changes) {
+//		//nothing to do...
+//		(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
+//		return NULL;
+//	}
+//	jlong* potentialChanges[changeCount.changes];
+//	findChanges changes = {changeCount.oldLinks, potentialChanges, changeCount.size, 0, 0};
+//	trav((PyObject*) handle, visit_findChanges, &changes);
+//	if (changeCount.size) { //Otherwise all potential changes are actual changes.
+//		for (changeCount.pos = 0; changeCount.pos < changeCount.changes; ++changeCount.pos)
+//		{
+//			if (longArrayContains(changeCount.oldLinks, changeCount.size,
+//					changes.changedNewLinks[changeCount.pos]))
+//			{
+//				--changeCount.changes;
+//				changes.changedNewLinks[changeCount.pos] = changes.changedNewLinks[changeCount.changes];
+//				--changeCount.pos;
+//			} else
+//				++newLinkCount;
+//		}
+//	}
+//	(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
+//	//We do this update as soon as possible, but not while the JVM is exposing an array
+//	//(i.e. might not be at full power):
+//	updateJyGCHeadLinks((PyObject*) handle, AS_JY((PyObject*) handle));
+//	if (newLinks)
+//	{
+//		jlongArray result = (*env)->NewLongArray(env, newLinks);
+//		jlong* result2 = (*env)->GetLongArrayElements(env, result, NULL);
+//		memcpy(result2, changes.changedNewLinks, newLinkCount*sizeof(jlong));
+//		(*env)->ReleaseLongArrayElements(env, result, result2, JNI_COMMIT);
+//		return result;
+//	} else
+//		return NULL;
+//}
+
+typedef struct {
+	jlong* dest;
+	jsize pos;
+} exploreTrav;
+
+static int
+visit_nativeTraverse(PyObject *op, void *arg)
+{
+	((exploreTrav*) arg)->dest[((exploreTrav*) arg)->pos++] = (jlong) op;
+	return 0;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyGC_nativeTraverse
+ * Signature: (J)[J
+ */
+jlongArray JyGC_nativeTraverse(JNIEnv *env, jclass class, jlong handle)
+{
+	assert(handle);
+
+	traverseproc trav;
+	if (PyType_CheckExact((PyObject*) handle))// && !Py_TYPE((PyObject*) op)->tp_traverse)
+		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
+	else trav = Py_TYPE((PyObject*) handle)->tp_traverse;
+	if (!trav) return NULL;
+
+	jsize size = JyObject_FixedGCSize((PyObject*) handle);
+	if (size == UNKNOWN_FIXED_GC_SIZE)
+	{
+		size = 0;
+		trav((PyObject*) handle, (visitproc)visit_count, &size);
+	}
+	jlongArray result = (*env)->NewLongArray(env, size);
+	exploreTrav expl = {(*env)->GetLongArrayElements(env, result, NULL), 0};
+	trav((PyObject*) handle, visit_nativeTraverse, &expl);
+	(*env)->ReleaseLongArrayElements(env, result, expl.dest, JNI_COMMIT);
+	return result;
 }
 
 void
@@ -2289,7 +2580,15 @@ PyObject_GC_Track(void *op)
 		return;
 	}
 	JyNIDebugOp(JY_NATIVE_GC_TRACK, (PyObject*) op, -1);
+	//todo: Explore _PyGC_generation0 from time to time to catch objects that
+	//  were tracked by some nasty extension via the _PyObject_GC_TRACK(op)-macro
+	//  rather than PyObject_GC_Track.
 	_PyObject_GC_TRACK(op);
+	if (Is_JyNICriticalType(Py_TYPE((PyObject*) op)))
+	{
+		env();
+		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_addJyNICriticalObject, (jlong) op);
+	}
 	//if ((AS_JY_WITH_GC(op)->flags & GC_NO_INITIAL_EXPLORE) == 0)
 	//	JyNI_GC_Explore((PyObject*) op);
 	pushExStack((PyObject*) op);
@@ -2332,6 +2631,11 @@ PyObject_GC_UnTrack(void *op)
 		 * filter it out as intended.
 		 */
 		removeObjectExStack(op);
+		if (Is_JyNICriticalType(Py_TYPE((PyObject*) op)))
+		{
+			env();
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_removeJyNICriticalObject, (jlong) op);
+		}
 		JyNIDebugOp(JY_NATIVE_GC_UNTRACK, (PyObject*) op, -1);
 		_PyObject_GC_UNTRACK(op);
 	}
@@ -2428,7 +2732,7 @@ _JyObject_GC_New(PyTypeObject *tp, TypeMapEntry* tme)
 	if (tme)
 	{
 		//printf("PyObject_GC_New-size: %u\n", (jlong) (tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp));
-		op = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp));
+		op = _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp));
 		if (op != NULL)
 		{
 			_PyObject_GC_InitJy(op, tme);
@@ -2455,7 +2759,7 @@ _JyObject_GC_NewVar(PyTypeObject *tp, Py_ssize_t nitems, TypeMapEntry* tme)
 	PyVarObject *op;
 	if (tme != NULL)
 	{
-		op = (PyVarObject *) _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject) : _PyObject_VAR_SIZE(tp, nitems));
+		op = (PyVarObject *) _PyObject_GC_Malloc((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(tp, nitems));
 		if (op != NULL)
 		{
 			JyObject* jy = AS_JY_WITH_GC(op);
@@ -2488,6 +2792,7 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 	if (JyObject_IS_TRUNCATED(jy))
 	{
 		//do nothing since JyObjects are always of same size:
+		//(also when truncateTrailing != 0, as trailing size does not change.)
 		/*const size_t basicsize = JyObjectBasicSize;
 		PyGC_Head *g = AS_GC(op);
 		if (basicsize > PY_SSIZE_T_MAX - sizeof(PyGC_Head))

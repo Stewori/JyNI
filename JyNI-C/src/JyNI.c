@@ -56,6 +56,7 @@
 //#include "frameobject.h"
 #include "importdl.h"
 //#include <dlfcn.h>
+//#include "stringlib/string_format.h"
 //_Py_CheckInterval
 const char* excPrefix = "exceptions.";
 //jlong JyNIDebugMode = 0;
@@ -312,13 +313,39 @@ _struct_sequence_template
 PyGetSetDescr_Type;
 PyMemberDescr_Type;
 PyWrapperDescr_Type;
-PyDictIterKey_Type;
-PyDictIterValue_Type;
-PyDictIterItem_Type;
-PyDictKeys_Type;
-PyDictItems_Type;
-PyDictValues_Type;
-PyReversed_Type;
+// PyDictIterKey_Type;
+// PyDictIterValue_Type;
+// PyDictIterItem_Type;
+// PyDictKeys_Type;
+// PyDictItems_Type;
+// PyDictValues_Type;
+// PyReversed_Type;
+PyFormatterIter_Type;
+PyFieldNameIter_Type;
+
+//Types currently not cared for, but of potential relevance:
+PyListIter_Type
+PyListRevIter_Type
+// PyClassMethod_Type
+// PyStaticMethod_Type
+PyMethodDescr_Type
+PyClassMethodDescr_Type
+PyDictProxy_Type
+PyProperty_Type
+PyBaseString_Type
+// PySeqIter_Type
+// PyRange_Type
+// Pyrangeiter_Type
+PyTupleIter_Type
+// PySetIter_Type
+// PyEnum_Type
+// PyGen_Type
+// PyFrame_Type
+// PySuper_Type
+// PyBuffer_Type
+// PyMemoryView_Type
+PyBaseObject_Type
+// PyCallIter_Type
 
 //maybe we can later support this via PyArray:
 PyByteArrayIter_Type;
@@ -891,10 +918,70 @@ inline void initBuiltinExceptions()
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type)
 {
 	int i;
+	if (&PyCFunction_Type == type) return JNI_TRUE;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
 		if (builtinTypes[i].py_type == type) return JNI_TRUE;
 	}
+
+	if (&PyCapsule_Type == type) return JNI_TRUE;
+	if (&PyCObject_Type == type) return JNI_TRUE;
+
+	for (i = 0; i < builtinExceptionCount; ++i)
+	{
+		if (builtinExceptions[49].exc_type == type) return JNI_TRUE;
+	}
+
+	// Now we check for types currently not listed in builtinTypes:
+
+	if (&PyGetSetDescr_Type == type) return JNI_TRUE;
+	if (&PyMemberDescr_Type == type) return JNI_TRUE;
+	if (&PyWrapperDescr_Type == type) return JNI_TRUE;
+	if (&PyMethodDescr_Type == type) return JNI_TRUE;
+	if (&PyClassMethodDescr_Type == type) return JNI_TRUE;
+	if (&PyDictProxy_Type == type) return JNI_TRUE;
+	if (&PyProperty_Type == type) return JNI_TRUE;
+	if (&EncodingMapType == type) return JNI_TRUE;
+	if (&wrappertype == type) return JNI_TRUE;
+	if (&cmpwrapper_type == type) return JNI_TRUE;
+	if (&sortwrapper_type == type) return JNI_TRUE;
+	if (&Long_InfoType == type) return JNI_TRUE;
+	if (&FloatInfoType == type) return JNI_TRUE;
+	// if (&_PyWeakref_RefType == type) return JNI_TRUE;
+	// if (&_PyWeakref_ProxyType == type) return JNI_TRUE;
+	// if (&_PyWeakref_CallableProxyType == type) return JNI_TRUE;
+	// if (&_struct_sequence_template == type) return JNI_TRUE;
+	// if (&PyDictIterKey_Type == type) return JNI_TRUE;
+	// if (&PyDictIterValue_Type == type) return JNI_TRUE;
+	// if (&PyDictIterItem_Type == type) return JNI_TRUE;
+	// if (&PyDictKeys_Type == type) return JNI_TRUE;
+	// if (&PyDictItems_Type == type) return JNI_TRUE;
+	// if (&PyDictValues_Type == type) return JNI_TRUE;
+	// if (&PyReversed_Type == type) return JNI_TRUE;
+	if (&PyListIter_Type == type) return JNI_TRUE;
+	if (&PyListRevIter_Type == type) return JNI_TRUE;
+	// if (&PyClassMethod_Type == type) return JNI_TRUE;
+	// if (&PyStaticMethod_Type == type) return JNI_TRUE;
+	// if (&PySeqIter_Type == type) return JNI_TRUE;
+	// if (&PyRange_Type == type) return JNI_TRUE;
+	// if (&Pyrangeiter_Type == type) return JNI_TRUE;
+	if (&PyTupleIter_Type == type) return JNI_TRUE;
+	// if (&PySetIter_Type == type) return JNI_TRUE;
+	// if (&PyEnum_Type == type) return JNI_TRUE;
+	// if (&PyGen_Type == type) return JNI_TRUE;
+	// if (&PyFrame_Type == type) return JNI_TRUE;
+	// if (&PySuper_Type == type) return JNI_TRUE;
+	// if (&PyBuffer_Type == type) return JNI_TRUE;
+	// if (&PyMemoryView_Type == type) return JNI_TRUE;
+	// if (&PyCallIter_Type == type) return JNI_TRUE;
+	// if (&PyByteArrayIter_Type == type) return JNI_TRUE;
+	if (&PyBaseString_Type == type) return JNI_TRUE;
+	if (&PyBaseObject_Type == type) return JNI_TRUE;
+
+	// string_format.h would be needed for these, but including it
+	// is not trivial.
+	// if (&PyFormatterIter_Type == type) return JNI_TRUE;
+	// if (&PyFieldNameIter_Type == type) return JNI_TRUE;
 	return JNI_FALSE;
 }
 
@@ -2269,6 +2356,12 @@ jmethodID JyNI_jPrintHash;
 //jmethodID JyNIPySet_pop;
 jmethodID JyNI_makeGCHead;
 jmethodID JyNI_makeStaticGCHead;
+jmethodID JyNI_gcDeletionReport;
+jmethodID JyNI_waitForCStubs;
+jmethodID JyNI_addJyNICriticalObject;
+jmethodID JyNI_removeJyNICriticalObject;
+jmethodID JyNI_suspendPyInstanceFinalizer;
+jmethodID JyNI_restorePyInstanceFinalizer;
 
 jclass JyTStateClass;
 jmethodID JyTState_setRecursionLimit;
@@ -2825,6 +2918,12 @@ inline jint initJyNI(JNIEnv *env)
 	//JyNIPySet_pop = (*env)->GetStaticMethodID(env, JyNIClass, "PySet_pop", "(Lorg/python/core/BaseSet;)Lorg/python/core/PyObject;");
 	JyNI_makeGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeGCHead", "(JZZ)LJyNI/gc/PyObjectGCHead;");
 	JyNI_makeStaticGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeStaticGCHead", "(JZ)LJyNI/gc/JyGCHead;");
+	JyNI_gcDeletionReport = (*env)->GetStaticMethodID(env, JyNIClass, "gcDeletionReport", "([J[J)V");
+	JyNI_waitForCStubs = (*env)->GetStaticMethodID(env, JyNIClass, "waitForCStubs", "()V");
+	JyNI_addJyNICriticalObject = (*env)->GetStaticMethodID(env, JyNIClass, "addJyNICriticalObject", "(J)V");
+	JyNI_removeJyNICriticalObject = (*env)->GetStaticMethodID(env, JyNIClass, "removeJyNICriticalObject", "(J)V");
+	JyNI_suspendPyInstanceFinalizer = (*env)->GetStaticMethodID(env, JyNIClass, "suspendPyInstanceFinalizer", "(Lorg/python/core/PyInstance;)V");
+	JyNI_restorePyInstanceFinalizer = (*env)->GetStaticMethodID(env, JyNIClass, "restorePyInstanceFinalizer", "(Lorg/python/core/PyInstance;)V");
 
 	//Error stuff:
 	//JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)

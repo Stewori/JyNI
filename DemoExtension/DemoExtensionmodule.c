@@ -141,9 +141,13 @@ listSetIndex(PyObject* self, PyObject* args)
 	PyObject* index = PyTuple_GET_ITEM(args, 1);
 	PyObject* value = PyTuple_GET_ITEM(args, 2);
 	long i = PyInt_AS_LONG(index);
+	Py_XINCREF(value);
+
 	Py_XDECREF(PyList_GET_ITEM(list, i));
 	PyList_SET_ITEM(list, i, value);
-	//PyList_Append(list, PyString_FromString(appendText));
+
+	//PyList_SetItem(list, i, value);
+
 	Py_RETURN_NONE;
 }
 

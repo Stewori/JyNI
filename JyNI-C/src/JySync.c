@@ -543,6 +543,13 @@ jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src)
 {
 	PyInstanceObject* inst = (PyInstanceObject*) src;
 	env(NULL);
+	/*
+	 * We would have to suspend the result's FinalizeTrigger, but actually
+	 * PyInstance doesn't get one anyway, if it is constructed using its
+	 * constructor (rather than by PyClass.__call__). JyNIFinalizeTriggerFactory
+	 * takes care to keep the instance's Finalizetrigger suspended as long
+	 * as we desire.
+	 */
 	return (*env)->NewObject(env, pyInstanceClass, pyInstanceConstructor,
 		JyNI_JythonPyObject_FromPyObject((PyObject*) inst->in_class),
 		JyNI_JythonPyObject_FromPyObject(inst->in_dict));
@@ -554,6 +561,7 @@ jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src)
 PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
 {
 	env(NULL);
+	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
 	PyObject* er = PyInstance_NewRaw(
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstanceInstclassField)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance__dict__)));

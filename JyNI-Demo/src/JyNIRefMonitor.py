@@ -29,12 +29,14 @@ sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case
 sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
 
 import time
+import weakref
 
 from JyNI import JyNI
 from JyNI import JyReferenceMonitor as monitor
 from JyNI.gc import JyWeakReferenceGC
 from java.lang import System
 from java.lang.ref import WeakReference
+from org.python.modules._weakref import GlobalRef
 
 
 def run1():
@@ -126,9 +128,7 @@ def run2():
 	# PySet, but no native link to other PyObject
 	# PyFrozenSet, "
 	# PyCode, not GC-relevant in CPython
-	# 
-	# Todo: Don't count objects reachable from registered type-dicts or dynModule-list as leaks.
-	
+
 	import DemoExtension
 	
 	#Note:
@@ -209,6 +209,118 @@ def run2():
 	print "exit"
 	print "===="
 
+def run3():
+	JyNI.JyRefMonitor_setMemDebugFlags(1)
+	JyWeakReferenceGC.monitorNativeCollection = True
+	import DemoExtension
+	
+	#JyNI.JyRefMonitor_setMemDebugFlags(1)
+	#JyWeakReferenceGC.monitorNativeCollection = True
 
-run2()
+	l = [0, "test1"]
+# 	print l
+# 	DemoExtension.listSetIndex(l, 0, 100.7)
+# 	print l
+	d = {'a': 7, 'b': "test6"}
+	#We create weak reference to l to monitor collection by Java-GC:
+	wkl = WeakReference(l)
+	wkd = WeakReference(d)
+	wkl2 = weakref.ref(l)
+	wkd2 = weakref.ref(d)
+
+	#Note:
+	#=====
+	#To make this work we'll have to ensure that d gets a GCHead even though
+	#l doesn't recognize the insertion of d and thus would not explore it.
+	#In fact every C-stub object must get a GCHead when going native, regardless
+	#of whether it is inserted somewhere or not, because it might be silently
+	#inserted and a GCHead is the only way to detect this and fix it.
+	#Add a call (e.g. to size) to the dict in l on native side to test that
+	#d still works (which it currently shouldn't).
+	#Later use d's GCHead to detect the invalid graph and resurrect d's java-part.
+	#Take care of the GIL here. CStubs must release the GIL when they detect a
+	#failing backend, so the GC-thread can acquire it and resurrect the backend.
+	#How to fix the weak reference etc?
+
+	#l[0] = d
+	print "weak(l): "+str(wkl.get())
+	print "weak(d): "+str(wkd.get())
+	print "weak2(l): "+str(wkl2())
+	print "weak2(d): "+str(wkd2())
+	print "make l native..."
+	#l[0] = d
+	#DemoExtension.argCountToString(l)
+	#l[0] = d
+	DemoExtension.listSetIndex(l, 0, d)
+
+	print "Delete l... (but GC not yet ran)"
+	#del l
+	del d
+	#l = None
+	#print "weak(l) after del: "+str(wkl.get())
+	print "weak(d) after del: "+str(wkd.get())
+	print "weak2(d) after del: "+str(wkd2())
+	print ""
+	print "Leaks before GC:"
+	monitor.listLeaks()
+	print ""
+	
+	print "calling Java-GC..."
+	System.gc()
+	time.sleep(2)
+# 	if monitor.lastClearGraphValid:
+# 		print "valid graph"
+# 	else:
+# 		print "invalid graph"
+# 	monitor.lastClearGraphValid = False
+	print "weak(l) after GC: "+str(wkl.get())
+	#print "l after GC: "+str(l)
+	print "weak(d) after GC: "+str(wkd.get())
+	print "weak2(l) after GC: "+str(wkl2())
+	print "weak2(d) after GC: "+str(wkd2())
+	wkd = WeakReference(l[0])
+	print ""
+	#monitor.listWouldDeleteNative()
+	print ""
+	#print "leaks after GC:"
+	#monitor.listLeaks()
+	print "l[0], i.e. d after gc:"
+	#print l[0]
+	#print len(l[0])
+	
+	print "------"
+	print "del l..."
+	del l
+	System.gc()
+	time.sleep(2)
+# 	if monitor.lastClearGraphValid:
+# 		print "valid graph"
+# 	else:
+# 		print "invalid graph"
+# 	monitor.lastClearGraphValid = False
+	print ""
+	monitor.listWouldDeleteNative()
+	print ""
+	#print "leaks after GC (l deleted):"
+	#monitor.listLeaks()
+	#print DemoExtension.argCountToString.__doc__
+	#monitor.listFreeStatus("dict")
+	#monitor.listAll()
+	#GlobalRef.processDelayedCallbacks()
+	print "weak(d) after GC2: "+str(wkd.get())
+	print "weak2(l) after GC2: "+str(wkl2())
+	print "weak2(d) after GC2: "+str(wkd2())
+	System.gc()
+	time.sleep(2)
+	print "weak(d) after GC3: "+str(wkd.get())
+	monitor.listWouldDeleteNative()
+	print ""
+	print "leaks after GC3:"
+	monitor.listLeaks()
+	print ""
+	print "===="
+	print "exit"
+	print "===="
+
+run3()
 #System.getProperties().list(System.out)
