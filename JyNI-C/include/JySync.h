@@ -87,6 +87,15 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src);
 jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src);
 PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src);
 
+jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src);
+PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src);
+
+jobject JySync_Init_JyWeakProxy_From_PyWeakProxy(PyObject* src);
+PyObject* JySync_Init_PyWeakProxy_From_JyWeakProxy(jobject src);
+
+jobject JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy(PyObject* src);
+PyObject* JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy(jobject src);
+
 void JySync_PyCode_From_JyCode(jobject src, PyObject* dest);
 
 //PyObject* JySync_Init_PyFunction_From_JyFunction(jobject src);

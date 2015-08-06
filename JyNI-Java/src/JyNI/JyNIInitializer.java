@@ -55,6 +55,7 @@ import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.util.PythonInterpreter;
 import org.python.modules.gc;
+import org.python.modules._weakref.GlobalRef;
 
 public class JyNIInitializer implements JythonInitializer {
 
@@ -93,12 +94,14 @@ public class JyNIInitializer implements JythonInitializer {
 		pint.exec("sys.setdlopenflags = setdlopenflags");
 		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
 		pint.cleanup();
+
+		//Set up Jython hooks for JyNI:
 		FinalizeTrigger.factory = new JyNIFinalizeTriggerFactory();
+		//GlobalRef.factory = new JyNIGlobalRefFactory();
 		new SentinelFinalizer();
 		gc.addJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS);
 		gc.registerPreFinalizationProcess(new Runnable(){
 				public void run() {JyNI.preProcessCStubGCCycle();}});
 		//System.out.println("Init JyNI done");
-		
 	}
 }

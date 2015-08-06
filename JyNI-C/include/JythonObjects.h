@@ -280,6 +280,10 @@ extern jmethodID pySliceIndicesEx;
 extern jclass pyEllipsisClass;
 extern jclass pyGeneratorClass;
 
+extern jclass pyWeakReferenceClass;
+extern jclass pyWeakProxyClass;
+extern jclass pyWeakCallableProxyClass;
+
 //extern jclass pyCodeClass;
 extern jfieldID pyCode_co_name;
 
@@ -306,6 +310,15 @@ extern jclass pyTableCodeClass;
 
 extern jclass pyCallIterClass;
 extern jclass pySuperClass;
+
+extern jclass GlobalRefClass;
+extern jmethodID GlobalRef_retryFactory;
+
+extern jclass AbstractReferenceClass;
+extern jmethodID AbstractReference_get;
+
+extern jclass JyNIGlobalRefClass;
+extern jmethodID JyNIGlobalRef_initNativeHandle;
 
 extern jclass pyBaseExceptionClass;
 extern jmethodID pyBaseExceptionEmptyConstructor;

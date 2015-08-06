@@ -255,6 +255,14 @@ JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyGC_1validateGCHead
 JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse
   (JNIEnv *, jclass, jlong);
 
+/*
+ * Class:     JyNI_JyNI
+ * Method:    releaseWeakReferent
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_releaseWeakReferent
+  (JNIEnv *, jclass, jlong, jlong);
+
 #ifdef __cplusplus
 }
 #endif

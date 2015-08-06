@@ -49,8 +49,8 @@ import JyNI.gc.*;
 import org.python.core.*;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules.gc;
-import org.python.modules._weakref.GlobalRef;
-import org.python.modules.gc.CycleMarkAttr;
+import org.python.modules._weakref.*;
+//import org.python.modules.gc.CycleMarkAttr;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -266,6 +266,7 @@ public class JyNI {
 	//public static native long[] JyGC_validateGCHead(long handle, long[] oldLinks);
 	public static native boolean JyGC_validateGCHead(long handle, long[] oldLinks);
 	public static native long[] JyGC_nativeTraverse(long handle);
+	protected static native void releaseWeakReferent(long handle, long tstate);
 	//public static native JyGCHead JyGC_lookupGCHead(long handle);
 
 	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
@@ -1325,5 +1326,38 @@ public class JyNI {
 				   (FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
 		if (ft != null && (ft.flags & FinalizeTrigger.FINALIZED_FLAG) == 0) ft.trigger(inst);
 		else gc.restoreFinalizer(inst);
+	}
+
+	protected static ReferenceType createWeakReferenceFromNative(PyObject referent, long handle, PyObject callback) {
+		if (referent == null)
+			return new ReferenceType(JyNIEmptyGlobalReference.defaultInstance, callback);
+		ReferenceBackend gref = GlobalRef.newInstance(referent);
+		((JyNIGlobalRef) gref).initNativeHandle(handle);
+		return new ReferenceType(gref, callback); //Todo: support callback
+	}
+
+	protected static ProxyType createProxyFromNative(PyObject referent, long handle, PyObject callback) {
+		if (referent == null)
+			return new ProxyType(JyNIEmptyGlobalReference.defaultInstance, callback);
+		ReferenceBackend gref = GlobalRef.newInstance(referent);
+		((JyNIGlobalRef) gref).initNativeHandle(handle);
+		return new ProxyType(gref, callback); //Todo: support callback
+	}
+
+	protected static CallableProxyType createCallableProxyFromNative(PyObject referent, long handle, PyObject callback) {
+		if (referent == null)
+			return new CallableProxyType(JyNIEmptyGlobalReference.defaultInstance, callback);
+		ReferenceBackend gref = GlobalRef.newInstance(referent);
+		((JyNIGlobalRef) gref).initNativeHandle(handle);
+		return new CallableProxyType(gref, callback); //Todo: support callback
+	}
+
+	protected static ReferenceBackend getGlobalRef(PyObject obj) {
+		return (ReferenceBackend) JyAttribute.getAttr(obj, JyAttribute.WEAK_REF_ATTR);
+//		Object result = JyAttribute.getAttr(obj, JyAttribute.WEAK_REF_ATTR);
+//		if (result != null && result instanceof GlobalRef)
+//			return (GlobalRef) result;
+//		else
+//			return null;
 	}
 }

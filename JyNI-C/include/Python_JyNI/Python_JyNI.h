@@ -171,7 +171,7 @@
 //#include "genobject_JyNI.h"
 #include "descrobject_JyNI.h"
 #include "warnings_JyNI.h"
-//#include "weakrefobject_JyNI.h"
+#include "weakrefobject_JyNI.h"
 
 #include "codecs_JyNI.h"
 #include "pyerrors_JyNI.h"

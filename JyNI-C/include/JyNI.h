@@ -451,12 +451,14 @@ jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tst
 jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 jobject JyNIlookupFromHandle(JNIEnv *env, jclass class, jlong handle);
 jint JyNIcurrentNativeRefCount(JNIEnv *env, jclass class, jlong handle);
+jstring JyNIgetNativeTypeName(JNIEnv *env, jclass class, jlong handle);
 //In gcmodule (declared here to preserve original gcmodule.h):
 jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate);
 void JyGC_restoreCStubBackend(JNIEnv *env, jclass class, jlong handle, jobject backend, jobject newHead);
 //jlongArray JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks);
 jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks);
 jlongArray JyGC_nativeTraverse(JNIEnv *env, jclass class, jlong handle);
+void JyNI_releaseWeakReferent(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 
 #define builtinTypeCount 46
 extern TypeMapEntry builtinTypes[builtinTypeCount];
@@ -726,6 +728,10 @@ extern jmethodID JyNI_addJyNICriticalObject;
 extern jmethodID JyNI_removeJyNICriticalObject;
 extern jmethodID JyNI_suspendPyInstanceFinalizer;
 extern jmethodID JyNI_restorePyInstanceFinalizer;
+extern jmethodID JyNI_createWeakReferenceFromNative;
+extern jmethodID JyNI_createProxyFromNative;
+extern jmethodID JyNI_createCallableProxyFromNative;
+extern jmethodID JyNI_getGlobalRef;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;

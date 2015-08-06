@@ -591,6 +591,104 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethodImClass)));
 }
 
+#define PyWeakref_GET_OBJECT0(ref)                          \
+    (Py_REFCNT(((PyWeakReference *)(ref))->wr_object) > 0   \
+     ? ((PyWeakReference *)(ref))->wr_object                \
+     : NULL)
+
+jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src)
+{
+	PyObject* referent = PyWeakref_GET_OBJECT0(src);
+	jobject jReferent = NULL;
+	if (referent) jReferent = JyNI_JythonPyObject_FromPyObject(referent);
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_createWeakReferenceFromNative,
+			jReferent, (jlong) referent, NULL); //todo: Support native callbacks.
+}
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
+PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src)
+{
+	// Todo: Handle case that the native counterpart of the Java-referent is
+	//       not weakly referencable in CPython-terms.
+	//       See PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))
+	env(NULL);
+	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
+	PyObject* referent = JyNI_PyObject_FromJythonPyObject(jReferent);
+	/* Note that an extra Py_INCREF is not necessary since the conversion method
+	 * returns a new reference.
+	 * JyNI-note: It is okay to hold a refcount for the weakly referenced object.
+	 * This will be decreffed when the Java-side GlobalRef is released.
+	 */
+	PyObject* result = PyWeakref_NewRef(referent, NULL);
+	// Todo: Support callback.
+	return result;
+}
+
+jobject JySync_Init_JyWeakProxy_From_PyWeakProxy(PyObject* src)
+{
+	PyObject* referent = PyWeakref_GET_OBJECT0(src);
+	jobject jReferent = NULL;
+	if (referent) jReferent = JyNI_JythonPyObject_FromPyObject(referent);
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_createProxyFromNative,
+			jReferent, (jlong) referent, NULL); //todo: Support native callbacks.
+}
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
+PyObject* JySync_Init_PyWeakProxy_From_JyWeakProxy(jobject src)
+{
+	// Todo: Handle case that the native counterpart of the Java-referent is
+	//       not weakly referencable in CPython-terms.
+	//       See PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))
+	env(NULL);
+	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
+	PyObject* referent = JyNI_PyObject_FromJythonPyObject(jReferent);
+	/* Note that an extra Py_INCREF is not necessary since the conversion method
+	 * returns a new reference.
+	 * JyNI-note: It is okay to hold a refcount for the weakly referenced object.
+	 * This will be decreffed when the Java-side GlobalRef is released.
+	 */
+	PyObject* result = PyWeakref_NewProxy(referent, NULL);
+	// Todo: Support callback.
+	return result;
+}
+
+jobject JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy(PyObject* src)
+{
+	PyObject* referent = PyWeakref_GET_OBJECT0(src);
+	jobject jReferent = NULL;
+	if (referent) jReferent = JyNI_JythonPyObject_FromPyObject(referent);
+	env(NULL);
+	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_createCallableProxyFromNative,
+			jReferent, (jlong) referent, NULL); //todo: Support native callbacks.
+}
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
+PyObject* JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy(jobject src)
+{
+	// Todo: Handle case that the native counterpart of the Java-referent is
+	//       not weakly referencable in CPython-terms.
+	//       See PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))
+	env(NULL);
+	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
+	PyObject* referent = JyNI_PyObject_FromJythonPyObject(jReferent);
+	/* Note that an extra Py_INCREF is not necessary since the conversion method
+	 * returns a new reference.
+	 * JyNI-note: It is okay to hold a refcount for the weakly referenced object.
+	 * This will be decreffed when the Java-side GlobalRef is released.
+	 */
+	PyObject* result = PyWeakref_NewProxy(referent, NULL);
+	// Todo: Support callback.
+	return result;
+}
+
 //jobject JySync_Init_JyCode_From_PyCode(PyObject* src) not needed because of truncation
 //PyObject* JySync_Init_PyCode_From_JyCode(jobject src)
 void JySync_PyCode_From_JyCode(jobject src, PyObject* dest)

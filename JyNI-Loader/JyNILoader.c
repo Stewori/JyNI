@@ -108,6 +108,7 @@ void (*JyGC_restoreCStubBackend)(JNIEnv*, jclass, jlong, jobject, jobject);
 //jlongArray (*JyGC_validateGCHead)(JNIEnv*, jclass, jlong, jlongArray);
 jboolean (*JyGC_validateGCHead)(JNIEnv*, jclass, jlong, jlongArray);
 jlongArray (*JyGC_nativeTraverse)(JNIEnv*, jclass, jlong);
+void (*JyNI_releaseWeakReferent)(JNIEnv*, jclass, jlong, jlong);
 //void JyNI_unload(JavaVM *jvm);
 
 
@@ -194,6 +195,7 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyGC_restoreCStubBackend) = dlsym(JyNIHandle, "JyGC_restoreCStubBackend");
 	*(void **) (&JyGC_validateGCHead) = dlsym(JyNIHandle, "JyGC_validateGCHead");
 	*(void **) (&JyGC_nativeTraverse) = dlsym(JyNIHandle, "JyGC_nativeTraverse");
+	*(void **) (&JyNI_releaseWeakReferent) = dlsym(JyNIHandle, "JyNI_releaseWeakReferent");
 
 	jint result = (*JyNIInit)(java);
 	if (result != JNI_VERSION_1_2) puts("Init-result indicates error!");
@@ -493,4 +495,15 @@ JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse(JNIEnv *env, jc
 		jlong handle)
 {
 	return JyGC_nativeTraverse(env, class, handle);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    releaseWeakReferent
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_releaseWeakReferent(JNIEnv *env, jclass class,
+		jlong handle, jlong tstate)
+{
+	JyNI_releaseWeakReferent(env, class, handle, tstate);
 }

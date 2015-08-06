@@ -1398,6 +1398,8 @@ ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 void *
 PyObject_Realloc(void *p, size_t n)
 {
+	// Todo: Notify Java-side of changed handle address.
+	// Take care for weak references, JyNIGCHeads, CPeers, JyAttributes, etc.
 	//header should be appropriately copied by underlying call to RawRealloc.
 	JyObject* er = PyObject_RawRealloc(AS_JY_NO_GC(p), n+sizeof(JyObject));
 	JyNIDebug2(JY_NATIVE_REALLOC, AS_JY_NO_GC(p), er, n, NULL);
