@@ -59,6 +59,8 @@ import org.python.modules._weakref.GlobalRef;
 
 public class JyNIInitializer implements JythonInitializer {
 
+	public static boolean initialized = false;
+
 	static class SentinelFinalizer implements JyGCHead {
 		public SentinelFinalizer() {
 			new JyWeakReferenceGC(this);
@@ -79,8 +81,18 @@ public class JyNIInitializer implements JythonInitializer {
 		//System.out.println("Init JyNI...");
 		PySystemState initState = PySystemState.doInitialize(preProperties,
 				postProperties, argv, classLoader, adapter);
-		//add the JyNI-Importer to list of import hooks:
 		initState.path_hooks.append(new JyNIImporter());
+//		initializeState(initState);
+//	}
+//
+//	public void initializeState(PySystemState state) {
+//		state.path_hooks.append(new JyNIImporter());
+//		initializeBasic();
+//	}
+//
+//	private void initializeBasic() {
+		//add the JyNI-Importer to list of import hooks:
+		//if (initialized) return;
 
 		PythonInterpreter pint = new PythonInterpreter();
 		//add support for sys.setdlopenflags and sys.getdlopenflags as available in common CPython:
@@ -103,5 +115,6 @@ public class JyNIInitializer implements JythonInitializer {
 		gc.registerPreFinalizationProcess(new Runnable(){
 				public void run() {JyNI.preProcessCStubGCCycle();}});
 		//System.out.println("Init JyNI done");
+		initialized = true;
 	}
 }

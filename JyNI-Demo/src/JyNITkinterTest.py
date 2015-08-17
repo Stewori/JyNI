@@ -8,7 +8,7 @@ import sys
 sys.path.append('/usr/lib/python2.7/lib-dynload')
 sys.path.append('/usr/lib/python2.7/lib-tk')
 
-from Tkinter import *
+from Tkinter import Tk, StringVar, Label, Entry, Button
 
 root = Tk()
 txt = StringVar()

@@ -105,9 +105,18 @@ starting with "JAVA_HOME" such that it is appropriate for your system.
 
 * Provide Jython: You have two ways to provide Jython. Either you simply copy
 jython.jar into the JyNI base directory or you edit "makefile" and adjust the
-JYTHON-variable such that it points to jython.jar. Be sure to use
-Jython 2.7 beta 4. If you want to use JyNIDemo.sh, you need to adjust
-the Jython-path in that file too. Same for JyNITkinterDemo.sh.
+JYTHON-variable such that it points to jython.jar. If you want to use
+JyNIDemo.sh, you need to adjust the Jython-path in that file too. Same for
+JyNITkinterDemo.sh.
+Note: Current JyNI repository version requires Jython >2.7.0, so until Jython
+2.7.1 is released (presumably in November 2015) you must built Jython from
+its newest repository version. Quickguide:
+  - git clone https://github.com/jythontools/jython
+  - cd jython
+  - ant jar-standalone
+    Note: Jython still requires Java 7 for building. (Not Java 8! *Running*
+    Jython with Java 8 on the other hand is fine.) Make sure JAVA_HOME is
+    configured accordingly. Sorry for the inconvenience.
 
 * If not yet done, install the dev-package of Python 2.7. JyNI only needs
 pyconfig.h from that package. Alternatively (if you know what you're doing)
