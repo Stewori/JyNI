@@ -2135,16 +2135,18 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 	//First we initialize refTmp-attributes with current object index
 	//and result with current refcount.
 //	jputs("Initial ref");
+	JyObject* jy;
 	for (i = 0; i < size; ++i)
 	{
 //		if (PyObject_IS_GC(refPool[i]))
 //		{
+		jy = AS_JY(refPool[i]);
 		result[i] = refPool[i]->ob_refcnt;
-		if (AS_JY(refPool[i])->flags & JY_CACHE_ETERNAL_FLAG_MASK)
+		if (jy->flags & JY_CACHE_ETERNAL_FLAG_MASK)
 			--result[i];
 //		jputsLong(refPool[i]);
 //		jputsLong(result[i]);
-		JyNI_AddOrSetJyAttribute(AS_JY(refPool[i]), JyAttributeJyGCRefTmp, (void*) (i+1));
+		JyNI_AddOrSetJyAttribute(jy, JyAttributeJyGCRefTmp, (void*) (i+1));
 //		}
 	}
 	//Now we decref the tmp-refcount copy of all referees.
@@ -2167,9 +2169,17 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 	jboolean graphInvalid = JNI_FALSE;
 	for (i = 0; i < size; ++i)
 	{
-		if (result[i] > 1)
+//		jputs("referent:");
+//		jputsLong(refPool[i]);
+//		jputsLong(result[i]);
+//		jputs("weak:");
+//		jputsLong(getWeakRefCount(AS_JY(refPool[i])));
+		if (result[i]-getWeakRefCount(AS_JY(refPool[i])) > 1)
 		{
 			graphInvalid = JNI_TRUE;
+//			jputs("Invalid referent:");
+//			jputsLong(refPool[i]);
+//			jputsLong(result[i]);
 			break;
 		} else if (result[i] < 1)
 			jputs("JyNI-Error: negative ref-count encountered!");
@@ -2248,7 +2258,7 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 	jboolean graphInvalid = checkReferenceGraph(refPool, size, graphResult);
 	if (graphInvalid)
 	{
-//		jputs("Invalid graph!");
+		//jputs("Invalid graph!!");
 		jsize confirmCount = 0, resurrectCount = 0;
 		for (i = 0; i < size; ++i)
 		{
@@ -2276,7 +2286,7 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_waitForCStubs);
 	}
 	else {
-//		jputs("Valid graph :)");
+		//jputs("Valid graph");
 //		jputsLong(size);
 		//Todo: Provide a quicker gcDeletionReport-method for this "trivial" case.
 		jsize confirmCount = 0;
@@ -2396,7 +2406,7 @@ static jboolean longArrayContains(jlong* array, jsize size, jlong value)
  */
 jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks)
 {
-	jputs(__FUNCTION__);
+	//jputs(__FUNCTION__);
 	assert(handle);
 
 	traverseproc trav;
@@ -2415,10 +2425,11 @@ jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray
 		//nothing to do...
 		if (changeCount.size)
 			(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
+		//jputs("nothing to do");
 		return JNI_FALSE;
 	}
-	jputsLong(__LINE__);
-	jputsLong(changeCount.changes);
+	//jputsLong(__LINE__);
+	//jputsLong(changeCount.changes);
 	jlong* potentialChanges[changeCount.changes];
 	findChanges changes = {changeCount.oldLinks, potentialChanges, changeCount.size, 0, 0};
 	trav((PyObject*) handle, visit_findChanges, &changes);
@@ -2437,12 +2448,14 @@ jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray
 		result = JNI_TRUE;
 	if (changeCount.size)
 		(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
-	//We do this update as soon as possible, but not while the JVM is exposing an array
-	//(i.e. might not be at full power):
+	/* We do this update as soon as possible, but not while the JVM is exposing an array
+	   (i.e. might not be at full power): */
 	updateJyGCHeadLinks((PyObject*) handle, AS_JY((PyObject*) handle));
+	//jputs("validateGCHead done");
 	return result;
 }
 
+// Former, misconcepted approach:
 ///*
 // * Class:     JyNI_JyNI
 // * Method:    JyGC_validateGCHead

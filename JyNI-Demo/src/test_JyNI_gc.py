@@ -1,44 +1,27 @@
 '''
+ * Copyright of JyNI:
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+ *
+ *
  * Copyright of Python and Jython:
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
  * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
- *
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
  *
  *
  * This file is part of JyNI.
  *
  * JyNI is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
  *
  * JyNI is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- * Linking this library statically or dynamically with other modules is
- * making a combined work based on this library.  Thus, the terms and
- * conditions of the GNU General Public License cover the whole
- * combination.
- *
- * As a special exception, the copyright holders of this library give you
- * permission to link this library with independent modules to produce an
- * executable, regardless of the license terms of these independent
- * modules, and to copy and distribute the resulting executable under
- * terms of your choice, provided that you also meet, for each linked
- * independent module, the terms and conditions of the license of that
- * module.  An independent module is a module which is not derived from
- * or based on this library.  If you modify this library, you may extend
- * this exception to your version of the library, but you are not
- * obligated to do so.  If you do not wish to do so, delete this
- * exception statement from your version.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
 
 
 Created on 10.07.2015
@@ -85,6 +68,11 @@ def runGC():
 	System.gc()
 	time.sleep(1)
 
+def clearCurrentLeaks():
+	leaks = monitor.getCurrentNativeLeaks()
+	if len(leaks) > 0:
+		monitor.declareLeaksPermanent(leaks)
+
 class TestJyNI_gc(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -104,6 +92,8 @@ class TestJyNI_gc(unittest.TestCase):
 
 	def test_gc_list_cycle(self):
 		#print "test_gc_list_cycle"
+		clearCurrentLeaks()
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		l = (123, [0, "test1"])
 		l[1][0] = l
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -119,6 +109,8 @@ class TestJyNI_gc(unittest.TestCase):
 
 	def test_gc_list_cycle2(self):
 		#print "test_gc_list_cycle2"
+		clearCurrentLeaks()
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		l2 = (127, [0, "test2"])
 		l2[1][0] = l2
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -137,6 +129,8 @@ class TestJyNI_gc(unittest.TestCase):
 
 	def test_gc_dict_cycle(self):
 		#print "test_gc_dict_cycle"
+		clearCurrentLeaks()
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		l = (123, {'a': 0, 'b': "test3"})
 		l[1]['a'] = l
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -149,12 +143,13 @@ class TestJyNI_gc(unittest.TestCase):
 		runGC()
 		self.assertIsNone(wkl.get())
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
-		#print ""
 		#monitor.listLeaks()
 		del wkl
 
 	def test_gc_list_modify_pre(self):
 		#print "test_gc_list_modify_pre"
+		clearCurrentLeaks()
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		l = [0, "test1"]
 		d = {'a': 7, 'b': "test6"}
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -177,6 +172,8 @@ class TestJyNI_gc(unittest.TestCase):
 
 	def test_gc_list_modify_update(self):
 		#print "test_gc_list_modify_update"
+		clearCurrentLeaks()
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		l = [0, "test1"]
 		d = {'a': 7, 'b': "test6"}
 		#We create weak reference to l to monitor collection by Java-GC:
@@ -199,6 +196,8 @@ class TestJyNI_gc(unittest.TestCase):
 
 	def test_gc_list_modify_silent(self):
 		#print "test_gc_list_modify_silent"
+		clearCurrentLeaks()
+		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		l = [0, "test1"]
 		d = {'a': 7, 'b': "test6"}
 		wkl = WeakReference(l)
@@ -212,9 +211,9 @@ class TestJyNI_gc(unittest.TestCase):
 		DemoExtension.listSetIndex(l, 0, d)
 		del d
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
-		#print "run1"
+		#monitor.listAll()
 		runGC()
-		#print "run1 done"
+		#monitor.listAll()
 		self.assertFalse(monitor.lastClearGraphValid)
 		self.assertIsNotNone(wkl.get())
 		self.assertIsNone(wkd.get())
@@ -224,20 +223,24 @@ class TestJyNI_gc(unittest.TestCase):
 		self.assertIsNotNone(l[0])
 		self.assertEqual(len(l[0]), 2)
 		del l
-		#print "run2"
 		runGC()
-		#print "run2 done"
+		#monitor.listAll()
 		self.assertTrue(monitor.lastClearGraphValid)
+
+ 		# For some reason resurrected objects persist one more
+ 		# gc-cycle in principle. So we have to run gc again before
+ 		# we can observe wkd2 to die. It is currently unclear whether
+ 		# this behavior is a JyNI-bug or natural Java-gc behavior,
+ 		# but for now (with some evidence) we assume the latter.
+		# Note: Since WeakRef-support wkd2 actually keeps the native
+		# referent alive for one more cycle. So also the monitor-refcount
+		# test only passes after another gc-run now.
+ 		runGC()
+ 		#monitor.listAll()
+		self.assertTrue(monitor.lastClearGraphValid)
+
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		self.assertIsNone(wkl2())
-		# For some reason resurrected objects persist one more
-		# gc-cycle in principle. So we have to run gc again before
-		# we can observe wkd2 to die. It is currently unclear whether
-		# this behavior is a JyNI-bug or natural Java-gc behavior,
-		# but for now (with some evidence) we assume the latter.
-		#print "run3"
-		runGC()
-		#print "run3 done"
 		self.assertIsNone(wkd2())
 
 

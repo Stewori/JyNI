@@ -40,7 +40,8 @@ const char* JyAttributeTypeName = "typn";
 const char* JyAttributeStringInterned = "strI";
 const char* JyAttributeSetEntry = "setE";
 const char* JyAttributeJyGCHead = "jyGC";
-const char* JyAttributeJyGCRefTmp = "gcref";
+const char* JyAttributeJyGCRefTmp = "gcrf";
+const char* JyAttributeWeakRefCount = "wrct";
 
 //defaults to 0; note that on alloc this value is added to the anyway allocated size sizeof(PyObjectHead)
 //const char* JyAttributeTruncateSize = "trSi";

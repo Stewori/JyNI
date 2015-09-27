@@ -59,6 +59,10 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 //		reaper.start();
 	}
 
+	public long getNativeRef() {
+		return nativeRef;
+	}
+
 	public static JyWeakReferenceGC lookupJyGCHead(long handle) {
 		return refList.get(handle);
 		//return result != null ? result.get() : null;

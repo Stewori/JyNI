@@ -26,7 +26,6 @@
 
 package JyNI;
 
-//import org.python.core.JyAttribute;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyList;
@@ -71,13 +70,31 @@ public class JyNIGlobalRef implements ReferenceBackend {
 	}
 
 	protected void initNativeHandle(long handle) {
+		//System.out.println("initNativeHandle: "+handle+" (J"+System.identityHashCode(backend));
+		//This should incref the native ref-count (if handle is non-null), shouldn't it?
+		//For efficiency reasons, the native caller of JyNI.createWeakReferenceFromNative
+		//should be responsible for the incref. Native calls to it should be strictly
+		//controlled - currently only happening in JySync.c.
 		nativeHandle = handle;
 	}
 
 	protected void notifyBackendClear(GlobalRef caller) {
 		/* Decref native referent if present. */
-		if (nativeHandle != 0) {
-			JyNI.releaseWeakReferent(nativeHandle,
+//These four lines prevent JyNI from detecting a corrupted ref-graph properly:
+//(todo: find out why!)
+/* Notes: This should release the ref-count that keeps the native referent alive
+          while this non-native ref exists. (So releasing the native side actually
+          makes sense.) However somehow it can break/fix ref-graphs. Maybe the
+          acquiring of the ref-count does not work reliably.
+ */
+		//Todo: Check/reason whether there might be issues if someone calls get while
+		//      the weakref is in pending state regarding clear.
+		//System.out.println("releaseWeakReferent? "+nativeHandle);
+		long handle = nativeHandle;
+		nativeHandle = 0;
+		if (handle != 0) {
+			//System.out.println(JyNI.currentNativeRefCount(handle));
+			JyNI.releaseWeakReferent(handle,
 					JyTState.prepareNativeThreadState(Py.getThreadState()));
 		}
 	}
@@ -110,7 +127,9 @@ public class JyNIGlobalRef implements ReferenceBackend {
 		PyObject result = JyNI.lookupFromHandle(nativeHandle);
 		if (result != null && backend != null)
 			backend.restore(result);
+		//if (result == null) System.out.println("Obtained null-result from non-null native handle");
 		return result;
+//		return null;
 	}
 
 	public int pythonHashCode() {
@@ -165,6 +184,7 @@ public class JyNIGlobalRef implements ReferenceBackend {
 	}
 
 	public void restore(PyObject formerReferent) {
+		//System.out.println("restore WeakReferent: "+nativeHandle);
 		backend.restore(formerReferent);
 //		if (backend != null) {
 //			backend.restore(formerReferent);

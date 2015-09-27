@@ -288,6 +288,7 @@ jstring JyNIgetNativeTypeName(JNIEnv *env, jclass class, jlong handle)
 void JyNI_releaseWeakReferent(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
 	ENTER_JyNI
+	decWeakRefCount(AS_JY((PyObject*) handle));
 	Py_DECREF(handle);
 	LEAVE_JyNI
 }
@@ -1506,11 +1507,17 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		}
 
 		/* Take care for already existing Jython-weak references */
-//		jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src);
-//		if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) {
-//			gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory);
-//		}
-//		if (gref) (*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest);
+		jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src);
+		if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) {
+			gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory);
+		}
+		if (gref) {
+			//jputs("native call to JyNIGlobalRef_initNativeHandle");
+			//jputsLong((jlong) dest);
+			Py_INCREF(dest);
+			incWeakRefCount(jy);
+			(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest);
+		}
 
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
 		if (PyObject_IS_GC(dest)) {
@@ -2118,6 +2125,25 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 	{
 		return (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, PyString_AS_STRING(op)), stringIntern);
 	}
+}
+
+inline int getWeakRefCount(JyObject* referent)
+{
+	return (int) JyNI_GetJyAttribute(referent, JyAttributeWeakRefCount);
+}
+
+inline int incWeakRefCount(JyObject* referent)
+{
+	int refCount = ((int) JyNI_GetJyAttribute(referent, JyAttributeWeakRefCount))+1;
+	JyNI_AddOrSetJyAttribute(referent, JyAttributeWeakRefCount, (void*) refCount);
+	return refCount;
+}
+
+inline int decWeakRefCount(JyObject* referent)
+{
+	int refCount = ((int) JyNI_GetJyAttribute(referent, JyAttributeWeakRefCount))-1;
+	JyNI_AddOrSetJyAttribute(referent, JyAttributeWeakRefCount, (void*) refCount);
+	return refCount < 0 ? -1 : refCount;
 }
 
 /* JY_DELEGATE indicates, when Functions like repr

@@ -91,7 +91,7 @@ public class JyNIInitializer implements JythonInitializer {
 
 		//Set up Jython hooks for JyNI:
 		FinalizeTrigger.factory = new JyNIFinalizeTriggerFactory();
-		//GlobalRef.factory = new JyNIGlobalRefFactory();
+		GlobalRef.factory = new JyNIGlobalRefFactory();
 		new SentinelFinalizer();
 		gc.addJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS);
 		gc.registerPreFinalizationProcess(new Runnable(){

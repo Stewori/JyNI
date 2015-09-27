@@ -345,7 +345,9 @@ extern const char* JyAttributeStringInterned;
 extern const char* JyAttributeSetEntry;
 extern const char* JyAttributeJyGCHead;
 extern const char* JyAttributeJyGCRefTmp;
+extern const char* JyAttributeWeakRefCount;
 //extern const char* JyAttributeTruncateSize;
+
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1
 #define JY_ATTR_VAR_SIZE_FLAG_MASK 2
 #define JY_ATTR_JWEAK_VALUE_FLAG_MASK 4
@@ -580,6 +582,9 @@ int updateClearJyGCHeadLinks(PyObject* op, JyObject* jy, jsize startIndex);
 int updateInsertJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		PyObject* newItem, JyObject* newItemJy);
 int updateJyGCHeadLinks(PyObject* op, JyObject* jy);
+inline int getWeakRefCount(JyObject* referent);
+inline int incWeakRefCount(JyObject* referent);
+inline int decWeakRefCount(JyObject* referent);
 
 /* Provide header for nullstring from stringobject.c
  * This way, the nullstring can also be used from other

@@ -257,6 +257,14 @@ JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    pinWeakReferent
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_pinWeakReferent
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    releaseWeakReferent
  * Signature: (JJ)V
  */

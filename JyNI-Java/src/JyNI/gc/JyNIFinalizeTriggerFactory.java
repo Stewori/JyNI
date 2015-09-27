@@ -34,8 +34,14 @@ import org.python.core.finalization.*;
 public class JyNIFinalizeTriggerFactory implements FinalizeTriggerFactory {
 
 	static class JyNIFinalizeTrigger extends FinalizeTrigger {
+		// For now this is just a stub.
 		protected JyNIFinalizeTrigger(PyObject obj) {
 			super(obj);
+		}
+
+		public void performFinalization() {
+			JyNI.waitForCStubs();
+			super.performFinalization();
 		}
 	}
 

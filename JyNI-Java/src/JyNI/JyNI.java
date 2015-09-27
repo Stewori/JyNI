@@ -248,6 +248,7 @@ public class JyNI {
 	//public static native long[] JyGC_validateGCHead(long handle, long[] oldLinks);
 	public static native boolean JyGC_validateGCHead(long handle, long[] oldLinks);
 	public static native long[] JyGC_nativeTraverse(long handle);
+	//protected static native void pinWeakReferent(long handle, long tstate);
 	protected static native void releaseWeakReferent(long handle, long tstate);
 	//public static native JyGCHead JyGC_lookupGCHead(long handle);
 
@@ -1094,7 +1095,7 @@ public class JyNI {
 			if (confirmationsUnconsumed > 0) {
 				/*
 				 * This might happen if gc-runs overlap (i.e. a gc-run overlaps the
-				 * finalization-phase of the previous one - depending on implementation
+				 * finalization-phase of the previous one - depending on JVM implementation
 				 * details this can happen or not), which should not (cannot?) happen in
 				 * usual operation, but maybe one can provoke it by calling System.gc in
 				 * high frequency. Just in case - maybe we just wait a bit if this
@@ -1167,11 +1168,12 @@ public class JyNI {
 	}
 
 	public static void waitForCStubs() {
+		//System.out.println("maybe waitForCStubs...");
 		synchronized (CStubGCHead.class) {
 			while (confirmationsUnconsumed > 0) {
 				try {
 					//System.out.println("waitForCStubs "+confirmationsUnconsumed);
-					CStubGCHead.class.wait();
+					CStubGCHead.class.wait(); //JyNI-GCRefReaper thread hanging here
 				} catch(InterruptedException ie) {}
 			}
 			//System.out.println("waitForCStubs done");
@@ -1213,7 +1215,7 @@ public class JyNI {
 	}
 
 	protected static void CStubReachableRestore(PyObject obj) {
-		//System.out.println("Resotre: "+obj);
+		//System.out.println("Restore: "+obj);
 		gc.abortDelayedFinalization(obj);
 		//gc.restoreFinalizer(obj); (done in abortDelayedFinalization)
 		gc.restoreWeakReferences(obj);
@@ -1274,11 +1276,11 @@ public class JyNI {
 //				System.out.println("unexplored!");
 //				//delayFinalization = JyGC_validateGCHead(handle, null) || delayFinalization;
 //			} else {
-			if (headRef == null) {
+			if (headRef != null) {
 				head = headRef.get();
 //				if (head == null) {
 //					System.out.println("j-deleted!");
-//				} else
+//				}// else
 				if (head != null && head instanceof TraversableGCHead) {
 					delayFinalization = JyGC_validateGCHead(handle,
 							((TraversableGCHead) head).toHandleArray()) || delayFinalization;
@@ -1287,8 +1289,8 @@ public class JyNI {
 //					delayFinalization = tmp || delayFinalization;
 //					if (tmp)
 //						System.out.println("check update repair: "+JyGC_validateGCHead(handle, ((TraversableGCHead) head).toHandleArray()));
-				} else System.err.println(
-						"JyNI-error: Encountered JyNI-critical with non-traversable JyGCHead!");
+				} else if (head != null) System.err.println(
+						"JyNI-error: Encountered JyNI-critical with non-traversable JyGCHead! "+headRef.getNativeRef());
 			}
 		}
 		if (delayFinalization) {//enable delayed finalization in GC-module
@@ -1310,7 +1312,10 @@ public class JyNI {
 		else gc.restoreFinalizer(inst);
 	}
 
+//---------------Weak Reference section-------------------
+	
 	protected static ReferenceType createWeakReferenceFromNative(PyObject referent, long handle, PyObject callback) {
+		System.out.println("createWeakReferenceFromNative "+handle);
 		if (referent == null)
 			return new ReferenceType(JyNIEmptyGlobalReference.defaultInstance, callback);
 		ReferenceBackend gref = GlobalRef.newInstance(referent);
@@ -1319,6 +1324,7 @@ public class JyNI {
 	}
 
 	protected static ProxyType createProxyFromNative(PyObject referent, long handle, PyObject callback) {
+		System.out.println("createProxyFromNative "+handle);
 		if (referent == null)
 			return new ProxyType(JyNIEmptyGlobalReference.defaultInstance, callback);
 		ReferenceBackend gref = GlobalRef.newInstance(referent);
@@ -1327,6 +1333,7 @@ public class JyNI {
 	}
 
 	protected static CallableProxyType createCallableProxyFromNative(PyObject referent, long handle, PyObject callback) {
+		System.out.println("createCallableProxyFromNative "+handle);
 		if (referent == null)
 			return new CallableProxyType(JyNIEmptyGlobalReference.defaultInstance, callback);
 		ReferenceBackend gref = GlobalRef.newInstance(referent);

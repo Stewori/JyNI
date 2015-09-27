@@ -69,6 +69,7 @@ public class JyReferenceMonitor {
 
 	public static long startTime = System.currentTimeMillis();
 	public static HashMap<Long, ObjectLog> nativeObjects = new HashMap<>();
+	public static HashMap<Long, ObjectLog> permanentLeaks = new HashMap<>();
 	public static long lastClearRefTime = 0;
 	public static long lastGCRun = 0;
 	public static boolean lastClearGraphValid = false;
@@ -137,6 +138,7 @@ public class JyReferenceMonitor {
 	}
 
 	public static class ObjectLog {
+		static String na = "n/a";
 		long nativeRef = 0;
 		long initialNativeRef = 0; //to track reallocs
 		WeakReference<PyObject> object;
@@ -172,6 +174,7 @@ public class JyReferenceMonitor {
 		}
 
 		public String repr() {
+			if (nativeFree > 0) return na;
 			if (object != null) {
 				PyObject op = object.get();
 				if (op != null) {
@@ -196,13 +199,13 @@ public class JyReferenceMonitor {
 			if (nativeType == null) {
 				String nt = JyNI.getNativeTypeName(nativeRef);
 				if (nt != null) return nt;
-				else return "type n/a";
+				else return "type "+na;
 			} else return nativeType;
 		}
 
 		public String toString() {
 			String os = repr();
-			if (os == null) os = "n/a";
+			if (os == null) os = na;
 			/* We intentionally don't use "null" as descriptor for
 			 * a missing reference. object being null just means
 			 * that no information is available - the native object
@@ -222,7 +225,8 @@ public class JyReferenceMonitor {
 			if (nativeType == null) {
 				String nt = JyNI.getNativeTypeName(nativeRef);
 				System.out.println("JyNI-Warning: Null-type discovered: "+nt);
-				System.out.println("object: "+JyNI.lookupFromHandle(nativeRef));
+				System.out.println("object: "+(
+						nativeFree == 0 ? JyNI.lookupFromHandle(nativeRef) : na));
 				if (nt != null)
 					nativeType = nt+"_n";
 			}
@@ -243,11 +247,11 @@ public class JyReferenceMonitor {
 		}
 
 		public void forceUpdatePyObject() {
-			//System.out.println("forceUpdatePyObject "+nativeRef);//Free on non-allocated ref!
-//			System.out.println("Src-func: "+nativeAllocFunc);
-//			System.out.println("type: "+this.nativeType);
-			PyObject op = JyNI.lookupFromHandle(nativeRef);
-//			System.out.println("forceUpdatePyObject done");
+			System.out.println("forceUpdatePyObject "+nativeRef);//Free on non-allocated ref!
+			System.out.println("Src-func: "+nativeAllocFunc);
+			System.out.println("type: "+this.nativeType);
+			PyObject op = nativeFree == 0 ? JyNI.lookupFromHandle(nativeRef) : null;
+			System.out.println("forceUpdatePyObject done");
 			if (op != null) object = new WeakReference<>(op);
 		}
 
@@ -424,6 +428,7 @@ public class JyReferenceMonitor {
 
 	public static void notifyClearReferences(long[] refs, boolean validGraph) {
 		lastClearRefTime = System.currentTimeMillis();
+		//System.out.println("notifyClearReferences: validGraph? "+validGraph);
 		lastClearGraphValid = validGraph;
 //		for (long l: refs) {
 //			ObjectLog log = nativeObjects.get(l);
@@ -497,6 +502,13 @@ public class JyReferenceMonitor {
 			}
 		}
 		return result;
+	}
+
+	public static void declareLeaksPermanent(Collection<ObjectLog> leaks) {
+		for (ObjectLog l: leaks) {
+			nativeObjects.remove(l.initialNativeRef);
+			permanentLeaks.put(l.initialNativeRef, l);
+		}
 	}
 
 	public static void listLeaks() {

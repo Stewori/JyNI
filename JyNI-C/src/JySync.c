@@ -581,6 +581,8 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
 jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src)
 {
 	PyObject* referent = PyWeakref_GET_OBJECT0(src);
+	jputs("Sync PyWeakRef* -> jython");
+	jputsLong((jlong) referent);
 	jobject jReferent = NULL;
 	if (referent) jReferent = JyNI_JythonPyObject_FromPyObject(referent);
 	env(NULL);
@@ -599,12 +601,17 @@ PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src)
 	env(NULL);
 	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
 	PyObject* referent = JyNI_PyObject_FromJythonPyObject(jReferent);
+	jputs("Sync jython -> PyWeakRef*");
+	jputsLong((jlong) referent);
 	/* Note that an extra Py_INCREF is not necessary since the conversion method
 	 * returns a new reference.
 	 * JyNI-note: It is okay to hold a refcount for the weakly referenced object.
 	 * This will be decreffed when the Java-side GlobalRef is released.
 	 */
 	PyObject* result = PyWeakref_NewRef(referent, NULL);
+	/* Todo: Consider how this shall work for non-heap objects.
+	 */
+	incWeakRefCount(AS_JY(result));
 	// Todo: Support callback.
 	return result;
 }

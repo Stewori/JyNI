@@ -41,6 +41,7 @@ public class JyNIGlobalRefFactory implements ReferenceBackendFactory {
 			return caller;
 	}
 
+	//Note: Currently only called by GlobalRef.call()
 	public void notifyClear(ReferenceBackend ref, GlobalRef caller) {
 		((JyNIGlobalRef) ref).notifyBackendClear(caller);
 	}
