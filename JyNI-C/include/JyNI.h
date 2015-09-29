@@ -446,6 +446,7 @@ void JyNI_releaseWeakReferent(JNIEnv *env, jclass class, jlong handle, jlong tst
 
 #define builtinTypeCount 46
 extern TypeMapEntry builtinTypes[builtinTypeCount];
+//extern TypeMapEntry specialPyInstance;
 
 #define  METHOD_INDEX_TME   8
 #define   FLOAT_INDEX_TME  17
@@ -719,6 +720,8 @@ extern jmethodID JyNI_createWeakReferenceFromNative;
 extern jmethodID JyNI_createProxyFromNative;
 extern jmethodID JyNI_createCallableProxyFromNative;
 extern jmethodID JyNI_getGlobalRef;
+extern jmethodID JyNI_getTypeNameForNativeConversion;
+extern jmethodID JyNI_getTypeOldStyleParent;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;

@@ -65,6 +65,7 @@ PyObject* JySync_Init_PyClass_From_JyClass(jobject src);
 
 jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src);
 PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src);
+PyObject* JySync_Init_Special_PyInstance(jobject src);
 
 jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src);
 PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src);

@@ -509,7 +509,37 @@ public class JyNI {
 			return t;
 		} catch (Exception e) {return null;}
 	}
-	
+
+	public static String getTypeNameForNativeConversion(PyObject obj) {
+		//JyNI.TestTk$StringVar should be instance
+//		String result = obj.getType().getName();
+//		System.out.println("getTypeNameForNativeConversion result: "+result);//+" ("+obj.__str__()+")");
+//		System.out.println(obj.getClass());
+//		System.out.println(obj.getType());
+//		System.out.println(obj.getType().getClass());
+//		System.out.println(obj.getType().getBase());
+//		System.out.println(obj.getType().getBases());
+//		PyObject cls = obj.getType().getBases().__getitem__(0);
+//		System.out.println(cls);
+//		System.out.println(cls.getType());
+//		System.out.println(cls.getClass());
+		//if (cls instanceof PyClass)
+		//System.out.println(((PyType) obj.getType().getBases().__getitem__(0)).getName());
+		//if (cls instanceof PyClass)
+		return obj.getType().getName();//result;
+	}
+
+	public static PyClass getTypeOldStyleParent(PyObject obj) {
+		PyObject bases = obj.getType().getBases();
+		PyObject result;
+		for (int i = 0; i < bases.__len__(); ++i) {
+			result = bases.__getitem__(i);
+			if (result instanceof PyClass)
+				return (PyClass) result;
+		}
+		return null;
+	}
+
 	public static long[] getNativeAvailableKeysAndValues(PyDictionary dict) {
 		Map<PyObject, PyObject> map = dict.getMap();
 		Iterator<PyObject> it = map.keySet().iterator();

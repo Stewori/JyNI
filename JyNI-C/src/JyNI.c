@@ -44,6 +44,7 @@ const char* excPrefix = "exceptions.";
 //jlong JyNIDebugMode = 0;
 
 TypeMapEntry builtinTypes[builtinTypeCount];
+static TypeMapEntry specialPyInstance;
 
 #define builtinExceptionCount 50
 //PyTypeObject* builtinExceptions[builtinExceptionCount];
@@ -462,6 +463,12 @@ inline void initBuiltinTypes()
 	builtinTypes[7].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[7].sync->jyInit = (jyInitSync) JySync_Init_JyInstance_From_PyInstance;
 	builtinTypes[7].sync->pyInit = (pyInitSync) JySync_Init_PyInstance_From_JyInstance;
+
+	specialPyInstance.py_type = &PyInstance_Type;
+	specialPyInstance.jy_class = pyInstanceClass;
+	specialPyInstance.flags = JySYNC_ON_INIT_FLAGS;// | JY_GC_FIXED_SIZE; // 2 links
+	specialPyInstance.sync = malloc(sizeof(SyncFunctions));
+	specialPyInstance.sync->pyInit = (pyInitSync) JySync_Init_Special_PyInstance;
 
 	builtinTypes[8].py_type = &PyMethod_Type;
 	builtinTypes[8].jy_class = pyMethodClass;
@@ -1614,9 +1621,13 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	//jputs("no handle exists yet");
 	//initialize PyObject*...
 	//find tme:
-	jstring tpName = (*env)->CallObjectMethod(env,
-			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType),
-			pyTypeGetName);
+//	jstring tpName = (*env)->CallObjectMethod(env,
+//			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType),
+//			pyTypeGetName);
+	jstring tpName = (*env)->CallStaticObjectMethod(env, JyNIClass,
+			JyNI_getTypeNameForNativeConversion, jythonPyObject);
+	//todo find out what name occurs if a Jython Java-proxy is used.
+	//     Can we make sense of it in default-instance case?
 	//jputs("tp name obtained:");
 	cstr_from_jstring(cName, tpName);
 	//jputs(cName);
@@ -1646,6 +1657,12 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			PyObject* er = JyNI_InitPyException(eme, jythonPyObject);
 			return er;
 		} else {
+			// We finally try a hack for some special new-style classes:
+			jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNI_getTypeOldStyleParent, jythonPyObject);
+			if (!(*env)->IsSameObject(env, old_cls, NULL)) {
+				return JyNI_InitPyObject(&specialPyInstance, jythonPyObject);
+			}
 			//Todo: Add case for new-style classes or Jython-defined types.
 			//jputs("returning NULL...");
 			//JyNI_jprintJ(jythonPyObject);
@@ -2417,6 +2434,8 @@ jmethodID JyNI_createWeakReferenceFromNative;
 jmethodID JyNI_createProxyFromNative;
 jmethodID JyNI_createCallableProxyFromNative;
 jmethodID JyNI_getGlobalRef;
+jmethodID JyNI_getTypeNameForNativeConversion;
+jmethodID JyNI_getTypeOldStyleParent;
 
 jclass JyTStateClass;
 jmethodID JyTState_setRecursionLimit;
@@ -3000,6 +3019,10 @@ inline jint initJyNI(JNIEnv *env)
 			"(Lorg/python/core/PyObject;JLorg/python/core/PyObject;)Lorg/python/modules/_weakref/CallableProxyType;");
 	JyNI_getGlobalRef = (*env)->GetStaticMethodID(env, JyNIClass, "getGlobalRef",
 			"(Lorg/python/core/PyObject;)Lorg/python/modules/_weakref/ReferenceBackend;");
+	JyNI_getTypeNameForNativeConversion = (*env)->GetStaticMethodID(env, JyNIClass, "getTypeNameForNativeConversion",
+			"(Lorg/python/core/PyObject;)Ljava/lang/String;");
+	JyNI_getTypeOldStyleParent = (*env)->GetStaticMethodID(env, JyNIClass, "getTypeOldStyleParent",
+			"(Lorg/python/core/PyObject;)Lorg/python/core/PyClass;");
 
 	//Error stuff:
 	//JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
@@ -3894,6 +3917,8 @@ void JyNI_unload(JavaVM *jvm)
 		if (builtinTypes[i].sync != NULL) free(builtinTypes[i].sync);
 		if (builtinTypes[i].type_name != NULL) free(builtinTypes[i].type_name);
 	}
+
+	free(specialPyInstance.sync);
 
 	env();
 	(*env)->DeleteWeakGlobalRef(env, JyNone);

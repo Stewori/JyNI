@@ -75,6 +75,10 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 		if (!item) {
 			jputs("Add null-item to tuple:");
 			jputsLong(er);
+			jobject jNull = (*env)->CallObjectMethod(env, src, pyTuplePyGet, i);
+			if (!jNull) jputs("j also null");
+			else if ((*env)->IsSameObject(env, jNull, NULL)) jputs("j equal null");
+			else jputs("j not null");
 		}
 	}
 	//JYNI_GC_TUPLE_EXPLORE(er);
@@ -547,6 +551,23 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
 	PyObject* er = PyInstance_NewRaw(
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstanceInstclassField)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance__dict__)));
+	return er;
+}
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
+PyObject* JySync_Init_Special_PyInstance(jobject src)
+{
+	env(NULL);
+	//todo: Care for finalizer also in this case.
+	//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
+	jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
+						JyNI_getTypeOldStyleParent, src);
+
+	PyObject* er = PyInstance_NewRaw(
+		JyNI_PyObject_FromJythonPyObject(old_cls),
+		JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyObjectGetDict)));
 	return er;
 }
 
