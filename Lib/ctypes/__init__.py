@@ -1,3 +1,31 @@
+#
+#  This File is based on ctypes/__init__.py from CPython 2.7.8.
+#  It has been modified to suit JyNI needs.
+#
+#  Copyright of the original file:
+#  Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+#  2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
+#
+#  Copyright of JyNI:
+#  Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+#
+#
+#  This file is part of JyNI.
+#
+#  JyNI is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation, either version 3 of
+#  the License, or (at your option) any later version.
+#
+#  JyNI is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
+
+
 ######################################################################
 #  This file should be kept compatible with Python 2.3, see PEP 291. #
 ######################################################################
@@ -470,12 +498,19 @@ class LibraryLoader(object):
 cdll = LibraryLoader(CDLL)
 pydll = LibraryLoader(PyDLL)
 
-if _os.name in ("nt", "ce"):
-    pythonapi = PyDLL("python dll", None, _sys.dllhandle)
-elif _sys.platform == "cygwin":
-    pythonapi = PyDLL("libpython%d.%d.dll" % _sys.version_info[:2])
-else:
-    pythonapi = PyDLL(None)
+# Todo: Adjust libnames for JyNI when we extend support to these platforms:
+# if _os.name in ("nt", "ce"):
+#     pythonapi = PyDLL("python dll", None, _sys.dllhandle)
+# elif _sys.platform == "cygwin":
+#     pythonapi = PyDLL("libpython%d.%d.dll" % _sys.version_info[:2])
+# else:
+
+# JyNI-Note:
+# From dlopen man-page:
+# If filename is NULL, then the returned handle is for the main program.
+# Given that in JyNI-case the main-program is the Java-loader (or LiJy)
+# this might need an adjustment, i.e. explicitly libJyNI.so as filename.
+pythonapi = PyDLL(None)
 
 
 if _os.name in ("nt", "ce"):
