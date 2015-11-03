@@ -36,13 +36,11 @@
 //#define WITHOUT_COMPLEX
 //PyExc_UnicodeDecodeError
 #include <jni.h>
-//#include <Python_JyNI.h>
 #include <Python_JyNI.h>
 //#include <JyNI_JyNI.h>
 #include "JythonSite.h"
 #include "JyList.h"
 #include "JyTState.h"
-
 
 /* JNI-Shortcuts: */
 
@@ -359,7 +357,8 @@ typedef struct { jweak jy; unsigned short flags; JyAttribute* attr;} JyObject;
 typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject; /* only used for pre-allocated blocks */
 typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;  /* only used for pre-allocated blocks */
 /* type_name is optional and defaults to py_type->tp_name */
-typedef struct { PyTypeObject* py_type; jclass jy_class; unsigned short flags; SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
+typedef struct { PyTypeObject* py_type; jclass jy_class; jclass jy_subclass; unsigned short flags;
+		SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
 
 #define JyObject_HasJyGCHead(pyObject, jyObject) \
@@ -478,6 +477,7 @@ extern PyTypeObject sortwrapper_type;
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type);
 inline jclass JyNI_JythonClassFromPyType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromPyType(PyTypeObject* type);
+inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromName(char* name);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name);
@@ -535,6 +535,7 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 //inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);
 inline PyObject* JyNI_Alloc(TypeMapEntry* tme);
 inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems);
+inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, Py_ssize_t nitems);
 inline PyObject* JyNI_AllocNative(PyTypeObject* type);
 inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems);
 inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme);
@@ -722,6 +723,7 @@ extern jmethodID JyNI_createCallableProxyFromNative;
 extern jmethodID JyNI_getGlobalRef;
 extern jmethodID JyNI_getTypeNameForNativeConversion;
 extern jmethodID JyNI_getTypeOldStyleParent;
+extern jmethodID JyNI_getJythonGlobals;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;
@@ -780,6 +782,8 @@ extern jclass pyCPeerGCClass;
 extern jmethodID pyCPeerGCConstructor;
 //extern jfieldID pyCPeerLinksHandle;
 
+extern jclass pyDictCPeerClass;
+
 extern jclass jyGCHeadClass;
 extern jmethodID traversableGCHeadSetLinks;
 extern jmethodID traversableGCHeadSetLink;
@@ -787,6 +791,9 @@ extern jmethodID traversableGCHeadInsertLink;
 extern jmethodID traversableGCHeadClearLink;
 extern jmethodID traversableGCHeadClearLinksFromIndex;
 extern jmethodID pyObjectGCHeadSetObject;
+extern jmethodID jyGCHeadGetHandle;
+
+extern jclass cPeerInterface;
 
 extern jclass pyCPeerTypeClass;
 extern jmethodID pyCPeerTypeConstructor;

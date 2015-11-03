@@ -2020,20 +2020,24 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 //		//jputs(Py_TYPE(op)->tp_name);
 //		return;
 //	}
+//	printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 	if (Is_Static_PyObject(op) || IS_UNEXPLORED(op))
 	{ //For now we force re-exploration of static PyObjects whenever it occurs.
-
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 //		jputs("explore object:");
-//		jputs(Py_TYPE((PyObject*) op)->tp_name);
+//		puts(Py_TYPE((PyObject*) op)->tp_name);
 	//	jputsLong(op);
 	//	if (AS_GC(op)->gc.gc_refs == GC_UNTRACKED) {
 	//		jputs("GC explore untracked object... this will cause problems...");
 	//	}
 		//jputs("count references...");
 		AS_GC(op)->gc.gc_refs = GC_EXPLORING;
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		if (Py_TYPE((PyObject*) op)->tp_traverse) {
 			int refCount = 0;
+//			printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 			Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_count, &refCount);
+//			printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 			//For now we only explore tracked objects. Only in GIL-free mode this will be different.
 			//Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_explore, NULL);
 	//		if (Py_TYPE(op) == &PyTuple_Type) {
@@ -2052,8 +2056,11 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 	//		jputs(Py_TYPE((PyObject*) op)->tp_name);
 	//		jputsLong(op);
 	//	}
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		AS_GC(op)->gc.gc_refs = GC_EXPLORED;
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		JyObject* jy = AS_JY_WITH_GC(op);
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 	//	if (!(jy->flags & JY_INITIALIZED_FLAG_MASK)) {
 	//		jputs("Explore uninitialized");
 	//		jputsLong(op);
@@ -2072,13 +2079,14 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 
 		env();
 		jobject jyHead = obtainJyGCHead(env, op, jy);
-
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		//perform exploration here and add all reachable JyGCHeads as links to jyHead.
 		//If the object is JyNI-GC-Var, use a list or something as head-links.
 		jobject linkHeads = exploreJyGCHeadLinks(env, op, jy);
+//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		(*env)->CallVoidMethod(env, jyHead, traversableGCHeadSetLinks, linkHeads);
 	}
-
+//	printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 	/*
 	 * The code above does the following:
 	 *
@@ -2658,6 +2666,12 @@ _PyObject_GC_Malloc(size_t basicsize)
 		return PyErr_NoMemory();
 	//jy = (JyObject*) PyObject_MALLOC(sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
 	jy = (JyObject*) PyObject_RawMalloc(sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
+//	jputs(__FUNCTION__);
+//	jputsLong((jlong) jy);
+//	jputsLong(sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
+//	jputs("sizes:");
+//	jputsLong(sizeof(PyGC_Head));
+//	jputsLong(sizeof(JyObject));
 	//jy = (JyObject*) malloc(sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
 	//printf("_PyObject_GC_Malloc %u\n", sizeof(JyObject) + sizeof(PyGC_Head) + basicsize);
 	//printf("address: %u\n", (jlong) jy);
@@ -2667,6 +2681,8 @@ _PyObject_GC_Malloc(size_t basicsize)
 	jy->attr = NULL;
 	//g = (PyGC_Head *)PyObject_MALLOC(sizeof(PyGC_Head) + basicsize);
 	g = GC_FROM_JY(jy);
+//	jputs("g");
+//	jputsLong((jlong) g);
 	//if (g == NULL) return PyErr_NoMemory();
 	g->gc.gc_refs = GC_UNTRACKED;
 // JyNI-todo: Implement a JyNI-compliant variant of the collection block.
@@ -2681,6 +2697,8 @@ _PyObject_GC_Malloc(size_t basicsize)
 //		collecting = 0;
 //	}
 	op = FROM_GC(g);
+//	jputs("op");
+//	jputsLong((jlong) op);
 	JyNIDebug(JY_NATIVE_ALLOC_GC, op, AS_JY_WITH_GC(op), basicsize, NULL);
 	//Shortcut not feasible because generic AS_JY not yet works as it depends
 	//on a properly configured Py_TYPE(op):

@@ -37,6 +37,7 @@ import org.python.modules._weakref.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.io.File;
+import java.nio.file.FileSystems;
 
 public class JyNI {
 	static {
@@ -500,7 +501,11 @@ public class JyNI {
 			return null;
 		}
 	}
-	
+
+	public static PyObject getJythonGlobals() {
+		return Py.getFrame().f_globals;
+	}
+
 	public static PyType getPyType(Class pyClass) {
 		try {
 			Field tp = pyClass.getField("TYPE");
@@ -1064,6 +1069,10 @@ public class JyNI {
 
 	public static String getPlatform() {
 		return PySystemState.version.asString();
+	}
+
+	public static boolean isPosix() {
+		return FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 	}
 
 	public static void jPrint(String msg) {

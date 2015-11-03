@@ -72,14 +72,18 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 		//Py_XINCREF(item);
 		//PyTuple_SetItem(er, i, item);
 		PyTuple_SET_ITEM(er, i, item);
-		if (!item) {
-			jputs("Add null-item to tuple:");
-			jputsLong(er);
-			jobject jNull = (*env)->CallObjectMethod(env, src, pyTuplePyGet, i);
-			if (!jNull) jputs("j also null");
-			else if ((*env)->IsSameObject(env, jNull, NULL)) jputs("j equal null");
-			else jputs("j not null");
-		}
+//		if (!item) {
+//			jputs("Add null-item to tuple:");
+//			jputsLong(er);
+//			jputsLong(i);
+//			jobject jNull = (*env)->CallObjectMethod(env, src, pyTuplePyGet, i);
+//			if (!jNull) jputs("j also null");
+//			else if ((*env)->IsSameObject(env, jNull, NULL)) jputs("j equal null");
+//			else {
+//				jputs("j not null:");
+//				JyNI_printJInfo(jNull);
+//			}
+//		}
 	}
 	//JYNI_GC_TUPLE_EXPLORE(er);
 	return er;
@@ -143,8 +147,10 @@ PyObject* JySync_Init_PyString_From_JyString(jobject src)
 			 */
 			AS_JY_NO_GC(result)->flags |= JY_CACHE_ETERNAL_FLAG_MASK;
 		return result;
-	} else
-		return PyString_FromString(cstr);
+	} else {
+		PyObject* result = PyString_FromString(cstr);
+		return result;
+	}
 }
 
 jobject JySync_Init_JyString_From_PyString(PyObject* src)

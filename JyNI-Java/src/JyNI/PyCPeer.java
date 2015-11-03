@@ -35,11 +35,10 @@ import org.python.core.PyDictionary;
 import org.python.core.Py;
 import org.python.core.finalization.FinalizableBuiltin;
 import org.python.core.Untraversable;
-import JyNI.gc.JyGCHead;
 import java.util.HashMap;
 
 @Untraversable
-public class PyCPeer extends PyObject implements JyGCHead, FinalizableBuiltin {
+public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuiltin {
 	
 	public long objectHandle;//, refHandle;
 	
@@ -75,8 +74,9 @@ public class PyCPeer extends PyObject implements JyGCHead, FinalizableBuiltin {
 		System.out.println("PeerCall args: "+args.length);
 		for(int i = 0; i < args.length; ++i)
 			System.out.println(args[i]);*/
+		PyObject result = null;
 		if (keywords.length == 0) {
-			return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
+			result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
 					args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null,
 					JyTState.prepareNativeThreadState(Py.getThreadState())));
 		} else {
@@ -89,12 +89,20 @@ public class PyCPeer extends PyObject implements JyGCHead, FinalizableBuiltin {
 			if (args.length > keywords.length) {
 				PyObject[] args2 = new PyObject[args.length - keywords.length];
 				System.arraycopy(args, 0, args2, 0, args2.length);
-				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false),
+				result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false),
 					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
 			} else
-				return JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple,
+				result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple,
 					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
 		}
+		if (result == null)
+			// This is equivalent to
+			// throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
+			// since parent is PyObject. Using super the error message automatically reflects updates
+			// to Jython-code.
+			return super.__call__(args, keywords);
+		else
+			return result;
 	}
 
 	public PyObject __findattr_ex__(String name) {

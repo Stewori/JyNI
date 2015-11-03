@@ -2601,15 +2601,15 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 			PyObject *result;
 			if (Py_EnterRecursiveCall(" while calling a Python object"))
 				return NULL;
-			env(NULL);
+			//env(NULL);
 //			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
 
 			result = (*call)(func, arg, kw);
 
 			Py_LeaveRecursiveCall();
 //			Jy_LeaveRecursiveCall();
-			jboolean envExc = (*env)->ExceptionCheck(env);
-			if (result == NULL && !PyErr_Occurred() && !envExc)
+			//jboolean envExc = (*env)->ExceptionCheck(env);
+			if (result == NULL && !PyErr_Occurred())// && !envExc)
 				PyErr_SetString(
 					PyExc_SystemError,
 					"NULL result without error in PyObject_Call");
@@ -2655,17 +2655,14 @@ PyObject_CallFunction(PyObject *callable, char *format, ...)
 {
 	va_list va;
 	PyObject *args;
-	puts("PyObject_CallFunction");
 	if (callable == NULL)
 		return null_error();
-	puts("v1");
 	if (format && *format) {
 		va_start(va, format);
 		args = Py_VaBuildValue(format, va);
 		va_end(va);
 	} else
 		args = PyTuple_New(0);
-	puts("v2");
 	return call_function_tail(callable, args);
 }
 

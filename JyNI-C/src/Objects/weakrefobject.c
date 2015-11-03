@@ -792,20 +792,23 @@ PyWeakref_NewRef(PyObject *ob, PyObject *callback)
     PyWeakReference *result = NULL;
     PyWeakReference **list;
     PyWeakReference *ref, *proxy;
-
+//    jputsLong(__LINE__);
     if (!PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))) {
         PyErr_Format(PyExc_TypeError,
                      "cannot create weak reference to '%s' object",
                      Py_TYPE(ob)->tp_name);
         return NULL;
     }
+//    jputsLong(__LINE__);
     list = GET_WEAKREFS_LISTPTR(ob);
     get_basic_refs(*list, &ref, &proxy);
     if (callback == Py_None)
         callback = NULL;
+//    jputsLong(__LINE__);
     if (callback == NULL)
         /* return existing weak reference if it exists */
         result = ref;
+//    jputsLong(__LINE__);
     if (result != NULL)
         Py_INCREF(result);
     else {
@@ -841,6 +844,7 @@ PyWeakref_NewRef(PyObject *ob, PyObject *callback)
             }
         }
     }
+//    jputsLong(__LINE__);
     return (PyObject *) result;
 }
 

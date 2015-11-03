@@ -28,6 +28,7 @@
 package JyNI;
 
 import java.util.HashMap;
+//import java.lang.ref.WeakReference;
 
 import org.python.core.Py;
 import org.python.core.PyDictionary;
@@ -37,7 +38,7 @@ import org.python.core.PyType;
 import org.python.core.PyObject;
 import org.python.core.finalization.FinalizableBuiltin;
 
-public class PyCPeerType extends PyType implements FinalizableBuiltin {
+public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBuiltin {
 	/*
 	public static long tp_name; // For printing, in format "<module>.<name>"
 	public static long tp_basicsize, tp_itemsize; // For allocation
@@ -152,11 +153,11 @@ public class PyCPeerType extends PyType implements FinalizableBuiltin {
 		System.out.println("PeerCall args: "+args.length);
 		for(int i = 0; i < args.length; ++i)
 			System.out.println(args[i]);*/
-		//PyObject er =
+		PyObject result;
 		if (keywords.length == 0)
-			return JyNI.callPyCPeer(objectHandle,
+			result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
 				args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null,
-				JyTState.prepareNativeThreadState(Py.getThreadState()));//Py.None);
+				JyTState.prepareNativeThreadState(Py.getThreadState())));//Py.None);
 		else {
 			//todo: Use PyStringMap here... much work needs to be done to make the peer dictobject accept this
 			HashMap<PyObject, PyObject> back = new HashMap<PyObject, PyObject>(keywords.length);
@@ -167,13 +168,15 @@ public class PyCPeerType extends PyType implements FinalizableBuiltin {
 			if (args.length > keywords.length) {
 				PyObject[] args2 = new PyObject[args.length - keywords.length];
 				System.arraycopy(args, 0, args2, 0, args2.length);
-				return JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false),
-					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState()));
+				result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false),
+					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
 			} else
-				return JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back),
-					JyTState.prepareNativeThreadState(Py.getThreadState()));
+				result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple, new PyDictionary(back),
+					JyTState.prepareNativeThreadState(Py.getThreadState())));
 		}
-		
+		if (result == null)
+			throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
+		else return result;
 		/*System.out.println("Call er:");
 		System.out.println(er);
 		System.out.println(er.getClass().getName());
@@ -181,26 +184,48 @@ public class PyCPeerType extends PyType implements FinalizableBuiltin {
 		//return er;
 	}
 
+//	int findAttrCount = 0;
+//	WeakReference<PyObject> classCache = null;
 	public PyObject __findattr_ex__(String name) {
-		//System.out.println("Look for attribute "+name+" in PyCPeerType");
-		PyObject er = JyNI.getAttrString(objectHandle, name,
-			JyTState.prepareNativeThreadState(Py.getThreadState()));
+//		if (name.equals("__class__") && classCache != null) {
+//			PyObject cc = classCache.get();
+//			if (cc != null) return cc;
+//			else classCache = null;
+//		}
+//		System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name+" "+(findAttrCount++));
+		long ts = JyTState.prepareNativeThreadState(Py.getThreadState());
+		PyObject er = JyNI.getAttrString(objectHandle, name, ts);
+//		System.out.println("Result: "+er);
+		er = JyNI.maybeExc(er);
+//		if (name.equals("__class__") && classCache == null) classCache = new WeakReference(er);
 		return er != null ? er : Py.None;
 		//return super.__findattr_ex__(name);
+	}
+
+	public PyString __str__() {
+		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
+		return er == null ? (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
 	}
 
 	public PyString __repr__() {
 //		System.out.println("PyCPeerType__repr__");
 //		System.out.println(name);
-		return (PyString) JyNI.repr(objectHandle,
-			JyTState.prepareNativeThreadState(Py.getThreadState()));
+		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
 	public String toString() {
 		return JyNI.PyObjectAsString(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState()));
 	}
-	
+
+	@Override
+	public long getHandle() {
+		return objectHandle;
+	}
+
 	/**
 	 * Though it is discouraged, we use finalize to tidy up the
 	 * native references of this peer. We might replace this by

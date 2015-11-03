@@ -185,7 +185,30 @@ PyString_FromString(const char *str)
 	/* Inline PyObject_NewVar */
 	//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
 	//if (op == NULL) return PyErr_NoMemory();
+//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
+
+
 	JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
+//	JyObject* jy = (JyObject*) PyObject_RawMalloc((offsetof(PyStringObject, ob_sval) + 1) + size + sizeof(JyObject));
+//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);
+//		jputsLong((jlong) jy);
+//		jputsLong((offsetof(PyStringObject, ob_sval) + 1) + size + sizeof(JyObject));
+//	}
+//	if (jy == NULL) return PyErr_NoMemory();
+//	jy->jy = NULL;
+//	jy->attr = NULL;
+//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);
+//		jputs("writing to position");
+//		jputsLong((jlong) &(jy->flags));
+//		jputs("tp_name-position");
+//		jputsLong((jlong) &(tmpObserved->tp_name));
+//	}
+//	jy->flags = (256 | 512);
+//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
+//	op = (PyStringObject *) ((PyObject *)(((JyObject *)(jy))+1));
+//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
+//	if (Jy_memDebugFlags) JyRefMonitor_addAction(13 | 256, op, jy, (offsetof(PyStringObject, ob_sval) + 1) + size, PyString_Type.tp_name, __FUNCTION__, "/home/stefan/eclipseWorkspace/JyNI/JyNI-C/src/Objects/stringobject.c", 189);
+
 	PyObject_INIT_VAR(op, &PyString_Type, size);
 	op->ob_shash = -1;
 	op->ob_sstate = SSTATE_NOT_INTERNED;

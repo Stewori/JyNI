@@ -4162,17 +4162,23 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //	PyFrame_FastToLocals(current_frame);
 //	return current_frame->f_locals;
 //}
-//
-//PyObject *
-//PyEval_GetGlobals(void)
-//{
+
+PyObject *
+PyEval_GetGlobals(void)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNI_getJythonGlobals)
+	);
+
 //	PyFrameObject *current_frame = PyEval_GetFrame();
 //	if (current_frame == NULL)
 //		return NULL;
 //	else
 //		return current_frame->f_globals;
-//}
-//
+}
+
 //PyFrameObject *
 //PyEval_GetFrame(void)
 //{

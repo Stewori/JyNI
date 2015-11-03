@@ -5,7 +5,7 @@ Created on 30.06.2013
 '''
 
 # Note that this script currently has issues under 32bit systems.
-# It appears that this is a JNI-bug; a workaround is known, but not yet implemented.
+# It appears that this is a JNI-bug.
 
 import sys
 #Since invalid paths do no harm, we add several possible paths here, where
@@ -322,5 +322,21 @@ def run3():
 	print "exit"
 	print "===="
 
-run3()
+def run4():
+	import DemoExtension
+
+	JyNI.JyRefMonitor_setMemDebugFlags(1)
+	l = ([0, "test"],)
+	l[0][0] = l
+	DemoExtension.argCountToString(l)
+	del l
+	#l[0][1] = None
+	print "Leaks before GC:"
+	monitor.listLeaks()
+	System.gc()
+	time.sleep(2)
+	print "Leaks after GC:"
+	monitor.listLeaks()
+
+run4()
 #System.getProperties().list(System.out)

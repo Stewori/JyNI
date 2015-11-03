@@ -247,11 +247,11 @@ public class JyReferenceMonitor {
 		}
 
 		public void forceUpdatePyObject() {
-			System.out.println("forceUpdatePyObject "+nativeRef);//Free on non-allocated ref!
-			System.out.println("Src-func: "+nativeAllocFunc);
-			System.out.println("type: "+this.nativeType);
+//			System.out.println("forceUpdatePyObject "+nativeRef);//Free on non-allocated ref!
+//			System.out.println("Src-func: "+nativeAllocFunc);
+//			System.out.println("type: "+this.nativeType);
 			PyObject op = nativeFree == 0 ? JyNI.lookupFromHandle(nativeRef) : null;
-			System.out.println("forceUpdatePyObject done");
+//			System.out.println("forceUpdatePyObject done");
 			if (op != null) object = new WeakReference<>(op);
 		}
 

@@ -1572,15 +1572,13 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 	return -1;
 }
 
-/*
-// Helper to get a pointer to an object's __dict__ slot, if any
 
+/* Helper to get a pointer to an object's __dict__ slot, if any */
 PyObject **
 _PyObject_GetDictPtr(PyObject *obj)
-{
+{ //JyNI-todo: Check for truncation to avoid segfault
 	Py_ssize_t dictoffset;
 	PyTypeObject *tp = Py_TYPE(obj);
-
 	if (!(tp->tp_flags & Py_TPFLAGS_HAVE_CLASS))
 		return NULL;
 	dictoffset = tp->tp_dictoffset;
@@ -1589,18 +1587,16 @@ _PyObject_GetDictPtr(PyObject *obj)
 	if (dictoffset < 0) {
 		Py_ssize_t tsize;
 		size_t size;
-
 		tsize = ((PyVarObject *)obj)->ob_size;
 		if (tsize < 0)
 				tsize = -tsize;
 		size = _PyObject_VAR_SIZE(tp, tsize);
-
 		dictoffset += (long)size;
 		assert(dictoffset > 0);
 		assert(dictoffset % SIZEOF_VOID_P == 0);
 	}
 	return (PyObject **) ((char *)obj + dictoffset);
-}*/
+}
 
 PyObject *
 PyObject_SelfIter(PyObject *obj)
@@ -1852,9 +1848,9 @@ _PyObject_NextNotImplemented(PyObject *self)
 PyObject *
 _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 {
-	//jputs("_PyObject_GenericGetAttrWithDict:");
-	//jputs(PyString_AS_STRING(name));
-	//jputs(obj->ob_type->tp_name);
+//	jputs("_PyObject_GenericGetAttrWithDict:");
+//	jputs(PyString_AS_STRING(name));
+//	jputs(obj->ob_type->tp_name);
 	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr = NULL;
 	PyObject *res = NULL;
@@ -1946,6 +1942,8 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 	}
 	//jputsLong(__LINE__);
 	if (dict == NULL) {
+//		jputs("JyNI-WARNING: Attempting to get dict by offset.");
+//		jputs("(this will most likely segfault soon)");
 		/* Inline _PyObject_GetDictPtr */
 		dictoffset = tp->tp_dictoffset;
 		if (dictoffset != 0) {
@@ -2111,24 +2109,22 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 		Py_DECREF(dict);
 		goto done;
 	}
-
 	if (f != NULL) {
 		res = f(descr, obj, value);
 		goto done;
 	}
-
 	if (descr == NULL) {
 		PyErr_Format(PyExc_AttributeError,
 							"'%.100s' object has no attribute '%.200s'",
 							tp->tp_name, PyString_AS_STRING(name));
 		goto done;
 	}
-
 	PyErr_Format(PyExc_AttributeError,
 					"'%.50s' object attribute '%.400s' is read-only",
 					tp->tp_name, PyString_AS_STRING(name));
   done:
 	Py_DECREF(name);
+//	jputsLong(__LINE__);
 	return res;
 }
 

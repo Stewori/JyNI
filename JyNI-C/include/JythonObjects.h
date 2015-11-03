@@ -102,18 +102,16 @@ extern jmethodID pyListReverse;
 extern jmethodID pyListGetArray;
 extern jfieldID pyListBackend;
 
+extern jclass pyAbstractDictClass;
+extern jmethodID pyAbstractDictCopy;
+extern jmethodID pyAbstractDictMerge;
+extern jmethodID pyAbstractDictMergeFromSeq;
+
 extern jclass pyDictClass;
 extern jmethodID pyDictConstructor;
 extern jmethodID pyDictByPyObjectArrayConstructor;
-//extern jmethodID pyDictGet_PyObject;
-//extern jmethodID pyDictGet_PyObjectWithDefault;
-//extern jmethodID pyDict__setitem__;
-//extern jmethodID pyDict__delitem__;
-//extern jmethodID pyDictClear;
-//extern jmethodID pyDictSize;
 
 extern jclass pyStringMapClass;
-//extern jmethodID pyStringMapClear;
 
 extern jclass pyIntClass;
 extern jmethodID pyIntConstructor;
@@ -155,6 +153,7 @@ extern jmethodID pyTypeGetBase;
 extern jmethodID pyTypeGetBases;
 //extern jmethodID pyTypeGetMro;
 extern jmethodID pyTypeIsSubType;
+extern jfieldID pyTypeMROField;
 
 extern jclass pySequenceClass;
 extern jmethodID pySequenceLen;
