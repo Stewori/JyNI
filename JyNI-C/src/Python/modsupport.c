@@ -146,6 +146,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 
 	//d = PyModule_GetDict(m);
 	d = (*env)->CallObjectMethod(env, m, pyModuleGetDict);
+
 	if (methods != NULL) {
 		n = PyString_FromString(name);
 
@@ -172,14 +173,20 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			}*/
 //			puts("add method:");
 //			puts(ml->ml_name);
-			(*env)->CallVoidMethod(env, d, pyObject__setitem__,
+			ENTER_SubtypeLoop_Safe_Mode(d, __setitem__)
+			(*env)->CallVoidMethod(env, d, JMID(__setitem__),
 					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
 					JyNI_JythonPyObject_FromPyObject(v));
+			LEAVE_SubtypeLoop_Safe_Mode(d)
 			Py_DECREF(v);
 		}
 		//puts("methods added");
 		Py_DECREF(n);
 	}
+//	if (pyd) {
+//		Exit_SubtypeLoop_Safe_ModeJy(pyd);
+//		Py_DECREF(pyd);
+//	}
 	//puts("add doc...");
 	if (doc != NULL) {
 //		v = PyString_FromString(doc);
@@ -736,7 +743,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 	}*/
 	jobject dict;
 	if (!o) {
-		puts("o NULL");
+		jputs("o NULL");
 		if (!PyErr_Occurred())
 			PyErr_SetString(PyExc_TypeError,
 							"PyModule_AddObject() needs non-NULL value");
@@ -756,9 +763,11 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 	}
 	//if (PyDict_SetItemString(dict, name, o))
 	//	return -1;
-	(*env)->CallVoidMethod(env, dict, pyObject__setitem__,
-			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, name)),
-			o);
+	ENTER_SubtypeLoop_Safe_Mode(dict, __setitem__)
+	(*env)->CallVoidMethod(env, dict, JMID(__setitem__),
+			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString,
+					(*env)->NewStringUTF(env, name)), o);
+	LEAVE_SubtypeLoop_Safe_Mode(dict)
 	//Py_DECREF(o);
 	//puts("done");
 	return 0;

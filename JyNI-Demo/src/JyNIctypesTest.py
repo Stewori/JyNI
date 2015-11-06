@@ -61,4 +61,44 @@ print libc.strlen("abcdef")
 print "-----------"
 printf = libc.printf
 printf("%d bottles of beer\n", 42)
-print "-----------"
+
+from ctypes import *
+class cell(Structure):
+	pass
+
+# print "----------"
+cell._fields_ = [("name", c_char_p), ("next", POINTER(cell))]
+#cell.test = "blah"
+#print cell.test
+#print cell._fields_
+c1 = cell()
+# # print cell
+# # print c1
+c1.name = "foo"
+c2 = cell()
+c2.name = "bar"
+# #pt = pointer(c1)
+c1.next = pointer(c2)
+c2.next = pointer(c1)
+p = c1
+# print c1
+# print type(cell.__dict__)
+# print type(c1.__dict__)
+# print type(pt.__dict__)
+# print type(pt[0].__dict__)
+#print c1.__dict__
+# print pt
+# print pt[0]
+#print pt[0].name
+#print c2
+#print "---"
+# print p.name
+# p = p.next[0]
+# print p.name
+#p = p.next[0]
+# print p.name
+for i in range(8):
+#	print p
+	print p.name,
+	p = p.next[0]
+print "\n-----------"

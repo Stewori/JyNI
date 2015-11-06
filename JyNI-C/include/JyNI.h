@@ -171,7 +171,8 @@
 #define JY_TRUNCATE_FLAG_MASK       8
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
 #define JY_CPEER_FLAG_MASK         16
-#define JY_CACHE_GC_FLAG_MASK      32
+#define JY_CACHE_GC_FLAG_MASK    32 //(currently not used; until we need it, we locate another flag here)
+//#define Jy_JAVA_CALLIN_FLAG        32 /* used to prevent and endless call-delegation loop for subtype PyCPeers */
 #define JY_CACHE_ETERNAL_FLAG_MASK 64
 //#define JY_GC_SINGLE_LINK        64
 #define JY_GC_VAR_SIZE            128 /* This distinguishes array-like vs list-like links. */
@@ -244,6 +245,60 @@
 		jobjectRef = (*env0)->NewWeakGlobalRef(env0, jobjectRef); \
 		((*env0)->DeleteLocalRef(env0, jobjectTmp0)); \
 	}
+
+
+/* Subtype Loop-safe macros help to prevent delegations jump endless
+ * between native side and Java subtype PyCPeer.
+ */
+#define JMID(method) pyObject ## method
+#define jytmp(jObject) jytmp_ ## jObject
+
+#define ENTER_SubtypeLoop_Safe_Mode(jObject, method)
+#define ENTER_SubtypeLoop_Safe_ModePy(jObject, pyObj, method)
+#define LEAVE_SubtypeLoop_Safe_Mode(jObject)
+
+//#define ENTER_SubtypeLoop_Safe_Mode0(jObject, method) \
+//	JyObject* jytmp(jObject) = NULL; \
+//	jmethodID jmid ## method = pyObject ## method; \
+//	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
+//		jytmp(jObject) = AS_JY(JyNI_PyObject_FromJythonPyObject(jObject)); \
+//		if (jytmp(jObject)->flags & Jy_JAVA_CALLIN_FLAG) jmid ## method = super ## method; \
+//		else jytmp(jObject)->flags |= Jy_JAVA_CALLIN_FLAG; \
+//	}
+//
+//#define ENTER_SubtypeLoop_Safe_ModePy0(jObject, pyObj, method) \
+//	JyObject* jytmp(jObject) = NULL; \
+//	jmethodID jmid ## method = pyObject ## method; \
+//	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
+//		jytmp(jObject) = AS_JY(pyObj); \
+//		if (jytmp(jObject)->flags & Jy_JAVA_CALLIN_FLAG) jmid ## method = super ## method; \
+//		else jytmp(jObject)->flags |= Jy_JAVA_CALLIN_FLAG; \
+//	}
+//
+//#define LEAVE_SubtypeLoop_Safe_Mode0(jObject) \
+//	if (jytmp(jObject)) { \
+//		jytmp(jObject)->flags &= ~Jy_JAVA_CALLIN_FLAG; \
+//		Py_DECREF(FROM_JY(jytmp(jObject))); \
+//	}
+
+//#define Enter_SubtypeLoop_Safe_Mode(pyObject) \
+//	Enter_SubtypeLoop_Safe_ModeJy(AS_JY(pyObject))
+//
+//#define Enter_SubtypeLoop_Safe_ModeJy(jyObject) \
+//	(jyObject)->flags |= Jy_JAVA_CALLIN_FLAG
+//
+//#define Exit_SubtypeLoop_Safe_Mode(pyObject) \
+//	Exit_SubtypeLoop_Safe_ModeJy(AS_JY(pyObject))
+//
+//#define Exit_SubtypeLoop_Safe_ModeJy(jyObject) \
+//	(jyObject)->flags &= ~Jy_JAVA_CALLIN_FLAG
+//
+//#define Check_Subtype_Flag(pyObject) \
+//	Check_Subtype_FlagJy(AS_JY(pyObject))
+//
+//#define Check_Subtype_FlagJy(jyObject) \
+//	((jyObject)->flags & Jy_JAVA_CALLIN_FLAG)
+
 
 /* GC-macro-replacements */
 #define _JyNI_GC_TRACK(o) PyObject_GC_Track(o) //_PyObject_GC_TRACK(o)
@@ -442,6 +497,10 @@ void JyGC_restoreCStubBackend(JNIEnv *env, jclass class, jlong handle, jobject b
 jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks);
 jlongArray JyGC_nativeTraverse(JNIEnv *env, jclass class, jlong handle);
 void JyNI_releaseWeakReferent(JNIEnv *env, jclass class, jlong handle, jlong tstate);
+jobject JyNI_getItem(JNIEnv *env, jclass class, jlong handle, jobject key, jlong tstate);
+jint JyNI_setItem(JNIEnv *env, jclass class, jlong handle, jobject key, jobject value, jlong tstate);
+jint JyNI_delItem(JNIEnv *env, jclass class, jlong handle, jobject key, jlong tstate);
+jint JyNI_PyObjectLength(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 
 #define builtinTypeCount 46
 extern TypeMapEntry builtinTypes[builtinTypeCount];
@@ -794,6 +853,17 @@ extern jmethodID pyObjectGCHeadSetObject;
 extern jmethodID jyGCHeadGetHandle;
 
 extern jclass cPeerInterface;
+//extern jclass cPeerNativeDelegateInterface;
+//extern jmethodID super__call__;
+//extern jmethodID super__findattr_ex__;
+//extern jmethodID super__setattr__;
+//extern jmethodID super__str__;
+//extern jmethodID super__repr__;
+//extern jmethodID super__finditem__;
+//extern jmethodID super__setitem__;
+//extern jmethodID super__delitem__;
+//extern jmethodID super__len__;
+//extern jmethodID super_toString;
 
 extern jclass pyCPeerTypeClass;
 extern jmethodID pyCPeerTypeConstructor;

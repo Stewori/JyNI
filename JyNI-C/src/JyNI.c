@@ -219,6 +219,72 @@ jobject JyNI_repr(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    getItem
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+jobject JyNI_getItem
+	(JNIEnv *env, jclass class, jlong handle, jobject key, jlong tstate)
+{
+	ENTER_JyNI
+	PyObject* pkey = JyNI_PyObject_FromJythonPyObject(key);
+	PyObject* res = PyObject_GetItem((PyObject*) handle, pkey);
+	jobject er = JyNI_JythonPyObject_FromPyObject(res);
+	Py_XDECREF(pkey);
+	Py_XDECREF(res);
+	LEAVE_JyNI
+	return er;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    setItem
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)I
+ */
+jint JyNI_setItem
+	(JNIEnv *env, jclass class, jlong handle, jobject key, jobject value, jlong tstate)
+{
+	ENTER_JyNI
+	PyObject* pkey = JyNI_PyObject_FromJythonPyObject(key);
+	PyObject* pval = JyNI_PyObject_FromJythonPyObject(value);
+	jint er = PyObject_SetItem((PyObject*) handle, pkey, pval);
+	Py_XDECREF(pkey);
+	Py_XDECREF(pval);
+	LEAVE_JyNI
+	return er;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    delItem
+ * Signature: (JLorg/python/core/PyObject;J)I
+ */
+jint JyNI_delItem
+	(JNIEnv *env, jclass class, jlong handle, jobject key, jlong tstate)
+{
+	ENTER_JyNI
+	PyObject* pkey = JyNI_PyObject_FromJythonPyObject(key);
+	jint er = PyObject_DelItem((PyObject*) handle, pkey);
+	Py_XDECREF(pkey);
+	LEAVE_JyNI
+	return er;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    PyObjectLength
+ * Signature: (JJ)I
+ */
+jint JyNI_PyObjectLength
+	(JNIEnv *env, jclass class, jlong handle, jlong tstate)
+{
+	ENTER_JyNI
+	jint er = PyObject_Size((PyObject*) handle);
+	LEAVE_JyNI
+	return er;
+}
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    PyObjectAsString
  * Signature: (JJ)Ljava/lang/String;
  */
@@ -1245,6 +1311,8 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
  */
 inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 {
+//	jputs(__FUNCTION__);
+//	jputs(tme->py_type->tp_name);
 	PyObject *obj;
 	//size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
 	size_t size = (tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(tme->py_type, nitems+1);
@@ -1843,6 +1911,8 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			jputs("Subtype:");
 			jputs(Py_TYPE(src)->tp_name);
 			jputs("Mapping-type:");
+			jputsLong(tme);
+			jputsLong(tme->py_type);
 			jputs(tme->py_type->tp_name);
 			PyErr_BadInternalCall();
 		}
@@ -2538,6 +2608,17 @@ jmethodID pyObjectGCHeadSetObject;
 jmethodID jyGCHeadGetHandle;
 
 jclass cPeerInterface;
+//jclass cPeerNativeDelegateInterface;
+//jmethodID super__call__;
+//jmethodID super__findattr_ex__;
+//jmethodID super__setattr__;
+//jmethodID super__str__;
+//jmethodID super__repr__;
+//jmethodID super__finditem__;
+//jmethodID super__setitem__;
+//jmethodID super__delitem__;
+//jmethodID super__len__;
+//jmethodID super_toString;
 
 jclass pyCPeerTypeClass;
 jmethodID pyCPeerTypeConstructor;
@@ -3208,6 +3289,29 @@ inline jint initJyNI(JNIEnv *env)
 	jclass cPeerInterfaceLocal = (*env)->FindClass(env, "JyNI/CPeerInterface");
 	cPeerInterface = (*env)->NewWeakGlobalRef(env, cPeerInterfaceLocal);
 	(*env)->DeleteLocalRef(env, cPeerInterfaceLocal);
+
+//	jclass cPeerNativeDelegateInterfaceLocal = (*env)->FindClass(env, "JyNI/CPeerNativeDelegateSubtype");
+//	cPeerNativeDelegateInterface = (*env)->NewWeakGlobalRef(env, cPeerNativeDelegateInterfaceLocal);
+//	(*env)->DeleteLocalRef(env, cPeerNativeDelegateInterfaceLocal);
+//	super__call__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__call__",
+//			"([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
+//	super__findattr_ex__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__findattr_ex__",
+//			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
+//	super__setattr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setattr__",
+//			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+//	super__str__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__str__",
+//				"()Lorg/python/core/PyString;");
+//	super__repr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__repr__",
+//			"()Lorg/python/core/PyString;");
+//	super__finditem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__finditem__",
+//			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+//	super__setitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setitem__",
+//			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+//	super__delitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__delitem__",
+//			"(Lorg/python/core/PyObject;)V");
+//	super__len__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__len__", "()I");
+//	super_toString = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super_toString",
+//			"()Ljava/lang/String;");
 
 	return JNI_VERSION_1_2;
 }

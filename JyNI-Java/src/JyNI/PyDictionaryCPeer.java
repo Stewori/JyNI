@@ -18,6 +18,10 @@ import org.python.core.finalization.FinalizableBuiltin;
  * PyDictionary is a pilot project on this front. Once we have implemented some
  * sample builtin-extending CPeer classes we will work out a generator script
  * like the one that generates the PyFooDerived-classes in Jython.
+ * Such a script will basically have two modi:
+ * One that implements magic methods entirely on top of native methods (e.g.
+ * like in PyCPeerType) and one that uses Jython-builtin super-methods as
+ * fallbacks, if a native one fails (like in PyDictionaryCPeer).
  *
  * We support PyDictionary with priority, because it is needed for ctypes to
  * wrap stgdict properly.
@@ -26,11 +30,14 @@ import org.python.core.finalization.FinalizableBuiltin;
  * by an exception as a not-implemented hint. In that case we try the super method,
  * which is responsible for throwing a not-implemented exception if needed. This
  * way we emulate that native methods would override thuse from super-class.
+ * Todo: Clean up this concept for int-returning methods, etc.
  *
  * @author Stefan Richthofer
  */
 public class PyDictionaryCPeer extends PyDictionary implements
-		CPeerInterface, FinalizableBuiltin {
+		//CPeerNativeDelegateSubtype,
+		CPeerInterface,
+		FinalizableBuiltin {
 	public long objectHandle;
 
 	/**
@@ -88,6 +95,51 @@ public class PyDictionaryCPeer extends PyDictionary implements
 		return result == null ? super.__repr__() : result;
 	}
 
+/* The naive implementation of find-item methods below causes infinite looping
+ * between native dict and Jython dict, e.g. in StgDict-case.
+ * Todo: Invent something to prevent this. Since ctypes appears to work okay
+ * with the code below uncommented, we can maybe shift this fix to alpha-4.
+ * So far, StgDict etc cannot be cleanly accessed from Java-side.
+ * We somehow must distinguish native calls from Jython calls here.
+ * This implies we must change method signatures somehow, e.g. introduce
+ * special variants for native call-ins.
+ * This implies, native side must perform a case distinction, whether Jython
+ * dict methods are called from within a subtype or from somewhere else (doesn't it?).
+ */
+//	public PyObject __finditem__(PyObject key) {
+//		return super.__finditem__(key);
+////		PyObject result = JyNI.maybeExc(JyNI.getItem(objectHandle, key,
+////				JyTState.prepareNativeThreadState(Py.getThreadState())));
+////		return result != null ? result : super.__finditem__(key);
+//	}
+//
+//	public void __setitem__(PyObject key, PyObject value) {
+//		super.__setitem__(key, value);
+////		int er = JyNI.setItem(objectHandle, key, value,
+////				JyTState.prepareNativeThreadState(Py.getThreadState()));
+////		JyNI.maybeExc(er);
+////		if (er != 0) super.__setitem__(key, value);
+//	}
+//
+//	public void __delitem__(PyObject key) {
+//		super.__delitem__(key);
+////		int er = JyNI.delItem(objectHandle, key,
+////				JyTState.prepareNativeThreadState(Py.getThreadState()));
+////		JyNI.maybeExc(er);
+////		if (er != 0) super.__delitem__(key);
+//	}
+//
+//	/* Todo: Declare value to indicate native not implemented.
+//	 * Use this value for other in-results too.
+//	 */
+//	public int __len__() {
+//		return super.__len__();
+////		int er = JyNI.PyObjectLength(objectHandle,
+////				JyTState.prepareNativeThreadState(Py.getThreadState()));
+////		JyNI.maybeExc();
+////		return er;
+//	}
+
 //	public String toString() {
 //		return JyNI.PyObjectAsString(objectHandle,
 //			JyTState.prepareNativeThreadState(Py.getThreadState()));
@@ -102,4 +154,15 @@ public class PyDictionaryCPeer extends PyDictionary implements
 	public void __del_builtin__() {
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
+
+//	public PyObject super__call__(PyObject[] args, String[] keywords) {return super.__call__(args, keywords);}
+//	public PyObject super__findattr_ex__(String name) {return super.__findattr_ex__(name);}
+//	public void super__setattr__(String name, PyObject value) {super.__setattr__(name, value);}
+//	public PyString super__str__() {return super.__str__();}
+//	public PyString super__repr__() {return super.__repr__();}
+//	public PyObject super__finditem__(PyObject key) {return super.__finditem__(key);}
+//	public void super__setitem__(PyObject key, PyObject value) {super.__setitem__(key, value);}
+//	public void super__delitem__(PyObject key) {super.__delitem__(key);}
+//	public int super__len__() {return super.__len__();}
+//	public String super_toString() {return super.toString();}
 }
