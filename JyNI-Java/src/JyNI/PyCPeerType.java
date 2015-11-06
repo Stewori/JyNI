@@ -143,7 +143,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 //	}
 	
 	public PyObject __call__(PyObject[] args, String[] keywords) {
-		System.out.println("CPeerType called: "+this);
+		//System.out.println("CPeerType called...");
 		//System.out.println("args: "+args);
 		//System.out.println("arg count: "+args.length);
 		//if (keywords !=)
@@ -202,21 +202,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		//return super.__findattr_ex__(name);
 	}
 
-	public void __setattr__(String name, PyObject value) {
-		/*
-		 * Should we also try to call super?
-		 * Actually we should assume that for native types the whole
-		 * logic happens natively and if that fails somehow, we cannot
-		 * fix that here. So probably it's best to just throw a natively
-		 * occured exception if present.
-		 */
-		JyNI.maybeExc(JyNI.setAttrString(objectHandle, name, value,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-		/*
-		 * Should we attempt to call postSetattr(name)?
-		 */
-    }
-
 	public PyString __str__() {
 		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState())));
@@ -229,32 +214,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 //		System.out.println(name);
 		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState())));
-	}
-
-	/* Yes, item-methods a not exactly a typical use-case for type-objects.
-	 * However we still implement this forwarding here, because you can
-	 * never know what crazy stuff native types come up with.
-	 */
-	public PyObject __finditem__(PyObject key) {
-		return JyNI.maybeExc(JyNI.getItem(objectHandle, key,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-	}
-
-	public void __setitem__(PyObject key, PyObject value) {
-		JyNI.maybeExc(JyNI.setItem(objectHandle, key, value,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-	}
-
-	public void __delitem__(PyObject key) {
-		JyNI.maybeExc(JyNI.delItem(objectHandle, key,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-	}
-
-	public int __len__() {
-		int er = JyNI.PyObjectLength(objectHandle,
-				JyTState.prepareNativeThreadState(Py.getThreadState()));
-		JyNI.maybeExc();
-		return er;
 	}
 
 	public String toString() {

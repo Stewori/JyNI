@@ -1364,18 +1364,18 @@ PyObject_Hash(PyObject *v)
 PyObject *
 PyObject_GetAttrString(PyObject *v, const char *name)
 {
-	jputs("PyObject_GetAttrString");
-	jputs(name);
+	//jputs("PyObject_GetAttrString");
+	//jputs(name);
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-		jputs("delegate");
+		//jputs("delegate");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
 	}
-	jputs("no delegate");
+	//jputs("no delegate");
 
 	PyObject *w, *res;
 
@@ -1384,15 +1384,14 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 		//jputs(Py_TYPE(v)->tp_name);
 		return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
 	}
-	jputs("tp_getattr is NULL");
+	//jputs("tp_getattr is NULL");
 	w = PyString_InternFromString(name);
 	if (w == NULL)
 		return NULL;
-	jputs("try PyString-version");
+	//jputs("try PyString-version");
 	res = PyObject_GetAttr(v, w);
-	jputs("PyString-version done. w:");
-	jputsLong(w);
-	jputsLong(res);
+	//jputs("PyString-version done. w:");
+	//jputsLong(w);
 	Py_XDECREF(w);
 //	puts("res null?");
 //	if (res) puts("no");
@@ -1415,8 +1414,6 @@ PyObject_HasAttrString(PyObject *v, const char *name)
 int
 PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 {
-	jputs(__FUNCTION__);
-	jputs(Py_TYPE(v)->tp_name);
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
@@ -1447,7 +1444,7 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 PyObject *
 PyObject_GetAttr(PyObject *v, PyObject *name)
 {
-	jputs("PyObject_GetAttr, PyObject key");
+	//jputs("PyObject_GetAttr, PyObject key");
 	if (!PyString_Check(name)) {
 #ifdef Py_USING_UNICODE
 		// The Unicode to string conversion is done here because the
@@ -1473,16 +1470,16 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 	}
-	jputs("no delegate in PyString-version");
+	//jputs("no delegate in PyString-version");
 	PyTypeObject *tp = Py_TYPE(v);
-	jputs(tp->tp_name);
+	//jputs(tp->tp_name);
 	if (tp->tp_getattro != NULL)
 	{
-		jputs("tp_getattro not NULL");
+		//jputs("tp_getattro not NULL");
 		return (*tp->tp_getattro)(v, name);
 	}
 	if (tp->tp_getattr != NULL) {
-		jputs("tp_getattr not NULL");
+		//jputs("tp_getattr not NULL");
 		return (*tp->tp_getattr)(v, PyString_AS_STRING(name));
 	}
 	PyErr_Format(PyExc_AttributeError,
@@ -1506,8 +1503,6 @@ PyObject_HasAttr(PyObject *v, PyObject *name)
 int
 PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 {
-	jputs(__FUNCTION__);
-	jputs(PyString_AS_STRING(name));
 	PyTypeObject *tp = Py_TYPE(v);
 	int err;
 
@@ -1534,7 +1529,6 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 		jobject delegate = JyNI_GetJythonDelegate(v);
 		if (delegate)
 		{
-			jputsLong(__LINE__);
 			env(NULL);
 			(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
 					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name),
@@ -1548,7 +1542,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 		} else
 			Py_INCREF(name);
 	}
-	jputsLong(__LINE__);
+
 	PyString_InternInPlace(&name);
 	if (tp->tp_setattro != NULL) {
 		err = (*tp->tp_setattro)(v, name, value);
@@ -1854,9 +1848,9 @@ _PyObject_NextNotImplemented(PyObject *self)
 PyObject *
 _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 {
-	jputs("_PyObject_GenericGetAttrWithDict:");
-	jputs(PyString_AS_STRING(name));
-	jputs(obj->ob_type->tp_name);
+//	jputs("_PyObject_GenericGetAttrWithDict:");
+//	jputs(PyString_AS_STRING(name));
+//	jputs(obj->ob_type->tp_name);
 	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr = NULL;
 	PyObject *res = NULL;
@@ -1890,7 +1884,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 	jobject delegate = JyNI_GetJythonDelegate(obj);
 	if (delegate)
 	{
-		jputsLong(__LINE__);
+		//jputsLong(__LINE__);
 		env(NULL);
 		res = JyNI_PyObject_FromJythonPyObject(
 				(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
@@ -1901,7 +1895,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 		if (PyType_Ready(tp) < 0)
 			goto done;
 	}
-	jputsLong(__LINE__);
+	//jputsLong(__LINE__);
 //#if 0 /* XXX this is not quite _PyType_Lookup anymore */
 //	/* Inline _PyType_Lookup */
 //	{
@@ -1946,9 +1940,9 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 			goto done;
 		}
 	}
-	jputsLong(__LINE__);
+	//jputsLong(__LINE__);
 	if (dict == NULL) {
-		jputs("JyNI-WARNING: Attempting to get dict by offset.");
+//		jputs("JyNI-WARNING: Attempting to get dict by offset.");
 //		jputs("(this will most likely segfault soon)");
 		/* Inline _PyObject_GetDictPtr */
 		dictoffset = tp->tp_dictoffset;
@@ -1970,9 +1964,8 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 			dict = *dictptr;
 		}
 	}
-	jputsLong(__LINE__);
+	//jputsLong(__LINE__);
 	if (dict != NULL) {
-		jputs(Py_TYPE(dict)->tp_name);
 		Py_INCREF(dict);
 		res = PyDict_GetItem(dict, name);
 		if (res != NULL) {
@@ -1983,19 +1976,19 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 		}
 		Py_DECREF(dict);
 	}
-	jputsLong(__LINE__);
+	//jputsLong(__LINE__);
 	if (f != NULL) {
 		res = f(descr, obj, (PyObject *)Py_TYPE(obj));
 		Py_DECREF(descr);
 		goto done;
 	}
-	jputsLong(__LINE__);
+	//jputsLong(__LINE__);
 	if (descr != NULL) {
 		res = descr;
 		/* descr was already increfed above */
 		goto done;
 	}
-	jputsLong(__LINE__);
+	//jputsLong(__LINE__);
 //	puts("file PyExc_AttributeError...");
 //	puts(((PyTypeObject*) PyExc_AttributeError)->tp_name);
 //	if (PyExc_AttributeError->ob_type == NULL)
@@ -2026,13 +2019,6 @@ int
 _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 											PyObject *value, PyObject *dict)
 {
-//	printf("%s %s\n", __FUNCTION__, PyString_AS_STRING(name));
-//	printf("%d\n", dict);
-//	printf("Dict-offset0: %d\n", Py_TYPE(obj)->tp_dictoffset);
-//	printf("type-name: %s\n", Py_TYPE(obj)->tp_name);
-//	printf("type-pos: %d\n", Py_TYPE(obj));
-	jputs(__FUNCTION__);
-	jputs(Py_TYPE(obj)->tp_name);
 	if (!PyString_Check(name)){
 #ifdef Py_USING_UNICODE
 		// The Unicode to string conversion is done here because the
@@ -2054,12 +2040,9 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 	}
 	else
 	{
-		jputsLong(__LINE__);
-		jputs(PyString_AS_STRING(name));
 		jobject delegate = JyNI_GetJythonDelegate(obj);
 		if (delegate)
 		{
-			jputsLong(__LINE__);
 			env(NULL);
 			(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
 					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name),
@@ -2073,7 +2056,7 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 		} else
 			Py_INCREF(name);
 	}
-	jputsLong(__LINE__);
+
 	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr;
 	descrsetfunc f;
@@ -2086,11 +2069,9 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 	}
 
 	descr = _PyType_Lookup(tp, name);
-	//printf("descr: %d\n", descr);
 	f = NULL;
 	if (descr != NULL &&
 		PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
-		//printf("%d\n", __LINE__);
 		f = descr->ob_type->tp_descr_set;
 		if (f != NULL && PyDescr_IsData(descr)) {
 				res = f(descr, obj, value);
@@ -2099,22 +2080,18 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 	}
 
 	if (dict == NULL) {
-		jputs("_PyObject_GenericSetAttrWithDict 1");
-		jputs(Py_TYPE(obj)->tp_name);
+		//jputs("_PyObject_GenericGetAttrWithDict 1");
+		//jputs(Py_TYPE(obj)->tp_name);
 		//if (PyModule_Check(obj)) {
 		//	jputs(PyModule_GetName(obj));
 		//	jputsLong((jlong) obj);
 		//}
 
 		dictptr = _PyObject_GetDictPtr(obj);
-		//printf("Dict-offset: %d\n",Py_TYPE(obj)->tp_dictoffset);
 		if (dictptr != NULL) {
-			jputsLong(__LINE__);
 			dict = *dictptr;
 			if (dict == NULL && value != NULL) {
 				dict = PyDict_New();
-				//printf("%d\n", __LINE__);
-				jputsLong(__LINE__);
 				if (dict == NULL)
 					goto done;
 				*dictptr = dict;
@@ -2122,19 +2099,14 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 		}
 	}
 	if (dict != NULL) {
-		//puts(Py_TYPE(dict)->tp_name);
 		Py_INCREF(dict);
 		if (value == NULL)
 			res = PyDict_DelItem(dict, name);
-		else {
-			jputsLong(__LINE__);
-			//printf("%d\n", __LINE__);
+		else
 			res = PyDict_SetItem(dict, name, value);
-		}
 //		if (res < 0 && PyErr_ExceptionMatches(PyExc_KeyError))
 //			PyErr_SetObject(PyExc_AttributeError, name);
 		Py_DECREF(dict);
-		//printf("%d\n", __LINE__);
 		goto done;
 	}
 	if (f != NULL) {

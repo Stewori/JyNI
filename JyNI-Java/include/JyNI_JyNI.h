@@ -129,38 +129,6 @@ JNIEXPORT jstring JNICALL Java_JyNI_JyNI_getNativeTypeName
 
 /*
  * Class:     JyNI_JyNI
- * Method:    getItem
- * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_getItem
-  (JNIEnv *, jclass, jlong, jobject, jlong);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    setItem
- * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)I
- */
-JNIEXPORT jint JNICALL Java_JyNI_JyNI_setItem
-  (JNIEnv *, jclass, jlong, jobject, jobject, jlong);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    delItem
- * Signature: (JLorg/python/core/PyObject;J)I
- */
-JNIEXPORT jint JNICALL Java_JyNI_JyNI_delItem
-  (JNIEnv *, jclass, jlong, jobject, jlong);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    PyObjectLength
- * Signature: (JJ)I
- */
-JNIEXPORT jint JNICALL Java_JyNI_JyNI_PyObjectLength
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     JyNI_JyNI
  * Method:    setNativeRecursionLimit
  * Signature: (I)V
  */
@@ -286,6 +254,14 @@ JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyGC_1validateGCHead
  */
 JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse
   (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    pinWeakReferent
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_pinWeakReferent
+  (JNIEnv *, jclass, jlong, jlong);
 
 /*
  * Class:     JyNI_JyNI

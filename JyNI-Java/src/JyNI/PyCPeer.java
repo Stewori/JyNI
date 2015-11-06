@@ -108,46 +108,11 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	public PyObject __findattr_ex__(String name) {
 		//System.out.println("Look for attribute "+name+" in PyCPeer");
 		PyObject er = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
 		//System.out.println("result:");
 		//System.out.println(er);
 		return er != null ? er : Py.None;
 		//return super.__findattr_ex__(name);
-	}
-
-	public void __setattr__(String name, PyObject value) {
-		JyNI.maybeExc(JyNI.setAttrString(objectHandle, name, value,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-    }
-
-	public PyObject __finditem__(PyObject key) {
-		return JyNI.maybeExc(JyNI.getItem(objectHandle, key,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-//		throw Py.TypeError(String.format("'%.200s' object is unsubscriptable",
-//				getType().fastGetName()));
-	}
-
-	public void __setitem__(PyObject key, PyObject value) {
-		JyNI.maybeExc(JyNI.setItem(objectHandle, key, value,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-//		throw Py.TypeError(String.format("'%.200s' object does not support item assignment",
-//				getType().fastGetName()));
-	}
-
-	public void __delitem__(PyObject key) {
-		JyNI.maybeExc(JyNI.delItem(objectHandle, key,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
-//		throw Py.TypeError(String.format("'%.200s' object doesn't support item deletion",
-//                                         getType().fastGetName()));
-	}
-
-	public int __len__() {
-		int er = JyNI.PyObjectLength(objectHandle,
-				JyTState.prepareNativeThreadState(Py.getThreadState()));
-		JyNI.maybeExc();
-		return er;
-//		throw Py.TypeError(String.format("object of type '%.200s' has no len()",
-//                                         getType().fastGetName()));
 	}
 
 	public PyString __str__() {
@@ -155,20 +120,20 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 		//Object er = JyNI.PyObjectAsPyString(objectHandle);
 		//return (PyString) JyNI.repr(objectHandle);
 		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
 		return er == null ? (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
-				JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
+			JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
 	}
 	
 	public PyString __repr__() {
 		//System.out.println("PyCPeer__repr__");
 		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
+			JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
 	public String toString() {
 		return JyNI.PyObjectAsString(objectHandle,
-				JyTState.prepareNativeThreadState(Py.getThreadState()));
+			JyTState.prepareNativeThreadState(Py.getThreadState()));
 	}
 
 	/**
