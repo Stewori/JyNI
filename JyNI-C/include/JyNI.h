@@ -171,7 +171,7 @@
 #define JY_TRUNCATE_FLAG_MASK       8
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
 #define JY_CPEER_FLAG_MASK         16
-#define JY_CACHE_GC_FLAG_MASK    32 //(currently not used; until we need it, we locate another flag here)
+#define JY_CACHE_GC_FLAG_MASK      32 /* (currently not used) */
 //#define Jy_JAVA_CALLIN_FLAG        32 /* used to prevent and endless call-delegation loop for subtype PyCPeers */
 #define JY_CACHE_ETERNAL_FLAG_MASK 64
 //#define JY_GC_SINGLE_LINK        64
@@ -250,7 +250,11 @@
 /* Subtype Loop-safe macros help to prevent delegations jump endless
  * between native side and Java subtype PyCPeer.
  */
+
+/* Generates the JNI jmethodid name for PyObject methods from bare method name. */
 #define JMID(method) pyObject ## method
+
+/* Generates a name for a tmp helper-var. */
 #define jytmp(jObject) jytmp_ ## jObject
 
 #define ENTER_SubtypeLoop_Safe_Mode(jObject, method)

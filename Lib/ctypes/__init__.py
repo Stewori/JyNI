@@ -53,12 +53,6 @@ if _os.name == "java":
     from JyNI import JyNI
     isPosix = JyNI.isPosix()
 
-print "ctypes init"
-print _sys.platform
-import platform
-print platform.os.name
-print platform.java_ver()[-1][0]
-
 DEFAULT_MODE = RTLD_LOCAL
 #todo: Work out Jython-compliant replacement for _sys.platform == "darwin"
 if isPosix and _sys.platform == "darwin":

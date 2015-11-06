@@ -33,32 +33,25 @@ import sys
 
 #Include native ctypes:
 sys.path.append('/usr/lib/python2.7/lib-dynload')
-#sys.path.insert(0, '/home/stefan/eclipseWorkspace/ctypes/lib')
 
-#from ctypes import cdll
-#from _ctypes import _SimpleCData
+import platform
+isMac = platform.mac_ver()[0] != '' or platform.java_ver()[-1][0] == 'Mac OS X'
 import ctypes
 #import struct
 
-#print "py_object0..."
-
-#class py_object0(_SimpleCData):
-#	pass
-
-print "import of ctypes successful"
+print "Demo of ctypes with os.name: "+platform.os.name
 print ""
-#print ctypes.sizeof(ctypes.c_long)
-#print struct.calcsize("l")#ctypes.c_long._type_)
-#print ctypes.c_long._type_
-#print py_object0
 
-#libc = ctypes.cdll.LoadLibrary("libc.so.6")
-libc = ctypes.CDLL('libc.so.6')
+if isMac:
+	libc = ctypes.CDLL('libc.dylib')
+else:
+	libc = ctypes.CDLL('libc.so.6')
+
 print libc
-#print type(libc.strlen)
+print type(libc.strlen)
 print libc.strlen
 print libc.strlen("abcdef")
-print "-----------"
+print "--------------------"
 printf = libc.printf
 printf("%d bottles of beer\n", 42)
 
@@ -66,39 +59,22 @@ from ctypes import *
 class cell(Structure):
 	pass
 
-# print "----------"
+print "Testting ctypes-pointers:"
+
 cell._fields_ = [("name", c_char_p), ("next", POINTER(cell))]
-#cell.test = "blah"
-#print cell.test
-#print cell._fields_
 c1 = cell()
-# # print cell
-# # print c1
 c1.name = "foo"
 c2 = cell()
 c2.name = "bar"
-# #pt = pointer(c1)
 c1.next = pointer(c2)
 c2.next = pointer(c1)
 p = c1
-# print c1
-# print type(cell.__dict__)
-# print type(c1.__dict__)
-# print type(pt.__dict__)
-# print type(pt[0].__dict__)
-#print c1.__dict__
-# print pt
-# print pt[0]
-#print pt[0].name
-#print c2
-#print "---"
-# print p.name
-# p = p.next[0]
-# print p.name
-#p = p.next[0]
-# print p.name
 for i in range(8):
-#	print p
 	print p.name,
 	p = p.next[0]
-print "\n-----------"
+print "\n--------------------"
+print "exited normally"
+print "i.e. demo successful"
+print ""
+print "======in JyNI-case expect native output after these lines on some consoles====="
+print "=====(it is a JNI issue that native output is displayed after java output)====="
