@@ -211,6 +211,10 @@ public class JyNI {
 	public static native PyObject lookupFromHandle(long handle);
 	public static native int currentNativeRefCount(long handle);
 	public static native String getNativeTypeName(long handle);
+	public static native PyObject getItem(long peerHandle, PyObject key, long tstate);
+	public static native int setItem(long peerHandle, PyObject key, PyObject value, long tstate);
+	public static native int delItem(long peerHandle, PyObject key, long tstate);
+	public static native int PyObjectLength(long peerHandle, long tstate);
 
 	//ThreadState-stuff:
 	public static native void setNativeRecursionLimit(int nativeRecursionLimit);
@@ -853,6 +857,14 @@ public class JyNI {
 	protected static PyObject maybeExc(PyObject obj) throws PyException {
 		if (obj == null && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
 		else return obj;
+	}
+
+	protected static void maybeExc(int res) throws PyException {
+		if (res != 0 && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
+	}
+
+	protected static void maybeExc() throws PyException {
+		if (Py.getThreadState().exception != null) throw Py.getThreadState().exception;
 	}
 
 	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {

@@ -57,21 +57,21 @@ null_error(void)
 
 /* Operations on any object */
 
-//int
-//PyObject_Cmp(PyObject *o1, PyObject *o2, int *result)
-//{
-//	int r;
-//
-//	if (o1 == NULL || o2 == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	r = PyObject_Compare(o1, o2);
-//	if (PyErr_Occurred())
-//		return -1;
-//	*result = r;
-//	return 0;
-//}
+int
+PyObject_Cmp(PyObject *o1, PyObject *o2, int *result)
+{
+	int r;
+
+	if (o1 == NULL || o2 == NULL) {
+		null_error();
+		return -1;
+	}
+	r = PyObject_Compare(o1, o2);
+	if (PyErr_Occurred())
+		return -1;
+	*result = r;
+	return 0;
+}
 
 PyObject *
 PyObject_Type(PyObject *o)
@@ -85,189 +85,189 @@ PyObject_Type(PyObject *o)
 	return v;
 }
 
-//Py_ssize_t
-//PyObject_Size(PyObject *o)
-//{
-//	PySequenceMethods *m;
-//
-//	if (o == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//
-//	m = o->ob_type->tp_as_sequence;
-//	if (m && m->sq_length)
-//		return m->sq_length(o);
-//
-//	return PyMapping_Size(o);
-//}
-//
-//#undef PyObject_Length
-//Py_ssize_t
-//PyObject_Length(PyObject *o)
-//{
-//	return PyObject_Size(o);
-//}
-//#define PyObject_Length PyObject_Size
-//
-//
-///* The length hint function returns a non-negative value from o.__len__()
-//   or o.__length_hint__().  If those methods aren't found or return a negative
-//   value, then the defaultvalue is returned.  If one of the calls fails,
-//   this function returns -1.
-//*/
-//
-//Py_ssize_t
-//_PyObject_LengthHint(PyObject *o, Py_ssize_t defaultvalue)
-//{
-//	static PyObject *hintstrobj = NULL;
-//	PyObject *ro, *hintmeth;
-//	Py_ssize_t rv;
-//
-//	/* try o.__len__() */
-//	rv = PyObject_Size(o);
-//	if (rv >= 0)
-//		return rv;
-//	if (PyErr_Occurred()) {
-//		if (!PyErr_ExceptionMatches(PyExc_TypeError) &&
-//			!PyErr_ExceptionMatches(PyExc_AttributeError))
-//				return -1;
-//		PyErr_Clear();
-//	}
-//
-//	if (PyInstance_Check(o))
-//		return defaultvalue;
-//	/* try o.__length_hint__() */
-//	hintmeth = _PyObject_LookupSpecial(o, "__length_hint__", &hintstrobj);
-//	if (hintmeth == NULL) {
-//		if (PyErr_Occurred())
-//			return -1;
-//		else
-//			return defaultvalue;
-//	}
-//	ro = PyObject_CallFunctionObjArgs(hintmeth, NULL);
-//	Py_DECREF(hintmeth);
-//	if (ro == NULL) {
-//		if (!PyErr_ExceptionMatches(PyExc_TypeError) &&
-//			!PyErr_ExceptionMatches(PyExc_AttributeError))
-//			return -1;
-//		PyErr_Clear();
-//		return defaultvalue;
-//	}
-//	rv = PyLong_Check(ro) ? PyLong_AsSsize_t(ro) : defaultvalue;
-//	Py_DECREF(ro);
-//	return rv;
-//}
-//
-//PyObject *
-//PyObject_GetItem(PyObject *o, PyObject *key)
-//{
-//	PyMappingMethods *m;
-//
-//	if (o == NULL || key == NULL)
-//		return null_error();
-//
-//	m = o->ob_type->tp_as_mapping;
-//	if (m && m->mp_subscript)
-//		return m->mp_subscript(o, key);
-//
-//	if (o->ob_type->tp_as_sequence) {
-//		if (PyIndex_Check(key)) {
-//			Py_ssize_t key_value;
-//			key_value = PyNumber_AsSsize_t(key, PyExc_IndexError);
-//			if (key_value == -1 && PyErr_Occurred())
-//				return NULL;
-//			return PySequence_GetItem(o, key_value);
-//		}
-//		else if (o->ob_type->tp_as_sequence->sq_item)
-//			return type_error("sequence index must "
-//							  "be integer, not '%.200s'", key);
-//	}
-//
-//	return type_error("'%.200s' object has no attribute '__getitem__'", o);
-//}
-//
-//int
-//PyObject_SetItem(PyObject *o, PyObject *key, PyObject *value)
-//{
-//	PyMappingMethods *m;
-//
-//	if (o == NULL || key == NULL || value == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	m = o->ob_type->tp_as_mapping;
-//	if (m && m->mp_ass_subscript)
-//		return m->mp_ass_subscript(o, key, value);
-//
-//	if (o->ob_type->tp_as_sequence) {
-//		if (PyIndex_Check(key)) {
-//			Py_ssize_t key_value;
-//			key_value = PyNumber_AsSsize_t(key, PyExc_IndexError);
-//			if (key_value == -1 && PyErr_Occurred())
-//				return -1;
-//			return PySequence_SetItem(o, key_value, value);
-//		}
-//		else if (o->ob_type->tp_as_sequence->sq_ass_item) {
-//			type_error("sequence index must be "
-//					   "integer, not '%.200s'", key);
-//			return -1;
-//		}
-//	}
-//
-//	type_error("'%.200s' object does not support item assignment", o);
-//	return -1;
-//}
-//
-//int
-//PyObject_DelItem(PyObject *o, PyObject *key)
-//{
-//	PyMappingMethods *m;
-//
-//	if (o == NULL || key == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	m = o->ob_type->tp_as_mapping;
-//	if (m && m->mp_ass_subscript)
-//		return m->mp_ass_subscript(o, key, (PyObject*)NULL);
-//
-//	if (o->ob_type->tp_as_sequence) {
-//		if (PyIndex_Check(key)) {
-//			Py_ssize_t key_value;
-//			key_value = PyNumber_AsSsize_t(key, PyExc_IndexError);
-//			if (key_value == -1 && PyErr_Occurred())
-//				return -1;
-//			return PySequence_DelItem(o, key_value);
-//		}
-//		else if (o->ob_type->tp_as_sequence->sq_ass_item) {
-//			type_error("sequence index must be "
-//					   "integer, not '%.200s'", key);
-//			return -1;
-//		}
-//	}
-//
-//	type_error("'%.200s' object does not support item deletion", o);
-//	return -1;
-//}
-//
-//int
-//PyObject_DelItemString(PyObject *o, char *key)
-//{
-//	PyObject *okey;
-//	int ret;
-//
-//	if (o == NULL || key == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//	okey = PyString_FromString(key);
-//	if (okey == NULL)
-//		return -1;
-//	ret = PyObject_DelItem(o, okey);
-//	Py_DECREF(okey);
-//	return ret;
-//}
+Py_ssize_t
+PyObject_Size(PyObject *o)
+{
+	PySequenceMethods *m;
+
+	if (o == NULL) {
+		null_error();
+		return -1;
+	}
+
+	m = o->ob_type->tp_as_sequence;
+	if (m && m->sq_length)
+		return m->sq_length(o);
+
+	return PyMapping_Size(o);
+}
+
+#undef PyObject_Length
+Py_ssize_t
+PyObject_Length(PyObject *o)
+{
+	return PyObject_Size(o);
+}
+#define PyObject_Length PyObject_Size
+
+
+/* The length hint function returns a non-negative value from o.__len__()
+   or o.__length_hint__().  If those methods aren't found or return a negative
+   value, then the defaultvalue is returned.  If one of the calls fails,
+   this function returns -1.
+*/
+
+Py_ssize_t
+_PyObject_LengthHint(PyObject *o, Py_ssize_t defaultvalue)
+{
+	static PyObject *hintstrobj = NULL;
+	PyObject *ro, *hintmeth;
+	Py_ssize_t rv;
+
+	/* try o.__len__() */
+	rv = PyObject_Size(o);
+	if (rv >= 0)
+		return rv;
+	if (PyErr_Occurred()) {
+		if (!PyErr_ExceptionMatches(PyExc_TypeError) &&
+			!PyErr_ExceptionMatches(PyExc_AttributeError))
+				return -1;
+		PyErr_Clear();
+	}
+
+	if (PyInstance_Check(o))
+		return defaultvalue;
+	/* try o.__length_hint__() */
+	hintmeth = _PyObject_LookupSpecial(o, "__length_hint__", &hintstrobj);
+	if (hintmeth == NULL) {
+		if (PyErr_Occurred())
+			return -1;
+		else
+			return defaultvalue;
+	}
+	ro = PyObject_CallFunctionObjArgs(hintmeth, NULL);
+	Py_DECREF(hintmeth);
+	if (ro == NULL) {
+		if (!PyErr_ExceptionMatches(PyExc_TypeError) &&
+			!PyErr_ExceptionMatches(PyExc_AttributeError))
+			return -1;
+		PyErr_Clear();
+		return defaultvalue;
+	}
+	rv = PyLong_Check(ro) ? PyLong_AsSsize_t(ro) : defaultvalue;
+	Py_DECREF(ro);
+	return rv;
+}
+
+PyObject *
+PyObject_GetItem(PyObject *o, PyObject *key)
+{
+	PyMappingMethods *m;
+
+	if (o == NULL || key == NULL)
+		return null_error();
+
+	m = o->ob_type->tp_as_mapping;
+	if (m && m->mp_subscript)
+		return m->mp_subscript(o, key);
+
+	if (o->ob_type->tp_as_sequence) {
+		if (PyIndex_Check(key)) {
+			Py_ssize_t key_value;
+			key_value = PyNumber_AsSsize_t(key, PyExc_IndexError);
+			if (key_value == -1 && PyErr_Occurred())
+				return NULL;
+			return PySequence_GetItem(o, key_value);
+		}
+		else if (o->ob_type->tp_as_sequence->sq_item)
+			return type_error("sequence index must "
+							  "be integer, not '%.200s'", key);
+	}
+
+	return type_error("'%.200s' object has no attribute '__getitem__'", o);
+}
+
+int
+PyObject_SetItem(PyObject *o, PyObject *key, PyObject *value)
+{
+	PyMappingMethods *m;
+
+	if (o == NULL || key == NULL || value == NULL) {
+		null_error();
+		return -1;
+	}
+	m = o->ob_type->tp_as_mapping;
+	if (m && m->mp_ass_subscript)
+		return m->mp_ass_subscript(o, key, value);
+
+	if (o->ob_type->tp_as_sequence) {
+		if (PyIndex_Check(key)) {
+			Py_ssize_t key_value;
+			key_value = PyNumber_AsSsize_t(key, PyExc_IndexError);
+			if (key_value == -1 && PyErr_Occurred())
+				return -1;
+			return PySequence_SetItem(o, key_value, value);
+		}
+		else if (o->ob_type->tp_as_sequence->sq_ass_item) {
+			type_error("sequence index must be "
+					   "integer, not '%.200s'", key);
+			return -1;
+		}
+	}
+
+	type_error("'%.200s' object does not support item assignment", o);
+	return -1;
+}
+
+int
+PyObject_DelItem(PyObject *o, PyObject *key)
+{
+	PyMappingMethods *m;
+
+	if (o == NULL || key == NULL) {
+		null_error();
+		return -1;
+	}
+	m = o->ob_type->tp_as_mapping;
+	if (m && m->mp_ass_subscript)
+		return m->mp_ass_subscript(o, key, (PyObject*)NULL);
+
+	if (o->ob_type->tp_as_sequence) {
+		if (PyIndex_Check(key)) {
+			Py_ssize_t key_value;
+			key_value = PyNumber_AsSsize_t(key, PyExc_IndexError);
+			if (key_value == -1 && PyErr_Occurred())
+				return -1;
+			return PySequence_DelItem(o, key_value);
+		}
+		else if (o->ob_type->tp_as_sequence->sq_ass_item) {
+			type_error("sequence index must be "
+					   "integer, not '%.200s'", key);
+			return -1;
+		}
+	}
+
+	type_error("'%.200s' object does not support item deletion", o);
+	return -1;
+}
+
+int
+PyObject_DelItemString(PyObject *o, char *key)
+{
+	PyObject *okey;
+	int ret;
+
+	if (o == NULL || key == NULL) {
+		null_error();
+		return -1;
+	}
+	okey = PyString_FromString(key);
+	if (okey == NULL)
+		return -1;
+	ret = PyObject_DelItem(o, okey);
+	Py_DECREF(okey);
+	return ret;
+}
 
 int
 PyObject_AsCharBuffer(PyObject *obj,
@@ -904,16 +904,16 @@ int PyObject_AsWriteBuffer(PyObject *obj,
 //	Py_XDECREF(empty);
 //	return result;
 //}
-//
-///* Operations on numbers */
-//
-//int
-//PyNumber_Check(PyObject *o)
-//{
-//	return o && o->ob_type->tp_as_number &&
-//		   (o->ob_type->tp_as_number->nb_int ||
-//		o->ob_type->tp_as_number->nb_float);
-//}
+
+/* Operations on numbers */
+
+int
+PyNumber_Check(PyObject *o)
+{
+	return o && o->ob_type->tp_as_number &&
+		   (o->ob_type->tp_as_number->nb_int ||
+		o->ob_type->tp_as_number->nb_float);
+}
 
 /* Binary operators */
 
@@ -1491,24 +1491,24 @@ PyNumber_Absolute(PyObject *o)
 	return type_error("bad operand type for abs(): '%.200s'", o);
 }
 
-///* Add a check for embedded NULL-bytes in the argument. */
-//static PyObject *
-//int_from_string(const char *s, Py_ssize_t len)
-//{
-//	char *end;
-//	PyObject *x;
-//
-//	x = PyInt_FromString((char*)s, &end, 10);
-//	if (x == NULL)
-//		return NULL;
-//	if (end != s + len) {
-//		PyErr_SetString(PyExc_ValueError,
-//						"null byte in argument for int()");
-//		Py_DECREF(x);
-//		return NULL;
-//	}
-//	return x;
-//}
+/* Add a check for embedded NULL-bytes in the argument. */
+static PyObject *
+int_from_string(const char *s, Py_ssize_t len)
+{
+	char *end;
+	PyObject *x;
+
+	x = PyInt_FromString((char*)s, &end, 10);
+	if (x == NULL)
+		return NULL;
+	if (end != s + len) {
+		PyErr_SetString(PyExc_ValueError,
+						"null byte in argument for int()");
+		Py_DECREF(x);
+		return NULL;
+	}
+	return x;
+}
 
 /* Return a Python Int or Long from the object item
    Raise TypeError if the result is not an int-or-long
@@ -1633,231 +1633,231 @@ PyNumber_AsSsize_t(PyObject *item, PyObject *err)
 //	Py_DECREF(integral);
 //	return NULL;
 //}
-//
-//
-//PyObject *
-//PyNumber_Int(PyObject *o)
-//{
-//	PyNumberMethods *m;
-//	static PyObject *trunc_name = NULL;
-//	PyObject *trunc_func;
-//	const char *buffer;
-//	Py_ssize_t buffer_len;
-//
-//	if (trunc_name == NULL) {
-//		trunc_name = PyString_InternFromString("__trunc__");
-//		if (trunc_name == NULL)
-//			return NULL;
-//	}
-//
-//	if (o == NULL)
-//		return null_error();
-//	if (PyInt_CheckExact(o)) {
-//		Py_INCREF(o);
-//		return o;
-//	}
-//	m = o->ob_type->tp_as_number;
-//	if (m && m->nb_int) { /* This should include subclasses of int */
-//		/* Classic classes always take this branch. */
-//		PyObject *res = m->nb_int(o);
-//		if (res && (!PyInt_Check(res) && !PyLong_Check(res))) {
-//			PyErr_Format(PyExc_TypeError,
-//						 "__int__ returned non-int (type %.200s)",
-//						 res->ob_type->tp_name);
-//			Py_DECREF(res);
-//			return NULL;
-//		}
-//		return res;
-//	}
-//	if (PyInt_Check(o)) { /* A int subclass without nb_int */
-//		PyIntObject *io = (PyIntObject*)o;
-//		return PyInt_FromLong(io->ob_ival);
-//	}
-//	trunc_func = PyObject_GetAttr(o, trunc_name);
-//	if (trunc_func) {
-//		PyObject *truncated = PyEval_CallObject(trunc_func, NULL);
-//		Py_DECREF(trunc_func);
-//		/* __trunc__ is specified to return an Integral type, but
-//		   int() needs to return an int. */
-//		return _PyNumber_ConvertIntegralToInt(
-//			truncated,
-//			"__trunc__ returned non-Integral (type %.200s)");
-//	}
-//	PyErr_Clear();  /* It's not an error if  o.__trunc__ doesn't exist. */
-//
-//	if (PyString_Check(o))
-//		return int_from_string(PyString_AS_STRING(o),
-//							   PyString_GET_SIZE(o));
-//#ifdef Py_USING_UNICODE
-//	if (PyUnicode_Check(o))
-//		return PyInt_FromUnicode(PyUnicode_AS_UNICODE(o),
-//								 PyUnicode_GET_SIZE(o),
-//								 10);
-//#endif
-//	if (!PyObject_AsCharBuffer(o, &buffer, &buffer_len))
-//		return int_from_string((char*)buffer, buffer_len);
-//
-//	return type_error("int() argument must be a string or a "
-//					  "number, not '%.200s'", o);
-//}
-//
-///* Add a check for embedded NULL-bytes in the argument. */
-//static PyObject *
-//long_from_string(const char *s, Py_ssize_t len)
-//{
-//	char *end;
-//	PyObject *x;
-//
-//	x = PyLong_FromString((char*)s, &end, 10);
-//	if (x == NULL)
-//		return NULL;
-//	if (end != s + len) {
-//		PyErr_SetString(PyExc_ValueError,
-//						"null byte in argument for long()");
-//		Py_DECREF(x);
-//		return NULL;
-//	}
-//	return x;
-//}
-//
-//PyObject *
-//PyNumber_Long(PyObject *o)
-//{
-//	PyNumberMethods *m;
-//	static PyObject *trunc_name = NULL;
-//	PyObject *trunc_func;
-//	const char *buffer;
-//	Py_ssize_t buffer_len;
-//
-//	if (trunc_name == NULL) {
-//		trunc_name = PyString_InternFromString("__trunc__");
-//		if (trunc_name == NULL)
-//			return NULL;
-//	}
-//
-//	if (o == NULL)
-//		return null_error();
-//	m = o->ob_type->tp_as_number;
-//	if (m && m->nb_long) { /* This should include subclasses of long */
-//		/* Classic classes always take this branch. */
-//		PyObject *res = m->nb_long(o);
-//		if (res == NULL)
-//			return NULL;
-//		if (PyInt_Check(res)) {
-//			long value = PyInt_AS_LONG(res);
-//			Py_DECREF(res);
-//			return PyLong_FromLong(value);
-//		}
-//		else if (!PyLong_Check(res)) {
-//			PyErr_Format(PyExc_TypeError,
-//						 "__long__ returned non-long (type %.200s)",
-//						 res->ob_type->tp_name);
-//			Py_DECREF(res);
-//			return NULL;
-//		}
-//		return res;
-//	}
-//	if (PyLong_Check(o)) /* A long subclass without nb_long */
-//		return _PyLong_Copy((PyLongObject *)o);
-//	trunc_func = PyObject_GetAttr(o, trunc_name);
-//	if (trunc_func) {
-//		PyObject *truncated = PyEval_CallObject(trunc_func, NULL);
-//		PyObject *int_instance;
-//		Py_DECREF(trunc_func);
-//		/* __trunc__ is specified to return an Integral type,
-//		   but long() needs to return a long. */
-//		int_instance = _PyNumber_ConvertIntegralToInt(
-//			truncated,
-//			"__trunc__ returned non-Integral (type %.200s)");
-//		if (int_instance && PyInt_Check(int_instance)) {
-//			/* Make sure that long() returns a long instance. */
-//			long value = PyInt_AS_LONG(int_instance);
-//			Py_DECREF(int_instance);
-//			return PyLong_FromLong(value);
-//		}
-//		return int_instance;
-//	}
-//	PyErr_Clear();  /* It's not an error if  o.__trunc__ doesn't exist. */
-//
-//	if (PyString_Check(o))
-//		/* need to do extra error checking that PyLong_FromString()
-//		 * doesn't do.  In particular long('9.5') must raise an
-//		 * exception, not truncate the float.
-//		 */
-//		return long_from_string(PyString_AS_STRING(o),
-//								PyString_GET_SIZE(o));
-//#ifdef Py_USING_UNICODE
-//	if (PyUnicode_Check(o))
-//		/* The above check is done in PyLong_FromUnicode(). */
-//		return PyLong_FromUnicode(PyUnicode_AS_UNICODE(o),
-//								  PyUnicode_GET_SIZE(o),
-//								  10);
-//#endif
-//	if (!PyObject_AsCharBuffer(o, &buffer, &buffer_len))
-//		return long_from_string(buffer, buffer_len);
-//
-//	return type_error("long() argument must be a string or a "
-//					  "number, not '%.200s'", o);
-//}
-//
-//PyObject *
-//PyNumber_Float(PyObject *o)
-//{
-//	PyNumberMethods *m;
-//
-//	if (o == NULL)
-//		return null_error();
-//	m = o->ob_type->tp_as_number;
-//	if (m && m->nb_float) { /* This should include subclasses of float */
-//		PyObject *res = m->nb_float(o);
-//		if (res && !PyFloat_Check(res)) {
-//			PyErr_Format(PyExc_TypeError,
-//			  "__float__ returned non-float (type %.200s)",
-//			  res->ob_type->tp_name);
-//			Py_DECREF(res);
-//			return NULL;
-//		}
-//		return res;
-//	}
-//	if (PyFloat_Check(o)) { /* A float subclass with nb_float == NULL */
-//		PyFloatObject *po = (PyFloatObject *)o;
-//		return PyFloat_FromDouble(po->ob_fval);
-//	}
-//	return PyFloat_FromString(o, NULL);
-//}
-//
-//PyObject *
-//PyNumber_ToBase(PyObject *n, int base)
-//{
-//	PyObject *res = NULL;
-//	PyObject *index = PyNumber_Index(n);
-//
-//	if (!index)
-//		return NULL;
-//	if (PyLong_Check(index))
-//		res = _PyLong_Format(index, base, 0, 1);
-//	else if (PyInt_Check(index))
-//		res = _PyInt_Format((PyIntObject*)index, base, 1);
-//	else
-//		/* It should not be possible to get here, as
-//		   PyNumber_Index already has a check for the same
-//		   condition */
-//		PyErr_SetString(PyExc_ValueError, "PyNumber_ToBase: index not "
-//						"int or long");
-//	Py_DECREF(index);
-//	return res;
-//}
-//
-//
-///* Operations on sequences */
+
+
+PyObject *
+PyNumber_Int(PyObject *o)
+{
+	PyNumberMethods *m;
+	static PyObject *trunc_name = NULL;
+	PyObject *trunc_func;
+	const char *buffer;
+	Py_ssize_t buffer_len;
+
+	if (trunc_name == NULL) {
+		trunc_name = PyString_InternFromString("__trunc__");
+		if (trunc_name == NULL)
+			return NULL;
+	}
+
+	if (o == NULL)
+		return null_error();
+	if (PyInt_CheckExact(o)) {
+		Py_INCREF(o);
+		return o;
+	}
+	m = o->ob_type->tp_as_number;
+	if (m && m->nb_int) { /* This should include subclasses of int */
+		/* Classic classes always take this branch. */
+		PyObject *res = m->nb_int(o);
+		if (res && (!PyInt_Check(res) && !PyLong_Check(res))) {
+			PyErr_Format(PyExc_TypeError,
+						 "__int__ returned non-int (type %.200s)",
+						 res->ob_type->tp_name);
+			Py_DECREF(res);
+			return NULL;
+		}
+		return res;
+	}
+	if (PyInt_Check(o)) { /* A int subclass without nb_int */
+		PyIntObject *io = (PyIntObject*)o;
+		return PyInt_FromLong(io->ob_ival);
+	}
+	trunc_func = PyObject_GetAttr(o, trunc_name);
+	if (trunc_func) {
+		PyObject *truncated = PyEval_CallObject(trunc_func, NULL);
+		Py_DECREF(trunc_func);
+		/* __trunc__ is specified to return an Integral type, but
+		   int() needs to return an int. */
+		return _PyNumber_ConvertIntegralToInt(
+			truncated,
+			"__trunc__ returned non-Integral (type %.200s)");
+	}
+	PyErr_Clear();  /* It's not an error if  o.__trunc__ doesn't exist. */
+
+	if (PyString_Check(o))
+		return int_from_string(PyString_AS_STRING(o),
+							   PyString_GET_SIZE(o));
+#ifdef Py_USING_UNICODE
+	if (PyUnicode_Check(o))
+		return PyInt_FromUnicode(PyUnicode_AS_UNICODE(o),
+								 PyUnicode_GET_SIZE(o),
+								 10);
+#endif
+	if (!PyObject_AsCharBuffer(o, &buffer, &buffer_len))
+		return int_from_string((char*)buffer, buffer_len);
+
+	return type_error("int() argument must be a string or a "
+					  "number, not '%.200s'", o);
+}
+
+/* Add a check for embedded NULL-bytes in the argument. */
+static PyObject *
+long_from_string(const char *s, Py_ssize_t len)
+{
+	char *end;
+	PyObject *x;
+
+	x = PyLong_FromString((char*)s, &end, 10);
+	if (x == NULL)
+		return NULL;
+	if (end != s + len) {
+		PyErr_SetString(PyExc_ValueError,
+						"null byte in argument for long()");
+		Py_DECREF(x);
+		return NULL;
+	}
+	return x;
+}
+
+PyObject *
+PyNumber_Long(PyObject *o)
+{
+	PyNumberMethods *m;
+	static PyObject *trunc_name = NULL;
+	PyObject *trunc_func;
+	const char *buffer;
+	Py_ssize_t buffer_len;
+
+	if (trunc_name == NULL) {
+		trunc_name = PyString_InternFromString("__trunc__");
+		if (trunc_name == NULL)
+			return NULL;
+	}
+
+	if (o == NULL)
+		return null_error();
+	m = o->ob_type->tp_as_number;
+	if (m && m->nb_long) { /* This should include subclasses of long */
+		/* Classic classes always take this branch. */
+		PyObject *res = m->nb_long(o);
+		if (res == NULL)
+			return NULL;
+		if (PyInt_Check(res)) {
+			long value = PyInt_AS_LONG(res);
+			Py_DECREF(res);
+			return PyLong_FromLong(value);
+		}
+		else if (!PyLong_Check(res)) {
+			PyErr_Format(PyExc_TypeError,
+						 "__long__ returned non-long (type %.200s)",
+						 res->ob_type->tp_name);
+			Py_DECREF(res);
+			return NULL;
+		}
+		return res;
+	}
+	if (PyLong_Check(o)) /* A long subclass without nb_long */
+		return _PyLong_Copy((PyLongObject *)o);
+	trunc_func = PyObject_GetAttr(o, trunc_name);
+	if (trunc_func) {
+		PyObject *truncated = PyEval_CallObject(trunc_func, NULL);
+		PyObject *int_instance;
+		Py_DECREF(trunc_func);
+		/* __trunc__ is specified to return an Integral type,
+		   but long() needs to return a long. */
+		int_instance = _PyNumber_ConvertIntegralToInt(
+			truncated,
+			"__trunc__ returned non-Integral (type %.200s)");
+		if (int_instance && PyInt_Check(int_instance)) {
+			/* Make sure that long() returns a long instance. */
+			long value = PyInt_AS_LONG(int_instance);
+			Py_DECREF(int_instance);
+			return PyLong_FromLong(value);
+		}
+		return int_instance;
+	}
+	PyErr_Clear();  /* It's not an error if  o.__trunc__ doesn't exist. */
+
+	if (PyString_Check(o))
+		/* need to do extra error checking that PyLong_FromString()
+		 * doesn't do.  In particular long('9.5') must raise an
+		 * exception, not truncate the float.
+		 */
+		return long_from_string(PyString_AS_STRING(o),
+								PyString_GET_SIZE(o));
+#ifdef Py_USING_UNICODE
+	if (PyUnicode_Check(o))
+		/* The above check is done in PyLong_FromUnicode(). */
+		return PyLong_FromUnicode(PyUnicode_AS_UNICODE(o),
+								  PyUnicode_GET_SIZE(o),
+								  10);
+#endif
+	if (!PyObject_AsCharBuffer(o, &buffer, &buffer_len))
+		return long_from_string(buffer, buffer_len);
+
+	return type_error("long() argument must be a string or a "
+					  "number, not '%.200s'", o);
+}
+
+PyObject *
+PyNumber_Float(PyObject *o)
+{
+	PyNumberMethods *m;
+
+	if (o == NULL)
+		return null_error();
+	m = o->ob_type->tp_as_number;
+	if (m && m->nb_float) { /* This should include subclasses of float */
+		PyObject *res = m->nb_float(o);
+		if (res && !PyFloat_Check(res)) {
+			PyErr_Format(PyExc_TypeError,
+			  "__float__ returned non-float (type %.200s)",
+			  res->ob_type->tp_name);
+			Py_DECREF(res);
+			return NULL;
+		}
+		return res;
+	}
+	if (PyFloat_Check(o)) { /* A float subclass with nb_float == NULL */
+		PyFloatObject *po = (PyFloatObject *)o;
+		return PyFloat_FromDouble(po->ob_fval);
+	}
+	return PyFloat_FromString(o, NULL);
+}
+
+PyObject *
+PyNumber_ToBase(PyObject *n, int base)
+{
+	PyObject *res = NULL;
+	PyObject *index = PyNumber_Index(n);
+
+	if (!index)
+		return NULL;
+	if (PyLong_Check(index))
+		res = _PyLong_Format(index, base, 0, 1);
+	else if (PyInt_Check(index))
+		res = _PyInt_Format((PyIntObject*)index, base, 1);
+	else
+		/* It should not be possible to get here, as
+		   PyNumber_Index already has a check for the same
+		   condition */
+		PyErr_SetString(PyExc_ValueError, "PyNumber_ToBase: index not "
+						"int or long");
+	Py_DECREF(index);
+	return res;
+}
+
+
+/* Operations on sequences */
 
 int
 PySequence_Check(PyObject *s)
 {
 	if (s == NULL)
 		return 0;
-//	if (PyInstance_Check(s))
-//		return PyObject_HasAttrString(s, "__getitem__");
+	if (PyInstance_Check(s))
+		return PyObject_HasAttrString(s, "__getitem__");
 	if (PyDict_Check(s))
 		return 0;
 	return  s->ob_type->tp_as_sequence &&
@@ -2431,109 +2431,109 @@ PySequence_Fast(PyObject *v, const char *m)
 //{
 //	return _PySequence_IterSearch(s, o, PY_ITERSEARCH_INDEX);
 //}
-//
-///* Operations on mappings */
-//
-//int
-//PyMapping_Check(PyObject *o)
-//{
-//	if (o && PyInstance_Check(o))
-//		return PyObject_HasAttrString(o, "__getitem__");
-//
-//	return  o && o->ob_type->tp_as_mapping &&
-//		o->ob_type->tp_as_mapping->mp_subscript &&
-//		!(o->ob_type->tp_as_sequence &&
-//		  o->ob_type->tp_as_sequence->sq_slice);
-//}
-//
-//Py_ssize_t
-//PyMapping_Size(PyObject *o)
-//{
-//	PyMappingMethods *m;
-//
-//	if (o == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//
-//	m = o->ob_type->tp_as_mapping;
-//	if (m && m->mp_length)
-//		return m->mp_length(o);
-//
-//	type_error("object of type '%.200s' has no len()", o);
-//	return -1;
-//}
-//
-//#undef PyMapping_Length
-//Py_ssize_t
-//PyMapping_Length(PyObject *o)
-//{
-//	return PyMapping_Size(o);
-//}
-//#define PyMapping_Length PyMapping_Size
-//
-//PyObject *
-//PyMapping_GetItemString(PyObject *o, char *key)
-//{
-//	PyObject *okey, *r;
-//
-//	if (key == NULL)
-//		return null_error();
-//
-//	okey = PyString_FromString(key);
-//	if (okey == NULL)
-//		return NULL;
-//	r = PyObject_GetItem(o, okey);
-//	Py_DECREF(okey);
-//	return r;
-//}
-//
-//int
-//PyMapping_SetItemString(PyObject *o, char *key, PyObject *value)
-//{
-//	PyObject *okey;
-//	int r;
-//
-//	if (key == NULL) {
-//		null_error();
-//		return -1;
-//	}
-//
-//	okey = PyString_FromString(key);
-//	if (okey == NULL)
-//		return -1;
-//	r = PyObject_SetItem(o, okey, value);
-//	Py_DECREF(okey);
-//	return r;
-//}
-//
-//int
-//PyMapping_HasKeyString(PyObject *o, char *key)
-//{
-//	PyObject *v;
-//
-//	v = PyMapping_GetItemString(o, key);
-//	if (v) {
-//		Py_DECREF(v);
-//		return 1;
-//	}
-//	PyErr_Clear();
-//	return 0;
-//}
-//
-//int
-//PyMapping_HasKey(PyObject *o, PyObject *key)
-//{
-//	PyObject *v;
-//
-//	v = PyObject_GetItem(o, key);
-//	if (v) {
-//		Py_DECREF(v);
-//		return 1;
-//	}
-//	PyErr_Clear();
-//	return 0;
-//}
+
+/* Operations on mappings */
+
+int
+PyMapping_Check(PyObject *o)
+{
+	if (o && PyInstance_Check(o))
+		return PyObject_HasAttrString(o, "__getitem__");
+
+	return  o && o->ob_type->tp_as_mapping &&
+		o->ob_type->tp_as_mapping->mp_subscript &&
+		!(o->ob_type->tp_as_sequence &&
+		  o->ob_type->tp_as_sequence->sq_slice);
+}
+
+Py_ssize_t
+PyMapping_Size(PyObject *o)
+{
+	PyMappingMethods *m;
+
+	if (o == NULL) {
+		null_error();
+		return -1;
+	}
+
+	m = o->ob_type->tp_as_mapping;
+	if (m && m->mp_length)
+		return m->mp_length(o);
+
+	type_error("object of type '%.200s' has no len()", o);
+	return -1;
+}
+
+#undef PyMapping_Length
+Py_ssize_t
+PyMapping_Length(PyObject *o)
+{
+	return PyMapping_Size(o);
+}
+#define PyMapping_Length PyMapping_Size
+
+PyObject *
+PyMapping_GetItemString(PyObject *o, char *key)
+{
+	PyObject *okey, *r;
+
+	if (key == NULL)
+		return null_error();
+
+	okey = PyString_FromString(key);
+	if (okey == NULL)
+		return NULL;
+	r = PyObject_GetItem(o, okey);
+	Py_DECREF(okey);
+	return r;
+}
+
+int
+PyMapping_SetItemString(PyObject *o, char *key, PyObject *value)
+{
+	PyObject *okey;
+	int r;
+
+	if (key == NULL) {
+		null_error();
+		return -1;
+	}
+
+	okey = PyString_FromString(key);
+	if (okey == NULL)
+		return -1;
+	r = PyObject_SetItem(o, okey, value);
+	Py_DECREF(okey);
+	return r;
+}
+
+int
+PyMapping_HasKeyString(PyObject *o, char *key)
+{
+	PyObject *v;
+
+	v = PyMapping_GetItemString(o, key);
+	if (v) {
+		Py_DECREF(v);
+		return 1;
+	}
+	PyErr_Clear();
+	return 0;
+}
+
+int
+PyMapping_HasKey(PyObject *o, PyObject *key)
+{
+	PyObject *v;
+
+	v = PyObject_GetItem(o, key);
+	if (v) {
+		Py_DECREF(v);
+		return 1;
+	}
+	PyErr_Clear();
+	return 0;
+}
 
 /* Operations on callable objects */
 
@@ -2555,8 +2555,10 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 //		puts(func->ob_type->tp_name);
 		env(NULL);
 		jobject jdict = JyNI_JythonPyObject_FromPyObject(kw);
-		JyNI_jprintJ(jdict);
-		jint dictSize = (*env)->CallIntMethod(env, jdict, pyObject__len__);
+		//JyNI_jprintJ(jdict);
+		ENTER_SubtypeLoop_Safe_ModePy(jdict, kw, __len__)
+		jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+		LEAVE_SubtypeLoop_Safe_Mode(jdict)
 		jobject args = (*env)->NewObjectArray(env,
 			PyTuple_GET_SIZE(arg)
 			+dictSize,
@@ -2802,297 +2804,305 @@ _PyObject_CallMethod_SizeT(PyObject *o, char *name, char *format, ...)
 }
 
 
-//static PyObject *
-//objargs_mktuple(va_list va)
-//{
-//	int i, n = 0;
-//	va_list countva;
-//	PyObject *result, *tmp;
-//
-//#ifdef VA_LIST_IS_ARRAY
-//	memcpy(countva, va, sizeof(va_list));
-//#else
-//#ifdef __va_copy
-//	__va_copy(countva, va);
-//#else
-//	countva = va;
-//#endif
-//#endif
-//
-//	while (((PyObject *)va_arg(countva, PyObject *)) != NULL)
-//		++n;
-//	result = PyTuple_New(n);
-//	if (result != NULL && n > 0) {
-//		for (i = 0; i < n; ++i) {
-//			tmp = (PyObject *)va_arg(va, PyObject *);
-//			PyTuple_SET_ITEM(result, i, tmp);
-//			Py_INCREF(tmp);
-//		}
-//	}
-//	return result;
-//}
-//
-//PyObject *
-//PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
-//{
-//	PyObject *args, *tmp;
-//	va_list vargs;
-//
-//	if (callable == NULL || name == NULL)
-//		return null_error();
-//
-//	callable = PyObject_GetAttr(callable, name);
-//	if (callable == NULL)
-//		return NULL;
-//
-//	/* count the args */
-//	va_start(vargs, name);
-//	args = objargs_mktuple(vargs);
-//	va_end(vargs);
-//	if (args == NULL) {
-//		Py_DECREF(callable);
-//		return NULL;
-//	}
-//	tmp = PyObject_Call(callable, args, NULL);
-//	Py_DECREF(args);
-//	Py_DECREF(callable);
-//
-//	return tmp;
-//}
-//
-//PyObject *
-//PyObject_CallFunctionObjArgs(PyObject *callable, ...)
-//{
-//	PyObject *args, *tmp;
-//	va_list vargs;
-//
-//	if (callable == NULL)
-//		return null_error();
-//
-//	/* count the args */
-//	va_start(vargs, callable);
-//	args = objargs_mktuple(vargs);
-//	va_end(vargs);
-//	if (args == NULL)
-//		return NULL;
-//	tmp = PyObject_Call(callable, args, NULL);
-//	Py_DECREF(args);
-//
-//	return tmp;
-//}
-//
-//
-///* isinstance(), issubclass() */
-//
-///* abstract_get_bases() has logically 4 return states, with a sort of 0th
-// * state that will almost never happen.
-// *
-// * 0. creating the __bases__ static string could get a MemoryError
-// * 1. getattr(cls, '__bases__') could raise an AttributeError
-// * 2. getattr(cls, '__bases__') could raise some other exception
-// * 3. getattr(cls, '__bases__') could return a tuple
-// * 4. getattr(cls, '__bases__') could return something other than a tuple
-// *
-// * Only state #3 is a non-error state and only it returns a non-NULL object
-// * (it returns the retrieved tuple).
-// *
-// * Any raised AttributeErrors are masked by clearing the exception and
-// * returning NULL.  If an object other than a tuple comes out of __bases__,
-// * then again, the return value is NULL.  So yes, these two situations
-// * produce exactly the same results: NULL is returned and no error is set.
-// *
-// * If some exception other than AttributeError is raised, then NULL is also
-// * returned, but the exception is not cleared.  That's because we want the
-// * exception to be propagated along.
-// *
-// * Callers are expected to test for PyErr_Occurred() when the return value
-// * is NULL to decide whether a valid exception should be propagated or not.
-// * When there's no exception to propagate, it's customary for the caller to
-// * set a TypeError.
-// */
-//static PyObject *
-//abstract_get_bases(PyObject *cls)
-//{
-//	static PyObject *__bases__ = NULL;
-//	PyObject *bases;
-//
-//	if (__bases__ == NULL) {
-//		__bases__ = PyString_InternFromString("__bases__");
-//		if (__bases__ == NULL)
-//			return NULL;
-//	}
-//	bases = PyObject_GetAttr(cls, __bases__);
-//	if (bases == NULL) {
-//		if (PyErr_ExceptionMatches(PyExc_AttributeError))
-//			PyErr_Clear();
-//		return NULL;
-//	}
-//	if (!PyTuple_Check(bases)) {
-//		Py_DECREF(bases);
-//		return NULL;
-//	}
-//	return bases;
-//}
-//
-//
-//static int
-//abstract_issubclass(PyObject *derived, PyObject *cls)
-//{
-//	PyObject *bases = NULL;
-//	Py_ssize_t i, n;
-//	int r = 0;
-//
-//	while (1) {
-//		if (derived == cls)
-//			return 1;
-//		bases = abstract_get_bases(derived);
-//		if (bases == NULL) {
-//			if (PyErr_Occurred())
-//				return -1;
-//			return 0;
-//		}
-//		n = PyTuple_GET_SIZE(bases);
-//		if (n == 0) {
-//			Py_DECREF(bases);
-//			return 0;
-//		}
-//		/* Avoid recursivity in the single inheritance case */
-//		if (n == 1) {
-//			derived = PyTuple_GET_ITEM(bases, 0);
-//			Py_DECREF(bases);
-//			continue;
-//		}
-//		for (i = 0; i < n; i++) {
-//			r = abstract_issubclass(PyTuple_GET_ITEM(bases, i), cls);
-//			if (r != 0)
-//				break;
-//		}
-//		Py_DECREF(bases);
-//		return r;
-//	}
-//}
-//
-//static int
-//check_class(PyObject *cls, const char *error)
-//{
-//	PyObject *bases = abstract_get_bases(cls);
-//	if (bases == NULL) {
-//		/* Do not mask errors. */
-//		if (!PyErr_Occurred())
-//			PyErr_SetString(PyExc_TypeError, error);
-//		return 0;
-//	}
-//	Py_DECREF(bases);
-//	return -1;
-//}
-//
-//static int
-//recursive_isinstance(PyObject *inst, PyObject *cls)
-//{
-//	PyObject *icls;
-//	static PyObject *__class__ = NULL;
-//	int retval = 0;
-//
-//	if (__class__ == NULL) {
-//		__class__ = PyString_InternFromString("__class__");
-//		if (__class__ == NULL)
-//			return -1;
-//	}
-//
-//	if (PyClass_Check(cls) && PyInstance_Check(inst)) {
-//		PyObject *inclass =
-//			(PyObject*)((PyInstanceObject*)inst)->in_class;
-//		retval = PyClass_IsSubclass(inclass, cls);
-//	}
-//	else if (PyType_Check(cls)) {
-//		retval = PyObject_TypeCheck(inst, (PyTypeObject *)cls);
-//		if (retval == 0) {
-//			PyObject *c = PyObject_GetAttr(inst, __class__);
-//			if (c == NULL) {
-//				PyErr_Clear();
-//			}
-//			else {
-//				if (c != (PyObject *)(inst->ob_type) &&
-//					PyType_Check(c))
-//					retval = PyType_IsSubtype(
-//						(PyTypeObject *)c,
-//						(PyTypeObject *)cls);
-//				Py_DECREF(c);
-//			}
-//		}
-//	}
-//	else {
-//		if (!check_class(cls,
-//			"isinstance() arg 2 must be a class, type,"
-//			" or tuple of classes and types"))
-//			return -1;
-//		icls = PyObject_GetAttr(inst, __class__);
-//		if (icls == NULL) {
-//			PyErr_Clear();
-//			retval = 0;
-//		}
-//		else {
-//			retval = abstract_issubclass(icls, cls);
-//			Py_DECREF(icls);
-//		}
-//	}
-//
-//	return retval;
-//}
-//
-//int
-//PyObject_IsInstance(PyObject *inst, PyObject *cls)
-//{
-//	static PyObject *name = NULL;
-//
-//	/* Quick test for an exact match */
-//	if (Py_TYPE(inst) == (PyTypeObject *)cls)
-//		return 1;
-//
-//	if (PyTuple_Check(cls)) {
-//		Py_ssize_t i;
-//		Py_ssize_t n;
-//		int r = 0;
-//
-//		if (Py_EnterRecursiveCall(" in __instancecheck__"))
-//			return -1;
-//		n = PyTuple_GET_SIZE(cls);
-//		for (i = 0; i < n; ++i) {
-//			PyObject *item = PyTuple_GET_ITEM(cls, i);
-//			r = PyObject_IsInstance(inst, item);
-//			if (r != 0)
-//				/* either found it, or got an error */
-//				break;
-//		}
-//		Py_LeaveRecursiveCall();
-//		return r;
-//	}
-//
-//	if (!(PyClass_Check(cls) || PyInstance_Check(cls))) {
-//		PyObject *checker;
-//		checker = _PyObject_LookupSpecial(cls, "__instancecheck__", &name);
-//		if (checker != NULL) {
-//			PyObject *res;
-//			int ok = -1;
-//			if (Py_EnterRecursiveCall(" in __instancecheck__")) {
-//				Py_DECREF(checker);
-//				return ok;
-//			}
-//			res = PyObject_CallFunctionObjArgs(checker, inst, NULL);
-//			Py_LeaveRecursiveCall();
-//			Py_DECREF(checker);
-//			if (res != NULL) {
-//				ok = PyObject_IsTrue(res);
-//				Py_DECREF(res);
-//			}
-//			return ok;
-//		}
-//		else if (PyErr_Occurred())
-//			return -1;
-//	}
-//	return recursive_isinstance(inst, cls);
-//}
-//
+static PyObject *
+objargs_mktuple(va_list va)
+{
+	int i, n = 0;
+	va_list countva;
+	PyObject *result, *tmp;
+
+#ifdef VA_LIST_IS_ARRAY
+	memcpy(countva, va, sizeof(va_list));
+#else
+#ifdef __va_copy
+	__va_copy(countva, va);
+#else
+	countva = va;
+#endif
+#endif
+
+	while (((PyObject *)va_arg(countva, PyObject *)) != NULL)
+		++n;
+	result = PyTuple_New(n);
+	if (result != NULL && n > 0) {
+		for (i = 0; i < n; ++i) {
+			tmp = (PyObject *)va_arg(va, PyObject *);
+			PyTuple_SET_ITEM(result, i, tmp);
+			Py_INCREF(tmp);
+		}
+	}
+	return result;
+}
+
+PyObject *
+PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
+{
+	PyObject *args, *tmp;
+	va_list vargs;
+
+	if (callable == NULL || name == NULL)
+		return null_error();
+
+	callable = PyObject_GetAttr(callable, name);
+	if (callable == NULL)
+		return NULL;
+
+	/* count the args */
+	va_start(vargs, name);
+	args = objargs_mktuple(vargs);
+	va_end(vargs);
+	if (args == NULL) {
+		Py_DECREF(callable);
+		return NULL;
+	}
+	tmp = PyObject_Call(callable, args, NULL);
+	Py_DECREF(args);
+	Py_DECREF(callable);
+
+	return tmp;
+}
+
+PyObject *
+PyObject_CallFunctionObjArgs(PyObject *callable, ...)
+{
+	PyObject *args, *tmp;
+	va_list vargs;
+
+	if (callable == NULL)
+		return null_error();
+
+	/* count the args */
+	va_start(vargs, callable);
+	args = objargs_mktuple(vargs);
+	va_end(vargs);
+	if (args == NULL)
+		return NULL;
+	tmp = PyObject_Call(callable, args, NULL);
+	Py_DECREF(args);
+
+	return tmp;
+}
+
+
+/* isinstance(), issubclass() */
+
+/* JyNI-note:
+ * Since currently all native types are actually native types
+ * (because JyNI does not yet support wrapping custom Java-types
+ * on native side, e.g. new-style classes) we don't need to care
+ * here for delegating is-instance calls etc back to Jython.
+ * However we will have to consider such stuff for JyNI-alpha.4.
+ */
+
+/* abstract_get_bases() has logically 4 return states, with a sort of 0th
+ * state that will almost never happen.
+ *
+ * 0. creating the __bases__ static string could get a MemoryError
+ * 1. getattr(cls, '__bases__') could raise an AttributeError
+ * 2. getattr(cls, '__bases__') could raise some other exception
+ * 3. getattr(cls, '__bases__') could return a tuple
+ * 4. getattr(cls, '__bases__') could return something other than a tuple
+ *
+ * Only state #3 is a non-error state and only it returns a non-NULL object
+ * (it returns the retrieved tuple).
+ *
+ * Any raised AttributeErrors are masked by clearing the exception and
+ * returning NULL.  If an object other than a tuple comes out of __bases__,
+ * then again, the return value is NULL.  So yes, these two situations
+ * produce exactly the same results: NULL is returned and no error is set.
+ *
+ * If some exception other than AttributeError is raised, then NULL is also
+ * returned, but the exception is not cleared.  That's because we want the
+ * exception to be propagated along.
+ *
+ * Callers are expected to test for PyErr_Occurred() when the return value
+ * is NULL to decide whether a valid exception should be propagated or not.
+ * When there's no exception to propagate, it's customary for the caller to
+ * set a TypeError.
+ */
+static PyObject *
+abstract_get_bases(PyObject *cls)
+{
+	static PyObject *__bases__ = NULL;
+	PyObject *bases;
+
+	if (__bases__ == NULL) {
+		__bases__ = PyString_InternFromString("__bases__");
+		if (__bases__ == NULL)
+			return NULL;
+	}
+	bases = PyObject_GetAttr(cls, __bases__);
+	if (bases == NULL) {
+		if (PyErr_ExceptionMatches(PyExc_AttributeError))
+			PyErr_Clear();
+		return NULL;
+	}
+	if (!PyTuple_Check(bases)) {
+		Py_DECREF(bases);
+		return NULL;
+	}
+	return bases;
+}
+
+
+static int
+abstract_issubclass(PyObject *derived, PyObject *cls)
+{
+	PyObject *bases = NULL;
+	Py_ssize_t i, n;
+	int r = 0;
+
+	while (1) {
+		if (derived == cls)
+			return 1;
+		bases = abstract_get_bases(derived);
+		if (bases == NULL) {
+			if (PyErr_Occurred())
+				return -1;
+			return 0;
+		}
+		n = PyTuple_GET_SIZE(bases);
+		if (n == 0) {
+			Py_DECREF(bases);
+			return 0;
+		}
+		/* Avoid recursivity in the single inheritance case */
+		if (n == 1) {
+			derived = PyTuple_GET_ITEM(bases, 0);
+			Py_DECREF(bases);
+			continue;
+		}
+		for (i = 0; i < n; i++) {
+			r = abstract_issubclass(PyTuple_GET_ITEM(bases, i), cls);
+			if (r != 0)
+				break;
+		}
+		Py_DECREF(bases);
+		return r;
+	}
+}
+
+static int
+check_class(PyObject *cls, const char *error)
+{
+	PyObject *bases = abstract_get_bases(cls);
+	if (bases == NULL) {
+		/* Do not mask errors. */
+		if (!PyErr_Occurred())
+			PyErr_SetString(PyExc_TypeError, error);
+		return 0;
+	}
+	Py_DECREF(bases);
+	return -1;
+}
+
+static int
+recursive_isinstance(PyObject *inst, PyObject *cls)
+{
+	PyObject *icls;
+	static PyObject *__class__ = NULL;
+	int retval = 0;
+
+	if (__class__ == NULL) {
+		__class__ = PyString_InternFromString("__class__");
+		if (__class__ == NULL)
+			return -1;
+	}
+
+	if (PyClass_Check(cls) && PyInstance_Check(inst)) {
+		PyObject *inclass =
+			(PyObject*)((PyInstanceObject*)inst)->in_class;
+		retval = PyClass_IsSubclass(inclass, cls);
+	}
+	else if (PyType_Check(cls)) {
+		retval = PyObject_TypeCheck(inst, (PyTypeObject *)cls);
+		if (retval == 0) {
+			PyObject *c = PyObject_GetAttr(inst, __class__);
+			if (c == NULL) {
+				PyErr_Clear();
+			}
+			else {
+				if (c != (PyObject *)(inst->ob_type) &&
+					PyType_Check(c))
+					retval = PyType_IsSubtype(
+						(PyTypeObject *)c,
+						(PyTypeObject *)cls);
+				Py_DECREF(c);
+			}
+		}
+	}
+	else {
+		if (!check_class(cls,
+			"isinstance() arg 2 must be a class, type,"
+			" or tuple of classes and types"))
+			return -1;
+		icls = PyObject_GetAttr(inst, __class__);
+		if (icls == NULL) {
+			PyErr_Clear();
+			retval = 0;
+		}
+		else {
+			retval = abstract_issubclass(icls, cls);
+			Py_DECREF(icls);
+		}
+	}
+
+	return retval;
+}
+
+int
+PyObject_IsInstance(PyObject *inst, PyObject *cls)
+{
+	static PyObject *name = NULL;
+
+	/* Quick test for an exact match */
+	if (Py_TYPE(inst) == (PyTypeObject *)cls)
+		return 1;
+
+	if (PyTuple_Check(cls)) {
+		Py_ssize_t i;
+		Py_ssize_t n;
+		int r = 0;
+
+		if (Py_EnterRecursiveCall(" in __instancecheck__"))
+			return -1;
+		n = PyTuple_GET_SIZE(cls);
+		for (i = 0; i < n; ++i) {
+			PyObject *item = PyTuple_GET_ITEM(cls, i);
+			r = PyObject_IsInstance(inst, item);
+			if (r != 0)
+				/* either found it, or got an error */
+				break;
+		}
+		Py_LeaveRecursiveCall();
+		return r;
+	}
+
+	if (!(PyClass_Check(cls) || PyInstance_Check(cls))) {
+		PyObject *checker;
+		checker = _PyObject_LookupSpecial(cls, "__instancecheck__", &name);
+		if (checker != NULL) {
+			PyObject *res;
+			int ok = -1;
+			if (Py_EnterRecursiveCall(" in __instancecheck__")) {
+				Py_DECREF(checker);
+				return ok;
+			}
+			res = PyObject_CallFunctionObjArgs(checker, inst, NULL);
+			Py_LeaveRecursiveCall();
+			Py_DECREF(checker);
+			if (res != NULL) {
+				ok = PyObject_IsTrue(res);
+				Py_DECREF(res);
+			}
+			return ok;
+		}
+		else if (PyErr_Occurred())
+			return -1;
+	}
+	return recursive_isinstance(inst, cls);
+}
+
 //static  int
 //recursive_issubclass(PyObject *derived, PyObject *cls)
 //{

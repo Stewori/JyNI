@@ -754,9 +754,9 @@ static PyObject *
 type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyObject *obj;
-//	jputs("type_call:");
-//	if (type->tp_name) jputs(type->tp_name);
-//	else jputs("name is null");
+	jputs("type_call:");
+	if (type->tp_name) jputs(type->tp_name);
+	else jputs("name is null");
 	if (type->tp_new == NULL) {
 		PyErr_Format(PyExc_TypeError,
 					 "cannot create '%.100s' instances (raised in type_call)",
@@ -2023,8 +2023,8 @@ subtype_setdict(PyObject *obj, PyObject *value, void *context)
 		}
 		return func(descr, obj, value);
 	}
-	jputs(__FUNCTION__);
-	jputsLong(__LINE__);
+	//jputs(__FUNCTION__);
+	//jputsLong(__LINE__);
 	dictptr = _PyObject_GetDictPtr(obj);
 	if (dictptr == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
@@ -2631,14 +2631,17 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 			slotoffset += sizeof(PyObject *);
 		}
 	}
-
+	//printf("%s %s\n", __FUNCTION__, PyString_AS_STRING(name));
+	//printf("%d\n", __LINE__);
 	if (add_dict) {
+		//puts("add dict");
 		if (base->tp_itemsize)
 			type->tp_dictoffset = -(long)sizeof(PyObject *);
 		else
 			type->tp_dictoffset = slotoffset;
 		slotoffset += sizeof(PyObject *);
 	}
+	//printf("Dict-offset in line %d: %d\n", __LINE__, type->tp_dictoffset);
 	if (add_weak) {
 		assert(!base->tp_itemsize);
 		type->tp_weaklistoffset = slotoffset;
@@ -2687,6 +2690,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 	}
 	/* Put the proper slots in place */
 	fixup_slot_dispatchers(type);
+	//printf("Dict-offset in line %d: %d\n", __LINE__, type->tp_dictoffset);
 	return (PyObject *)type;
 }
 
@@ -2695,6 +2699,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 PyObject *
 _PyType_Lookup(PyTypeObject *type, PyObject *name)
 {
+	//printf("%s: %s in %s\n", __FUNCTION__, PyString_AS_STRING(name), type->tp_name);
 	//jputs(__FUNCTION__);
 	Py_ssize_t i, n;
 	PyObject *mro, *res, *base, *dict;
@@ -2724,20 +2729,25 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 	for (i = 0; i < n; i++) {
 		base = PyTuple_GET_ITEM(mro, i);
 		if (PyClass_Check(base)) {
+			//printf("look in class %s\n", PyString_AS_STRING(((PyClassObject *)base)->cl_name));
 			dict = ((PyClassObject *)base)->cl_dict;
 			//jputs("classdict");
 		} else {
+			//printf("look in type %s\n", ((PyTypeObject *)base)->tp_name);
 			assert(PyType_Check(base));
 			//jputs("tp_dict");
 			//jputs(((PyTypeObject *)base)->tp_name);
 			dict = ((PyTypeObject *)base)->tp_dict;
+			//puts(Py_TYPE(dict)->tp_name);
 		}
 		assert(dict && PyDict_Check(dict));
 		//jputsLong(__LINE__);
 		//jputsLong(dict);
 		res = PyDict_GetItem(dict, name);
-		if (res != NULL)
+		if (res != NULL) {
+			//puts("found");
 			break;
+		}
 		//else jputs("res is NULL");
 	}
 	//jputsLong(__LINE__);
@@ -4238,6 +4248,7 @@ PyType_Ready(PyTypeObject *type)
 {
 //	jputs("PyType_Ready:");
 //	jputs(type->tp_name);
+	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
 
 	PyObject *dict, *bases;
 	PyTypeObject *base;
@@ -4426,6 +4437,7 @@ PyType_Ready(PyTypeObject *type)
 	assert(type->tp_dict != NULL);
 	type->tp_flags = (type->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
 	JyNI_GC_ExploreObject(type);
+	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
 	return 0;
 
   error:
