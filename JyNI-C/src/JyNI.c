@@ -2608,17 +2608,17 @@ jmethodID pyObjectGCHeadSetObject;
 jmethodID jyGCHeadGetHandle;
 
 jclass cPeerInterface;
-//jclass cPeerNativeDelegateInterface;
-//jmethodID super__call__;
-//jmethodID super__findattr_ex__;
-//jmethodID super__setattr__;
-//jmethodID super__str__;
-//jmethodID super__repr__;
-//jmethodID super__finditem__;
-//jmethodID super__setitem__;
-//jmethodID super__delitem__;
-//jmethodID super__len__;
-//jmethodID super_toString;
+jclass cPeerNativeDelegateInterface;
+jmethodID super__call__;
+jmethodID super__findattr_ex__;
+jmethodID super__setattr__;
+jmethodID super__str__;
+jmethodID super__repr__;
+jmethodID super__finditem__;
+jmethodID super__setitem__;
+jmethodID super__delitem__;
+jmethodID super__len__;
+jmethodID super_toString;
 
 jclass pyCPeerTypeClass;
 jmethodID pyCPeerTypeConstructor;
@@ -3290,28 +3290,28 @@ inline jint initJyNI(JNIEnv *env)
 	cPeerInterface = (*env)->NewWeakGlobalRef(env, cPeerInterfaceLocal);
 	(*env)->DeleteLocalRef(env, cPeerInterfaceLocal);
 
-//	jclass cPeerNativeDelegateInterfaceLocal = (*env)->FindClass(env, "JyNI/CPeerNativeDelegateSubtype");
-//	cPeerNativeDelegateInterface = (*env)->NewWeakGlobalRef(env, cPeerNativeDelegateInterfaceLocal);
-//	(*env)->DeleteLocalRef(env, cPeerNativeDelegateInterfaceLocal);
-//	super__call__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__call__",
-//			"([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
-//	super__findattr_ex__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__findattr_ex__",
-//			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
-//	super__setattr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setattr__",
-//			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
-//	super__str__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__str__",
-//				"()Lorg/python/core/PyString;");
-//	super__repr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__repr__",
-//			"()Lorg/python/core/PyString;");
-//	super__finditem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__finditem__",
-//			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-//	super__setitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setitem__",
-//			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-//	super__delitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__delitem__",
-//			"(Lorg/python/core/PyObject;)V");
-//	super__len__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__len__", "()I");
-//	super_toString = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super_toString",
-//			"()Ljava/lang/String;");
+	jclass cPeerNativeDelegateInterfaceLocal = (*env)->FindClass(env, "JyNI/CPeerNativeDelegateSubtype");
+	cPeerNativeDelegateInterface = (*env)->NewWeakGlobalRef(env, cPeerNativeDelegateInterfaceLocal);
+	(*env)->DeleteLocalRef(env, cPeerNativeDelegateInterfaceLocal);
+	super__call__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__call__",
+			"([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
+	super__findattr_ex__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__findattr_ex__",
+			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
+	super__setattr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setattr__",
+			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+	super__str__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__str__",
+				"()Lorg/python/core/PyString;");
+	super__repr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__repr__",
+			"()Lorg/python/core/PyString;");
+	super__finditem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__finditem__",
+			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+	super__setitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setitem__",
+			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+	super__delitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__delitem__",
+			"(Lorg/python/core/PyObject;)V");
+	super__len__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__len__", "()I");
+	super_toString = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super_toString",
+			"()Ljava/lang/String;");
 
 	return JNI_VERSION_1_2;
 }

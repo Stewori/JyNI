@@ -7,6 +7,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED
+#define JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED -2L
 #undef JyNI_JyNI_RTLD_LAZY
 #define JyNI_JyNI_RTLD_LAZY 1L
 #undef JyNI_JyNI_RTLD_NOW

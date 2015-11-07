@@ -177,7 +177,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			(*env)->CallVoidMethod(env, d, JMID(__setitem__),
 					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
 					JyNI_JythonPyObject_FromPyObject(v));
-			LEAVE_SubtypeLoop_Safe_Mode(d)
+			LEAVE_SubtypeLoop_Safe_Mode(d, __setitem__)
 			Py_DECREF(v);
 		}
 		//puts("methods added");
@@ -767,7 +767,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 	(*env)->CallVoidMethod(env, dict, JMID(__setitem__),
 			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString,
 					(*env)->NewStringUTF(env, name)), o);
-	LEAVE_SubtypeLoop_Safe_Mode(dict)
+	LEAVE_SubtypeLoop_Safe_Mode(dict, __setitem__)
 	//Py_DECREF(o);
 	//puts("done");
 	return 0;

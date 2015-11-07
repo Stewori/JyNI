@@ -231,7 +231,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 			JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
-	/* Yes, item-methods a not exactly a typical use-case for type-objects.
+	/* Yes, item-methods are not exactly a typical use-case for type-objects.
 	 * However we still implement this forwarding here, because you can
 	 * never know what crazy stuff native types come up with.
 	 */

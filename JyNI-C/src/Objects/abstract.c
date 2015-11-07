@@ -183,7 +183,7 @@ PyObject_GetItem(PyObject *o, PyObject *key)
 			return type_error("sequence index must "
 							  "be integer, not '%.200s'", key);
 	}
-
+	JyNICheckSubtype(o);
 	return type_error("'%.200s' object has no attribute '__getitem__'", o);
 }
 
@@ -215,6 +215,7 @@ PyObject_SetItem(PyObject *o, PyObject *key, PyObject *value)
 		}
 	}
 
+	JyNICheckSubtypeInt(o);
 	type_error("'%.200s' object does not support item assignment", o);
 	return -1;
 }
@@ -246,7 +247,7 @@ PyObject_DelItem(PyObject *o, PyObject *key)
 			return -1;
 		}
 	}
-
+	JyNICheckSubtypeInt(o);
 	type_error("'%.200s' object does not support item deletion", o);
 	return -1;
 }
@@ -2016,7 +2017,7 @@ PySequence_GetItem(PyObject *s, Py_ssize_t i)
 		}
 		return m->sq_item(s, i);
 	}
-
+	JyNICheckSubtype(s);
 	return type_error("'%.200s' object does not support indexing", s);
 }
 
@@ -2077,7 +2078,7 @@ PySequence_SetItem(PyObject *s, Py_ssize_t i, PyObject *o)
 		}
 		return m->sq_ass_item(s, i, o);
 	}
-
+	JyNICheckSubtypeInt(s);
 	type_error("'%.200s' object does not support item assignment", s);
 	return -1;
 }
@@ -2104,7 +2105,7 @@ PySequence_DelItem(PyObject *s, Py_ssize_t i)
 		}
 		return m->sq_ass_item(s, i, (PyObject *)NULL);
 	}
-
+	JyNICheckSubtypeInt(s);
 	type_error("'%.200s' object doesn't support item deletion", s);
 	return -1;
 }
@@ -2459,7 +2460,7 @@ PyMapping_Size(PyObject *o)
 	m = o->ob_type->tp_as_mapping;
 	if (m && m->mp_length)
 		return m->mp_length(o);
-
+	JyNICheckSubtypeInt(o);
 	type_error("object of type '%.200s' has no len()", o);
 	return -1;
 }
@@ -2558,7 +2559,7 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 		//JyNI_jprintJ(jdict);
 		ENTER_SubtypeLoop_Safe_ModePy(jdict, kw, __len__)
 		jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-		LEAVE_SubtypeLoop_Safe_Mode(jdict)
+		LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 		jobject args = (*env)->NewObjectArray(env,
 			PyTuple_GET_SIZE(arg)
 			+dictSize,

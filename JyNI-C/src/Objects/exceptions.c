@@ -289,7 +289,7 @@ BaseException_getitem(PyBaseExceptionObject *self, Py_ssize_t index)
 	ENTER_SubtypeLoop_Safe_ModePy(jself, self, __finditem__)
 	jobject result = (*env)->CallObjectMethod(env, jself, JMID(__finditem__),
 			JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(index)));
-	LEAVE_SubtypeLoop_Safe_Mode(jself)
+	LEAVE_SubtypeLoop_Safe_ModePy(jself, __finditem__)
 	return JyNI_PyObject_FromJythonPyObject(result);
 //	if (PyErr_WarnPy3k("__getitem__ not supported for exception "
 //					   "classes in 3.x; use args attribute", 1) < 0)
@@ -655,7 +655,7 @@ SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jdict)
+	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)+dictSize,
 		stringClass, NULL);
@@ -789,7 +789,7 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jdict)
+	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -1362,7 +1362,7 @@ SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jdict)
+	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -2427,7 +2427,7 @@ UnicodeEncodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jdict)
+	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -2540,7 +2540,7 @@ UnicodeDecodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jdict)
+	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
@@ -2649,7 +2649,7 @@ UnicodeTranslateError_init(PyUnicodeErrorObject *self, PyObject *args, PyObject 
 	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jdict)
+	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	jobject jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,

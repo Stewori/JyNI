@@ -616,7 +616,7 @@ function_call(PyObject *func, PyObject *arg, PyObject *kw)
 		jdict = JyNI_JythonPyObject_FromPyObject(kw);
 		ENTER_SubtypeLoop_Safe_ModePy(jdict, kw, __len__)
 		dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-		LEAVE_SubtypeLoop_Safe_Mode(jdict)
+		LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
 	}
 	jobject args = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(arg)

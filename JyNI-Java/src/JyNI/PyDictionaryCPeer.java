@@ -35,8 +35,8 @@ import org.python.core.finalization.FinalizableBuiltin;
  * @author Stefan Richthofer
  */
 public class PyDictionaryCPeer extends PyDictionary implements
-		//CPeerNativeDelegateSubtype,
-		CPeerInterface,
+		CPeerNativeDelegateSubtype,
+		//CPeerInterface,
 		FinalizableBuiltin {
 	public long objectHandle;
 
@@ -107,37 +107,35 @@ public class PyDictionaryCPeer extends PyDictionary implements
  * dict methods are called from within a subtype or from somewhere else (doesn't it?).
  */
 //	public PyObject __finditem__(PyObject key) {
-//		return super.__finditem__(key);
-////		PyObject result = JyNI.maybeExc(JyNI.getItem(objectHandle, key,
-////				JyTState.prepareNativeThreadState(Py.getThreadState())));
-////		return result != null ? result : super.__finditem__(key);
+////		return super.__finditem__(key);
+//		PyObject result = JyNI.maybeExc(JyNI.getItem(objectHandle, key,
+//				JyTState.prepareNativeThreadState(Py.getThreadState())));
+//		return result != null ? result : super.__finditem__(key);
 //	}
 //
 //	public void __setitem__(PyObject key, PyObject value) {
-//		super.__setitem__(key, value);
-////		int er = JyNI.setItem(objectHandle, key, value,
-////				JyTState.prepareNativeThreadState(Py.getThreadState()));
-////		JyNI.maybeExc(er);
-////		if (er != 0) super.__setitem__(key, value);
+////		super.__setitem__(key, value);
+//		int er = JyNI.setItem(objectHandle, key, value,
+//				JyTState.prepareNativeThreadState(Py.getThreadState()));
+//		JyNI.maybeExc(er);
+//		if (er != 0) super.__setitem__(key, value);
 //	}
 //
 //	public void __delitem__(PyObject key) {
-//		super.__delitem__(key);
-////		int er = JyNI.delItem(objectHandle, key,
-////				JyTState.prepareNativeThreadState(Py.getThreadState()));
-////		JyNI.maybeExc(er);
-////		if (er != 0) super.__delitem__(key);
+////		super.__delitem__(key);
+//		int er = JyNI.delItem(objectHandle, key,
+//				JyTState.prepareNativeThreadState(Py.getThreadState()));
+//		JyNI.maybeExc(er);
+//		if (er != 0) super.__delitem__(key);
 //	}
 //
-//	/* Todo: Declare value to indicate native not implemented.
-//	 * Use this value for other in-results too.
-//	 */
 //	public int __len__() {
-//		return super.__len__();
-////		int er = JyNI.PyObjectLength(objectHandle,
-////				JyTState.prepareNativeThreadState(Py.getThreadState()));
-////		JyNI.maybeExc();
-////		return er;
+////		return super.__len__();
+//		int er = JyNI.PyObjectLength(objectHandle,
+//				JyTState.prepareNativeThreadState(Py.getThreadState()));
+//		JyNI.maybeExc();
+//		if (er == JyNI.NATIVE_INT_METHOD_NOT_IMPLEMENTED) return super.__len__();
+//		else return er;
 //	}
 
 //	public String toString() {
@@ -155,14 +153,14 @@ public class PyDictionaryCPeer extends PyDictionary implements
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
 
-//	public PyObject super__call__(PyObject[] args, String[] keywords) {return super.__call__(args, keywords);}
-//	public PyObject super__findattr_ex__(String name) {return super.__findattr_ex__(name);}
-//	public void super__setattr__(String name, PyObject value) {super.__setattr__(name, value);}
-//	public PyString super__str__() {return super.__str__();}
-//	public PyString super__repr__() {return super.__repr__();}
-//	public PyObject super__finditem__(PyObject key) {return super.__finditem__(key);}
-//	public void super__setitem__(PyObject key, PyObject value) {super.__setitem__(key, value);}
-//	public void super__delitem__(PyObject key) {super.__delitem__(key);}
-//	public int super__len__() {return super.__len__();}
-//	public String super_toString() {return super.toString();}
+	public PyObject super__call__(PyObject[] args, String[] keywords) {return super.__call__(args, keywords);}
+	public PyObject super__findattr_ex__(String name) {return super.__findattr_ex__(name);}
+	public void super__setattr__(String name, PyObject value) {super.__setattr__(name, value);}
+	public PyString super__str__() {return super.__str__();}
+	public PyString super__repr__() {return super.__repr__();}
+	public PyObject super__finditem__(PyObject key) {return super.__finditem__(key);}
+	public void super__setitem__(PyObject key, PyObject value) {super.__setitem__(key, value);}
+	public void super__delitem__(PyObject key) {super.__delitem__(key);}
+	public int super__len__() {return super.__len__();}
+	public String super_toString() {return super.toString();}
 }

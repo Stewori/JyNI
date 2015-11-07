@@ -142,7 +142,9 @@ public class JyNI {
 	}
 	
 	public static final String JyNIHandleAttr = "_JyNIHandleAttr".intern();
-	
+
+	public static final int NATIVE_INT_METHOD_NOT_IMPLEMENTED = -2;
+
 	/**Lazy function call binding.*/
 	public static final int RTLD_LAZY = 0x00001;
 	/**Immediate function call binding.*/

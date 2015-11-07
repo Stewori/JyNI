@@ -42,6 +42,11 @@
 #include "JyList.h"
 #include "JyTState.h"
 
+// We could alternatively include JyNI-Java/include/JyNI_JyNI.h,
+// but for now it feels more lightweight to simply redefine the
+// value we actually need here:
+#define JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED -2L
+
 /* JNI-Shortcuts: */
 
 /* Shortcut to get JNI-environment, including check for whether
@@ -251,7 +256,19 @@
  * between native side and Java subtype PyCPeer.
  */
 
-/* Generates the JNI jmethodid name for PyObject methods from bare method name. */
+/* Subtype-delegte recursion flags: */
+#define sdrflag__call__          1
+#define sdrflag__findattr_ex__   2
+#define sdrflag__setattr__       4
+#define sdrflag__str__           8
+#define sdrflag__repr__         16
+#define sdrflag__finditem__     32
+#define sdrflag__setitem__      64
+#define sdrflag__delitem__     128
+#define sdrflag__len__         256
+#define sdrflag_toString       512
+
+/* Generates the JNI jmethodID name for PyObject methods from bare method name. */
 #define JMID(method) pyObject ## method
 
 /* Generates a name for a tmp helper-var. */
@@ -259,31 +276,79 @@
 
 #define ENTER_SubtypeLoop_Safe_Mode(jObject, method)
 #define ENTER_SubtypeLoop_Safe_ModePy(jObject, pyObj, method)
-#define LEAVE_SubtypeLoop_Safe_Mode(jObject)
+#define LEAVE_SubtypeLoop_Safe_Mode(jObject, method)
+#define LEAVE_SubtypeLoop_Safe_ModePy(jObject, method)
+#define JyNICheckSubtypeInt(pyObject)
+#define JyNICheckSubtype(pyObject)
 
-//#define ENTER_SubtypeLoop_Safe_Mode0(jObject, method) \
-//	JyObject* jytmp(jObject) = NULL; \
-//	jmethodID jmid ## method = pyObject ## method; \
-//	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
-//		jytmp(jObject) = AS_JY(JyNI_PyObject_FromJythonPyObject(jObject)); \
-//		if (jytmp(jObject)->flags & Jy_JAVA_CALLIN_FLAG) jmid ## method = super ## method; \
-//		else jytmp(jObject)->flags |= Jy_JAVA_CALLIN_FLAG; \
-//	}
-//
-//#define ENTER_SubtypeLoop_Safe_ModePy0(jObject, pyObj, method) \
-//	JyObject* jytmp(jObject) = NULL; \
-//	jmethodID jmid ## method = pyObject ## method; \
-//	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
-//		jytmp(jObject) = AS_JY(pyObj); \
-//		if (jytmp(jObject)->flags & Jy_JAVA_CALLIN_FLAG) jmid ## method = super ## method; \
-//		else jytmp(jObject)->flags |= Jy_JAVA_CALLIN_FLAG; \
-//	}
-//
-//#define LEAVE_SubtypeLoop_Safe_Mode0(jObject) \
-//	if (jytmp(jObject)) { \
-//		jytmp(jObject)->flags &= ~Jy_JAVA_CALLIN_FLAG; \
-//		Py_DECREF(FROM_JY(jytmp(jObject))); \
-//	}
+// if (JyNI_HasJyAttribute(JyObject* obj, JyAttributeSubDelegFlags))
+// short sdrFlags_tmp ## method = (short) JyNI_GetJyAttribute(JyObject* obj, JyAttributeSubDelegFlags);
+// sdrFlags_tmp ## method |= sdrflag ## method;
+// JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, (void*) sdrFlags_tmp ## method);
+
+#define JyNICheckSubtypeInt0(pyObject) \
+	if (JyNI_HasJyAttribute(AS_JY(pyObject), JyAttributeSubDelegFlags)) \
+			return JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED
+
+#define JyNICheckSubtype0(pyObject) \
+	if (JyNI_HasJyAttribute(AS_JY(pyObject), JyAttributeSubDelegFlags)) \
+			return NULL
+
+#define ENTER_SubtypeLoop_Safe_Mode0(jObject, method) \
+	JyObject* jytmp(jObject) = NULL; \
+	jmethodID jmid ## method = pyObject ## method; \
+	short sdrFlags_tmp ## jObject; \
+	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
+		jytmp(jObject) = AS_JY(JyNI_PyObject_FromJythonPyObject(jObject)); \
+		sdrFlags_tmp ## jObject = (short) \
+				JyNI_GetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags); \
+		if (sdrFlags_tmp ## jObject & sdrflag ## method) { \
+			jmid ## method = super ## method; \
+			Py_DECREF(FROM_JY(jytmp(jObject))); \
+			jytmp(jObject) = NULL; \
+		} else { \
+			sdrFlags_tmp ## jObject |= sdrflag ## method; \
+			JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
+					(void*) sdrFlags_tmp ## jObject); \
+		} \
+	}
+
+#define ENTER_SubtypeLoop_Safe_ModePy0(jObject, pyObj, method) \
+	JyObject* jytmp(jObject) ## py = NULL; \
+	jmethodID jmid ## method = pyObject ## method; \
+	short sdrFlags_tmp ## jObject; \
+	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
+		jytmp(jObject) ## py = AS_JY(pyObj); \
+		sdrFlags_tmp ## jObject = (short) \
+				JyNI_GetJyAttribute(jytmp(jObject) ## py, JyAttributeSubDelegFlags); \
+		if (sdrFlags_tmp ## jObject & sdrflag ## method)  { \
+			jmid ## method = super ## method; \
+			jytmp(jObject) ## py = NULL; \
+		} else { \
+			sdrFlags_tmp ## jObject |= sdrflag ## method; \
+			JyNI_AddOrSetJyAttribute(jytmp(jObject) ## py, JyAttributeSubDelegFlags, \
+					(void*) sdrFlags_tmp ## jObject); \
+		} \
+	}
+
+#define LEAVE_SubtypeLoop_Safe_Mode0(jObject, method) \
+	if (jytmp(jObject)) { \
+		sdrFlags_tmp ## jObject = (short) \
+				JyNI_GetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags); \
+		sdrFlags_tmp ## jObject &= ~sdrflag ## method; \
+		JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
+				(void*) sdrFlags_tmp ## jObject); \
+		Py_DECREF(FROM_JY(jytmp(jObject))); \
+	}
+
+#define LEAVE_SubtypeLoop_Safe_ModePy0(jObject, method) \
+	if (jytmp(jObject) ## py) { \
+		sdrFlags_tmp ## jObject = (short) \
+				JyNI_GetJyAttribute(jytmp(jObject) ## py, JyAttributeSubDelegFlags); \
+		sdrFlags_tmp ## jObject &= ~sdrflag ## method; \
+		JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
+				(void*) sdrFlags_tmp ## jObject); \
+	}
 
 //#define Enter_SubtypeLoop_Safe_Mode(pyObject) \
 //	Enter_SubtypeLoop_Safe_ModeJy(AS_JY(pyObject))
@@ -403,6 +468,7 @@ extern const char* JyAttributeSetEntry;
 extern const char* JyAttributeJyGCHead;
 extern const char* JyAttributeJyGCRefTmp;
 extern const char* JyAttributeWeakRefCount;
+extern const char* JyAttributeSubDelegFlags;
 //extern const char* JyAttributeTruncateSize;
 
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1
@@ -857,17 +923,17 @@ extern jmethodID pyObjectGCHeadSetObject;
 extern jmethodID jyGCHeadGetHandle;
 
 extern jclass cPeerInterface;
-//extern jclass cPeerNativeDelegateInterface;
-//extern jmethodID super__call__;
-//extern jmethodID super__findattr_ex__;
-//extern jmethodID super__setattr__;
-//extern jmethodID super__str__;
-//extern jmethodID super__repr__;
-//extern jmethodID super__finditem__;
-//extern jmethodID super__setitem__;
-//extern jmethodID super__delitem__;
-//extern jmethodID super__len__;
-//extern jmethodID super_toString;
+extern jclass cPeerNativeDelegateInterface;
+extern jmethodID super__call__;
+extern jmethodID super__findattr_ex__;
+extern jmethodID super__setattr__;
+extern jmethodID super__str__;
+extern jmethodID super__repr__;
+extern jmethodID super__finditem__;
+extern jmethodID super__setitem__;
+extern jmethodID super__delitem__;
+extern jmethodID super__len__;
+extern jmethodID super_toString;
 
 extern jclass pyCPeerTypeClass;
 extern jmethodID pyCPeerTypeConstructor;

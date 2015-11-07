@@ -35,7 +35,8 @@ import sys
 sys.path.append('/usr/lib/python2.7/lib-dynload')
 
 import platform
-isMac = platform.mac_ver()[0] != '' or platform.java_ver()[-1][0] == 'Mac OS X'
+isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
+print "import ctypes..."
 import ctypes
 #import struct
 
@@ -59,7 +60,7 @@ from ctypes import *
 class cell(Structure):
 	pass
 
-print "Testting ctypes-pointers:"
+print "Testing ctypes-pointers:"
 
 cell._fields_ = [("name", c_char_p), ("next", POINTER(cell))]
 c1 = cell()

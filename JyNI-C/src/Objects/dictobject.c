@@ -746,7 +746,7 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 					JyNI_JythonPyObject_FromPyObject(key)
 				)
 			);
-	LEAVE_SubtypeLoop_Safe_Mode(jop)
+	LEAVE_SubtypeLoop_Safe_ModePy(jop, __finditem__)
 	if((*env)->ExceptionCheck(env)) {
 		(*env)->ExceptionClear(env);
 		return NULL;
@@ -864,7 +864,7 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 			jop, JMID(__setitem__),
 			JyNI_JythonPyObject_FromPyObject(key),
 			JyNI_JythonPyObject_FromPyObject(value));
-	LEAVE_SubtypeLoop_Safe_Mode(jop)
+	LEAVE_SubtypeLoop_Safe_Mode(jop, __setitem__)
 	return 0;
 
 //	if (insertdict(mp, key, hash, value) != 0)
@@ -934,7 +934,7 @@ PyDict_DelItem(PyObject *op, PyObject *key)
 	ENTER_SubtypeLoop_Safe_ModePy(jop, op, __delitem__)
 	(*env)->CallVoidMethod(env, jop, JMID(__delitem__),
 			JyNI_JythonPyObject_FromPyObject(key));
-	LEAVE_SubtypeLoop_Safe_Mode(jop)
+	LEAVE_SubtypeLoop_Safe_ModePy(jop, __delitem__)
 	return 0;
 }
 
@@ -1864,7 +1864,7 @@ PyDict_Size(PyObject *mp)
 	jobject jmp = JyNI_JythonPyObject_FromPyObject(mp);
 	ENTER_SubtypeLoop_Safe_ModePy(jmp, mp, __len__)
 	Py_ssize_t result = (Py_ssize_t) (*env)->CallIntMethod(env, jmp, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_Mode(jmp)
+	LEAVE_SubtypeLoop_Safe_ModePy(jmp, __len__)
 	return result;
 	//return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
 //	return ((PyDictObject *)mp)->ma_used;
@@ -2639,7 +2639,7 @@ PyObject* PyDict_GetItemStringJy(PyObject* v, jobject key)
 	ENTER_SubtypeLoop_Safe_ModePy(jv, v, __finditem__)
 	jobject result = (*env)->CallObjectMethod(env,
 			jv, JMID(__finditem__), key);
-	LEAVE_SubtypeLoop_Safe_Mode(jv)
+	LEAVE_SubtypeLoop_Safe_ModePy(jv, __finditem__)
 	return JyNI_PyObject_FromJythonPyObject(result);
 //	return JyNI_PyObject_FromJythonPyObject(
 //			(*env)->CallObjectMethod(env,
@@ -2723,7 +2723,7 @@ PyDict_SetItemString(PyObject *v, const char *key, PyObject *item)
 			//(*env)->NewObject(env, pyStringClass, pyStringByJStringConstructor, (*env)->NewStringUTF(env, key)),
 			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, key)),
 			jitem);
-	LEAVE_SubtypeLoop_Safe_Mode(jv)
+	LEAVE_SubtypeLoop_Safe_ModePy(jv, __setitem__)
 	return 0;
 	/*PyObject *kv;
 	int err;
@@ -2753,7 +2753,7 @@ PyDict_DelItemString(PyObject *v, const char *key)
 	jobject jv = JyNI_JythonPyObject_FromPyObject(v);
 	ENTER_SubtypeLoop_Safe_ModePy(jv, v, __delitem__)
 	(*env)->CallVoidMethod(env, jv, JMID(__delitem__), key2);
-	LEAVE_SubtypeLoop_Safe_Mode(jv);
+	LEAVE_SubtypeLoop_Safe_ModePy(jv, __delitem__);
 	return 0;
 //	PyObject *kv;
 //	int err;

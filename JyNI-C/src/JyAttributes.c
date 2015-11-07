@@ -31,17 +31,18 @@
  */
 #include <JyNI.h>
 
-const char* JyAttributePyChecksum = "pyCs";
-const char* JyAttributeJyChecksum = "jyCs";
-const char* JyAttributeSyncFunctions = "sync";
-const char* JyAttributeModuleFile = "modf";
-const char* JyAttributeModuleName = "modn";
-const char* JyAttributeTypeName = "typn";
+const char* JyAttributePyChecksum     = "pyCs";
+const char* JyAttributeJyChecksum     = "jyCs";
+const char* JyAttributeSyncFunctions  = "sync";
+const char* JyAttributeModuleFile     = "modf";
+const char* JyAttributeModuleName     = "modn";
+const char* JyAttributeTypeName       = "typn";
 const char* JyAttributeStringInterned = "strI";
-const char* JyAttributeSetEntry = "setE";
-const char* JyAttributeJyGCHead = "jyGC";
-const char* JyAttributeJyGCRefTmp = "gcrf";
-const char* JyAttributeWeakRefCount = "wrct";
+const char* JyAttributeSetEntry       = "setE";
+const char* JyAttributeJyGCHead       = "jyGC";
+const char* JyAttributeJyGCRefTmp     = "gcrf";
+const char* JyAttributeWeakRefCount   = "wrct";
+const char* JyAttributeSubDelegFlags  = "sdlr";
 
 //defaults to 0; note that on alloc this value is added to the anyway allocated size sizeof(PyObjectHead)
 //const char* JyAttributeTruncateSize = "trSi";
