@@ -242,15 +242,10 @@ jobject JyNI_getItem
 jint JyNI_setItem
 	(JNIEnv *env, jclass class, jlong handle, jobject key, jobject value, jlong tstate)
 {
-	jputsLong(__LINE__);
 	ENTER_JyNI
-	jputsLong(__LINE__);
 	PyObject* pkey = JyNI_PyObject_FromJythonPyObject(key);
-	jputsLong(__LINE__);
 	PyObject* pval = JyNI_PyObject_FromJythonPyObject(value);
-	jputsLong(__LINE__);
 	jint er = PyObject_SetItem((PyObject*) handle, pkey, pval);
-	jputsLong(__LINE__);
 	Py_XDECREF(pkey);
 	Py_XDECREF(pval);
 	LEAVE_JyNI

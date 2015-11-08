@@ -43,7 +43,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public static long tp_name; // For printing, in format "<module>.<name>"
 	public static long tp_basicsize, tp_itemsize; // For allocation
 
-    // Methods to implement standard operations
+	// Methods to implement standard operations
 
 	public static long tp_dealloc;
 	public static long tp_print;
@@ -52,13 +52,13 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public static long tp_compare;
 	public static long tp_repr;
 
-    // Method suites for standard classes
+	// Method suites for standard classes
 
 	public static long tp_as_number;
 	public static long tp_as_sequence;
 	public static long tp_as_mapping;
 
-    // More standard operations (here for binary compatibility)
+	// More standard operations (here for binary compatibility)
 
 	public static long tp_hash;
 	public static long tp_call;
@@ -66,34 +66,34 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public static long tp_getattro;
 	public static long tp_setattro;
 
-    // Functions to access object as input/output buffer
+	// Functions to access object as input/output buffer
 	public static long tp_as_buffer;
 
-    // Flags to define presence of optional/expanded features
+	// Flags to define presence of optional/expanded features
 	public static long tp_flags;
 
 	public static long tp_doc; // Documentation string
 
-    // Assigned meaning in release 2.0
-    // call function for all accessible objects
+	// Assigned meaning in release 2.0
+	// call function for all accessible objects
 	public static long tp_traverse;
 
-    // delete references to contained objects
+	// delete references to contained objects
 	public static long tp_clear;
 
-    // Assigned meaning in release 2.1
-    // rich comparisons
+	// Assigned meaning in release 2.1
+	// rich comparisons
 	public static long tp_richcompare;
 
-    // weak reference enabler
+	// weak reference enabler
 	public static long tp_weaklistoffset;
 
-    // Added in release 2.2
-    // Iterators
+	// Added in release 2.2
+	// Iterators
 	public static long tp_iter;
 	public static long tp_iternext;
 
-    // Attribute descriptor and subclassing stuff
+	// Attribute descriptor and subclassing stuff
 	public static long tp_methods;
 	public static long tp_members;
 	public static long tp_getset;
@@ -114,17 +114,17 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public static long tp_weaklist;
 	public static long tp_del;
 
-    // Type attribute cache version tag. Added in version 2.6
+	// Type attribute cache version tag. Added in version 2.6
 	public static long tp_version_tag;*/
-	
+
 	public long objectHandle, refHandle;
-	
+
 	public PyCPeerType(long objectHandle) {
 		super(fromClass(PyType.class));
 		this.objectHandle = objectHandle;
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
-	
+
 	public PyCPeerType(long objectHandle, String name, PyObject dict) {
 		super(fromClass(PyType.class));
 		this.objectHandle = objectHandle;
@@ -133,7 +133,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		if (dict != null) super.dict = dict;
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
-	
+
 //	public String getName()
 //	{
 //		String er = super.getName();
@@ -142,7 +142,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 //		return er;
 //	}
 
-	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 		//System.out.println("CPeerType called: "+this);
 		//System.out.println("args: "+args);
@@ -187,7 +186,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 //	int findAttrCount = 0;
 //	WeakReference<PyObject> classCache = null;
-	@Override
 	public PyObject __findattr_ex__(String name) {
 //		if (name.equals("__class__") && classCache != null) {
 //			PyObject cc = classCache.get();
@@ -204,7 +202,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		//return super.__findattr_ex__(name);
 	}
 
-	@Override
 	public void __setattr__(String name, PyObject value) {
 		/*
 		 * Should we also try to call super?
@@ -218,9 +215,8 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		/*
 		 * Should we attempt to call postSetattr(name)?
 		 */
-    }
+	}
 
-	@Override
 	public PyString __str__() {
 		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState())));
@@ -228,7 +224,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 			JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
 	}
 
-	@Override
 	public PyString __repr__() {
 //		System.out.println("PyCPeerType__repr__");
 //		System.out.println(name);
@@ -240,25 +235,21 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	 * However we still implement this forwarding here, because you can
 	 * never know what crazy stuff native types come up with.
 	 */
-	@Override
 	public PyObject __finditem__(PyObject key) {
 		return JyNI.maybeExc(JyNI.getItem(objectHandle, key,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
-	@Override
 	public void __setitem__(PyObject key, PyObject value) {
 		JyNI.maybeExc(JyNI.setItem(objectHandle, key, value,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
-	@Override
 	public void __delitem__(PyObject key) {
 		JyNI.maybeExc(JyNI.delItem(objectHandle, key,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
-	@Override
 	public int __len__() {
 		int er = JyNI.PyObjectLength(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState()));
@@ -266,7 +257,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		return er;
 	}
 
-	@Override
 	public String toString() {
 		return JyNI.PyObjectAsString(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState()));
