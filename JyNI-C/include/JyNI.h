@@ -55,8 +55,8 @@
  * giving it a more natural look...
  */
 #define env(errRet) \
-	JNIEnv *env;\
-	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2))\
+	JNIEnv *env; \
+	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) \
 		return errRet
 
 /* For now we assume, nobody would cache _PyThreadState_Current for
@@ -176,12 +176,12 @@
 #define JY_TRUNCATE_FLAG_MASK       8
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
 #define JY_CPEER_FLAG_MASK         16
-#define JY_CACHE_GC_FLAG_MASK      32 /* (currently not used) */
-//#define Jy_JAVA_CALLIN_FLAG        32 /* used to prevent and endless call-delegation loop for subtype PyCPeers */
+//#define JY_CACHE_GC_FLAG_MASK      32 /* (currently not used) */
+#define JY_SUBTYPE_FLAG_MASK       32 /* used to prevent and endless call-delegation loop for subtype PyCPeers */
 #define JY_CACHE_ETERNAL_FLAG_MASK 64
 //#define JY_GC_SINGLE_LINK        64
 #define JY_GC_VAR_SIZE            128 /* This distinguishes array-like vs list-like links. */
-#define JY_CACHE                   96 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
+#define JY_CACHE                   64 //96 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
 //#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
 //#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
@@ -257,117 +257,128 @@
  */
 
 /* Subtype-delegte recursion flags: */
-#define sdrflag__call__          1
-#define sdrflag__findattr_ex__   2
-#define sdrflag__setattr__       4
-#define sdrflag__str__           8
-#define sdrflag__repr__         16
-#define sdrflag__finditem__     32
-#define sdrflag__setitem__      64
-#define sdrflag__delitem__     128
-#define sdrflag__len__         256
-#define sdrflag_toString       512
+//#define sdrflag__call__          1
+//#define sdrflag__findattr_ex__   2
+//#define sdrflag__setattr__       4
+//#define sdrflag__str__           8
+//#define sdrflag__repr__         16
+//#define sdrflag__finditem__     32
+//#define sdrflag__setitem__      64
+//#define sdrflag__delitem__     128
+//#define sdrflag__len__         256
+//#define sdrflag_toString       512
 
 /* Generates the JNI jmethodID name for PyObject methods from bare method name. */
-#define JMID(method) pyObject ## method
+//#define JMID(method) pyObject ## method
+#define JMID(method) jmid ## method
 
 /* Generates a name for a tmp helper-var. */
-#define jytmp(jObject) jytmp_ ## jObject
+//#define jytmp(jObject) jytmp_ ## jObject
+//#define jytmpPy(jObject) jytmpPy_ ## jObject
 
-#define ENTER_SubtypeLoop_Safe_Mode(jObject, method)
-#define ENTER_SubtypeLoop_Safe_ModePy(jObject, pyObj, method)
-#define LEAVE_SubtypeLoop_Safe_Mode(jObject, method)
-#define LEAVE_SubtypeLoop_Safe_ModePy(jObject, method)
-#define JyNICheckSubtypeInt(pyObject)
-#define JyNICheckSubtype(pyObject)
 
 // if (JyNI_HasJyAttribute(JyObject* obj, JyAttributeSubDelegFlags))
 // short sdrFlags_tmp ## method = (short) JyNI_GetJyAttribute(JyObject* obj, JyAttributeSubDelegFlags);
 // sdrFlags_tmp ## method |= sdrflag ## method;
 // JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, (void*) sdrFlags_tmp ## method);
 
-#define JyNICheckSubtypeInt0(pyObject) \
-	if (JyNI_HasJyAttribute(AS_JY(pyObject), JyAttributeSubDelegFlags)) \
+//#define JyNICheckSubtypeInt(pyObject) \
+//	if (JyNI_HasJyAttribute(AS_JY(pyObject), JyAttributeSubDelegFlags)) \
+//			return JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED
+//
+//#define JyNICheckSubtype(pyObject) \
+//	if (JyNI_HasJyAttribute(AS_JY(pyObject), JyAttributeSubDelegFlags)) \
+//			return NULL
+
+#define JyNICheckSubtypeInt(pyObject) \
+	if (AS_JY(pyObject)->flags & JY_SUBTYPE_FLAG_MASK) \
 			return JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED
 
-#define JyNICheckSubtype0(pyObject) \
-	if (JyNI_HasJyAttribute(AS_JY(pyObject), JyAttributeSubDelegFlags)) \
+#define JyNICheckSubtype(pyObject) \
+	if (AS_JY(pyObject)->flags & JY_SUBTYPE_FLAG_MASK) \
 			return NULL
 
-#define ENTER_SubtypeLoop_Safe_Mode0(jObject, method) \
-	JyObject* jytmp(jObject) = NULL; \
+#define ENTER_SubtypeLoop_Safe_Mode(jObject, method) \
 	jmethodID jmid ## method = pyObject ## method; \
-	short sdrFlags_tmp ## jObject; \
-	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
-		jytmp(jObject) = AS_JY(JyNI_PyObject_FromJythonPyObject(jObject)); \
-		sdrFlags_tmp ## jObject = (short) \
-				JyNI_GetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags); \
-		if (sdrFlags_tmp ## jObject & sdrflag ## method) { \
-			jmid ## method = super ## method; \
-			Py_DECREF(FROM_JY(jytmp(jObject))); \
-			jytmp(jObject) = NULL; \
-		} else { \
-			sdrFlags_tmp ## jObject |= sdrflag ## method; \
-			JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
-					(void*) sdrFlags_tmp ## jObject); \
-		} \
-	}
+	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) \
+		jmid ## method = super ## method;
 
-#define ENTER_SubtypeLoop_Safe_ModePy0(jObject, pyObj, method) \
-	JyObject* jytmp(jObject) ## py = NULL; \
-	jmethodID jmid ## method = pyObject ## method; \
-	short sdrFlags_tmp ## jObject; \
-	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
-		jytmp(jObject) ## py = AS_JY(pyObj); \
-		sdrFlags_tmp ## jObject = (short) \
-				JyNI_GetJyAttribute(jytmp(jObject) ## py, JyAttributeSubDelegFlags); \
-		if (sdrFlags_tmp ## jObject & sdrflag ## method)  { \
-			jmid ## method = super ## method; \
-			jytmp(jObject) ## py = NULL; \
-		} else { \
-			sdrFlags_tmp ## jObject |= sdrflag ## method; \
-			JyNI_AddOrSetJyAttribute(jytmp(jObject) ## py, JyAttributeSubDelegFlags, \
-					(void*) sdrFlags_tmp ## jObject); \
-		} \
-	}
+#define ENTER_SubtypeLoop_Safe_ModePy(jObject, pyObj, method) \
+	ENTER_SubtypeLoop_Safe_Mode(jObject, method)
 
-#define LEAVE_SubtypeLoop_Safe_Mode0(jObject, method) \
-	if (jytmp(jObject)) { \
-		sdrFlags_tmp ## jObject = (short) \
-				JyNI_GetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags); \
-		sdrFlags_tmp ## jObject &= ~sdrflag ## method; \
-		JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
-				(void*) sdrFlags_tmp ## jObject); \
-		Py_DECREF(FROM_JY(jytmp(jObject))); \
-	}
+#define LEAVE_SubtypeLoop_Safe_Mode(jObject, method)
 
-#define LEAVE_SubtypeLoop_Safe_ModePy0(jObject, method) \
-	if (jytmp(jObject) ## py) { \
-		sdrFlags_tmp ## jObject = (short) \
-				JyNI_GetJyAttribute(jytmp(jObject) ## py, JyAttributeSubDelegFlags); \
-		sdrFlags_tmp ## jObject &= ~sdrflag ## method; \
-		JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
-				(void*) sdrFlags_tmp ## jObject); \
-	}
+#define LEAVE_SubtypeLoop_Safe_ModePy(jObject, method)
 
-//#define Enter_SubtypeLoop_Safe_Mode(pyObject) \
-//	Enter_SubtypeLoop_Safe_ModeJy(AS_JY(pyObject))
+//#define ENTER_SubtypeLoop_Safe_Mode0(jObject, method) \
+//	jputs(__FUNCTION__); \
+//	jputsLong(__LINE__); \
+//	PyThreadState * jobject ## method ## _savets = NULL; \
+//	JyObject* jytmp(jObject) = NULL; \
+//	jmethodID jmid ## method = pyObject ## method; \
+//	short sdrFlags_tmp ## jObject; \
+//	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
+//		jytmp(jObject) = AS_JY(JyNI_PyObject_FromJythonPyObject(jObject)); \
+//		sdrFlags_tmp ## jObject = (short) \
+//				JyNI_GetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags); \
+//		if (sdrFlags_tmp ## jObject & sdrflag ## method) { \
+//			jmid ## method = super ## method; \
+//			Py_DECREF(FROM_JY(jytmp(jObject))); \
+//			jytmp(jObject) = NULL; \
+//		} else { \
+//			jobject ## method ## _savets = PyEval_SaveThread(); \
+//			sdrFlags_tmp ## jObject |= sdrflag ## method; \
+//			JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
+//					(void*) sdrFlags_tmp ## jObject); \
+//		} \
+//	}
 //
-//#define Enter_SubtypeLoop_Safe_ModeJy(jyObject) \
-//	(jyObject)->flags |= Jy_JAVA_CALLIN_FLAG
+//#define ENTER_SubtypeLoop_Safe_ModePy0(jObject, pyObj, method) \
+//	jputs(__FUNCTION__); \
+//	jputsLong(__LINE__); \
+//	PyThreadState * jobject ## method ## _savets = NULL; \
+//	JyObject* jytmpPy(jObject) = NULL; \
+//	jmethodID jmid ## method = pyObject ## method; \
+//	short sdrFlags_tmp ## jObject; \
+//	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) { \
+//		jytmpPy(jObject) = AS_JY(pyObj); \
+//		sdrFlags_tmp ## jObject = (short) \
+//				JyNI_GetJyAttribute(jytmpPy(jObject), JyAttributeSubDelegFlags); \
+//		if (sdrFlags_tmp ## jObject & sdrflag ## method)  { \
+//			jmid ## method = super ## method; \
+//			jytmpPy(jObject) = NULL; \
+//		} else { \
+//			jobject ## method ## _savets = PyEval_SaveThread(); \
+//			sdrFlags_tmp ## jObject |= sdrflag ## method; \
+//			JyNI_AddOrSetJyAttribute(jytmpPy(jObject), JyAttributeSubDelegFlags, \
+//					(void*) sdrFlags_tmp ## jObject); \
+//		} \
+//	}
 //
-//#define Exit_SubtypeLoop_Safe_Mode(pyObject) \
-//	Exit_SubtypeLoop_Safe_ModeJy(AS_JY(pyObject))
+//#define LEAVE_SubtypeLoop_Safe_Mode0(jObject, method) \
+//	jputsLong(__LINE__); \
+//	if (jytmp(jObject)) { \
+//		sdrFlags_tmp ## jObject = (short) \
+//				JyNI_GetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags); \
+//		sdrFlags_tmp ## jObject &= ~sdrflag ## method; \
+//		JyNI_AddOrSetJyAttribute(jytmp(jObject), JyAttributeSubDelegFlags, \
+//				(void*) sdrFlags_tmp ## jObject); \
+//		Py_DECREF(FROM_JY(jytmp(jObject))); \
+//	} \
+//	if (jobject ## method ## _savets) \
+//		PyEval_RestoreThread(jobject ## method ## _savets);
 //
-//#define Exit_SubtypeLoop_Safe_ModeJy(jyObject) \
-//	(jyObject)->flags &= ~Jy_JAVA_CALLIN_FLAG
-//
-//#define Check_Subtype_Flag(pyObject) \
-//	Check_Subtype_FlagJy(AS_JY(pyObject))
-//
-//#define Check_Subtype_FlagJy(jyObject) \
-//	((jyObject)->flags & Jy_JAVA_CALLIN_FLAG)
-
+//#define LEAVE_SubtypeLoop_Safe_ModePy0(jObject, method) \
+//	jputsLong(__LINE__); \
+//	if (jytmpPy(jObject)) { \
+//		sdrFlags_tmp ## jObject = (short) \
+//				JyNI_GetJyAttribute(jytmpPy(jObject), JyAttributeSubDelegFlags); \
+//		sdrFlags_tmp ## jObject &= ~sdrflag ## method; \
+//		JyNI_AddOrSetJyAttribute(jytmpPy(jObject), JyAttributeSubDelegFlags, \
+//				(void*) sdrFlags_tmp ## jObject); \
+//	} \
+//	if (jobject ## method ## _savets) \
+//		PyEval_RestoreThread(jobject ## method ## _savets);
 
 /* GC-macro-replacements */
 #define _JyNI_GC_TRACK(o) PyObject_GC_Track(o) //_PyObject_GC_TRACK(o)
@@ -468,7 +479,7 @@ extern const char* JyAttributeSetEntry;
 extern const char* JyAttributeJyGCHead;
 extern const char* JyAttributeJyGCRefTmp;
 extern const char* JyAttributeWeakRefCount;
-extern const char* JyAttributeSubDelegFlags;
+//extern const char* JyAttributeSubDelegFlags;
 //extern const char* JyAttributeTruncateSize;
 
 #define JY_ATTR_OWNS_VALUE_FLAG_MASK 1

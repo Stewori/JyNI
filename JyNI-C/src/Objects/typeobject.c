@@ -763,8 +763,9 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 					 type->tp_name);
 		return NULL;
 	}
-
+//	jputsLong(__LINE__);
 	obj = type->tp_new(type, args, kwds);
+//	jputsLong(__LINE__);
 	if (obj != NULL) {
 		// Ugly exception: when the call was type(something),
 		// don't call tp_init on the result.
@@ -773,11 +774,13 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 			(kwds == NULL ||
 			 (PyDict_Check(kwds) && PyDict_Size(kwds) == 0)))
 			return obj;
+
 		// If the returned object is not an instance of type,
 		// it won't be initialized.
 		if (!PyType_IsSubtype(obj->ob_type, type))
 			return obj;
 		type = obj->ob_type;
+
 		if (PyType_HasFeature(type, Py_TPFLAGS_HAVE_CLASS) &&
 			type->tp_init != NULL &&
 			type->tp_init(obj, args, kwds) < 0) {

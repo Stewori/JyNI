@@ -52,7 +52,8 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 		this.objectHandle = objectHandle;
 		//JyNI.CPeerHandles.put(objectHandle, this);
 	}
-	
+
+	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 //		StringBuilder  bl = new StringBuilder("(");
 //		for (PyObject arg: args) {
@@ -105,6 +106,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 			return result;
 	}
 
+	@Override
 	public PyObject __findattr_ex__(String name) {
 		//System.out.println("Look for attribute "+name+" in PyCPeer");
 		PyObject er = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name,
@@ -115,11 +117,13 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 		//return super.__findattr_ex__(name);
 	}
 
+	@Override
 	public void __setattr__(String name, PyObject value) {
 		JyNI.maybeExc(JyNI.setAttrString(objectHandle, name, value,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
     }
 
+	@Override
 	public PyObject __finditem__(PyObject key) {
 		return JyNI.maybeExc(JyNI.getItem(objectHandle, key,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
@@ -127,6 +131,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 //				getType().fastGetName()));
 	}
 
+	@Override
 	public void __setitem__(PyObject key, PyObject value) {
 		JyNI.maybeExc(JyNI.setItem(objectHandle, key, value,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
@@ -134,6 +139,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 //				getType().fastGetName()));
 	}
 
+	@Override
 	public void __delitem__(PyObject key) {
 		JyNI.maybeExc(JyNI.delItem(objectHandle, key,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
@@ -141,6 +147,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 //                                         getType().fastGetName()));
 	}
 
+	@Override
 	public int __len__() {
 		int er = JyNI.PyObjectLength(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState()));
@@ -150,6 +157,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 //                                         getType().fastGetName()));
 	}
 
+	@Override
 	public PyString __str__() {
 		//System.out.println("PyCPeer__str__");
 		//Object er = JyNI.PyObjectAsPyString(objectHandle);
@@ -159,13 +167,15 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 		return er == null ? (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
 	}
-	
+
+	@Override
 	public PyString __repr__() {
 		//System.out.println("PyCPeer__repr__");
 		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
+	@Override
 	public String toString() {
 		return JyNI.PyObjectAsString(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState()));

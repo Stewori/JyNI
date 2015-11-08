@@ -191,15 +191,16 @@ int
 PyObject_SetItem(PyObject *o, PyObject *key, PyObject *value)
 {
 	PyMappingMethods *m;
-
+	jputsLong(__LINE__);
 	if (o == NULL || key == NULL || value == NULL) {
 		null_error();
 		return -1;
 	}
+	jputsLong(__LINE__);
 	m = o->ob_type->tp_as_mapping;
 	if (m && m->mp_ass_subscript)
 		return m->mp_ass_subscript(o, key, value);
-
+	jputsLong(__LINE__);
 	if (o->ob_type->tp_as_sequence) {
 		if (PyIndex_Check(key)) {
 			Py_ssize_t key_value;
@@ -214,7 +215,7 @@ PyObject_SetItem(PyObject *o, PyObject *key, PyObject *value)
 			return -1;
 		}
 	}
-
+	jputsLong(__LINE__);
 	JyNICheckSubtypeInt(o);
 	type_error("'%.200s' object does not support item assignment", o);
 	return -1;

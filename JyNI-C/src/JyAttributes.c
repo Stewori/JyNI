@@ -42,7 +42,7 @@ const char* JyAttributeSetEntry       = "setE";
 const char* JyAttributeJyGCHead       = "jyGC";
 const char* JyAttributeJyGCRefTmp     = "gcrf";
 const char* JyAttributeWeakRefCount   = "wrct";
-const char* JyAttributeSubDelegFlags  = "sdlr";
+//const char* JyAttributeSubDelegFlags  = "sdlr";
 
 //defaults to 0; note that on alloc this value is added to the anyway allocated size sizeof(PyObjectHead)
 //const char* JyAttributeTruncateSize = "trSi";

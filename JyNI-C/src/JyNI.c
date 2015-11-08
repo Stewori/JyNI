@@ -141,7 +141,6 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	jobject er;
 	//offsetof(PyTypeObject, tp_call);
 	if (peer->ob_type->tp_call) {
-//		jputsLong(__LINE__);
 //		jputs(peer->ob_type->tp_name);
 		PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
@@ -243,10 +242,15 @@ jobject JyNI_getItem
 jint JyNI_setItem
 	(JNIEnv *env, jclass class, jlong handle, jobject key, jobject value, jlong tstate)
 {
+	jputsLong(__LINE__);
 	ENTER_JyNI
+	jputsLong(__LINE__);
 	PyObject* pkey = JyNI_PyObject_FromJythonPyObject(key);
+	jputsLong(__LINE__);
 	PyObject* pval = JyNI_PyObject_FromJythonPyObject(value);
+	jputsLong(__LINE__);
 	jint er = PyObject_SetItem((PyObject*) handle, pkey, pval);
+	jputsLong(__LINE__);
 	Py_XDECREF(pkey);
 	Py_XDECREF(pval);
 	LEAVE_JyNI
@@ -1920,7 +1924,8 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>",
 				"(JLJyNI/PyCPeerType;)V");
 		dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType);
-		srcJy->flags |= JY_CPEER_FLAG_MASK; //maybe introduce a distinct flag for subtype case
+		srcJy->flags |= JY_CPEER_FLAG_MASK;
+		srcJy->flags |= JY_SUBTYPE_FLAG_MASK;
 	} else if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
 		//jputsLong(__LINE__);

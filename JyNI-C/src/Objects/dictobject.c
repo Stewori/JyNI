@@ -865,6 +865,7 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 			JyNI_JythonPyObject_FromPyObject(key),
 			JyNI_JythonPyObject_FromPyObject(value));
 	LEAVE_SubtypeLoop_Safe_Mode(jop, __setitem__)
+
 	return 0;
 
 //	if (insertdict(mp, key, hash, value) != 0)

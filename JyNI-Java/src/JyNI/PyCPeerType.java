@@ -141,7 +141,8 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 //		System.out.println("PyCPeerTypeGetName: "+er);
 //		return er;
 //	}
-	
+
+	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 		//System.out.println("CPeerType called: "+this);
 		//System.out.println("args: "+args);
@@ -186,6 +187,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 //	int findAttrCount = 0;
 //	WeakReference<PyObject> classCache = null;
+	@Override
 	public PyObject __findattr_ex__(String name) {
 //		if (name.equals("__class__") && classCache != null) {
 //			PyObject cc = classCache.get();
@@ -202,6 +204,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		//return super.__findattr_ex__(name);
 	}
 
+	@Override
 	public void __setattr__(String name, PyObject value) {
 		/*
 		 * Should we also try to call super?
@@ -217,6 +220,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		 */
     }
 
+	@Override
 	public PyString __str__() {
 		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState())));
@@ -224,6 +228,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 			JyTState.prepareNativeThreadState(Py.getThreadState()))) : er;
 	}
 
+	@Override
 	public PyString __repr__() {
 //		System.out.println("PyCPeerType__repr__");
 //		System.out.println(name);
@@ -235,21 +240,25 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	 * However we still implement this forwarding here, because you can
 	 * never know what crazy stuff native types come up with.
 	 */
+	@Override
 	public PyObject __finditem__(PyObject key) {
 		return JyNI.maybeExc(JyNI.getItem(objectHandle, key,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
+	@Override
 	public void __setitem__(PyObject key, PyObject value) {
 		JyNI.maybeExc(JyNI.setItem(objectHandle, key, value,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
+	@Override
 	public void __delitem__(PyObject key) {
 		JyNI.maybeExc(JyNI.delItem(objectHandle, key,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 	}
 
+	@Override
 	public int __len__() {
 		int er = JyNI.PyObjectLength(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState()));
@@ -257,6 +266,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		return er;
 	}
 
+	@Override
 	public String toString() {
 		return JyNI.PyObjectAsString(objectHandle,
 			JyTState.prepareNativeThreadState(Py.getThreadState()));

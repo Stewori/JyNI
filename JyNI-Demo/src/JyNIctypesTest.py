@@ -36,7 +36,6 @@ sys.path.append('/usr/lib/python2.7/lib-dynload')
 
 import platform
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
-print "import ctypes..."
 import ctypes
 #import struct
 
