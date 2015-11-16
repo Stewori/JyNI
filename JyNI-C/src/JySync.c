@@ -524,6 +524,8 @@ PyObject* JySync_Init_PyClass_From_JyClass(jobject src)
 	env(NULL);
 	jstring nm = (*env)->GetObjectField(env, src, pyClass__name__);
 	cstr_from_jstring(cnm, nm);
+//	jputs("Sync-Class:");
+//	jputs(cnm);
 	return PyClass_New(
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass__bases__)),
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass__dict__)),
@@ -835,6 +837,11 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	(*env)->ReleaseStringUTFChars(env, jtmp, utf_string);
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(dest), JyAttributeTypeName, cname, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 	tp->tp_name = cname;
+//	jputs("Sync-Type:");
+//	jputs(cname);
+//	jputsLong(dest);
+//	jputsLong(AS_JY_WITH_GC(dest));
+	//SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(AS_JY_WITH_GC(dest), JyAttributeSyncFunctions);
 
 	//dict:
 	jtmp = (*env)->CallObjectMethod(env, src, pyObjectFastGetDict);
@@ -851,4 +858,12 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	//mro:
 //	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);
 //	tp->tp_mro = JyNI_PyObject_FromJythonPyObject(jtmp);
+
+	//We try to get away with just setting this to default for now:
+	tp->tp_flags |= Py_TPFLAGS_DEFAULT;
+//	jputsLong(tp->tp_flags);// & Py_TPFLAGS_HAVE_CLASS);
+//	jputsLong(tp);
+	//if (!tp->tp_alloc)
+	if (!(tp->tp_flags & Py_TPFLAGS_READY))
+		PyType_Ready(tp);
 }

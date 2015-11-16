@@ -239,6 +239,27 @@ public class JyNI {
 	//ReferenceMonitor- and GC-Stuff:
 	public static native void JyRefMonitor_setMemDebugFlags(int flags);
 
+	//Number protocol:
+	//public static native int JyNI_PyNumber_Check(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Add(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Subtract(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Multiply(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Divide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_FloorDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_TrueDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Remainder(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Divmod(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Power(long o1, PyObject o2, PyObject o3, long tstate);
+	public static native PyObject JyNI_PyNumber_Negative(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Positive(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Absolute(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Invert(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Lshift(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Rshift(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_And(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Xor(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Or(long o1, PyObject o2, long tstate);
+
 	/**
 	 * Returns true, if the whole graph could be deleted (valid graph).
 	 * Returns false, if at least one object had to be resurrected (invalid graph).
@@ -827,6 +848,8 @@ public class JyNI {
 //			System.out.println("return "+er);
 //			System.out.println("class: "+er.getClass());
 			return er;
+		} catch (NoSuchFieldException nsfe) {
+			return null;
 		} catch (Exception e) {
 			System.err.println("JyNI-Warning: Could not obtain Exception: "+name);
 			System.err.println("  Reason: "+e);

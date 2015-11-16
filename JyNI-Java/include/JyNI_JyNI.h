@@ -259,6 +259,150 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Add
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Add
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Subtract
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Subtract
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Multiply
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Multiply
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Divide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Divide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_FloorDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1FloorDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_TrueDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1TrueDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Remainder
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Remainder
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Divmod
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Divmod
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Power
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Power
+  (JNIEnv *, jclass, jlong, jobject, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Negative
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Negative
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Positive
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Positive
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Absolute
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Absolute
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Invert
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Invert
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Lshift
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Lshift
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Rshift
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Rshift
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_And
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1And
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Xor
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Xor
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Or
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Or
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    JyGC_clearNativeReferences
  * Signature: ([JJ)Z
  */

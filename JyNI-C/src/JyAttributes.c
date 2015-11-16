@@ -115,6 +115,8 @@ inline void* JyNI_GetJyAttribute(JyObject* obj, const char* name)
 	JyAttribute* nxt = obj->attr;
 	while (nxt != NULL)
 	{
+//		jputsLong(__LINE__);
+//		jputs(nxt->name);
 		if (nxt->name == name)
 			return nxt->value;
 		else

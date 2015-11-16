@@ -1682,8 +1682,10 @@ static jboolean hasJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 
 static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 {
+	//jputs(__FUNCTION__);
 	if (Is_Static_PyObject(op))
 	{
+		//jputsLong(__LINE__);
 		//jputs("JyNI-Warning: obtainJyGCHead was called with non-heap object.");
 		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass,
 				JyNI_getNativeStaticJyGCHead, (jlong) op);
@@ -1693,23 +1695,46 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_registerNativeStaticJyGCHead,
 					(jlong) op, result);
 		}
+		//jputsLong(__LINE__);
 		return result;
 	}
+	//jputsLong(__LINE__);
 	if (jy->flags & JY_CPEER_FLAG_MASK)
 	{
+		//jputsLong(__LINE__);
+//		if (PyType_Check(op)) {
+//			jputs("Warning: Exploring Type:");
+//			jputs(((PyTypeObject*) op)->tp_name);
+//		}
 //		if (!(jy->flags & JY_INITIALIZED_FLAG_MASK))
 //			jputs("JyNI-Warning: uninitialized CPeer at explore!");
-		return JyNI_JythonPyObject_FromPyObject(op);
+		jobject er = JyNI_JythonPyObject_FromPyObject(op);
+
+		//Todo: This warning is not completely silent when commented-in.
+		//Investigate!
+//		if (!(*env)->IsInstanceOf(env, er, jyGCHeadClass))
+//			jputs("Obtained a head that is not a JyGCHead!");
+
+//		if (PyType_Check(op) && !(*env)->IsInstanceOf(env, er, pyTypeClass)) {
+//			jputs("Obtained a head that is not a PyType!");
+//			if ((*env)->IsInstanceOf(env, er, pyCPeerGCClass))
+//				jputs("Created pyCPeerGC instead");
+//		}
+		//jputsLong(__LINE__);
+		return er;
 	} else
 	{
+		//jputsLong(__LINE__);
 		jboolean hasHeadAttr = JyObject_HasJyGCHead(op, jy);
 		jobject result = NULL;
 		if (hasHeadAttr)
 		{
 			result = (*env)->NewLocalRef(env, JyObject_GetJyGCHead(op, jy));
 		}
+		//jputsLong(__LINE__);
 		if (!result || (*env)->IsSameObject(env, result, NULL))
 		{
+			//jputsLong(__LINE__);
 			if (result)
 			{
 				jputs("Still needed JyGCHead was collected!");
@@ -1749,6 +1774,7 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 					(*env)->DeleteLocalRef(env, jjy);
 				}
 			}
+			//jputsLong(__LINE__);
 			//Here we add another ref for the JyGCHead to let it keep the native object alive.
 			Py_INCREF(op);
 //			if ((jy->flags & JY_INITIALIZED_FLAG_MASK)) {
@@ -2012,8 +2038,7 @@ int updateJyGCHeadLinks(PyObject* op, JyObject* jy) {
 	}
 }
 
-void JyNI_GC_ExploreObject(PyObject* op) //{}
-//void JyNI_GC_ExploreObject0(PyObject* op)
+void JyNI_GC_ExploreObject(PyObject* op)
 {
 //	if (Is_Static_PyObject(op)) {
 //		//jputs("JyNI-Warning: JyNI_GC_ExploreObject called with non-heap object.");
@@ -2023,7 +2048,6 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 //	printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 	if (Is_Static_PyObject(op) || IS_UNEXPLORED(op))
 	{ //For now we force re-exploration of static PyObjects whenever it occurs.
-//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 //		jputs("explore object:");
 //		puts(Py_TYPE((PyObject*) op)->tp_name);
 	//	jputsLong(op);
@@ -2032,12 +2056,9 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 	//	}
 		//jputs("count references...");
 		AS_GC(op)->gc.gc_refs = GC_EXPLORING;
-//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		if (Py_TYPE((PyObject*) op)->tp_traverse) {
 			int refCount = 0;
-//			printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 			Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_count, &refCount);
-//			printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 			//For now we only explore tracked objects. Only in GIL-free mode this will be different.
 			//Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_explore, NULL);
 	//		if (Py_TYPE(op) == &PyTuple_Type) {
@@ -2050,17 +2071,14 @@ void JyNI_GC_ExploreObject(PyObject* op) //{}
 	//		}
 		} //else {
 		/* This is okay to happen since mirrored objects are explored
-		 * and get a JyGCHead even if they are not subject of GC.
+		 * and get a JyGCHead even if they are not subject to GC.
 		 */
 	//		jputs("tp_traverse is NULL:");
 	//		jputs(Py_TYPE((PyObject*) op)->tp_name);
 	//		jputsLong(op);
 	//	}
-//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		AS_GC(op)->gc.gc_refs = GC_EXPLORED;
-//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 		JyObject* jy = AS_JY_WITH_GC(op);
-//		printf("JyNI_GC_ExploreObject %i\n", __LINE__);
 	//	if (!(jy->flags & JY_INITIALIZED_FLAG_MASK)) {
 	//		jputs("Explore uninitialized");
 	//		jputsLong(op);
