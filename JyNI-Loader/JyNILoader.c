@@ -67,6 +67,8 @@ jobject (*JyNI_getItem)(JNIEnv*, jclass, jlong, jobject, jlong);
 jint (*JyNI_setItem)(JNIEnv*, jclass, jlong, jobject, jobject, jlong);
 jint (*JyNI_delItem)(JNIEnv*, jclass, jlong, jobject, jlong);
 jint (*JyNI_PyObjectLength)(JNIEnv*, jclass, jlong, jlong);
+jobject (*JyNI_descr_get)(jlong, jobject, jobject, jlong);
+jint (*JyNI_descr_set)(jlong, jobject, jobject, jlong);
 jstring (*JyNIPyObjectAsString)(JNIEnv*, jclass, jlong, jlong);
 jobject (*JyNIPyObjectAsPyString)(JNIEnv*, jclass, jlong, jlong);
 jint (*JyNISetAttrString)(JNIEnv*, jclass, jlong, jstring, jobject, jlong);
@@ -210,6 +212,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyNI_setItem) = dlsym(JyNIHandle, "JyNI_setItem");
 	*(void **) (&JyNI_delItem) = dlsym(JyNIHandle, "JyNI_delItem");
 	*(void **) (&JyNI_PyObjectLength) = dlsym(JyNIHandle, "JyNI_PyObjectLength");
+	*(void **) (&JyNI_descr_get) = dlsym(JyNIHandle, "JyNI_descr_get");
+	*(void **) (&JyNI_descr_set) = dlsym(JyNIHandle, "JyNI_descr_set");
 
 
 	//Number protocol:
@@ -595,6 +599,28 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_PyObjectLength
 	(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
 	return JyNI_PyObjectLength(env, class, handle, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    descr_get
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_descr_1get
+  (JNIEnv *env, jclass class, jlong self, jobject obj, jobject type, jlong tstate)
+{
+	return JyNI_descr_get(self, obj, type, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    descr_set
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_descr_1set
+  (JNIEnv *env, jclass class, jlong self, jobject obj, jobject value, jlong tstate)
+{
+	return JyNI_descr_set(self, obj, value, tstate);
 }
 
 

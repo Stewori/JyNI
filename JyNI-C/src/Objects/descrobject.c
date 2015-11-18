@@ -264,7 +264,7 @@ methoddescr_call(PyMethodDescrObject *descr, PyObject *args, PyObject *kwds)
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%.200s' "
 					 "requires a '%.100s' object "
-					 "but received a '%.100s'",
+					 "but received(267) a '%.100s'",
 					 descr_name((PyDescrObject *)descr),
 					 descr->d_type->tp_name,
 					 self->ob_type->tp_name);
@@ -307,7 +307,7 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 	if (!PyType_Check(self)) {
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%s' requires a type "
-					 "but received a '%.100s'",
+					 "but received(310) a '%.100s'",
 					 descr_name((PyDescrObject *)descr),
 					 self->ob_type->tp_name);
 		return NULL;
@@ -316,7 +316,7 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%s' "
 					 "requires a subtype of '%.100s' "
-					 "but received '%.100s",
+					 "but received(319) '%.100s",
 					 descr_name((PyDescrObject *)descr),
 					 descr->d_type->tp_name,
 					 self->ob_type->tp_name);
@@ -340,12 +340,14 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 static PyObject *
 wrapperdescr_call(PyWrapperDescrObject *descr, PyObject *args, PyObject *kwds)
 {
+	jputs(__FUNCTION__);
 	Py_ssize_t argc;
 	PyObject *self, *func, *result;
 
 	/* Make sure that the first argument is acceptable as 'self' */
 	assert(PyTuple_Check(args));
 	argc = PyTuple_GET_SIZE(args);
+	jputsLong(argc);
 	if (argc < 1) {
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%.300s' of '%.100s' "
@@ -357,10 +359,13 @@ wrapperdescr_call(PyWrapperDescrObject *descr, PyObject *args, PyObject *kwds)
 	self = PyTuple_GET_ITEM(args, 0);
 	if (!_PyObject_RealIsSubclass((PyObject *)Py_TYPE(self),
 								  (PyObject *)(descr->d_type))) {
+		jputs(Py_TYPE(self)->tp_name);
+		jputs("is not a subclass of");
+		jputs(descr->d_type->tp_name);
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%.200s' "
 					 "requires a '%.100s' object "
-					 "but received a '%.100s'",
+					 "but received(363) a '%.100s'",
 					 descr_name((PyDescrObject *)descr),
 					 descr->d_type->tp_name,
 					 self->ob_type->tp_name);
@@ -1130,6 +1135,7 @@ PyTypeObject wrappertype = {
 PyObject *
 PyWrapper_New(PyObject *d, PyObject *self)
 {
+	//jputs(__FUNCTION__);
 	wrapperobject *wp;
 	PyWrapperDescrObject *descr;
 

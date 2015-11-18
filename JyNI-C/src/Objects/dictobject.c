@@ -859,13 +859,16 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 //	if ((*env)->IsSameObject(env, jop, NULL)) {
 //		jputs("pseudo null");
 //	}
+	jobject jkey = JyNI_JythonPyObject_FromPyObject(key);
+	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
+	jobject jval = JyNI_JythonPyObject_FromPyObject(value);
+	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 	ENTER_SubtypeLoop_Safe_Mode(jop, __setitem__)
 	(*env)->CallVoidMethod(env,
 			jop, JMID(__setitem__),
-			JyNI_JythonPyObject_FromPyObject(key),
-			JyNI_JythonPyObject_FromPyObject(value));
+			jkey,
+			jval);
 	LEAVE_SubtypeLoop_Safe_Mode(jop, __setitem__)
-
 	return 0;
 
 //	if (insertdict(mp, key, hash, value) != 0)

@@ -35,8 +35,16 @@
 #ifndef JYTSTATE_H_
 #define JYTSTATE_H_
 
+// We abuse the frame field (not used by JyNI) to store the Jython thread state.
+// Still always use this macro to access it; we might move it to another field one day.
 #define TS_GET_JY(ts) ((jobject) (ts)->frame)
 #define TS_SET_JY(ts, jy) ((ts)->frame = (struct _frame*) (jy))
+
+//We also use the tracing-field (not used by JyNI) in place of gilstate_counter:
+#define JyNI_gilstate_counter tracing
+
+//We use the use_tracing-field (not used by JyNI) to store a JyNI-specific flag:
+#define JyNI_natively_attached use_tracing
 
 //struct _ts *next;
 //PyInterpreterState *interp;

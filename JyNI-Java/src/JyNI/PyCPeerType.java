@@ -27,6 +27,7 @@
 
 package JyNI;
 
+
 import java.util.HashMap;
 
 import org.python.core.Py;
@@ -201,6 +202,10 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		System.out.println(er.getType().getName());*/
 		//return er;
 	}
+
+//	public void addMethod(PyBuiltinMethod meth) {
+//		System.out.println("PyCPeerType.addMethod: "+meth);
+//	}
 
 //	int findAttrCount = 0;
 //	WeakReference<PyObject> classCache = null;

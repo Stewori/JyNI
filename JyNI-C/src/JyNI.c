@@ -132,27 +132,24 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
+	//jputs(Py_TYPE(peer)->tp_name);
+	//PyWrapperDescr_Type
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 	ENTER_JyNI
-	PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
-	//(*env)->DeleteLocalRef(env, args);
-	PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
-	//(*env)->DeleteLocalRef(env, kw);
 	jobject er;
-	//offsetof(PyTypeObject, tp_call);
 	if (peer->ob_type->tp_call) {
-//		jputs(peer->ob_type->tp_name);
+		PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
+		PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
 		PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
+		Py_XDECREF(jargs);
+		Py_XDECREF(jkw);
 		Py_XDECREF(jres);
 	} else {
 //		PyErr_Format(PyExc_TypeError, "'%.200s' object is not callable",
 //				peer->ob_type->tp_name);
 		er = NULL;
 	}
-	Py_XDECREF(jargs);
-	Py_XDECREF(jkw);
-
 	LEAVE_JyNI
 	return er;
 }
@@ -292,6 +289,52 @@ jint JyNI_PyObjectLength
 	jint er = PyObject_Size((PyObject*) handle);
 	LEAVE_JyNI
 	return er;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    descr_get
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL JyNI_descr_get
+  (jlong self, jobject obj, jobject type, jlong tstate)
+{
+	ENTER_JyNI
+	jobject res;
+	if (Py_TYPE((PyObject*) self)->tp_descr_get) {
+		PyObject* pyobj = JyNI_PyObject_FromJythonPyObject(obj);
+		PyObject* pytype = JyNI_PyObject_FromJythonPyObject(type);
+		PyObject* pyres = Py_TYPE((PyObject*) self)->tp_descr_get((PyObject*) self, pyobj, pytype);
+		res = JyNI_JythonPyObject_FromPyObject(pyres);
+		Py_XDECREF(pyobj);
+		Py_XDECREF(pytype);
+		Py_XDECREF(pyres);
+	} else
+		res = NULL;
+	LEAVE_JyNI
+	return res;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    descr_set
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL JyNI_descr_set
+  (jlong self, jobject obj, jobject value, jlong tstate)
+{
+	ENTER_JyNI
+	jint res;
+	if (Py_TYPE((PyObject*) self)->tp_descr_set) {
+		PyObject* pyobj = JyNI_PyObject_FromJythonPyObject(obj);
+		PyObject* pyval = JyNI_PyObject_FromJythonPyObject(value);
+		res = Py_TYPE((PyObject*) self)->tp_descr_set((PyObject*) self, pyobj, pyval);
+		Py_XDECREF(pyobj);
+		Py_XDECREF(pyval);
+	} else
+		res = JyNI_JyNI_NATIVE_INT_METHOD_NOT_IMPLEMENTED;
+	LEAVE_JyNI
+	return res;
 }
 
 /*
@@ -1920,6 +1963,7 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
  */
 inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
 {
+	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 	jobject dest = NULL;
 	//jputs(__FUNCTION__);
 	//jputsLong(__LINE__);
@@ -1937,8 +1981,10 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			PyErr_BadInternalCall();
 		}
 		jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>",
 				"(JLJyNI/PyCPeerType;)V");
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType);
 		srcJy->flags |= JY_CPEER_FLAG_MASK;
 		srcJy->flags |= JY_SUBTYPE_FLAG_MASK;
@@ -1950,7 +1996,9 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 	} else
 	{
 		//jputsLong(__LINE__);
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		jmethodID cm = (*env)->GetMethodID(env, tme->jy_class, "<init>", "()V");
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		if (cm)
 		{
 			dest = (*env)->NewObject(env, tme->jy_class, cm);
@@ -1969,6 +2017,7 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
+	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 	return dest;
 }
 
@@ -2079,11 +2128,16 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	if (jy->jy != NULL)
 	{
 		//jputsLong(__LINE__);
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = (TypeMapEntry*) jy->jy;
 	} else {
 		//jputsLong(__LINE__);
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
-		if (!tme) tme = JyNI_JythonTypeEntry_FromSubType(Py_TYPE(op));
+		if (!tme) {
+			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
+			tme = JyNI_JythonTypeEntry_FromSubType(Py_TYPE(op));
+		}
 	}
 	//jputsLong(tme);
 	//tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
@@ -2093,7 +2147,9 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		//jputs(Py_TYPE(op)->tp_name);
 		//if (!tme->py_type) jputs("py_type is NULL");
 		//if (!tme->py_type->tp_name) jputs("py_type name is NULL");
-		//jputs(tme->py_type->tp_name);
+		//puts(tme->py_type->tp_name);
+		//puts(Py_TYPE(op)->tp_name);
+		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		return JyNI_InitJythonPyObject(tme, op, jy);
 	}
 	else
@@ -2104,6 +2160,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			return JyNI_InitJythonPyException(eme, op, jy);
 		else
 		{
+			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			//setup and return PyCPeer in this case...
 			env(NULL);
 			//The following lookup is not necessary, because if there already was a PyCPeer,
@@ -2606,6 +2663,7 @@ jmethodID JyNI_getJythonGlobals;
 
 jclass JyTStateClass;
 jmethodID JyTState_setRecursionLimit;
+jmethodID JyTState_prepareNativeThreadState;
 jfieldID JyTState_nativeRecursionLimitField;
 
 jclass JyNIDictNextResultClass;
@@ -3244,6 +3302,8 @@ inline jint initJyNI(JNIEnv *env)
 	JyTStateClass = (jclass) (*env)->NewWeakGlobalRef(env, JyTStateClassLocal);
 	(*env)->DeleteLocalRef(env, JyTStateClassLocal);
 	JyTState_setRecursionLimit = (*env)->GetStaticMethodID(env, JyTStateClass, "setRecursionLimit", "(I)V");
+	JyTState_prepareNativeThreadState = (*env)->GetStaticMethodID(env, JyTStateClass,
+			"prepareNativeThreadState", "()J");
 	JyTState_nativeRecursionLimitField = (*env)->GetStaticFieldID(env, JyTStateClass, "nativeRecursionLimit", "I");
 
 	jclass JyNIDictNextResultClassLocal = (*env)->FindClass(env, "JyNI/JyNIDictNextResult");

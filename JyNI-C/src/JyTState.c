@@ -80,7 +80,9 @@ jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState
 	tstate->frame = NULL;
 	tstate->recursion_depth = 0;
 	//int tracing = 0;
+	tstate->JyNI_gilstate_counter = 0;
 	//int use_tracing = 0;
+	tstate->JyNI_natively_attached = 0;
 	//Py_tracefunc c_profilefunc = NULL;
 	//Py_tracefunc c_tracefunc = NULL;
 	tstate->c_profileobj = NULL;

@@ -1392,10 +1392,10 @@ _PyObject_LookupSpecial(PyObject *self, char *attrstr, PyObject **attrobj)
 	return lookup_maybe(self, attrstr, attrobj);
 }
 /*
-// A variation of PyObject_CallMethod that uses lookup_method()
-// instead of PyObject_GetAttrString().  This uses the same convention
-// as lookup_method to cache the interned name string object.
-
+ A variation of PyObject_CallMethod that uses lookup_method()
+ instead of PyObject_GetAttrString().  This uses the same convention
+ as lookup_method to cache the interned name string object.
+*/
 static PyObject *
 call_method(PyObject *o, char *name, PyObject **nameobj, char *format, ...)
 {
@@ -1430,8 +1430,8 @@ call_method(PyObject *o, char *name, PyObject **nameobj, char *format, ...)
 	return retval;
 }
 
-// Clone of call_method() that returns NotImplemented when the lookup fails.
-
+/* Clone of call_method() that returns NotImplemented when the lookup fails.
+*/
 static PyObject *
 call_maybe(PyObject *o, char *name, PyObject **nameobj, char *format, ...)
 {
@@ -1467,7 +1467,7 @@ call_maybe(PyObject *o, char *name, PyObject **nameobj, char *format, ...)
 
 	return retval;
 }
-*/
+
 static int
 fill_classic_mro(PyObject *mro, PyObject *cls)
 {
@@ -4295,8 +4295,8 @@ static int add_operators(PyTypeObject *);
 int
 PyType_Ready(PyTypeObject *type)
 {
-//	puts("PyType_Ready:");
-//	puts(type->tp_name);
+//	jputs("PyType_Ready:");
+//	jputs(type->tp_name);
 	//if (type->tp_as_mapping) printf("has mapping, line %d\n", __LINE__);
 	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
 
@@ -4385,7 +4385,7 @@ PyType_Ready(PyTypeObject *type)
 
 	/* Add type-specific descriptors to tp_dict */
 //	if (type->tp_as_mapping)
-//		printf("mp_subscript before adding describtors: %d\n", type->tp_as_mapping->mp_subscript);
+//		printf("mp_subscript before adding descriptors: %d\n", type->tp_as_mapping->mp_subscript);
 	if (add_operators(type) < 0)
 		goto error;
 	if (type->tp_methods != NULL) {
@@ -6812,6 +6812,8 @@ add_operators(PyTypeObject *type)
 				return -1;
 		}
 		else {
+//			jputs("call PyDescr_NewWrapper...");
+//			jputs(p->name);
 			descr = PyDescr_NewWrapper(type, p, *ptr);
 			if (descr == NULL)
 				return -1;

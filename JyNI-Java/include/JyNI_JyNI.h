@@ -163,6 +163,22 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_PyObjectLength
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    descr_get
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_descr_1get
+  (JNIEnv *, jclass, jlong, jobject, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    descr_set
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_descr_1set
+  (JNIEnv *, jclass, jlong, jobject, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    setNativeRecursionLimit
  * Signature: (I)V
  */
@@ -248,14 +264,6 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyList_1remove
  */
 JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize
   (JNIEnv *, jclass, jlong, jint);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    JyRefMonitor_setMemDebugFlags
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags
-  (JNIEnv *, jclass, jint);
 
 /*
  * Class:     JyNI_JyNI
@@ -400,6 +408,14 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Xor
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Or
   (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyRefMonitor_setMemDebugFlags
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_JyRefMonitor_1setMemDebugFlags
+  (JNIEnv *, jclass, jint);
 
 /*
  * Class:     JyNI_JyNI

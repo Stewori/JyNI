@@ -60,6 +60,10 @@ public class JyTState {
 		return res;
 	}
 
+	public static long prepareNativeThreadState() {
+		return prepareNativeThreadState(Py.getThreadState());
+	}
+
 	public static long prepareNativeThreadState(ThreadState ts) {
 		JyTState jts = fromThreadState(ts);
 		syncToNative(jts);

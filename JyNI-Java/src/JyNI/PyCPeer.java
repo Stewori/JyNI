@@ -158,6 +158,22 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	}
 
 	@Override
+	public PyObject __get__(PyObject obj, PyObject type) {
+		PyObject result = JyNI.maybeExc(JyNI.descr_get(objectHandle, obj, type,
+				JyTState.prepareNativeThreadState(Py.getThreadState())));
+		return result != null ? result : super.__get__(obj, type);
+	}
+
+	@Override
+	public void __set__(PyObject obj, PyObject value) {
+		int result = JyNI.descr_set(objectHandle, obj, value,
+				JyTState.prepareNativeThreadState(Py.getThreadState()));
+		JyNI.maybeExc();
+		if (result == JyNI.NATIVE_INT_METHOD_NOT_IMPLEMENTED)
+			super.__set__(obj, value);
+	}
+
+	@Override
 	public PyString __str__() {
 		//System.out.println("PyCPeer__str__");
 		//Object er = JyNI.PyObjectAsPyString(objectHandle);

@@ -217,6 +217,8 @@ public class JyNI {
 	public static native int setItem(long peerHandle, PyObject key, PyObject value, long tstate);
 	public static native int delItem(long peerHandle, PyObject key, long tstate);
 	public static native int PyObjectLength(long peerHandle, long tstate);
+	public static native PyObject descr_get(long self, PyObject obj, PyObject type, long tstate);
+	public static native int descr_set(long self, PyObject obj, PyObject value, long tstate);
 
 	//ThreadState-stuff:
 	public static native void setNativeRecursionLimit(int nativeRecursionLimit);
@@ -235,9 +237,6 @@ public class JyNI {
 
 	//Set-Stuff:
 	public static native void JySet_putSize(long handle, int size);
-
-	//ReferenceMonitor- and GC-Stuff:
-	public static native void JyRefMonitor_setMemDebugFlags(int flags);
 
 	//Number protocol:
 	//public static native int JyNI_PyNumber_Check(long o, long tstate);
@@ -259,6 +258,9 @@ public class JyNI {
 	public static native PyObject JyNI_PyNumber_And(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Xor(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Or(long o1, PyObject o2, long tstate);
+
+	//ReferenceMonitor- and GC-Stuff:
+	public static native void JyRefMonitor_setMemDebugFlags(int flags);
 
 	/**
 	 * Returns true, if the whole graph could be deleted (valid graph).
@@ -1409,7 +1411,7 @@ public class JyNI {
 	}
 
 	protected static CallableProxyType createCallableProxyFromNative(PyObject referent, long handle, PyObject callback) {
-		System.out.println("createCallableProxyFromNative "+handle);
+		//System.out.println("createCallableProxyFromNative "+handle);
 		if (referent == null)
 			return new CallableProxyType(JyNIEmptyGlobalReference.defaultInstance, callback);
 		ReferenceBackend gref = GlobalRef.newInstance(referent);

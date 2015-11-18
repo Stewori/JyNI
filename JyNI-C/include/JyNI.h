@@ -582,6 +582,8 @@ jobject JyNI_getItem(JNIEnv *env, jclass class, jlong handle, jobject key, jlong
 jint JyNI_setItem(JNIEnv *env, jclass class, jlong handle, jobject key, jobject value, jlong tstate);
 jint JyNI_delItem(JNIEnv *env, jclass class, jlong handle, jobject key, jlong tstate);
 jint JyNI_PyObjectLength(JNIEnv *env, jclass class, jlong handle, jlong tstate);
+jobject JyNI_descr_get(jlong self, jobject obj, jobject type, jlong tstate);
+jint JyNI_descr_set(jlong self, jobject obj, jobject value, jlong tstate);
 
 //Number protocol call-ins:
 //(these usually don't need env and class, so we simplified the signatures a bit.)
@@ -889,6 +891,7 @@ extern jmethodID JyNI_getJythonGlobals;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;
+extern jmethodID JyTState_prepareNativeThreadState;
 extern jfieldID JyTState_nativeRecursionLimitField;
 
 extern jclass JyNIDictNextResultClass;

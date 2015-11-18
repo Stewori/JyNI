@@ -53,11 +53,13 @@ $(JYNIBIN)/JyNI:
 
 $(JYTHON):
 	@echo ''
-	@echo '----------------------------------------------'
+	@echo '------------------------------------------------'
 	@echo 'Fatal error: Could not find jython.jar.'
-	@echo 'Either put jython.jar into the JyNI base folder, or adjust the JYTHON-variable at the top of makefile to point to your installed jython.jar.'
-	@echo 'Be sure to use Jython 2.7 (beta) or newer.'
-	@echo '----------------------------------------------'
+	@echo 'Either put jython.jar into the JyNI base folder,
+	@echo 'or adjust the JYTHON-variable at the top of'
+	@echo 'makefile to point to your installed jython.jar.'
+	@echo 'Be sure to use Jython 2.7.1 or newer.'
+	@echo '------------------------------------------------'
 	@echo ''
 	@false
 

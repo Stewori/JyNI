@@ -254,10 +254,10 @@ PyThreadState *_PyThreadState_Current = NULL;
 //	_PyGILState_NoteThreadState(tstate);
 //#endif
 //}
-//
-//void
-//PyThreadState_Clear(PyThreadState *tstate)
-//{
+
+void
+PyThreadState_Clear(PyThreadState *tstate)
+{
 //	if (Py_VerboseFlag && tstate->frame != NULL)
 //		fprintf(stderr,
 //		  "PyThreadState_Clear: warning: thread still has a frame\n");
@@ -279,13 +279,15 @@ PyThreadState *_PyThreadState_Current = NULL;
 //	tstate->c_tracefunc = NULL;
 //	Py_CLEAR(tstate->c_profileobj);
 //	Py_CLEAR(tstate->c_traceobj);
-//}
-//
-//
+}
+
+
 ///* Common code for PyThreadState_Delete() and PyThreadState_DeleteCurrent() */
-//static void
-//tstate_delete_common(PyThreadState *tstate)
-//{
+static void
+tstate_delete_common(PyThreadState *tstate)
+{
+	env();
+	JyTState_clearNativeThreadState(env, NULL, (jlong) tstate);
 //	PyInterpreterState *interp;
 //	PyThreadState **p;
 //	PyThreadState *prev_p = NULL;
@@ -318,37 +320,37 @@ PyThreadState *_PyThreadState_Current = NULL;
 //	*p = tstate->next;
 //	HEAD_UNLOCK();
 //	free(tstate);
-//}
-//
-//
-//void
-//PyThreadState_Delete(PyThreadState *tstate)
-//{
-//	if (tstate == _PyThreadState_Current)
-//		Py_FatalError("PyThreadState_Delete: tstate is still current");
-//	tstate_delete_common(tstate);
+}
+
+
+void
+PyThreadState_Delete(PyThreadState *tstate)
+{
+	if (tstate == _PyThreadState_Current)
+		Py_FatalError("PyThreadState_Delete: tstate is still current");
+	tstate_delete_common(tstate);
 //#ifdef WITH_THREAD
 //	if (autoInterpreterState && PyThread_get_key_value(autoTLSkey) == tstate)
 //		PyThread_delete_key_value(autoTLSkey);
 //#endif /* WITH_THREAD */
-//}
-//
-//
-//#ifdef WITH_THREAD
-//void
-//PyThreadState_DeleteCurrent()
-//{
-//	PyThreadState *tstate = _PyThreadState_Current;
-//	if (tstate == NULL)
-//		Py_FatalError(
-//			"PyThreadState_DeleteCurrent: no current tstate");
-//	_PyThreadState_Current = NULL;
+}
+
+
+#ifdef WITH_THREAD
+void
+PyThreadState_DeleteCurrent()
+{
+	PyThreadState *tstate = _PyThreadState_Current;
+	if (tstate == NULL)
+		Py_FatalError(
+			"PyThreadState_DeleteCurrent: no current tstate");
+	_PyThreadState_Current = NULL;
 //	if (autoInterpreterState && PyThread_get_key_value(autoTLSkey) == tstate)
 //		PyThread_delete_key_value(autoTLSkey);
-//	tstate_delete_common(tstate);
-//	PyEval_ReleaseLock();
-//}
-//#endif /* WITH_THREAD */
+	tstate_delete_common(tstate);
+	PyEval_ReleaseLock();
+}
+#endif /* WITH_THREAD */
 
 PyThreadState *
 PyThreadState_Get(void)
@@ -384,6 +386,7 @@ PyThreadState_Swap(PyThreadState *newts)
 //#endif
 	return oldts;
 }
+
 ///* An extension mechanism to store arbitrary additional per-thread state.
 //   PyThreadState_GetDict() returns a dictionary that can be used to hold such
 //   state; the caller should pick a unique key and store its state there.  If
@@ -520,29 +523,29 @@ PyThreadState_Swap(PyThreadState *newts)
 //	Py_DECREF(result);
 //	return NULL;
 //}
-//
-///* Python "auto thread state" API. */
-//#ifdef WITH_THREAD
-//
-///* Keep this as a static, as it is not reliable!  It can only
-//   ever be compared to the state for the *current* thread.
-//   * If not equal, then it doesn't matter that the actual
-//	 value may change immediately after comparison, as it can't
-//	 possibly change to the current thread's state.
-//   * If equal, then the current thread holds the lock, so the value can't
-//	 change until we yield the lock.
-//*/
-//static int
-//PyThreadState_IsCurrent(PyThreadState *tstate)
-//{
-//	/* Must be the tstate for this thread */
-//	assert(PyGILState_GetThisThreadState()==tstate);
-//	/* On Windows at least, simple reads and writes to 32 bit values
-//	   are atomic.
-//	*/
-//	return tstate == _PyThreadState_Current;
-//}
-//
+
+/* Python "auto thread state" API. */
+#ifdef WITH_THREAD
+
+/* Keep this as a static, as it is not reliable!  It can only
+   ever be compared to the state for the *current* thread.
+   * If not equal, then it doesn't matter that the actual
+	 value may change immediately after comparison, as it can't
+	 possibly change to the current thread's state.
+   * If equal, then the current thread holds the lock, so the value can't
+	 change until we yield the lock.
+*/
+static int
+PyThreadState_IsCurrent(PyThreadState *tstate)
+{
+	/* Must be the tstate for this thread */
+	assert(PyGILState_GetThisThreadState()==tstate);
+	/* On Windows at least, simple reads and writes to 32 bit values
+	   are atomic.
+	*/
+	return tstate == _PyThreadState_Current;
+}
+
 ///* Internal initialization/finalization functions called by
 //   Py_Initialize/Py_Finalize
 //*/
@@ -564,63 +567,87 @@ PyThreadState_Swap(PyThreadState *newts)
 //	PyThread_delete_key(autoTLSkey);
 //	autoInterpreterState = NULL;
 //}
-//
-///* When a thread state is created for a thread by some mechanism other than
-//   PyGILState_Ensure, it's important that the GILState machinery knows about
-//   it so it doesn't try to create another thread state for the thread (this is
-//   a better fix for SF bug #1010677 than the first one attempted).
-//*/
-//static void
-//_PyGILState_NoteThreadState(PyThreadState* tstate)
-//{
-//	/* If autoTLSkey isn't initialized, this must be the very first
-//	   threadstate created in Py_Initialize().  Don't do anything for now
-//	   (we'll be back here when _PyGILState_Init is called). */
+
+/* When a thread state is created for a thread by some mechanism other than
+   PyGILState_Ensure, it's important that the GILState machinery knows about
+   it so it doesn't try to create another thread state for the thread (this is
+   a better fix for SF bug #1010677 than the first one attempted).
+*/
+static void
+_PyGILState_NoteThreadState(PyThreadState* tstate)
+{
+	/* If autoTLSkey isn't initialized, this must be the very first
+	   threadstate created in Py_Initialize().  Don't do anything for now
+	   (we'll be back here when _PyGILState_Init is called). */
 //	if (!autoInterpreterState)
 //		return;
-//
-//	/* Stick the thread state for this thread in thread local storage.
-//
-//	   The only situation where you can legitimately have more than one
-//	   thread state for an OS level thread is when there are multiple
-//	   interpreters, when:
-//
-//		   a) You shouldn't really be using the PyGILState_ APIs anyway,
-//		  and:
-//
-//		   b) The slightly odd way PyThread_set_key_value works (see
-//		  comments by its implementation) means that the first thread
-//		  state created for that given OS level thread will "win",
-//		  which seems reasonable behaviour.
-//	*/
+
+	/* Stick the thread state for this thread in thread local storage.
+
+	   The only situation where you can legitimately have more than one
+	   thread state for an OS level thread is when there are multiple
+	   interpreters, when:
+
+		   a) You shouldn't really be using the PyGILState_ APIs anyway,
+		  and:
+
+		   b) The slightly odd way PyThread_set_key_value works (see
+		  comments by its implementation) means that the first thread
+		  state created for that given OS level thread will "win",
+		  which seems reasonable behaviour.
+	*/
 //	if (PyThread_set_key_value(autoTLSkey, (void *)tstate) < 0)
 //		Py_FatalError("Couldn't create autoTLSkey mapping");
-//
-//	/* PyGILState_Release must not try to delete this thread state. */
-//	tstate->gilstate_counter = 1;
-//}
-//
-///* The public functions */
-//PyThreadState *
-//PyGILState_GetThisThreadState(void)
-//{
+
+	/* PyGILState_Release must not try to delete this thread state. */
+	tstate->JyNI_gilstate_counter = 1;
+}
+
+/* The public functions */
+PyThreadState *
+PyGILState_GetThisThreadState(void)
+{
 //	if (autoInterpreterState == NULL)
 //		return NULL;
 //	return (PyThreadState *)PyThread_get_key_value(autoTLSkey);
-//}
-//
-//PyGILState_STATE
-//PyGILState_Ensure(void)
-//{
-//	int current;
-//	PyThreadState *tcur;
-//	/* Note that we do not auto-init Python here - apart from
-//	   potential races with 2 threads auto-initializing, pep-311
-//	   spells out other issues.  Embedders are expected to have
-//	   called Py_Initialize() and usually PyEval_InitThreads().
-//	*/
+	env(NULL);
+	return (PyThreadState*) (*env)->CallStaticLongMethod(env,
+			JyTStateClass, JyTState_prepareNativeThreadState);
+}
+
+PyGILState_STATE
+PyGILState_Ensure(void)
+{
+	int current;
+	int JNI_result;
+	PyThreadState *tcur;
+
+	// JyNI-note: Python initialization stuff not relevant in JyNI.
+	/* Note that we do not auto-init Python here - apart from
+	   potential races with 2 threads auto-initializing, pep-311
+	   spells out other issues.  Embedders are expected to have
+	   called Py_Initialize() and usually PyEval_InitThreads().
+	*/
 //	assert(autoInterpreterState); /* Py_Initialize() hasn't been called! */
 //	tcur = (PyThreadState *)PyThread_get_key_value(autoTLSkey);
+
+	// This time we cannot use the plain env-macro, since we must expect
+	// to have a still JVM-detached thread running.
+	JNIEnv *env;
+	JNI_result = (*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2);
+	if (JNI_result == JNI_EDETACHED) {
+		if ((*java)->AttachCurrentThread(java, (void **)&env, NULL))
+			return -1;
+	} else if (JNI_result)
+		return -1;
+
+	tcur = (PyThreadState*) (*env)->CallStaticLongMethod(env, JyTStateClass,
+			JyTState_prepareNativeThreadState);
+	// Store JNI_result in tcur so we will know whether we should finally
+	// detach the thread when tcur is released:
+	tcur->JyNI_natively_attached = JNI_result;
+	current = PyThreadState_IsCurrent(tcur);
+
 //	if (tcur == NULL) {
 //		/* Create a new thread state for this thread */
 //		tcur = PyThreadState_New(autoInterpreterState);
@@ -633,56 +660,66 @@ PyThreadState_Swap(PyThreadState *newts)
 //	}
 //	else
 //		current = PyThreadState_IsCurrent(tcur);
-//	if (current == 0)
-//		PyEval_RestoreThread(tcur);
-//	/* Update our counter in the thread-state - no need for locks:
-//	   - tcur will remain valid as we hold the GIL.
-//	   - the counter is safe as we are the only thread "allowed"
-//		 to modify this value
-//	*/
-//	++tcur->gilstate_counter;
-//	return current ? PyGILState_LOCKED : PyGILState_UNLOCKED;
-//}
-//
-//void
-//PyGILState_Release(PyGILState_STATE oldstate)
-//{
+
+	if (current == 0)
+		PyEval_RestoreThread(tcur); // this call acquires the GIL
+	/* Update our counter in the thread-state - no need for locks:
+	   - tcur will remain valid as we hold the GIL.
+	   - the counter is safe as we are the only thread "allowed"
+		 to modify this value
+	*/
+	++tcur->JyNI_gilstate_counter;
+	return current ? PyGILState_LOCKED : PyGILState_UNLOCKED;
+}
+
+void
+PyGILState_Release(PyGILState_STATE oldstate)
+{
+	env();
 //	PyThreadState *tcur = (PyThreadState *)PyThread_get_key_value(
 //															autoTLSkey);
+	PyThreadState *tcur = (PyThreadState*) (*env)->CallStaticLongMethod(env,
+			JyTStateClass, JyTState_prepareNativeThreadState);
 //	if (tcur == NULL)
-//		Py_FatalError("auto-releasing thread-state, "
-//					  "but no thread-state for this thread");
-//	/* We must hold the GIL and have our thread state current */
-//	/* XXX - remove the check - the assert should be fine,
-//	   but while this is very new (April 2003), the extra check
-//	   by release-only users can't hurt.
-//	*/
-//	if (! PyThreadState_IsCurrent(tcur))
-//		Py_FatalError("This thread state must be current when releasing");
-//	assert(PyThreadState_IsCurrent(tcur));
-//	--tcur->gilstate_counter;
-//	assert(tcur->gilstate_counter >= 0); /* illegal counter value */
-//
-//	/* If we're going to destroy this thread-state, we must
-//	 * clear it while the GIL is held, as destructors may run.
-//	 */
-//	if (tcur->gilstate_counter == 0) {
-//		/* can't have been locked when we created it */
-//		assert(oldstate == PyGILState_UNLOCKED);
-//		PyThreadState_Clear(tcur);
-//		/* Delete the thread-state.  Note this releases the GIL too!
-//		 * It's vital that the GIL be held here, to avoid shutdown
-//		 * races; see bugs 225673 and 1061968 (that nasty bug has a
-//		 * habit of coming back).
-//		 */
-//		PyThreadState_DeleteCurrent();
-//	}
-//	/* Release the lock if necessary */
-//	else if (oldstate == PyGILState_UNLOCKED)
-//		PyEval_SaveThread();
-//}
-//
-//#endif /* WITH_THREAD */
+	if (!tcur->JyNI_gilstate_counter) {
+		JyTState_clearNativeThreadState(env, NULL, tcur);
+		Py_FatalError("auto-releasing thread-state, "
+					  "but no thread-state for this thread");
+	}
+	/* We must hold the GIL and have our thread state current */
+	/* XXX - remove the check - the assert should be fine,
+	   but while this is very new (April 2003), the extra check
+	   by release-only users can't hurt.
+	*/
+	if (! PyThreadState_IsCurrent(tcur))
+		Py_FatalError("This thread state must be current when releasing");
+	assert(PyThreadState_IsCurrent(tcur));
+	--tcur->JyNI_gilstate_counter;
+	assert(tcur->gilstate_counter >= 0); /* illegal counter value */
+
+	/* If we're going to destroy this thread-state, we must
+	 * clear it while the GIL is held, as destructors may run.
+	 */
+	if (tcur->gilstate_counter == 0) {
+		/* can't have been locked when we created it */
+		assert(oldstate == PyGILState_UNLOCKED);
+		int detach = tcur->JyNI_natively_attached;
+		PyThreadState_Clear(tcur);
+		/* Delete the thread-state.  Note this releases the GIL too!
+		 * It's vital that the GIL be held here, to avoid shutdown
+		 * races; see bugs 225673 and 1061968 (that nasty bug has a
+		 * habit of coming back).
+		 */
+		PyThreadState_DeleteCurrent(); // releases the GIL
+		if (detach == JNI_EDETACHED)
+			(*java)->DetachCurrentThread(java);
+	}
+	/* Release the lock if necessary */
+	else if (oldstate == PyGILState_UNLOCKED)
+		PyEval_SaveThread(); //releases the GIL
+}
+
+#endif /* WITH_THREAD */
 #ifdef __cplusplus
 }
 #endif
