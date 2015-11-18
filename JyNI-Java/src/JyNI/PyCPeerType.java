@@ -145,8 +145,6 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
 
-	// Todo: Support __mul__ using PyNumber_Multiply in abstract.c.
-
 //	public PyType getType() {
 //		//System.out.println("PyCPeerType.getType");
 //		//Todo: Support arbitrary metatypes.
@@ -288,17 +286,22 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		return er;
 	}
 
-	@Override
-	public PyObject __mul__(PyObject other) {
-        return JyNI.maybeExc(JyNI.JyNI_PyNumber_Multiply(objectHandle, other,
-        		JyTState.prepareNativeThreadState(Py.getThreadState())));
-    }
+// It appears number operators work via descriptors on native side, because
+// Jython would not treat PyCPeer class family as builtins. So corresponding
+// magic methods for numbers need not be implemented here. We will add this
+// implementation, if a good reason for this is discovered.
 
-	@Override
-	public PyObject __rmul__(PyObject other) {
-        return JyNI.maybeExc(JyNI.JyNI_PyNumber_Multiply(objectHandle, other,
-        		JyTState.prepareNativeThreadState(Py.getThreadState())));
-    }
+//	@Override
+//	public PyObject __mul__(PyObject other) {
+//        return JyNI.maybeExc(JyNI.JyNI_PyNumber_Multiply(objectHandle, other,
+//        		JyTState.prepareNativeThreadState(Py.getThreadState())));
+//    }
+//
+//	@Override
+//	public PyObject __rmul__(PyObject other) {
+//        return JyNI.maybeExc(JyNI.JyNI_PyNumber_Multiply(objectHandle, other,
+//        		JyTState.prepareNativeThreadState(Py.getThreadState())));
+//    }
 
 	@Override
 	public String toString() {

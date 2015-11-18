@@ -133,7 +133,6 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
 	//jputs(Py_TYPE(peer)->tp_name);
-	//PyWrapperDescr_Type
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 	ENTER_JyNI
 	jobject er;

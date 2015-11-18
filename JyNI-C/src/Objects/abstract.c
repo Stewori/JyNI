@@ -1261,10 +1261,10 @@ sequence_repeat(ssizeargfunc repeatfunc, PyObject *seq, PyObject *n)
 PyObject *
 PyNumber_Multiply(PyObject *v, PyObject *w)
 {
-	jputs(__FUNCTION__);
-	jputs(Py_TYPE(v)->tp_name);
-	jputs(Py_TYPE(w)->tp_name);
-	jputs("");
+//	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(v)->tp_name);
+//	jputs(Py_TYPE(w)->tp_name);
+//	jputs("");
 
 	PyObject *result = binary_op1(v, w, NB_SLOT(nb_multiply));
 	if (result == Py_NotImplemented) {
