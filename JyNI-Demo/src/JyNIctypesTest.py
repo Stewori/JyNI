@@ -33,6 +33,7 @@ import sys
 
 #Include native ctypes:
 sys.path.append('/usr/lib/python2.7/lib-dynload')
+#sys.path.append('/home/stefan/eclipseWorkspace/ctypes')
 
 import platform
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''

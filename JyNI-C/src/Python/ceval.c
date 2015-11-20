@@ -4262,43 +4262,44 @@ PyEval_CallObjectWithKeywords(PyObject *func, PyObject *arg, PyObject *kw)
 	Py_DECREF(arg);
 	return result;
 }
-//const char *
-//PyEval_GetFuncName(PyObject *func)
-//{
-//	if (PyMethod_Check(func))
-//		return PyEval_GetFuncName(PyMethod_GET_FUNCTION(func));
-//	else if (PyFunction_Check(func))
-//		return PyString_AsString(((PyFunctionObject*)func)->func_name);
-//	else if (PyCFunction_Check(func))
-//		return ((PyCFunctionObject*)func)->m_ml->ml_name;
-//	else if (PyClass_Check(func))
-//		return PyString_AsString(((PyClassObject*)func)->cl_name);
-//	else if (PyInstance_Check(func)) {
-//		return PyString_AsString(
-//			((PyInstanceObject*)func)->in_class->cl_name);
-//	} else {
-//		return func->ob_type->tp_name;
-//	}
-//}
-//
-//const char *
-//PyEval_GetFuncDesc(PyObject *func)
-//{
-//	if (PyMethod_Check(func))
-//		return "()";
-//	else if (PyFunction_Check(func))
-//		return "()";
-//	else if (PyCFunction_Check(func))
-//		return "()";
-//	else if (PyClass_Check(func))
-//		return " constructor";
-//	else if (PyInstance_Check(func)) {
-//		return " instance";
-//	} else {
-//		return " object";
-//	}
-//}
-//
+
+const char *
+PyEval_GetFuncName(PyObject *func)
+{
+	if (PyMethod_Check(func))
+		return PyEval_GetFuncName(PyMethod_GET_FUNCTION(func));
+	else if (PyFunction_Check(func))
+		return PyString_AsString(((PyFunctionObject*)func)->func_name);
+	else if (PyCFunction_Check(func))
+		return ((PyCFunctionObject*)func)->m_ml->ml_name;
+	else if (PyClass_Check(func))
+		return PyString_AsString(((PyClassObject*)func)->cl_name);
+	else if (PyInstance_Check(func)) {
+		return PyString_AsString(
+			((PyInstanceObject*)func)->in_class->cl_name);
+	} else {
+		return func->ob_type->tp_name;
+	}
+}
+
+const char *
+PyEval_GetFuncDesc(PyObject *func)
+{
+	if (PyMethod_Check(func))
+		return "()";
+	else if (PyFunction_Check(func))
+		return "()";
+	else if (PyCFunction_Check(func))
+		return "()";
+	else if (PyClass_Check(func))
+		return " constructor";
+	else if (PyInstance_Check(func)) {
+		return " instance";
+	} else {
+		return " object";
+	}
+}
+
 //static void
 //err_args(PyObject *func, int flags, int nargs)
 //{

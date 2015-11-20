@@ -925,6 +925,19 @@ public class JyNI {
 		tstate0.exception = new PyException();
 	}
 
+	public static void JyErr_PrintEx(boolean set_sys_last_vars, ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
+		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
+		if (set_sys_last_vars) {
+			JyErr_InsertCurExc(tstate0, type, value, traceback);
+			tstate0.exception.normalize();
+			Py.printException(tstate0.exception);
+		} else {
+			PyException exc = new PyException(type, value, traceback);
+			exc.normalize();
+			Py.printException(exc);
+		}
+	}
+
 	/*public static void PyErr_Restore(PyObject type, PyObject value, PyTraceback traceback) {
 		//ThreadState tstate = ;
 		//tstate.exception = traceback instanceof PyTraceback ? new PyException(type, value, (PyTraceback) traceback) : new PyException(type, value);

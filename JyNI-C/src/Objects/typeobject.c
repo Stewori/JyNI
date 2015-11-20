@@ -2153,9 +2153,9 @@ valid_identifier(PyObject *s)
 	}
 	return 1;
 }
-
+*/
 #ifdef Py_USING_UNICODE
-// Replace Unicode objects in slots.
+/* Replace Unicode objects in slots. */
 
 static PyObject *
 _unicode_to_string(PyObject *slots, Py_ssize_t nslots)
@@ -2189,7 +2189,7 @@ _unicode_to_string(PyObject *slots, Py_ssize_t nslots)
 	return slots;
 }
 #endif
-
+/*
 // Forward
 static int
 object_init(PyObject *self, PyObject *args, PyObject *kwds);

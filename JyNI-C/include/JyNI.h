@@ -910,6 +910,7 @@ extern jmethodID JyNIExceptionByName;
 //extern jmethodID JyErr_SetCurExc;
 //extern jmethodID JyErr_GetCurExc;
 extern jmethodID JyNIJyErr_InsertCurExc;
+extern jmethodID JyNIJyErr_PrintEx;
 //extern jmethodID JyNIPyErr_Restore;
 //extern jmethodID JyNIPyErr_Clear;
 //extern jmethodID JyNIPyErr_Occurred;

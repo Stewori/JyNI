@@ -2615,6 +2615,7 @@ jmethodID JyNIExceptionByName;
 //jmethodID JyErr_SetCurExc;
 //jmethodID JyErr_GetCurExc;
 jmethodID JyNIJyErr_InsertCurExc;
+jmethodID JyNIJyErr_PrintEx;
 //jmethodID JyNIPyErr_Restore;
 //jmethodID JyNIPyErr_Clear;
 //jmethodID JyNIPyErr_Occurred;
@@ -3281,6 +3282,9 @@ inline jint initJyNI(JNIEnv *env)
 //	        "(Lorg/python/core/ThreadState;)Lorg/python/core/PyException;");
 	JyNIJyErr_InsertCurExc = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_InsertCurExc",
 			"(Lorg/python/core/ThreadState;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
+	JyNIJyErr_PrintEx = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_PrintEx",
+			"(ZLorg/python/core/ThreadState;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
+
 //	JyNIPyErr_Restore = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Restore", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
 //	JyNIPyErr_Clear = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Clear", "()V");
 //	JyNIPyErr_Occurred = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Occurred", "()Lorg/python/core/PyObject;");
