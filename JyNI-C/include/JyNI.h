@@ -41,6 +41,7 @@
 #include "JythonSite.h"
 #include "JyList.h"
 #include "JyTState.h"
+#include "JyNI-Debug.h"
 
 // We could alternatively include JyNI-Java/include/JyNI_JyNI.h,
 // but for now it feels more lightweight to simply redefine the
@@ -713,9 +714,9 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v);
 inline void JyNI_printJInfo(jobject obj);
 inline void JyNI_jprintHash(jobject obj);
 inline void JyNI_jprintJ(jobject obj);
-inline void jputs(const char* msg);
-inline void jputsLong(jlong val);
-inline void jputsPy(PyObject* o);
+//inline void jputs(const char* msg);
+//inline void jputsLong(jlong val);
+//inline void jputsPy(PyObject* o);
 
 /* To save lookups: */
 inline void _PyObject_GC_InitJy(PyObject *op, TypeMapEntry* tme);

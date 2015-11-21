@@ -1873,7 +1873,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 			//jputsLong(__LINE__);
 			if (fixedSize == 1) {
 				//jputsLong(__LINE__);
-				PyObject* singleLink;
+				PyObject* singleLink = NULL;
 				trav(op, (visitproc)visit_exploreSingleLink, &singleLink);
 				//jputsLong(__LINE__);
 				//jputs(Py_TYPE(op)->tp_name);
@@ -1886,7 +1886,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 //					jputs("JyNI-Warning: Obtained non-heap single link.");
 //				else jputs("non-static");
 //				jputsLong(__LINE__);
-				if (!Is_Static_PyObject(singleLink)) {
+				if (singleLink && !Is_Static_PyObject(singleLink)) {
 					JyObject* jy = AS_JY(singleLink);
 					jobject result0 = obtainJyGCHead(env, singleLink, jy);
 					//jputsLong(__LINE__);
