@@ -9,6 +9,11 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.finalization.FinalizableBuiltin;
 
+import JyNI.gc.DefaultTraversableGCHead;
+import JyNI.gc.JyGCHead;
+import JyNI.gc.JyVisitproc;
+import JyNI.gc.TraversableGCHead;
+
 /**
  * Specialized CPeer classes are used to wrap native custom types that extend
  * builtin types. For consistency the Java-counterpart must also be something
@@ -18,9 +23,10 @@ import org.python.core.finalization.FinalizableBuiltin;
  * @author Stefan Richthofer
  */
 public class PyTupleCPeer extends PyTuple implements
-		CPeerNativeDelegateSubtype, FinalizableBuiltin {
+		CPeerNativeDelegateSubtype, FinalizableBuiltin, TraversableGCHead {
 
 	public long objectHandle;
+	protected Object links;
 
 	/**
 	 * This constructor signature is obligatory for every specialized
@@ -170,4 +176,39 @@ public class PyTupleCPeer extends PyTuple implements
 	public int super__len__() {return super.__len__();}
 	@Override
 	public String super_toString() {return super.toString();}
+
+
+	public void setLinks(Object links) {
+		this.links = links;
+	}
+
+	@Override
+	public int setLink(int index, JyGCHead link) {
+		return DefaultTraversableGCHead.setLink(links, index, link);
+	}
+
+	@Override
+	public int insertLink(int index, JyGCHead link) {
+		return DefaultTraversableGCHead.insertLink(links, index, link);
+	}
+
+	@Override
+	public int clearLink(int index) {
+		return DefaultTraversableGCHead.clearLink(links, index);
+	}
+
+	@Override
+	public int clearLinksFromIndex(int startIndex) {
+		return DefaultTraversableGCHead.clearLinksFromIndex(links, startIndex);
+	}
+
+	@Override
+	public int jyTraverse(JyVisitproc visit, Object arg) {
+		return DefaultTraversableGCHead.jyTraverse(links, visit, arg);
+	}
+
+	@Override
+	public long[] toHandleArray() {
+		return DefaultTraversableGCHead.toHandleArray(links);
+	}
 }
