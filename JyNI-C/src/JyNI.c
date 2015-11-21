@@ -132,12 +132,18 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
-	//jputs(Py_TYPE(peer)->tp_name);
+//	jputs(Py_TYPE(peer)->tp_name);
+//	int jdbg = strcmp(Py_TYPE(peer)->tp_name, "_ctypes.PyCFuncPtrType") == 0;
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 	ENTER_JyNI
 	jobject er;
 	if (peer->ob_type->tp_call) {
 		PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
+//		if (jdbg) {
+//			jputsLong(jargs);
+//			jputsLong(PyTuple_GET_SIZE(jargs));
+//			jputsLong(PyTuple_GET_ITEM(jargs, 0));
+//		}
 		PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
 		PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
@@ -734,6 +740,7 @@ inline void initBuiltinTypes()
 
 	builtinTypes[27].py_type = &PyTuple_Type;
 	builtinTypes[27].jy_class = pyTupleClass;
+	builtinTypes[27].jy_subclass = pyTupleCPeerClass;
 	builtinTypes[27].flags = JySYNC_ON_INIT_FLAGS;// | JY_GC_FIXED_SIZE;// | GC_NO_INITIAL_EXPLORE; // Py_SIZE(o) links
 	builtinTypes[27].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[27].sync->jyInit = (jyInitSync) JySync_Init_JyTuple_From_PyTuple;
@@ -1979,19 +1986,28 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			jputs(tme->py_type->tp_name);
 			PyErr_BadInternalCall();
 		}
-		jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
-		jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>",
-				"(JLJyNI/PyCPeerType;)V");
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
-		dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType);
+		Py_INCREF(src);
+		if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
+		{
+			//jputsLong(__LINE__);
+			if (tme->sync && tme->sync->jyInit)
+				dest = tme->sync->jyInit(src, tme->jy_subclass);
+		} else
+		{
+			jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
+			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
+			jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>",
+					"(JLJyNI/PyCPeerType;)V");
+			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
+			dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType);
+		}
 		srcJy->flags |= JY_CPEER_FLAG_MASK;
 		srcJy->flags |= JY_SUBTYPE_FLAG_MASK;
 	} else if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
 		//jputsLong(__LINE__);
 		if (tme->sync && tme->sync->jyInit)
-			dest = tme->sync->jyInit(src);
+			dest = tme->sync->jyInit(src, NULL);
 	} else
 	{
 		//jputsLong(__LINE__);
@@ -2710,6 +2726,8 @@ jmethodID pyCPeerTypeGCConstructorSubtype;
 
 // Subclasses:
 jclass pyDictCPeerClass;
+jclass pyTupleCPeerClass;
+jmethodID pyTupleCPeerConstructor;
 
 jclass jyGCHeadClass;
 jmethodID traversableGCHeadSetLinks;
@@ -3386,6 +3404,12 @@ inline jint initJyNI(JNIEnv *env)
 	jclass pyDictCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyDictionaryCPeer");
 	pyDictCPeerClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDictCPeerClassLocal);
 	(*env)->DeleteLocalRef(env, pyDictCPeerClassLocal);
+
+	jclass pyTupleCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyTupleCPeer");
+	pyTupleCPeerClass = (jclass) (*env)->NewWeakGlobalRef(env, pyTupleCPeerClassLocal);
+	(*env)->DeleteLocalRef(env, pyTupleCPeerClassLocal);
+	pyTupleCPeerConstructor = (*env)->GetMethodID(env, pyTupleCPeerClass,
+			"<init>", "(JLJyNI/PyCPeerType;[Lorg/python/core/PyObject;)V");
 
 	jclass pyCPeerTypeClassLocal = (*env)->FindClass(env, "JyNI/PyCPeerType");
 	pyCPeerTypeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerTypeClassLocal);

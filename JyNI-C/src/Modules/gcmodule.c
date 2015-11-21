@@ -1878,10 +1878,10 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 				//jputsLong(__LINE__);
 				//jputs(Py_TYPE(op)->tp_name);
 				//jputs(Py_TYPE(singleLink)->tp_name);
-				if (!singleLink) {
-					jputs("singleLink is NULL");
-					jputsLong(op);//PyTuple_GET_ITEM(op, 0));
-				}
+//				if (!singleLink) {
+//					jputs("singleLink is NULL");
+//					jputsLong(op);//PyTuple_GET_ITEM(op, 0));
+//				}
 //				if (Is_Static_PyObject(singleLink))
 //					jputs("JyNI-Warning: Obtained non-heap single link.");
 //				else jputs("non-static");

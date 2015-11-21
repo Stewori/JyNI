@@ -409,7 +409,7 @@ typedef void (*jy2pySync)(jobject, PyObject*);
 /* PyObject* is src, jobject is dest. Src must not be modified. */
 typedef void (*py2jySync)(PyObject*, jobject);
 
-typedef jobject (*jyInitSync)(PyObject*);
+typedef jobject (*jyInitSync)(PyObject*, jclass);
 typedef PyObject* (*pyInitSync)(jobject);
 typedef jobject (*jyFactoryMethod)();
 //typedef void (*jy2pyItemSync)(jobject, PyObject*, int index);
@@ -954,6 +954,8 @@ extern jmethodID pyCPeerTypeGCConstructor;
 extern jmethodID pyCPeerTypeGCConstructorSubtype;
 
 extern jclass pyDictCPeerClass;
+extern jclass pyTupleCPeerClass;
+extern jmethodID pyTupleCPeerConstructor;
 
 extern jclass jyGCHeadClass;
 extern jmethodID traversableGCHeadSetLinks;

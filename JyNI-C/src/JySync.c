@@ -89,24 +89,36 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 	return er;
 }
 
-jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src)
+jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src, jclass subtype)
 {
-	if (PyTuple_GET_SIZE(src) == 0)
+	if (!subtype && !PyTuple_GET_SIZE(src))
 	{
 		return JyEmptyTuple;
 	} else {
 		env(NULL);
-		jarray back = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(src), pyObjectClass, NULL);
-		//if (srcSize != PyTuple_GET_SIZE(dest)) //...throw exception since tuple is immutable
-		int i;
-		for (i = 0; i < PyTuple_GET_SIZE(src); ++i)
+		jarray back;
+		if (PyTuple_GET_SIZE(src))
 		{
-			(*env)->SetObjectArrayElement(env, back, i, JyNI_JythonPyObject_FromPyObject(
-					PyTuple_GET_ITEM(src, i)));
-			//Py_XINCREF(PyTuple_GET_ITEM(src, i));
+			back = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(src), pyObjectClass, NULL);
+			//if (srcSize != PyTuple_GET_SIZE(dest)) //...throw exception since tuple is immutable
+			int i;
+			for (i = 0; i < PyTuple_GET_SIZE(src); ++i)
+			{
+				(*env)->SetObjectArrayElement(env, back, i, JyNI_JythonPyObject_FromPyObject(
+						PyTuple_GET_ITEM(src, i)));
+				//Py_XINCREF(PyTuple_GET_ITEM(src, i));
+			}
+		} else
+			back = length0PyObjectArray;
+		if (!subtype)
+			return (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor,
+					back, JNI_FALSE);
+		else
+		{
+			jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
+			return (*env)->NewObject(env, subtype, pyTupleCPeerConstructor,
+					(jlong) src, jsrcType, back);
 		}
-		return (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor,
-				back, JNI_FALSE);
 	}
 }
 
@@ -153,7 +165,7 @@ PyObject* JySync_Init_PyString_From_JyString(jobject src)
 	}
 }
 
-jobject JySync_Init_JyString_From_PyString(PyObject* src)
+jobject JySync_Init_JyString_From_PyString(PyObject* src, jclass subtype)
 {
 	//todo: check interned-regulations on jython-side
 	env(NULL);
@@ -230,7 +242,7 @@ PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 //	//return PyString_FromString(cstr);
 //}
 
-jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
+jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src, jclass subtype)
 {
 	PyObject* utf16 = PyUnicode_EncodeUTF16(PyUnicode_AS_UNICODE(src),
 			 PyUnicode_GET_SIZE(src),
@@ -314,7 +326,7 @@ PyObject* JySync_Init_PyInt_From_JyInt(jobject src)
  * As of this writing, we consider this as less confusing than changing a number
  * value during conversion.
  */
-jobject JySync_Init_JyInt_From_PyInt(PyObject* src)
+jobject JySync_Init_JyInt_From_PyInt(PyObject* src, jclass subtype)
 {
 	env(NULL);
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewIntFromLong, (jlong) PyInt_AS_LONG(src));
@@ -329,7 +341,7 @@ PyObject* JySync_Init_PyFloat_From_JyFloat(jobject src)
 	return PyFloat_FromDouble((double) (*env)->CallDoubleMethod(env, src, pyFloatAsDouble));
 }
 
-jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src)
+jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src, jclass subtype)
 {
 	env(NULL);
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewFloatFromDouble, (jdouble) PyFloat_AS_DOUBLE(src));
@@ -346,7 +358,7 @@ PyObject* JySync_Init_PyComplex_From_JyComplex(jobject src)
 			(double) (*env)->GetDoubleField(env, src, pyComplexImagField));
 }
 
-jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src)
+jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src, jclass subtype)
 {
 	env(NULL);
 	return (*env)->NewObject(env, pyComplexClass, pyComplexBy2DoubleConstructor,
@@ -370,7 +382,7 @@ PyObject* JySync_Init_PyLong_From_JyLong(jobject src)
 	return er;
 }
 
-jobject JySync_Init_JyLong_From_PyLong(PyObject* src)
+jobject JySync_Init_JyLong_From_PyLong(PyObject* src, jclass subtype)
 {
 	env(NULL);
 	size_t numBits = _PyLong_NumBits(src);
@@ -387,7 +399,7 @@ jobject JySync_Init_JyLong_From_PyLong(PyObject* src)
 			(*env)->NewObject(env, bigIntClass, bigIntegerFromByteArrayConstructor, jbytes));
 }
 
-jobject JySync_Init_JyList_From_PyList(PyObject* src)
+jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
 {
 	//jputs(__FUNCTION__);
 	//Since it is likely that src was created by an extension, we
@@ -506,7 +518,7 @@ PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src) //needed because
 }
 
 
-jobject JySync_Init_JyClass_From_PyClass(PyObject* src)
+jobject JySync_Init_JyClass_From_PyClass(PyObject* src, jclass subtype)
 {
 	PyClassObject* cls = (PyClassObject*) src;
 	env(NULL);
@@ -533,7 +545,7 @@ PyObject* JySync_Init_PyClass_From_JyClass(jobject src)
 }
 
 
-jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src)
+jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src, jclass subtype)
 {
 	PyInstanceObject* inst = (PyInstanceObject*) src;
 	env(NULL);
@@ -580,7 +592,7 @@ PyObject* JySync_Init_Special_PyInstance(jobject src)
 }
 
 
-jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src)
+jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src, jclass subtype)
 {
 	PyMethodObject* meth = (PyMethodObject*) src;
 	env(NULL);
@@ -607,7 +619,7 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
      ? ((PyWeakReference *)(ref))->wr_object                \
      : NULL)
 
-jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src)
+jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src, jclass subtype)
 {
 	PyObject* referent = PyWeakref_GET_OBJECT0(src);
 	jputs("Sync PyWeakRef* -> jython");
@@ -645,7 +657,7 @@ PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src)
 	return result;
 }
 
-jobject JySync_Init_JyWeakProxy_From_PyWeakProxy(PyObject* src)
+jobject JySync_Init_JyWeakProxy_From_PyWeakProxy(PyObject* src, jclass subtype)
 {
 	PyObject* referent = PyWeakref_GET_OBJECT0(src);
 	jobject jReferent = NULL;
@@ -676,7 +688,7 @@ PyObject* JySync_Init_PyWeakProxy_From_JyWeakProxy(jobject src)
 	return result;
 }
 
-jobject JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy(PyObject* src)
+jobject JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy(PyObject* src, jclass subtype)
 {
 	PyObject* referent = PyWeakref_GET_OBJECT0(src);
 	jobject jReferent = NULL;

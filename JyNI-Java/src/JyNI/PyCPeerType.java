@@ -161,6 +161,11 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 //		System.out.println("CPeerType called: "+this);
+//		if (this.toString().equals("<class 'ctypes.CFunctionType'>"))
+//		{
+//			System.out.println(args[0]);
+//			System.out.println(args[0].getClass());
+//		}
 		//System.out.println("args: "+args);
 //		System.out.println("arg count: "+args.length);
 		//if (keywords !=)
