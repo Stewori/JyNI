@@ -2146,8 +2146,28 @@ visit_refCheckInc(PyObject *op, void *arg)
 }
 
 /*
+ * This method checks the reference graph spanned  by the objects
+ * in the PyObject*-array refPool for inner consistency.
+ * This means that all reference-counts must be explainable within
+ * this graph.
+ *
+ * A zero return-value indicates that there must be external
+ * objects holding references to refPool.
+ *
+ * A non-zero return value indicates that refPool is self-contained
+ * in terms of reference-counting. For GC this usually means it can
+ * be safely deleted, regardless of various internal reference counts,
+ * as these must be a system of cycles.
+ *
+ * 'result' is a pointer to an int-array that will be filled with boolean
+ * values indicating object-wise whether the component's reference count
+ * is explainable within refPool (0 means explainable).
+ * This array needs not to be initialized;
+ * it is guaranteed that every component of it will be explicitly set.
+ *
+ *
  * Note that one must be holding the GIL to call this method.
- * Also, result won't contain actual refcount, but contains
+ * Also, 'result' won't contain actual refcount, but contains
  * zero if no refs exist and >0 if at least one ref exists.
  * The algorithm only looks for has/has not ref, but then does
  * *not* investigate the exact count. This is sufficient to
@@ -2172,10 +2192,11 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 			--result[i];
 //		jputsLong(refPool[i]);
 //		jputsLong(result[i]);
+		//We store 'i+i' so that '0' can stand for uninitialized.
 		JyNI_AddOrSetJyAttribute(jy, JyAttributeJyGCRefTmp, (void*) (i+1));
 //		}
 	}
-	//Now we decref the tmp-refcount copy of all referees.
+	//Now we decref the tmp-refcount copy (i.e. result) of all referees.
 	for (i = 0; i < size; ++i)
 	{
 		if (PyObject_IS_GC(refPool[i]))
@@ -2207,11 +2228,14 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 //			jputsLong(refPool[i]);
 //			jputsLong(result[i]);
 			break;
-		} else if (result[i] < 1)
+		} else if (result[i] < 1) {
 			jputs("JyNI-Error: negative ref-count encountered!");
+			jputs(Py_TYPE(refPool[i])->tp_name);
+		}
 	}
 	if (graphInvalid)
 	{
+		// We perform a breadth-first search to fully provide result-array.
 		//jputs("JyNI-Note: Invalid reference graph encountered!");
 		jint restoreStack[size];
 		jint restoreRefs[size];
@@ -2231,6 +2255,7 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 //		jputsLong(Py_TYPE(refPool[restoreStack[stackTop-1]])->tp_traverse);
 		while (stackTop)
 		{
+//			jputsLong(stackTop);
 			//jputsLong(__LINE__);
 			for (i = 0; i < stackTop; ++i)
 			{
@@ -2241,7 +2266,11 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 			stackTop = 0;
 			for (i = 0; i < size; ++i)
 			{
-				if (result[i] == 1 && restoreRefs > 0)
+				/* In our BFS we check for non-initial state
+				 * on result side and for non-zero on ref-side
+				 * to identify not yet visited nodes:
+				 */
+				if (result[i] == 1 && restoreRefs[i] > 0)
 				{
 					result[i] += restoreRefs[i];
 					if (PyObject_IS_GC(refPool[i]))
