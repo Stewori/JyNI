@@ -2337,10 +2337,32 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 		if (resurrectArr) (*env)->ReleaseLongArrayElements(env, resurrectArr, resurrectArr2, JNI_COMMIT);
 		if (confirmArr) (*env)->ReleaseLongArrayElements(env, confirmArr, confirmArr2, JNI_COMMIT);
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_gcDeletionReport, confirmArr, resurrectArr);
-		if (resurrectArr)
+		if (resurrectArr) {
+			/* We wait for finalizers to be done. Problem here is that some
+			 * finalizers might call into native code (e.g. by looking up some
+			 * attribute of a CPeer). In that case they can deadlock on the GIL
+			 * with this waiting point here.
+			 * Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS can solve this, but
+			 * might also allow other threads to interfere with gc-process
+			 * causing unforeseeable trouble.
+			 *
+			 * I currently see two options:
+			 * 1) Go with Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS and keep an
+			 *    eye on it via testing
+			 * 2) Strictly require finalizers not to call into native code.
+			 *
+			 * Since I see no way how to enforce option 2) or even just detect
+			 * violations properly, it could be a constant source of deadlocks.
+			 *
+			 * So I'll apply 1) and hope it won't hurt too much (still, finalizers
+			 * are at least _recommended_ not to call into native code):
+			 */
+			Py_BEGIN_ALLOW_THREADS
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_waitForCStubs);
-	}
-	else {
+			Py_END_ALLOW_THREADS
+		}
+	} else
+	{
 		//jputs("Valid graph");
 //		jputsLong(size);
 		//Todo: Provide a quicker gcDeletionReport-method for this "trivial" case.

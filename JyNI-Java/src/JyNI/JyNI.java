@@ -1275,7 +1275,8 @@ public class JyNI {
 		static visitRestoreCStubReachables defaultInstance
 				= new visitRestoreCStubReachables();
 
-		Set<PyObject> alreadyExplored = new HashSet<>();
+		//Set<PyObject> alreadyExplored = new HashSet<>();
+		IdentityHashMap<PyObject, PyObject> alreadyExplored = new IdentityHashMap<>();
 		public Stack<PyObject> explorationStack = new Stack<>();
 		
 		public static void clear() {
@@ -1284,19 +1285,21 @@ public class JyNI {
 
 		@Override
 		public int visit(PyObject object, Object arg) {
-			if (alreadyExplored.contains(object))
+			//if (alreadyExplored.contains(object))
+			if (alreadyExplored.containsKey(object))
 				return 0;
 			if (continueCStubExplore(object)) {
 				explorationStack.push(object);
 			}
-			alreadyExplored.add(object);
+			alreadyExplored.put(object, object);
 			CStubReachableRestore(object);
 			return 0;
 		}
 	}
 
 	protected static boolean continueCStubExplore(PyObject obj) {
-		if (JyNICriticalObjectSet.contains(obj)) return false;
+		if (obj instanceof CPeerInterface && JyNICriticalObjectSet.contains(
+				((CPeerInterface) obj).getHandle())) return false;
 		if (!gc.isTraversable(obj)) return false;
 		long handle = lookupNativeHandle(obj);
 		JyWeakReferenceGC headRef = JyWeakReferenceGC.lookupJyGCHead(handle);
