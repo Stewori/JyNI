@@ -207,6 +207,11 @@
 #define Is_Static_PyObject(pyObject) \
 	(Is_StaticSingleton(pyObject) || Is_StaticTypeObject(pyObject) || !Has_Dealloc(pyObject))
 
+#define PyType_IsReady(pyObject) \
+	(((PyTypeObject*) pyObject)->tp_flags & Py_TPFLAGS_READY)
+
+#define IsReadyType(pyObject) \
+	(PyType_CheckExact(pyObject) && PyType_IsReady(pyObject))
 
 #define JyNIClearRef0(jobjectRef, flags, env0) \
 	if (!(flags & JY_CACHE)) \

@@ -207,6 +207,7 @@ static jboolean isExStackEmpty() {
 	return !explorationStack.next && explorationStack.position == 0;
 }
 
+/* Nothing wrong with this method, but currently not used.
 static jint exStackSize() {
 	jint result = explorationStack.position;
 	Ex_Stack_Block* stack = explorationStack.next;
@@ -216,6 +217,7 @@ static jint exStackSize() {
 	}
 	return result;//-exStackGapCount;
 }
+*/
 
 static jint exStackBlockCount() {
 	jint result = 1;
@@ -349,10 +351,11 @@ static jint exStackBlockCount() {
 #define GC_EXPLORED _PyGC_REFS_EXPLORED
 
 #define IS_UNEXPLORED(op) \
-	(AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)
+	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
 
-#define IS_EXPLORED(op) \
-	(AS_GC(op)->gc.gc_refs > 0 || AS_GC(op)->gc.gc_refs < GC_EXPLORING)
+//not used
+//#define IS_EXPLORED(op) \
+//	(IsReadyType(op) || (AS_GC(op)->gc.gc_refs > 0 || AS_GC(op)->gc.gc_refs < GC_EXPLORING))
 
 #define IS_TRACKED(o) ((AS_GC(o))->gc.gc_refs != GC_UNTRACKED)
 #define IS_REACHABLE(o) ((AS_GC(o))->gc.gc_refs == GC_REACHABLE)
@@ -2002,7 +2005,7 @@ int updateInsertJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		 */
 		//jputs("JyNI-Warning: updateJyGCHeadLink called on unexplored object!");
 		//JyNI_GC_ExploreObject(op);
-		return GC_OBJECT_UNEXPLORED;;
+		return GC_OBJECT_UNEXPLORED;
 	} else {
 		env(GC_OBJECT_JNIFAIL);
 		jobject gcHead = obtainJyGCHead(env, op, jy);
@@ -2040,6 +2043,15 @@ int updateJyGCHeadLinks(PyObject* op, JyObject* jy) {
 
 void JyNI_GC_ExploreObject(PyObject* op)
 {
+	/*
+	 * Note that not only GC-objects (in terms of PyObject_IS_GC) must be explored,
+	 * but every traversable object. Non-heap types are an example of this. They
+	 * are traversable, but don't have a gc-head. Neverteless JyNI needs to explore
+	 * them to obtain a full reference graph.
+	 * Such objects are a special case though, because without a GC-head we cannot
+	 * set the GC_EXPLORED flag.
+	 * So for IS_UNEXPLORED we check for
+	 */
 //	if (Is_Static_PyObject(op)) {
 //		//jputs("JyNI-Warning: JyNI_GC_ExploreObject called with non-heap object.");
 //		//jputs(Py_TYPE(op)->tp_name);
@@ -2055,7 +2067,8 @@ void JyNI_GC_ExploreObject(PyObject* op)
 	//		jputs("GC explore untracked object... this will cause problems...");
 	//	}
 		//jputs("count references...");
-		AS_GC(op)->gc.gc_refs = GC_EXPLORING;
+		if (PyObject_IS_GC(op))
+			AS_GC(op)->gc.gc_refs = GC_EXPLORING;
 		if (Py_TYPE((PyObject*) op)->tp_traverse) {
 			int refCount = 0;
 			Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_count, &refCount);
@@ -2077,7 +2090,8 @@ void JyNI_GC_ExploreObject(PyObject* op)
 	//		jputs(Py_TYPE((PyObject*) op)->tp_name);
 	//		jputsLong(op);
 	//	}
-		AS_GC(op)->gc.gc_refs = GC_EXPLORED;
+		if (PyObject_IS_GC(op))
+			AS_GC(op)->gc.gc_refs = GC_EXPLORED;
 		JyObject* jy = AS_JY_WITH_GC(op);
 	//	if (!(jy->flags & JY_INITIALIZED_FLAG_MASK)) {
 	//		jputs("Explore uninitialized");
