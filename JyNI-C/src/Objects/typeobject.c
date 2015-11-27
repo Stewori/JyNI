@@ -4506,10 +4506,6 @@ PyType_Ready(PyTypeObject *type)
 	assert(type->tp_dict != NULL);
 	type->tp_flags = (type->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
 
-	/*
-	 * Causes trouble on OSX, if not present:
-	 */
-	//if (Py_TYPE(type) && PyObject_IS_GC(type))
 	JyNI_GC_ExploreObject(type);
 	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
 	return 0;

@@ -2050,7 +2050,14 @@ void JyNI_GC_ExploreObject(PyObject* op)
 	 * them to obtain a full reference graph.
 	 * Such objects are a special case though, because without a GC-head we cannot
 	 * set the GC_EXPLORED flag.
-	 * So for IS_UNEXPLORED we check for
+	 * So for IS_UNEXPLORED we check for the GC_EXPLORED-flag only if the object
+	 * satisfies PyObject_IS_GC. Otherwise we still do a special check for
+	 * Type-objects, whether they have their ready-flag set, assuming that "readied"
+	 * types have also been explored by this method.
+	 * For other traversable, but non-gc (in terms of PyObject_IS_GC) obects we
+	 * assume unexplored state all the time, even if the object was explored. So we
+	 * redo exploration whenever we encouter such an object
+	 * (actually no cases of this are currently known).
 	 */
 //	if (Is_Static_PyObject(op)) {
 //		//jputs("JyNI-Warning: JyNI_GC_ExploreObject called with non-heap object.");
