@@ -32,6 +32,8 @@ Created on 03.10.2015
 import sys
 
 #Include native ctypes:
+print sys.path
+#sys.path.remove('/home/stefan/eclipseWorkspace/JyNI/Lib')
 sys.path.append('/usr/lib/python2.7/lib-dynload')
 #sys.path.append('/home/stefan/eclipseWorkspace/ctypes')
 

@@ -310,7 +310,7 @@ public class JyNI {
 		//todo: Check, whether this does what it is supposed to
 		//System.out.println("JyNI: Getting Object by name: "+name);
 		PySystemState sysState = Py.getSystemState();
-		return Py.getThreadState().systemState.__dict__.__getitem__(new PyString(name))._doget(sysState);
+		return Py.getThreadState().getSystemState().__dict__.__getitem__(new PyString(name))._doget(sysState);
 		//PyObject er = Py.getThreadState().systemState.__dict__.__getitem__(new PyString(name));
 		/*PyObject er = sysState.__dict__.__finditem__(name);
 		System.out.println("found: "+er.getClass().getName());
@@ -352,7 +352,7 @@ public class JyNI {
 	public static int getDLOpenFlags()
 	{
 		try {
-			return ((PyInteger) Py.getThreadState().systemState.__getattr__("dlopenflags")).asInt();
+			return ((PyInteger) Py.getThreadState().getSystemState().__getattr__("dlopenflags")).asInt();
 		} catch (Exception e1)
 		{
 			try {
@@ -363,11 +363,11 @@ public class JyNI {
 			}
 		}
 	}
-		
+
 	public static void setDLOpenFlags(int n)
 	{
 		try {
-			Py.getThreadState().systemState.__setattr__("dlopenflags", new PyInteger(n));
+			Py.getThreadState().getSystemState().__setattr__("dlopenflags", new PyInteger(n));
 		} catch (Exception e1)
 		{
 			try {

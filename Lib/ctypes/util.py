@@ -36,6 +36,11 @@
 ######################################################################
 import sys, os
 
+isPosix = os.name == "posix"
+if os.name == "java":
+    from JyNI import JyNI
+    isPosix = JyNI.isPosix()
+
 # find_library(name) returns the pathname of a library, or None.
 if os.name == "nt":
 
@@ -104,7 +109,7 @@ if os.name == "ce":
     def find_library(name):
         return name
 
-if os.name == "posix" and sys.platform == "darwin":
+if isPosix and sys.platform == "darwin":
     from ctypes.macholib.dyld import dyld_find as _dyld_find
     def find_library(name):
         possible = ['lib%s.dylib' % name,
@@ -117,7 +122,7 @@ if os.name == "posix" and sys.platform == "darwin":
                 continue
         return None
 
-elif os.name == "posix":
+elif isPosix:
     # Andreas Degert's find functions, using gcc, /sbin/ldconfig, objdump
     import re, tempfile, errno
 
@@ -284,7 +289,7 @@ def test():
         print cdll.load("msvcrt")
         print find_library("msvcrt")
 
-    if os.name == "posix":
+    if isPosix:
         # find and load_version
         print find_library("m")
         print find_library("c")

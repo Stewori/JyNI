@@ -297,14 +297,20 @@ inline void _PyObject_InitJy(PyObject *op, TypeMapEntry* tme)
 
 inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme)
 {
+//	jputs(__FUNCTION__);
+//	jputs(tp->tp_name);
+//	if (tme) jputs(tme->py_type->tp_name);
+//	else jputs("no tme");
 	PyObject *op;
 	JyObject *jy;
 	//if (JyNI_IsBuiltinType(tp))
 	if (tme != NULL)
 	{
+//		jputsLong(__LINE__);
+//		jputsLong(((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp)));
 		//op = (PyObject *) PyObject_MALLOC(JyObjectBasicSize);
 		//jy = (JyObject*) PyObject_MALLOC(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)) );
-		jy = (JyObject*) PyObject_RawMalloc(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)) );
+		jy = (JyObject*) PyObject_RawMalloc(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp)) );
 		if (jy == NULL) return PyErr_NoMemory();
 		//jy->jy = (jobject) tme;//tme->jy_class;
 		//jy->flags = tme->flags;
@@ -313,15 +319,19 @@ inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme)
 		_PyObject_InitJy(op, tme);
 		op = PyObject_INIT(op, tp);
 		JyNIDebug(JY_NATIVE_ALLOC, op, jy,
-				sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)),
+				sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp)),
 				tp->tp_name);
 		if (PyObject_IS_GC(op)) jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_New");
 		//JyNI_SetUpJyObject(jy);
 		return op;
 	} else
 	{
+//		jputsLong(__LINE__);
+//		jputsLong(_PyObject_SIZE(tp));
+//		jputsLong(sizeof(JyObject)+_PyObject_SIZE(tp));
 		//jy = (JyObject *) PyObject_MALLOC(sizeof(JyObject)+_PyObject_SIZE(tp));
 		jy = (JyObject *) PyObject_RawMalloc(sizeof(JyObject)+_PyObject_SIZE(tp));
+//		jputsLong(jy);
 		if (jy == NULL) return PyErr_NoMemory();
 		jy->flags = JY_CPEER_FLAG_MASK;
 		jy->attr = NULL;
@@ -343,7 +353,7 @@ _PyObject_NewVar(PyTypeObject *tp, Py_ssize_t nitems)
 	JyObject *jy;
 	if (tme != NULL)
 	{
-		const size_t size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject) : _PyObject_VAR_SIZE(tp, nitems))+sizeof(JyObject);
+		const size_t size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(tp, nitems))+sizeof(JyObject);
 		//jy = (JyObject *) PyObject_MALLOC(size);
 		jy = (JyObject *) PyObject_RawMalloc(size);
 		if (jy == NULL) return (PyVarObject *) PyErr_NoMemory();

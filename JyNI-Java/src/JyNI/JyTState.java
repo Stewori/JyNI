@@ -49,7 +49,7 @@ public class JyTState {
 	}
 
 	public static void setRecursionLimit(ThreadState ts, int limit) {
-		ts.systemState.setrecursionlimit(limit);
+		ts.getSystemState().setrecursionlimit(limit);
 	}
 
 	public static JyTState fromThreadState(ThreadState ts) {
@@ -73,12 +73,12 @@ public class JyTState {
 	protected static void syncToNative(JyTState ts) {
 		ThreadState tState = ts.tState.get();
 		if (tState == null) return;
-		if (nativeRecursionLimit != tState.systemState.getrecursionlimit())
+		if (nativeRecursionLimit != tState.getSystemState().getrecursionlimit())
 		{
-			nativeRecursionLimit = tState.systemState.getrecursionlimit();
+			nativeRecursionLimit = tState.getSystemState().getrecursionlimit();
 			JyNI.setNativeRecursionLimit(nativeRecursionLimit);
 		}
-		
+
 		if (ts.nativeCallDepth != tState.call_depth) {
 			ts.nativeCallDepth = tState.call_depth;
 			JyNI.setNativeCallDepth(ts.nativeHandle, ts.nativeCallDepth);
