@@ -110,7 +110,7 @@ JYTHON-variable such that it points to jython.jar. If you want to use
 JyNIDemo.sh, you need to adjust the Jython-path in that file too. Same for
 JyNITkinterDemo.sh.
 Note: Current JyNI repository version requires Jython >2.7.0, so until Jython
-2.7.1 is released (presumably in November 2015) you must built Jython from
+2.7.1 is released (presumably in January 2016) you must built Jython from
 its newest repository version. Quickguide:
   - git clone https://github.com/jythontools/jython
   - cd jython
@@ -270,10 +270,12 @@ that access the data only via other functions are mostly kept unchanged.
 
 Copyright of Python and Jython:
 Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
+2011, 2012, 2013, 2014, 2015, 2016 Python Software Foundation.
+All rights reserved.
 
 Copyright of JyNI:
-Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+Copyright (c) 2013, 2014, 2015, 2016 Stefan Richthofer.
+All rights reserved.
 
 
 
@@ -293,8 +295,8 @@ If you do not have the source code, it is available at:
 
 JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
 2.7.7, 2.7.8 and 2.7.9. As such, it includes the common license of CPython
-2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9 and Jython in the file
-"PSF-LICENSE-2". Whether a source-file is directly based on CPython
+2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11 and Jython in
+the file "PSF-LICENSE-2". Whether a source-file is directly based on CPython
 source-code is documented at the beginning of each file.
 
 For compliance with PSF LICENSE AGREEMENT FOR PYTHON 2, section 3,
