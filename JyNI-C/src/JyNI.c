@@ -1791,6 +1791,19 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		Py_INCREF(Py_NotImplemented);
 		return Py_NotImplemented;
 	}
+
+	//Special treatment for boolean. We cannot just compare with singletons,
+	//because via Java-API it is possible in Jython to create non-singleton
+	//PyBooleans (Honestly, that constructor should be protected, but changing
+	//that today might break some existing code.).
+	if ((*env)->IsInstanceOf(env, jythonPyObject, pyBooleanClass))
+	{
+		if ((*env)->IsSameObject(env, jythonPyObject, JyTrue)) Py_RETURN_TRUE;
+		if ((*env)->IsSameObject(env, jythonPyObject, JyFalse)) Py_RETURN_FALSE;
+		if ((*env)->GetBooleanField(env, pyBooleanClass, pyBoolVal)) Py_RETURN_TRUE;
+		else Py_RETURN_FALSE;
+	}
+
 	//Todo: Maybe the check for nullstring and unicode_empty is not needed
 	//here and should be processed via usual lookup. (Since these singletons
 	//are on the heap)
@@ -2048,11 +2061,11 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	if (op == Py_None) return JyNone;
 	if (op == Py_NotImplemented) return JyNotImplemented;
 	if (op == Py_Ellipsis) return JyEllipsis;
+	if (op == Py_True) return JyTrue;
+	if (op == Py_False) return JyFalse;
 	/* nullstring might be uninitialized, which is no matter here.
-	 * If it was uninitialized, the usual string conversion code
-	 * will initialize it and return it in the end. Uninitialized
-	 * nullstring cannot trigger "return JyEmptyString" here, since
-	 * it would already have triggered "return NULL" some lines above.
+	 * Uninitialized nullstring cannot trigger "return JyEmptyString" here,
+	 * since it would already have triggered "return NULL" some lines above.
 	 */
 	if (op == nullstring) return JyEmptyString;
 	if (op == unicode_empty) return JyEmptyUnicode;
@@ -2065,6 +2078,9 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		//NULL for some other reason. However this would not go far without segfault then anyway.
 		PyType_Ready(op); //this is the wrong place to do this... it's just a quick hack. Find better solution soon...
 	}
+	//jputs(Py_TYPE(op)->tp_name);
+	//int bl = strcmp(Py_TYPE(op)->tp_name, "bool") == 0;
+	//if (bl) jputs("converting bool");
 	//jputsLong(__LINE__);
 //	jputs("convert:");
 //	if (!op->ob_type) jputs("type is NULL");
@@ -2138,15 +2154,16 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		//return jy->jy;
 	} //else
 	//{
+	//if (bl) jputs("converting bool2");
 	//jputsLong(__LINE__);
 	TypeMapEntry* tme;
 	if (jy->jy != NULL)
 	{
-		//jputsLong(__LINE__);
+		//if (bl) jputsLong(__LINE__);
 		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = (TypeMapEntry*) jy->jy;
 	} else {
-		//jputsLong(__LINE__);
+		//if (bl) jputsLong(__LINE__);
 		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 		if (!tme) {
@@ -2589,9 +2606,8 @@ jweak JyEmptyFrozenSet;
 jweak JyEmptyString;
 jweak JyEmptyUnicode;
 jweak JyEmptyTuple;
-//PyUnicodeObject* unicode_empty;
-PyObject* PyTrue;
-PyObject* PyFalse;
+jweak JyTrue;
+jweak JyFalse;
 jweak length0StringArray;
 jweak length0PyObjectArray;
 
@@ -2872,7 +2888,8 @@ jmethodID pyExceptionIsExceptionClass;
 jmethodID pyExceptionIsExceptionInstance;
 
 jclass pyBooleanClass;
-jmethodID pyBooleanConstructor;
+//jmethodID pyBooleanConstructor;
+jfieldID pyBoolVal;
 
 jclass pyArrayClass;
 jmethodID pyArrayGetTypecode;
@@ -3612,7 +3629,8 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (pyBooleanClassLocal == NULL) { return JNI_ERR;}
 	pyBooleanClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBooleanClassLocal);
 	(*env)->DeleteLocalRef(env, pyBooleanClassLocal);
-	pyBooleanConstructor = (*env)->GetMethodID(env, pyBooleanClass, "<init>", "(Z)V");
+	//pyBooleanConstructor = (*env)->GetMethodID(env, pyBooleanClass, "<init>", "(Z)V");
+	pyBoolVal = (*env)->GetFieldID(env, pyBooleanClass, "value", "Z");
 
 	jclass pyIntClassLocal = (*env)->FindClass(env, "org/python/core/PyInteger");
 	if (pyIntClassLocal == NULL) { return JNI_ERR;}
@@ -4116,9 +4134,6 @@ inline jint initJythonObjects(JNIEnv *env)
 
 inline jint initSingletons(JNIEnv *env)
 {
-	//PyTrue = JyNI_PyObject_FromJythonPyObject((*env)->NewWeakGlobalRef(env, (*env)->NewObject(env, pyBooleanClass, pyBooleanConstructor, JNI_TRUE)));
-	//PyFalse = JyNI_PyObject_FromJythonPyObject((*env)->NewWeakGlobalRef(env, (*env)->NewObject(env, pyBooleanClass, pyBooleanConstructor, JNI_FALSE)));
-
 	/*jmethodID pyUnicodeEmptyConstructor = (*env)->GetMethodID(env, pyUnicodeClass, "<init>", "()V");
 	jobject unicode_emptyLocal = (*env)->NewObject(env, pyUnicodeClass, pyUnicodeEmptyConstructor);
 	unicode_empty = JyNI_PyObject_FromJythonPyObject((*env)->NewWeakGlobalRef(env, unicode_emptyLocal));
@@ -4145,6 +4160,10 @@ inline jint initSingletons(JNIEnv *env)
 	length0StringArray = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyStringArray));
 	jfieldID jyEmptyPyObjArray = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyObjects", "[Lorg/python/core/PyObject;");
 	length0PyObjectArray = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyPyObjArray));
+	jfieldID jyTrue = (*env)->GetStaticFieldID(env, pyPyClass, "True", "Lorg/python/core/PyBoolean;");
+	JyTrue = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyTrue));
+	jfieldID jyFalse = (*env)->GetStaticFieldID(env, pyPyClass, "False", "Lorg/python/core/PyBoolean;");
+	JyFalse = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyFalse));
 
 
 //	length0StringArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, stringClass, NULL));
@@ -4247,6 +4266,8 @@ void JyNI_unload(JavaVM *jvm)
 	(*env)->DeleteWeakGlobalRef(env, JyEmptyFrozenSet);
 	(*env)->DeleteWeakGlobalRef(env, JyEmptyString);
 	(*env)->DeleteWeakGlobalRef(env, JyEmptyUnicode);
+	(*env)->DeleteWeakGlobalRef(env, JyTrue);
+	(*env)->DeleteWeakGlobalRef(env, JyFalse);
 
 	(*env)->DeleteWeakGlobalRef(env, length0StringArray);
 	(*env)->DeleteWeakGlobalRef(env, length0PyObjectArray);

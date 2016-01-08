@@ -83,6 +83,15 @@ class TestJyNI(unittest.TestCase):
 		self.assertEqual(DemoExtension.intSquare.__name__, "intSquare")
 		self.assertEqual(DemoExtension.intSquare(16), 256)
 		self.assertEqual(DemoExtension.intSquare(19), 361)
+		self.assertEqual(DemoExtension.intSquare1(-19), 361)
+
+	def test_boolean_passing(self):
+		self.assertEqual(DemoExtension.booleanToInt(False), 0)
+		self.assertEqual(DemoExtension.booleanToInt(True), 1)
+		self.assertIsNone(DemoExtension.booleanToInt(99))
+		self.assertTrue(DemoExtension.intToBoolean(1))
+		self.assertFalse(DemoExtension.intToBoolean(0))
+		self.assertIsNone(DemoExtension.intToBoolean(2))
 
 	def test_native_list_access_writing(self):
 		l = ["Hello", "lovely", "world"]

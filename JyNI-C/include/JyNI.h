@@ -187,7 +187,7 @@
 //#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
 #define Is_StaticSingleton(pyObject) \
-	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented)
+	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented || pyObject == Py_True || pyObject == Py_False)
 
 #define Is_StaticTypeObject(pyObject) \
 	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))

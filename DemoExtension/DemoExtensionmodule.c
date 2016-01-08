@@ -65,6 +65,13 @@ intSquare(PyObject *self, PyObject *args)
 	return PyInt_FromLong(l*l);
 }
 
+PyObject *
+intSquare1(PyObject *self, PyObject *integer)
+{
+	long int l = PyInt_AS_LONG(integer);
+	return PyInt_FromLong(l*l);
+}
+
 PyObject*
 keywordTest(PyObject* self, PyObject* args, PyObject* kw)
 {
@@ -245,6 +252,24 @@ createTupleSelfContaining(PyObject* self, PyObject* args)
 	return tuple;
 }
 
+PyObject*
+booleanToInt(PyObject* self, PyObject* boolean)
+{
+	if (boolean == Py_True) return PyInt_FromLong(1);
+	else if (boolean == Py_False) return PyInt_FromLong(0);
+	else Py_RETURN_NONE;
+}
+
+PyObject*
+intToBoolean(PyObject* self, PyObject* integer)
+{
+	long int l = PyInt_AS_LONG(integer);
+	//For debugging reasons we make a strict 0/1 conversion here.
+	if (l == 1) Py_RETURN_TRUE;
+	else if (l == 0) Py_RETURN_FALSE;
+	else Py_RETURN_NONE;
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
@@ -256,6 +281,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"printInt", printInt, METH_VARARGS, "Prints out the int and returns nothing."},
 	{"printString", printString, METH_VARARGS, "Prints out the string and returns nothing."},
 	{"intSquare", intSquare, METH_VARARGS, "Returns the square of the given int."},
+	{"intSquare1", intSquare1, METH_O, "Variant of intSquare using the METH_O flag."},
 	{"argCountToString", argCountToString, METH_VARARGS, "Returns number of arguments as string."},
 	{"concatFirstWithLastString", concatFirstWithLastString, METH_VARARGS, "Concatenates first with last element. Returns empty string, if less than two args are available."},
 	{"keywordTest", keywordTest, METH_VARARGS | METH_KEYWORDS, "Tests working with keywords."},
@@ -263,6 +289,8 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"unicodeTest", unicodeTest, METH_VARARGS, "Test JyNI's unicode support by converting forth and back."},
 	{"createListSelfContaining", createListSelfContaining, METH_NOARGS, "Natively create a self-containing list."},
 	{"createTupleSelfContaining", createTupleSelfContaining, METH_NOARGS, "Natively create a self-containing tuple."},
+	{"booleanToInt", booleanToInt, METH_O, "Converts True to one, False to zero, everything else to None."},
+	{"intToBoolean", intToBoolean, METH_O, "Converts one to True, zero to False, everything else to None."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

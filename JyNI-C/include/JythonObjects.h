@@ -43,6 +43,8 @@ extern jweak JyEmptyFrozenSet;
 extern jweak JyEmptyString;
 extern jweak JyEmptyUnicode;
 extern jweak JyEmptyTuple;
+extern jweak JyTrue;
+extern jweak JyFalse;
 
 extern jclass pyObjectClass;
 extern jmethodID pyObjectGetType;
@@ -79,7 +81,8 @@ extern jmethodID pyObjectHashCode;
 extern jclass pyFrameClass;
 
 extern jclass pyBooleanClass;
-extern jmethodID pyBooleanConstructor;
+extern jfieldID pyBoolVal;
+//extern jmethodID pyBooleanConstructor;
 
 extern jclass pyTupleClass;
 extern jmethodID pyTupleConstructor;

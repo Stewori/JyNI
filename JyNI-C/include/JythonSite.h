@@ -36,11 +36,6 @@
 #include "JythonObjects.h"
 #include "JyNI.h"
 
-//singletons:
-//extern PyUnicodeObject* unicode_empty;
-extern PyObject* JyTrue;
-extern PyObject* JyFalse;
-
 extern jclass pyPyClass;
 extern jmethodID pyPyGetThreadState;
 extern jmethodID pyPyGetFrame;
