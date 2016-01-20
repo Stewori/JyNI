@@ -293,11 +293,11 @@ static PyObject *
 classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 					  PyObject *kwds)
 {
-	puts(__FUNCTION__);
-	puts(descr->d_method->ml_name);
+//	puts(__FUNCTION__);
+//	puts(descr->d_method->ml_name);
 	//puts(descr->d_name->ob_type->tp_name);
-	puts(((PyStringObject*) descr->d_name)->ob_sval);
-	puts(descr->d_type->tp_name);
+//	puts(((PyStringObject*) descr->d_name)->ob_sval);
+//	puts(descr->d_type->tp_name);
 	Py_ssize_t argc;
 	PyObject *self, *func, *result;
 
@@ -312,7 +312,7 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 					 descr->d_type->tp_name);
 		return NULL;
 	}
-	printf("%d\n", __LINE__);
+//	printf("%d\n", __LINE__);
 	self = PyTuple_GET_ITEM(args, 0);
 	if (!PyType_Check(self)) {
 		PyErr_Format(PyExc_TypeError,
@@ -324,10 +324,10 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 //					 "but received a '%.100s'",
 //					 descr_name((PyDescrObject *)descr),
 //					 self->ob_type->tp_name);
-		puts(self->ob_type->tp_name);
-		if (self->ob_type == &PyString_Type)
-			puts(((PyStringObject*) self)->ob_sval);
-		printf("%d\n", __LINE__);
+//		puts(self->ob_type->tp_name);
+//		if (self->ob_type == &PyString_Type)
+//			puts(((PyStringObject*) self)->ob_sval);
+//		printf("%d\n", __LINE__);
 		return NULL;
 	}
 	if (!PyType_IsSubtype((PyTypeObject *)self, descr->d_type)) {
@@ -338,10 +338,10 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 					 descr_name((PyDescrObject *)descr),
 					 descr->d_type->tp_name,
 					 self->ob_type->tp_name);
-		printf("%d\n", __LINE__);
+//		printf("%d\n", __LINE__);
 		return NULL;
 	}
-	printf("%d\n", __LINE__);
+//	printf("%d\n", __LINE__);
 	func = PyCFunction_New(descr->d_method, self);
 	if (func == NULL)
 		return NULL;
@@ -350,7 +350,7 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 		Py_DECREF(func);
 		return NULL;
 	}
-	printf("%d\n", __LINE__);
+//	printf("%d\n", __LINE__);
 	result = PyEval_CallObjectWithKeywords(func, args, kwds);
 	Py_DECREF(func);
 	Py_DECREF(args);
