@@ -412,10 +412,10 @@ static int add_subclass(PyTypeObject*, PyTypeObject*);
 //static void update_all_slots(PyTypeObject *);
 
 typedef int (*update_callback)(PyTypeObject *, void *);
-//static int update_subclasses(PyTypeObject *type, PyObject *name,
-//							 update_callback callback, void *data);
-//static int recurse_down_subclasses(PyTypeObject *type, PyObject *name,
-//								   update_callback callback, void *data);
+static int update_subclasses(PyTypeObject *type, PyObject *name,
+							 update_callback callback, void *data);
+static int recurse_down_subclasses(PyTypeObject *type, PyObject *name,
+								   update_callback callback, void *data);
 
 //static int
 //mro_subclasses(PyTypeObject *type, PyObject* temp)
@@ -1955,8 +1955,8 @@ solid_base(PyTypeObject *type)
 }
 
 static void object_dealloc(PyObject *);
-/*static int object_init(PyObject *, PyObject *, PyObject *);
-static int update_slot(PyTypeObject *, PyObject *); */
+/*static int object_init(PyObject *, PyObject *, PyObject *); */
+static int update_slot(PyTypeObject *, PyObject *);
 static void fixup_slot_dispatchers(PyTypeObject *);
 
 /* Helpers for  __dict__ descriptor.  We don't want to expose the dicts
@@ -2824,53 +2824,65 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 }
 
 /*
-// This is similar to PyObject_GenericGetAttr(),
-// but uses _PyType_Lookup() instead of just looking in type->tp_dict.
+ * This is similar to PyObject_GenericGetAttr(),
+ * but uses _PyType_Lookup() instead of just looking in type->tp_dict.
+ */
 static PyObject *
 type_getattro(PyTypeObject *type, PyObject *name)
 {
+	jobject delegate = JyNI_GetJythonDelegate(type);
+	if (delegate)
+	{
+		env(NULL);
+		return JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
+	}
+
 	PyTypeObject *metatype = Py_TYPE(type);
 	PyObject *meta_attribute, *attribute;
 	descrgetfunc meta_get;
 
-	// Initialize this type (we'll assume the metatype is initialized)
+	/* Initialize this type (we'll assume the metatype is initialized) */
 	if (type->tp_dict == NULL) {
 		if (PyType_Ready(type) < 0)
 			return NULL;
 	}
 
-	// No readable descriptor found yet
+	/* No readable descriptor found yet */
 	meta_get = NULL;
 
-	// Look for the attribute in the metatype
+	/* Look for the attribute in the metatype */
 	meta_attribute = _PyType_Lookup(metatype, name);
 
 	if (meta_attribute != NULL) {
 		meta_get = Py_TYPE(meta_attribute)->tp_descr_get;
 
 		if (meta_get != NULL && PyDescr_IsData(meta_attribute)) {
-//			 * Data descriptors implement tp_descr_set to intercept
-//			 * writes. Assume the attribute is not overridden in
-//			 * type's tp_dict (and bases): call the descriptor now.
-
+			/* Data descriptors implement tp_descr_set to intercept
+			 * writes. Assume the attribute is not overridden in
+			 * type's tp_dict (and bases): call the descriptor now.
+			 */
 			return meta_get(meta_attribute, (PyObject *)type,
 							(PyObject *)metatype);
 		}
 		Py_INCREF(meta_attribute);
 	}
 
-//	 * No data descriptor found on metatype. Look in tp_dict of this
-//	 * type and its bases
+	/* No data descriptor found on metatype. Look in tp_dict of this
+	 * type and its bases
+	 */
 	attribute = _PyType_Lookup(type, name);
 	if (attribute != NULL) {
-		// Implement descriptor functionality, if any
+		/* Implement descriptor functionality, if any */
 		descrgetfunc local_get = Py_TYPE(attribute)->tp_descr_get;
 
 		Py_XDECREF(meta_attribute);
 
 		if (local_get != NULL) {
-//			 * NULL 2nd argument indicates the descriptor was
-//			 * found on the target object itself (or a base)
+			/* NULL 2nd argument indicates the descriptor was
+			 * found on the target object itself (or a base)
+			 */
 			return local_get(attribute, (PyObject *)NULL,
 							 (PyObject *)type);
 		}
@@ -2879,8 +2891,9 @@ type_getattro(PyTypeObject *type, PyObject *name)
 		return attribute;
 	}
 
-//	 * No attribute found in local __dict__ (or bases): use the
-//	 * descriptor from the metatype, if any
+	/* No attribute found in local __dict__ (or bases): use the
+	 * descriptor from the metatype, if any
+	 */
 	if (meta_get != NULL) {
 		PyObject *res;
 		res = meta_get(meta_attribute, (PyObject *)type,
@@ -2889,12 +2902,12 @@ type_getattro(PyTypeObject *type, PyObject *name)
 		return res;
 	}
 
-	// If an ordinary attribute was found on the metatype, return it now
+	/* If an ordinary attribute was found on the metatype, return it now */
 	if (meta_attribute != NULL) {
 		return meta_attribute;
 	}
 
-	// Give up
+	/* Give up */
 	PyErr_Format(PyExc_AttributeError,
 					 "type object '%.50s' has no attribute '%.400s'",
 					 type->tp_name, PyString_AS_STRING(name));
@@ -2911,11 +2924,25 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
 			type->tp_name);
 		return -1;
 	}
+	jobject delegate = JyNI_GetJythonDelegate(type);
+	if (delegate)
+	{
+		env(NULL);
+		(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
+				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name),
+				JyNI_JythonPyObject_FromPyObject(value));
+		if ((*env)->ExceptionCheck(env))
+		{
+			(*env)->ExceptionClear(env);
+			return -1;
+		} else
+			return 0;
+	}
 	if (PyObject_GenericSetAttr((PyObject *)type, name, value) < 0)
 		return -1;
 	return update_slot(type, name);
 }
-
+/*
 static void
 type_dealloc(PyTypeObject *type)
 {
@@ -3086,8 +3113,8 @@ PyTypeObject PyType_Type = {
 	0,//(hashfunc)_Py_HashPointer,            /* tp_hash */
 	(ternaryfunc)type_call,                   /* tp_call */
 	0,                                        /* tp_str */
-	0,//(getattrofunc)type_getattro,          /* tp_getattro */
-	0,//(setattrofunc)type_setattro,          /* tp_setattro */
+	(getattrofunc)type_getattro,              /* tp_getattro */
+	(setattrofunc)type_setattro,              /* tp_setattro */
 	0,                                        /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE |
 	    Py_TPFLAGS_TYPE_SUBCLASS,             /* tp_flags */
@@ -6652,42 +6679,43 @@ init_slotdefs(void)
 	initialized = 1;
 }
 
-// Update the slots after assignment to a class (type) attribute.
-//static int
-//update_slot(PyTypeObject *type, PyObject *name)
-//{
-//	slotdef *ptrs[MAX_EQUIV];
-//	slotdef *p;
-//	slotdef **pp;
-//	int offset;
-//
-////	   Clear the VALID_VERSION flag of 'type' and all its
-////	   subclasses.  This could possibly be unified with the
-////	   update_subclasses() recursion below, but carefully:
-////	   they each have their own conditions on which to stop
-////	   recursing into subclasses.
-//	PyType_Modified(type);
-//
-//	init_slotdefs();
-//	pp = ptrs;
-//	for (p = slotdefs; p->name; p++) {
-//		// XXX assume name is interned!
-//		if (p->name_strobj == name)
-//			*pp++ = p;
-//	}
-//	*pp = NULL;
-//	for (pp = ptrs; *pp; pp++) {
-//		p = *pp;
-//		offset = p->offset;
-//		while (p > slotdefs && (p-1)->offset == offset)
-//			--p;
-//		*pp = p;
-//	}
-//	if (ptrs[0] == NULL)
-//		return 0; // Not an attribute that affects any slots
-//	return update_subclasses(type, name,
-//							 update_slots_callback, (void *)ptrs);
-//}
+/* Update the slots after assignment to a class (type) attribute. */
+static int
+update_slot(PyTypeObject *type, PyObject *name)
+{
+	slotdef *ptrs[MAX_EQUIV];
+	slotdef *p;
+	slotdef **pp;
+	int offset;
+
+	/* Clear the VALID_VERSION flag of 'type' and all its
+	 * subclasses.  This could possibly be unified with the
+	 * update_subclasses() recursion below, but carefully:
+	 * they each have their own conditions on which to stop
+	 * recursing into subclasses.
+	 */
+	PyType_Modified(type);
+
+	init_slotdefs();
+	pp = ptrs;
+	for (p = slotdefs; p->name; p++) {
+		/* XXX assume name is interned! */
+		if (p->name_strobj == name)
+			*pp++ = p;
+	}
+	*pp = NULL;
+	for (pp = ptrs; *pp; pp++) {
+		p = *pp;
+		offset = p->offset;
+		while (p > slotdefs && (p-1)->offset == offset)
+			--p;
+		*pp = p;
+	}
+	if (ptrs[0] == NULL)
+		return 0; /* Not an attribute that affects any slots */
+	return update_subclasses(type, name,
+							 update_slots_callback, (void *)ptrs);
+}
 
 /* Store the proper functions in the slot dispatches at class (type)
  * definition time, based upon which operations the class overrides in its
@@ -6715,50 +6743,50 @@ fixup_slot_dispatchers(PyTypeObject *type)
 //	}
 //}
 
-//   recurse_down_subclasses() and update_subclasses() are mutually
-//   recursive functions to call a callback for all subclasses,
-//   but refraining from recursing into subclasses that define 'name'.
+/* recurse_down_subclasses() and update_subclasses() are mutually
+   recursive functions to call a callback for all subclasses,
+   but refraining from recursing into subclasses that define 'name'. */
 
-//static int
-//update_subclasses(PyTypeObject *type, PyObject *name,
-//				  update_callback callback, void *data)
-//{
-//	if (callback(type, data) < 0)
-//		return -1;
-//	return recurse_down_subclasses(type, name, callback, data);
-//}
+static int
+update_subclasses(PyTypeObject *type, PyObject *name,
+				  update_callback callback, void *data)
+{
+	if (callback(type, data) < 0)
+		return -1;
+	return recurse_down_subclasses(type, name, callback, data);
+}
 
-//static int
-//recurse_down_subclasses(PyTypeObject *type, PyObject *name,
-//						update_callback callback, void *data)
-//{
-//	PyTypeObject *subclass;
-//	PyObject *ref, *subclasses, *dict;
-//	Py_ssize_t i, n;
-//
-//	subclasses = type->tp_subclasses;
-//	if (subclasses == NULL)
-//		return 0;
-//	assert(PyList_Check(subclasses));
-//	n = PyList_GET_SIZE(subclasses);
-//	for (i = 0; i < n; i++) {
-//		ref = PyList_GET_ITEM(subclasses, i);
-//		assert(PyWeakref_CheckRef(ref));
-//		subclass = (PyTypeObject *)PyWeakref_GET_OBJECT(ref);
-//		assert(subclass != NULL);
-//		if ((PyObject *)subclass == Py_None)
-//			continue;
-//		assert(PyType_Check(subclass));
-//		// Avoid recursing down into unaffected classes
-//		dict = subclass->tp_dict;
-//		if (dict != NULL && PyDict_Check(dict) &&
-//			PyDict_GetItem(dict, name) != NULL)
-//			continue;
-//		if (update_subclasses(subclass, name, callback, data) < 0)
-//			return -1;
-//	}
-//	return 0;
-//}
+static int
+recurse_down_subclasses(PyTypeObject *type, PyObject *name,
+						update_callback callback, void *data)
+{
+	PyTypeObject *subclass;
+	PyObject *ref, *subclasses, *dict;
+	Py_ssize_t i, n;
+
+	subclasses = type->tp_subclasses;
+	if (subclasses == NULL)
+		return 0;
+	assert(PyList_Check(subclasses));
+	n = PyList_GET_SIZE(subclasses);
+	for (i = 0; i < n; i++) {
+		ref = PyList_GET_ITEM(subclasses, i);
+		assert(PyWeakref_CheckRef(ref));
+		subclass = (PyTypeObject *)PyWeakref_GET_OBJECT(ref);
+		assert(subclass != NULL);
+		if ((PyObject *)subclass == Py_None)
+			continue;
+		assert(PyType_Check(subclass));
+		/* Avoid recursing down into unaffected classes */
+		dict = subclass->tp_dict;
+		if (dict != NULL && PyDict_Check(dict) &&
+			PyDict_GetItem(dict, name) != NULL)
+			continue;
+		if (update_subclasses(subclass, name, callback, data) < 0)
+			return -1;
+	}
+	return 0;
+}
 
 
 /* This function is called by PyType_Ready() to populate the type's

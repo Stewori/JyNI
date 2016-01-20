@@ -34,9 +34,7 @@ Created on 03.10.2015
 import sys
 
 #Include native ctypes:
-#sys.path.remove('/home/stefan/eclipseWorkspace/JyNI/Lib')
 sys.path.append('/usr/lib/python2.7/lib-dynload')
-#sys.path.append('/home/stefan/eclipseWorkspace/ctypes')
 
 import platform
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
@@ -63,9 +61,12 @@ printf = libc.printf
 printf("%d bottles of beer\n", 42)
 printf("%d bottles of beer\n", Bottles(73))
 
-#from ctypes import c_char_p, c_int, c_double
-#printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
+from ctypes import c_char_p, c_int, c_double
+
+# currently c_double or float is not working for some reason
+printf.argtypes = [c_char_p, c_char_p, c_int, c_int]#, c_double]
 #printf("String '%s', Int %d, Double %f\n", "Hi", 10, 2.2)
+printf("String '%s', Int %d, Int2 %d\n", "Hi", 10, 22)
 
 from ctypes import *
 class cell(Structure):
