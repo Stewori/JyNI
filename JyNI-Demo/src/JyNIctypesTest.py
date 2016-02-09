@@ -38,15 +38,15 @@ sys.path.append('/usr/lib/python2.7/lib-dynload')
 
 import platform
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
-import ctypes
+from ctypes import *
 
 print "Demo of ctypes with os.name: "+platform.os.name
 print ""
 
 if isMac:
-	libc = ctypes.CDLL('libc.dylib')
+	libc = CDLL('libc.dylib')
 else:
-	libc = ctypes.CDLL('libc.so.6')
+	libc = CDLL('libc.so.6')
 
 class Bottles:
 	def __init__(self, number):
@@ -61,11 +61,17 @@ printf = libc.printf
 printf("%d bottles of beer\n", 42)
 printf("%d bottles of beer\n", Bottles(73))
 
-from ctypes import c_char_p, c_int, c_double
 printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
 printf("String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
 
-from ctypes import *
+buffer = c_buffer("\000", 10)
+libc.sprintf(buffer, "Spam%d", 776)
+
+print repr(buffer.value)
+# Currently fails:
+print repr(buffer.raw),
+print "(should be 'Spam776\\x00\\x00\\x00')"
+
 class cell(Structure):
 	pass
 
