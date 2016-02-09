@@ -63,7 +63,7 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
 	jint srcSize = (*env)->CallIntMethod(env, src, pyTupleSize);
 	//jputs("### creating tuple...");
 	PyObject* er = PyTuple_New(srcSize);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) er, JNI_FALSE);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) er);//, JNI_FALSE);
 	AS_JY_WITH_GC(er)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	//jputs("### created tuple...");
 	//Py_XINCREF(er);
@@ -442,7 +442,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 	jarray handles = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupNativeHandles, src);
 	jsize size = (*env)->GetArrayLength(env, handles);
 	PyObject* op = PyList_New((Py_ssize_t) size);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) op, JNI_FALSE);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) op);//, JNI_FALSE);
 	AS_JY_WITH_GC(op)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	jsize i;
 	PyObject* v;

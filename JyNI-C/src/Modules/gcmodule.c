@@ -2934,7 +2934,7 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 		{
 			/* take care to correct the handle on java-side */
 			env(NULL);
-			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNISetNativeHandle, jy->jy, (jlong) op, (jy->flags & JY_TRUNCATE_FLAG_MASK) != 0);
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNISetNativeHandle, jy->jy, (jlong) op);//, (jy->flags & JY_TRUNCATE_FLAG_MASK) != 0);
 			//todo: maybe do sync here
 		}
 		//JyNIDebug2(JY_NATIVE_REALLOC_GC, AS_JY_WITH_GC(op0), jy, basicsize, NULL);

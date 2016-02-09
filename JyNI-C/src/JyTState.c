@@ -38,6 +38,7 @@
 
 inline void JyErr_InsertCurExc()
 {
+	//puts(__FUNCTION__);
 	PyThreadState *tstate = PyThreadState_GET();
 	env();
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIJyErr_InsertCurExc,

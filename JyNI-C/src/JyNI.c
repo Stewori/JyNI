@@ -1663,9 +1663,8 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 	env(NULL);
 	jy->jy = (*env)->NewWeakGlobalRef(env, src);
 	//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj, jy->flags & JY_TRUNCATE_FLAG_MASK);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
 	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-	//}
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	if (PyType_IS_GC(eme->exc_type))
 		JyNI_GC_ExploreObject(obj);
@@ -1735,7 +1734,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		env(NULL);
 		jy->jy = (*env)->NewWeakGlobalRef(env, src);
 		if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
-			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest, jy->flags & JY_TRUNCATE_FLAG_MASK);
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
 			jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 		}
 
@@ -1783,7 +1782,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 //	if (jythonPyObject == JyEllipsis) return Py_Ellipsis;
 	env(NULL);
 	if ((*env)->IsSameObject(env, jythonPyObject, NULL)) return NULL;
-	/* In principal, the caller is responsible to decide whether or not
+	/* In principle, the caller is responsible to decide whether or not
 	 * the conversion-result should be INCREFed. However, in singleton cases
 	 * missing INCREFs do more harm than duplicate INCREFs, so for now, we
 	 * INCREF singletons here.
@@ -1827,13 +1826,13 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	}
 	if (checkForType && (*env)->IsInstanceOf(env, jythonPyObject, pyTypeClass))
 	{
-		//No increfs here, since JyNI_PyTypeObject_FromJythonPyTypeObject returns NEW ref if any.
+		/* No increfs here, since JyNI_PyTypeObject_FromJythonPyTypeObject returns NEW ref if any. */
 		PyObject* er = (PyObject*) JyNI_PyTypeObject_FromJythonPyTypeObject(jythonPyObject);
 		if (er) return er;
-		//No increfs here, since JyNI_PyExceptionType_FromJythonExceptionType returns NEW ref if any.
+		/* No increfs here, since JyNI_PyExceptionType_FromJythonExceptionType returns NEW ref if any. */
 		er = (PyObject*) JyNI_PyExceptionType_FromJythonExceptionType(jythonPyObject);
 		if (er) return er;
-		//heap-type case: Proceed same way like for ordinary PyObjects.
+		/* heap-type case: Proceed same way like for ordinary PyObjects. */
 	}
 	if (checkCPeer && (*env)->IsInstanceOf(env, jythonPyObject, cPeerInterface))
 	{
@@ -1890,12 +1889,10 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		//if (tme->py_type) jputs(tme->py_type->tp_name);
 
 		//No need to incref here, since JyNI_InitPyObject returns NEW ref.
-		PyObject* er = JyNI_InitPyObject(tme, jythonPyObject);
-
-		//jputs("handle initialized");
-		return er;
+		return JyNI_InitPyObject(tme, jythonPyObject);
 	} else
 	{
+//		jputsLong(__LINE__);
 		//jputs("tme is NULL...");
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(
 			JyNI_PyExceptionType_FromJythonExceptionType(
@@ -1908,6 +1905,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			PyObject* er = JyNI_InitPyException(eme, jythonPyObject);
 			return er;
 		} else {
+//			jputsLong(__LINE__);
 			// We finally try a hack for some special new-style classes:
 			jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
 					JyNI_getTypeOldStyleParent, jythonPyObject);
@@ -1973,7 +1971,7 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
 	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some exc_factories might already init this
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);//, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
@@ -2044,13 +2042,14 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
 	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some sync-on-init methods might already init this
 		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest,
-				(jlong) src, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+				(jlong) src);//, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
 	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 	return dest;
 }
+
 
 /*
  * Returns a jobject as a new JNI-local reference, unless op has a
@@ -2072,37 +2071,30 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	 */
 	if (op == nullstring) return JyEmptyString;
 	if (op == unicode_empty) return JyEmptyUnicode;
-	//jputsLong(__LINE__);
 	if (op->ob_type == NULL)
 	{
-		//jputs("type of op is NULL");
-		//we assume that only type-objects (and as such also exception types) can have ob_type == NULL.
-		//So we call PyType_Ready to init it. However this might fail brutally, if ob_type was
-		//NULL for some other reason. However this would not go far without segfault then anyway.
-		PyType_Ready(op); //this is the wrong place to do this... it's just a quick hack. Find better solution soon...
+		/* we assume that only type-objects (and as such also exception types) can have ob_type == NULL.
+		 * So we call PyType_Ready to init it. However this might fail brutally, if ob_type was
+		 * NULL for some other reason. However this would not go far without segfault then anyway.
+		 */
+		PyType_Ready(op); //this is the wrong place to do this... it's just a quick hack. TODO: Find better solution...
 	}
-	//jputs(Py_TYPE(op)->tp_name);
-	//int bl = strcmp(Py_TYPE(op)->tp_name, "bool") == 0;
-	//if (bl) jputs("converting bool");
-	//jputsLong(__LINE__);
-//	jputs("convert:");
-//	if (!op->ob_type) jputs("type is NULL");
-//	if (!op->ob_type->tp_name) jputs("type name is NULL");
-//	jputs(op->ob_type->tp_name);
-	//The following block cares for statically defined type objects.
-	//Heap-types are treated like ordinary objects.
-	if (PyType_Check(op) && !PyType_HasFeature(op->ob_type, Py_TPFLAGS_HEAPTYPE))
+	/* The following block cares for statically defined type objects.
+	 * Heap-types are treated like ordinary objects.
+	 * Note: Don't confuse the following line with checking op->ob_type rather than op itself.
+	 */
+	env(NULL);
+	if (PyType_Check(op) && !PyType_HasFeature((PyTypeObject*) op, Py_TPFLAGS_HEAPTYPE))
 	{
 		if (PyExceptionClass_Check(op))
 		{
-			//jputs("convert exception...");
 			jobject er = JyNI_JythonExceptionType_FromPyExceptionType(op);
-			if (er != NULL) return er;
+			if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
+			else return _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op, NULL);
 		} else
 		{
-			//jputs("convert type...");
 			jobject er = JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op);
-			if (er != NULL) return er;
+			if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
 		}
 	}
 	//jputsLong(__LINE__);
@@ -2119,8 +2111,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 				JyNI_SyncPy2Jy(op, jy);
 			return jy->jy;
 		} else {
-			//jputsLong(__LINE__);
-			env(NULL);
 			//This might not work if called by a thread not attached to the JVM:
 			jobject result = (*env)->NewLocalRef(env, jy->jy);
 			/* Originally the following line read
@@ -2191,10 +2181,11 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	{
 		//jputsLong(__LINE__);
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op));
-		if (eme)
+		if (eme) {
 			return JyNI_InitJythonPyException(eme, op, jy);
-		else
+		} else
 		{
+			//jputsLong(__LINE__);
 			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			//setup and return PyCPeer in this case...
 			env(NULL);
@@ -2212,7 +2203,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			//or natively defined metatypes:
 			//jobject opType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(op));
 			//However, the general conversion method should also work and has this support:
-			jobject opType = JyNI_JythonPyObject_FromPyObject(Py_TYPE(op));
 
 			//Py_INCREF(Py_TYPE(op));
 //				if (!opType) jputs("create PyCPeer with opType NULL");
@@ -2230,8 +2220,9 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 				return _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op, NULL);
 			}
 
+			jobject opType = JyNI_JythonPyObject_FromPyObject(Py_TYPE(op));
 			jobject er = PyObject_IS_GC(op) ?
-					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType):
+					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType) :
 					(*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
 			//jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
 			jy->flags |= JY_INITIALIZED_FLAG_MASK;
@@ -2247,6 +2238,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls)
 {
 	//if (type == NULL) return NULL;
+	//jputs(__FUNCTION__);
 	env(NULL);
 	if (cls != NULL)
 	{
@@ -2254,15 +2246,14 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 	} else {
 		//setup and return PyCPeerType in this case...
 		jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) type);
-		if (er != NULL) return er;
+		//todo: Init this handle
+		//if (er != NULL) return er;
+		if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
 		//No JyObjects available for types!
 		//JyObject* jy = AS_JY_NO_GC(type); //since we currently don't init types properly, GC-check would not work with PyTypeObjects
 		//if (JyObject_IS_INITIALIZED(jy))
 		//	return jy->jy; //no sync-attempt for types
 		else {
-//			jputs(__FUNCTION__);
-//			jputs(type->tp_name);
-//			jputsLong(type);
 			Py_INCREF(type);
 			jobject er;// = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeConstructor, (jlong) type);
 			//if (Py_TYPE(type) == NULL) jputs("JyNI-warning: Attempt to convert PyTypeObject with NULL-type.");
@@ -2318,6 +2309,8 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 				// Should we set mro now to empty tuple?
 				// For now we try to get away without it.
 			//}
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, er, (jlong) type);
+
 			return er;
 		}
 	}

@@ -841,11 +841,11 @@ public class JyNI {
 
 	//--------------errors-section-----------------
 	public static PyObject exceptionByName(String name) {
-//		System.out.println("look for exception: "+name);
+		//System.out.println("look for exception: "+name);
 		String rawName = name;
 		int pin = name.indexOf('.');
 		if (pin != -1) rawName = rawName.substring(pin+1);
-//		System.out.println("rawName: "+rawName);
+		//System.out.println("rawName: "+rawName);
 		try {
 			Field exc = Py.class.getField(rawName);
 			PyObject er = (PyObject) exc.get(null);
@@ -855,8 +855,8 @@ public class JyNI {
 		} catch (NoSuchFieldException nsfe) {
 			return null;
 		} catch (Exception e) {
-			System.err.println("JyNI-Warning: Could not obtain Exception: "+name);
-			System.err.println("  Reason: "+e);
+//			System.err.println("JyNI-Warning: Could not obtain Exception: "+name);
+//			System.err.println("  Reason: "+e);
 			return null;
 		}
 	}
@@ -897,6 +897,8 @@ public class JyNI {
 	}
 
 	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
+//		System.out.println("JyErr_InsertCurExc");
+//		System.out.println(value);
 		if (type == null) type = Py.None;
 		if (value == null) value = Py.None;
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
@@ -908,6 +910,9 @@ public class JyNI {
 //		}
 		//System.out.println("JyErr_InsertCurExc 3");
 	}
+
+	/*
+	These simplified versions are currently not used.
 
 	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value) {
 		if (type == null) type = Py.None;
@@ -925,7 +930,7 @@ public class JyNI {
 	public static void JyErr_InsertCurExc(ThreadState tstate) {
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
 		tstate0.exception = new PyException();
-	}
+	}*/
 
 	public static void JyErr_PrintEx(boolean set_sys_last_vars, ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;

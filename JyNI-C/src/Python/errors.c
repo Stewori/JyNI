@@ -69,7 +69,7 @@ extern "C" {
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
-	//puts("PyErr_Restore");
+//	puts(__FUNCTION__);
 	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
 		/* XXX Should never happen -- fatal error instead? */
 		/* Well, it could be None. */
@@ -116,6 +116,9 @@ PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 	tstate->curexc_type = type;
 	tstate->curexc_value = value;
 	tstate->curexc_traceback = traceback;
+//	printf("%d\n", __LINE__);
+//	if (value && PyString_Check(value))
+//		puts(PyString_AS_STRING(value));
 
 	Py_XDECREF(oldtype);
 	Py_XDECREF(oldvalue);
@@ -125,6 +128,7 @@ PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 void
 PyErr_SetObject(PyObject *exception, PyObject *value)
 {
+//	puts(__FUNCTION__);
 	Py_XINCREF(exception);
 	Py_XINCREF(value);
 	PyErr_Restore(exception, value, (PyObject *)NULL);
@@ -239,15 +243,28 @@ PyErr_ExceptionMatches(PyObject *exc)
 void
 PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 {
+//	puts(__FUNCTION__);
 	if (*exc == NULL) {
 		/* There was no exception, so nothing to do. */
 		return;
 	}
+//	puts("a");
+//	if (!(*exc)->ob_type) {
+//		puts("exc ob_type is null");
+//	} else
+//		puts((*exc)->ob_type->tp_name);
+//	puts(((PyTypeObject*) *exc)->tp_name);
+//	puts("b");
 	env();
 	jobject pyExc = (*env)->NewObject(env, pyExceptionClass, pyExceptionFullConstructor,
 		JyNI_JythonPyObject_FromPyObject(*exc),
 		JyNI_JythonPyObject_FromPyObject(*val),
 		JyNI_JythonPyObject_FromPyObject(*tb));
+//	if (!(*exc)->ob_type) {
+//		puts("exc ob_type is still null");
+//	} else
+//		puts((*exc)->ob_type->tp_name);
+//	puts("c");
 	(*env)->CallVoidMethod(env, pyExc, pyExceptionNormalize);
 	*exc = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
 	*val = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
@@ -671,8 +688,7 @@ PyErr_BadInternalCall(void)
 PyObject *
 PyErr_Format(PyObject *exception, const char *format, ...)
 {
-//	puts("PyErr_Format");
-//	puts(format);
+	//puts(__FUNCTION__);
 	va_list vargs;
 	PyObject* string;
 
@@ -683,7 +699,7 @@ PyErr_Format(PyObject *exception, const char *format, ...)
 #endif
 
 	string = PyString_FromFormatV(format, vargs);
-//	puts(PyString_AS_STRING(string));
+	//puts(PyString_AS_STRING(string));
 	PyErr_SetObject(exception, string);
 	Py_XDECREF(string);
 	va_end(vargs);
@@ -766,13 +782,20 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 		(*env)->NewStringUTF(env, name), jbases, JyNI_JythonPyObject_FromPyObject(dict));
 	if ((*env)->ExceptionCheck(env))
 	{
-		jputs("Exception on makeClass call:");
+//		jputs("Exception on makeClass call:");
 		jobject exc = (*env)->ExceptionOccurred(env);
-		JyNI_jprintJ(exc);
+//		JyNI_jprintJ(exc);
 		(*env)->ExceptionClear(env);
 	}
+//	jputs(__FUNCTION__);
+//	jputs(name);
+//	JyNI_jprintJ(jres);
+//	JyNI_printJInfo(jres);
 	//result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO", dot+1, bases, dict);
 	result = JyNI_PyObject_FromJythonPyObject(jres);
+//	jputs("New exception created:");
+//	jputs(name);
+//	jputsLong(PyType_HasFeature(((PyTypeObject*) result)->ob_type, Py_TPFLAGS_HEAPTYPE));
 //	jputs("control name");
 //	jputs(((PyTypeObject*) result)->tp_name);
 

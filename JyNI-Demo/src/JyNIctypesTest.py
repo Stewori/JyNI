@@ -62,11 +62,8 @@ printf("%d bottles of beer\n", 42)
 printf("%d bottles of beer\n", Bottles(73))
 
 from ctypes import c_char_p, c_int, c_double
-
-# currently c_double or float is not working for some reason
-printf.argtypes = [c_char_p, c_char_p, c_int, c_int]#, c_double]
-#printf("String '%s', Int %d, Double %f\n", "Hi", 10, 2.2)
-printf("String '%s', Int %d, Int2 %d\n", "Hi", 10, 22)
+printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
+printf("String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
 
 from ctypes import *
 class cell(Structure):
@@ -87,28 +84,16 @@ for i in range(8):
 	print p.name,
 	p = p.next[0]
 
-print ''
-# print c_int
-# print c_int.mro()
-# print type(c_int)
-
+print ""
 print "--------------------"
-print type(c_int)
-#print type(c_int).__mro__
-print c_int.mro()
-#print c_int.__mro__
-#from JyNI import JyNI
-#JyNI.jPrintInfo(c_int)
 
-#print c_int.__dict__
 IntArray6 = c_int * 6
 
-print type(IntArray6)
-print IntArray6.mro()
+#print type(IntArray6)
+#print IntArray6.mro()
 
 ia = IntArray6(5, 1, 7, 33, 99, -7)
 print ia
-# #ia = [5, 1, 7, 33, 99]
 qsort = libc.qsort
 
 def py_cmp_func(a, b):
@@ -120,7 +105,10 @@ cmp_func = CMPFUNC(py_cmp_func)
 qsort(ia, len(ia), sizeof(c_int), cmp_func)
 for i in range(len(ia)):
 	print ia[i],
-#for i in ia: print i,
+
+# Iterator-related builtins not yet supported:
+# for i in ia: print i,
+
 print ""
 print "===================="
 print "exited normally"
