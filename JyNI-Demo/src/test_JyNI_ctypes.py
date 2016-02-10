@@ -63,18 +63,15 @@ class TestJyNI_ctypes(unittest.TestCase):
 		libc.sprintf(buffer, "%d bottles of beer", Bottles(73))
 		self.assertEqual(buffer.value, "73 bottles of beer")
 
-# Moving these lines in a separate test (test_argtypes) currently causes failure, related to gc: 
+
+	def test_argtypes(self):
+		# We must later restore old argtypes (i.e. probably None) to assure
+		# that all tests are applied under same conditions.
+		saved_argtypes = libc.sprintf.argtypes
 		libc.sprintf.argtypes = [c_char_p, c_char_p, c_char_p, c_int, c_double]
 		libc.sprintf(buffer, "String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
 		self.assertTrue(buffer.value.startswith("String 'Hi'; Int 10; Double 2"))
-
-
-# 	def test_argtypes(self):
-# 		oldtypes = libc.sprintf.argtypes
-# 		libc.sprintf.argtypes = [c_char_p, c_char_p, c_char_p, c_int, c_double]
-# 		libc.sprintf(buffer, "String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
-# 		self.assertTrue(buffer.value.startswith("String 'Hi'; Int 10; Double 2"))
-# 		libc.sprintf.argtypes = oldtypes
+		libc.sprintf.argtypes = saved_argtypes
 
 
 	def test_pointers(self):

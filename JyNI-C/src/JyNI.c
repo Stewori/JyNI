@@ -2104,12 +2104,14 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	//if (JyNI_IsJyObject(op))
 	if (JyObject_IS_INITIALIZED(jy))
 	{
-		//jputsLong(__LINE__);
 		if (jy->flags & JY_CACHE_ETERNAL_FLAG_MASK) {
-			//jputsLong(__LINE__);
 			if (jy->flags & SYNC_ON_PY_TO_JY_FLAG_MASK)
 				JyNI_SyncPy2Jy(op, jy);
-			return jy->jy;
+			/* No local ref needed here, since JY_CACHE_ETERNAL guarantees immortality anyway.
+			 * However we still create a local ref, because the caller might call DeleteLocalRef
+			 * on it, which might fail by JVM-specific behavior.
+			 */
+			return (*env)->NewLocalRef(env, jy->jy);
 		} else {
 			//This might not work if called by a thread not attached to the JVM:
 			jobject result = (*env)->NewLocalRef(env, jy->jy);
@@ -2123,10 +2125,9 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			 * So a check for result != NULL is sufficient and much more efficient here.
 			 */
 			if (result != NULL) {
-				//jputsLong(__LINE__);
 				if (jy->flags & SYNC_ON_PY_TO_JY_FLAG_MASK)
 					JyNI_SyncPy2Jy(op, jy);
-				return jy->jy;
+				return result;
 			} else {
 				/* This is actually okay. It can happen if the Java-counterpart
 				 * of a mirrored object was collected by Java-gc.

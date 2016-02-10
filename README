@@ -195,11 +195,10 @@ sh JyNITkinterDemo.sh
 ----------
 
 Further steps:
-- support weak references
-- support garbage collection
+- improve ctypes support
 - support newstyle classes
-- support ctypes
 - support numpy
+- support buffer protocol
 - test and support on other platforms
 - provide autotools-support
 

@@ -1689,10 +1689,9 @@ static jboolean hasJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 
 static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 {
-	//jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	if (Is_Static_PyObject(op))
 	{
-		//jputsLong(__LINE__);
 		//jputs("JyNI-Warning: obtainJyGCHead was called with non-heap object.");
 		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass,
 				JyNI_getNativeStaticJyGCHead, (jlong) op);
@@ -1702,13 +1701,10 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_registerNativeStaticJyGCHead,
 					(jlong) op, result);
 		}
-		//jputsLong(__LINE__);
 		return result;
 	}
-	//jputsLong(__LINE__);
 	if (jy->flags & JY_CPEER_FLAG_MASK)
 	{
-		//jputsLong(__LINE__);
 //		if (PyType_Check(op)) {
 //			jputs("Warning: Exploring Type:");
 //			jputs(((PyTypeObject*) op)->tp_name);
@@ -1731,7 +1727,6 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 		return er;
 	} else
 	{
-		//jputsLong(__LINE__);
 		jboolean hasHeadAttr = JyObject_HasJyGCHead(op, jy);
 		jobject result = NULL;
 		if (hasHeadAttr)
@@ -1806,6 +1801,7 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 static int
 visit_exploreArrayLink(PyObject *op, void *arg)
 {
+//	jputs(__FUNCTION__);
 	/* JyNI-note:
 	 * It is hard to decide whether to explore non-heap-objects here or not.
 	 * On one hand they should be kept alive anyway. However there might be
