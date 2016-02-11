@@ -75,6 +75,7 @@ class TestJyNI_ctypes(unittest.TestCase):
 
 
 	def test_pointers(self):
+
 		class cell(Structure):
 			pass
 

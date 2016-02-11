@@ -562,7 +562,6 @@ PyObject_Repr(PyObject *v)
 //		jputs("rep res");
 //		jputs(Py_TYPE(v)->tp_name);
 		res = (*Py_TYPE(v)->tp_repr)(v);
-//		jputs("rep res done");
 		if (res == NULL)
 				return NULL;
 #ifdef Py_USING_UNICODE
@@ -590,6 +589,8 @@ PyObject_Repr(PyObject *v)
 PyObject *
 _PyObject_Str(PyObject *v)
 {
+//	jputs(__FUNCTION__);
+//	jputs(v->ob_type->tp_name);
 	PyObject *res;
 	int type_ok;
 	if (v == NULL)
@@ -602,7 +603,8 @@ _PyObject_Str(PyObject *v)
 	if (delegate)
 	{
 		env(NULL);
-		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObjectAsString));
+		return JyNI_PyObject_FromJythonPyObject(
+				(*env)->CallObjectMethod(env, delegate, pyObject__str__));
 	}
 #ifdef Py_USING_UNICODE
 	if (PyUnicode_CheckExact(v)) {
@@ -612,7 +614,6 @@ _PyObject_Str(PyObject *v)
 #endif
 	if (Py_TYPE(v)->tp_str == NULL)
 		return PyObject_Repr(v);
-
 	// It is possible for a type to have a tp_str representation that loops
 	// infinitely.
 //	env(NULL);
@@ -625,10 +626,7 @@ _PyObject_Str(PyObject *v)
 //		(*env)->ExceptionClear(env);
 //		return NULL;
 //	}
-//	puts("yyy");
 	res = (*Py_TYPE(v)->tp_str)(v);
-//	puts("result type10: ");
-//	puts(res->ob_type->tp_name);
 	Py_LeaveRecursiveCall();
 //	Jy_LeaveRecursiveCall();
 	if (res == NULL) return NULL;

@@ -243,18 +243,12 @@ PyErr_ExceptionMatches(PyObject *exc)
 void
 PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 {
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	if (*exc == NULL) {
 		/* There was no exception, so nothing to do. */
 		return;
 	}
-//	puts("a");
-//	if (!(*exc)->ob_type) {
-//		puts("exc ob_type is null");
-//	} else
-//		puts((*exc)->ob_type->tp_name);
-//	puts(((PyTypeObject*) *exc)->tp_name);
-//	puts("b");
+
 	env();
 	jobject pyExc = (*env)->NewObject(env, pyExceptionClass, pyExceptionFullConstructor,
 		JyNI_JythonPyObject_FromPyObject(*exc),
@@ -264,8 +258,11 @@ PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 //		puts("exc ob_type is still null");
 //	} else
 //		puts((*exc)->ob_type->tp_name);
-//	puts("c");
+//	jputs("old val:");
+//	if (*val && PyString_CheckExact(*val)) jputs(PyString_AS_STRING(*val));
+//	else jputs("val null");
 	(*env)->CallVoidMethod(env, pyExc, pyExceptionNormalize);
+
 	*exc = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTypeField));
 	*val = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionValueField));
 	*tb = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyExceptionTracebackField));
