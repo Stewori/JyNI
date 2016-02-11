@@ -71,20 +71,20 @@ The following built-in types are already supported:
 * Natively defined custom-types
 * Exception types
 * PyType as static type or heap type
+* weak reference types
 
 Passing instances of new-style classes to an extension does not work yet.
 
 
 JyNI has been tested on
 
-* Linux Mint Debian edition (LMDE) (32 bit and 64 bit)
+* Linux Mint Debian edition (LMDE) (64 bit)
 * Linux Mint 13 (64 bit)
-* Ubuntu 13.10 (64 bit)
+* Mac OS-X (10.10 and 10.11 intel-2.7)
 
-It would almost surely also work on Ubuntu (32 bit) and Debian.
+It would presumably work also on other posix systems.
 If you try it on further distributions, please consider to report your results
-(see contact section). Theoretically, the current version should be buildable
-for all systems with shlib.
+(see contact section).
 
 
 
@@ -107,16 +107,9 @@ starting with "JAVA_HOME" such that it is appropriate for your system.
 jython.jar into the JyNI base directory or you edit "makefile" and adjust the
 JYTHON-variable such that it points to jython.jar. If you want to use
 JyNIDemo.sh, you need to adjust the Jython-path in that file too. Same for
-JyNITkinterDemo.sh.
-Note: Current JyNI repository version requires Jython >2.7.0, so until Jython
-2.7.1 is released (presumably in January 2016) you must built Jython from
-its newest repository version. Quickguide:
-  - git clone https://github.com/jythontools/jython
-  - cd jython
-  - ant jar-standalone
-    Note: Jython still requires Java 7 for building. (Not Java 8! *Running*
-    Jython with Java 8 on the other hand is fine.) Make sure JAVA_HOME is
-    configured accordingly. Sorry for the inconvenience.
+the other demonstration shell-scripts.
+Note: Current JyNI repository version requires Jython 2.7.1 (beta 3) or newer.
+Jython 2.7.1 (beta 3) is available here: http://fwierzbicki.blogspot.de/2016/02/jython-271-beta3-released.html
 
 * If not yet done, install the dev-package of Python 2.7. JyNI only needs
 pyconfig.h from that package. Alternatively (if you know what you're doing)
@@ -126,6 +119,9 @@ corresponding include-path in the makefile.
 * Build JyNI: Open a terminal and enter the JyNI base directory. Type "make".
 Optionally run "make clean" afterwards. The resulting binaries are placed in
 the subfolder named "build".
+On OS-X append "-f makefile.osx".
+To build on Linux with clang (rather than gcc) append "-f makefile.clang".
+(For OS-X only a clang-based makefile is available.)
 
 To run Jython with JyNI support, call (from JyNI base dir)
 
@@ -161,7 +157,7 @@ JyNI-Demo/src/test_JyNI.py runs unittests for some basic JyNI features.
 You can run it via
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/test_JyNI.py
 or
-sh JyNI_unittest.sh
+./JyNI_unittest.sh
 provided that jython.jar is placed in JyNI's directory. Otherwise you need to
 provide the correct path for your jython.jar in the command.
 
@@ -170,7 +166,7 @@ Python-side. It should run perfectly with either CPython 2.7.x or
 Jython+JyNI. To run it, type
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDemo.py
 Like with the unittest you can alternatively run
-sh JyNIDemo.sh
+./JyNIDemo.sh
 
 To see a basic demonstration that JyNI is capable of using the original
 datetime module, run
@@ -179,11 +175,15 @@ java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDate
 To see a demonstration of exception support (on native level), run
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIExceptionTest.py
 
-
 To see a demonstration of Tkinter support, run
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNITkinterTest.py
 or
-sh JyNITkinterDemo.sh
+./JyNITkinterDemo.sh
+
+For a demonstration of ctypes support, run
+java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIctypesTest.py
+or
+./JyNIctypesDemo.sh
 
 
 
@@ -279,30 +279,14 @@ All rights reserved.
 8. License
 ----------
 
-The software in this package is distributed under the GNU General Public
-License (with a special exception described below).
+The software in this package is distributed under the
+GNU Lesser General Public License.
 
-A copy of GNU General Public License (GPL) is included in this distribution,
-in the file "COPYING".  If you do not have the source code, it is available at:
+A copy of GNU Lesser General Public License (LGPL) is included in this
+distribution, in the files "COPYING" and "COPYING.LESSER".
+If you do not have the source code, it is available at:
 
     https://github.com/Stewori/JyNI
-
-  Linking this library statically or dynamically with other modules is
-  making a combined work based on this library.  Thus, the terms and
-  conditions of the GNU General Public License cover the whole
-  combination.
- 
-  As a special exception, the copyright holders of this library give you
-  permission to link this library with independent modules to produce an
-  executable, regardless of the license terms of these independent
-  modules, and to copy and distribute the resulting executable under
-  terms of your choice, provided that you also meet, for each linked
-  independent module, the terms and conditions of the license of that
-  module.  An independent module is a module which is not derived from
-  or based on this library.  If you modify this library, you may extend
-  this exception to your version of the library, but you are not
-  obligated to do so.  If you do not wish to do so, delete this
-  exception statement from your version.
 
 
 JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
@@ -324,5 +308,5 @@ For convenience, a copy of the current section is provided in the file
 9. Contact
 ----------
 
-Please use the contact information provided on www.jyni.org, section "contact".
+Please use the contact information provided on www.jyni.org/#contact.
 

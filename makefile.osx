@@ -40,7 +40,7 @@ JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/g
 
 all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
 	@echo ''
-	@echo 'Build finnished.'
+	@echo 'Build successful.'
 
 $(OUTPUTDIR):
 	mkdir $(OUTPUTDIR)
