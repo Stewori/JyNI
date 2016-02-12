@@ -2329,7 +2329,15 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 	PyObject* refPool[size];
 	jint graphResult[size];
 	jlong* arr = (*env)->GetLongArrayElements(env, references, NULL);
-	memcpy(refPool, arr, size*sizeof(PyObject*));
+#if __SIZEOF_POINTER__ == 8
+	/* Regardless of the platform jlong is always 8 bytes. So this branch is processed
+	 * whenever jlong and PyObject* are of same size, i.e. memcpy can be used:
+	 */
+	Py_MEMCPY(refPool, arr, size*sizeof(PyObject*));
+#else
+	for (i = 0; i < size; ++i) refPool[i] = (PyObject*) arr[i];
+#endif
+
 	(*env)->ReleaseLongArrayElements(env, references, arr, JNI_ABORT);
 	jboolean graphInvalid = checkReferenceGraph(refPool, size, graphResult);
 	if (graphInvalid)
