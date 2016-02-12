@@ -270,11 +270,11 @@ PyThreadState_Clear(PyThreadState *tstate)
 //
 //	Py_CLEAR(tstate->dict);
 //	Py_CLEAR(tstate->async_exc);
-//
-//	Py_CLEAR(tstate->curexc_type);
-//	Py_CLEAR(tstate->curexc_value);
-//	Py_CLEAR(tstate->curexc_traceback);
-//
+
+	Py_CLEAR(tstate->curexc_type);
+	Py_CLEAR(tstate->curexc_value);
+	Py_CLEAR(tstate->curexc_traceback);
+
 //	Py_CLEAR(tstate->exc_type);
 //	Py_CLEAR(tstate->exc_value);
 //	Py_CLEAR(tstate->exc_traceback);
@@ -290,8 +290,9 @@ PyThreadState_Clear(PyThreadState *tstate)
 static void
 tstate_delete_common(PyThreadState *tstate)
 {
-	env();
-	JyTState_clearNativeThreadState(env, NULL, (jlong) tstate);
+//	env();
+//	JyTState_clearNativeThreadState(env, NULL, (jlong) tstate);
+	_delNativeThreadState(tstate);
 //	PyInterpreterState *interp;
 //	PyThreadState **p;
 //	PyThreadState *prev_p = NULL;
@@ -560,7 +561,7 @@ PyThreadState_IsCurrent(PyThreadState *tstate)
 //	autoTLSkey = PyThread_create_key();
 //	autoInterpreterState = i;
 //	assert(PyThread_get_key_value(autoTLSkey) == NULL);
-//	assert(t->gilstate_counter == 0);
+//	assert(t->JyNI_gilstate_counter == 0);
 //
 //	_PyGILState_NoteThreadState(t);
 //}
@@ -659,7 +660,7 @@ PyGILState_Ensure(void)
 //			Py_FatalError("Couldn't create thread-state for new thread");
 //		/* This is our thread state!  We'll need to delete it in the
 //		   matching call to PyGILState_Release(). */
-//		tcur->gilstate_counter = 0;
+//		tcur->JyNI_gilstate_counter = 0;
 //		current = 0; /* new thread state is never current */
 //	}
 //	else
@@ -680,13 +681,13 @@ void
 PyGILState_Release(PyGILState_STATE oldstate)
 {
 	env();
-//	PyThreadState *tcur = (PyThreadState *)PyThread_get_key_value(
-//															autoTLSkey);
+//	PyThreadState *tcur = (PyThreadState*) PyThread_get_key_value(autoTLSkey);
 	PyThreadState *tcur = (PyThreadState*) (*env)->CallStaticLongMethod(env,
 			JyTStateClass, JyTState_prepareNativeThreadState);
-//	if (tcur == NULL)
+
 	if (!tcur->JyNI_gilstate_counter) {
-		JyTState_clearNativeThreadState(env, NULL, tcur);
+		//JyTState_clearNativeThreadState(env, NULL, tcur);
+		_delNativeThreadState(tcur);
 		Py_FatalError("auto-releasing thread-state, "
 					  "but no thread-state for this thread");
 	}
@@ -699,12 +700,12 @@ PyGILState_Release(PyGILState_STATE oldstate)
 		Py_FatalError("This thread state must be current when releasing");
 	assert(PyThreadState_IsCurrent(tcur));
 	--tcur->JyNI_gilstate_counter;
-	assert(tcur->gilstate_counter >= 0); /* illegal counter value */
+	assert(tcur->JyNI_gilstate_counter >= 0); /* illegal counter value */
 
 	/* If we're going to destroy this thread-state, we must
 	 * clear it while the GIL is held, as destructors may run.
 	 */
-	if (tcur->gilstate_counter == 0) {
+	if (tcur->JyNI_gilstate_counter == 0) {
 		/* can't have been locked when we created it */
 		assert(oldstate == PyGILState_UNLOCKED);
 		int detach = tcur->JyNI_natively_attached;

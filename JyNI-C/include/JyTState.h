@@ -62,6 +62,7 @@
 #define TS_TRUNCATED_SIZE (sizeof(struct _ts*) + sizeof(PyInterpreterState*) \
 		+ sizeof(struct _frame*) + 3*sizeof(int) + 2*sizeof(Py_tracefunc) \
 		+ 5*sizeof(PyObject*))
+//#define TS_TRUNCATED_SIZE sizeof(PyThreadState)
 
 inline void JyErr_InsertCurExc();
 inline void Py_SetRecursionLimitNative(int new_limit);
@@ -93,5 +94,7 @@ jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState
  * Signature: (J)V
  */
 void JyTState_clearNativeThreadState(JNIEnv *env, jclass class, jlong threadState);
+
+void _delNativeThreadState(PyThreadState* threadState);
 
 #endif /* JYTSTATE_H_ */

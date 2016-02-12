@@ -83,7 +83,10 @@ jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState
 	tstate->frame = NULL;
 	tstate->recursion_depth = 0;
 	//int tracing = 0;
-	tstate->JyNI_gilstate_counter = 0;
+	/* We directly init this to 1, which is the Java-side keep-alive anchor.
+	 * It will be released in JyTState_clearNativeThreadState.
+	 */
+	tstate->JyNI_gilstate_counter = 1;
 	//int use_tracing = 0;
 	tstate->JyNI_natively_attached = 0;
 	//Py_tracefunc c_profilefunc = NULL;
@@ -103,9 +106,19 @@ jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState
  * Class:     JyNI_JyNI
  * Method:    clearNativeThreadState
  * Signature: (J)V
+ *
+ * Don't call this method from native code!
+ * It decrements the gilstate counter to release the Java-side keep-alive anchor
+ * of the thread state. Thus it must only be called from Java.
  */
 void JyTState_clearNativeThreadState(JNIEnv *env, jclass class, jlong threadState)
 {
 	(*env)->DeleteWeakGlobalRef(env, TS_GET_JY((PyThreadState*) threadState));
-	PyObject_RawFree((void*) threadState);
+	if (!--((PyThreadState*) threadState)->JyNI_gilstate_counter)
+		_delNativeThreadState((PyThreadState*) threadState);
+}
+
+void _delNativeThreadState(PyThreadState* threadState)
+{
+	PyObject_RawFree(threadState);
 }
