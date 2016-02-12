@@ -2720,6 +2720,17 @@ jmethodID JyLockConstructor;
 jmethodID JyLockAcquire;
 jmethodID JyLockRelease;
 
+jclass NativeActionClass;
+jmethodID NativeAction_constructor;
+jfieldID NativeAction_action;
+jfieldID NativeAction_obj;
+jfieldID NativeAction_nativeRef1;
+jfieldID NativeAction_nativeRef2;
+jfieldID NativeAction_cTypeName;
+jfieldID NativeAction_cMethod;
+jfieldID NativeAction_cLine;
+jfieldID NativeAction_cFile;
+
 jclass JyReferenceMonitorClass;
 jmethodID JyRefMonitorMakeDebugInfo;
 jmethodID JyRefMonitorAddAction;
@@ -3384,14 +3395,28 @@ inline jint initJyNI(JNIEnv *env)
 	JyLockAcquire = (*env)->GetMethodID(env, JyLockClass, "acquire", "(Z)Z");
 	JyLockRelease = (*env)->GetMethodID(env, JyLockClass, "release", "()V");
 
+	jclass NativeActionClassLocal = (*env)->FindClass(env, "JyNI/JyReferenceMonitor$NativeAction");
+	NativeActionClass = (jclass) (*env)->NewWeakGlobalRef(env, NativeActionClassLocal);
+	(*env)->DeleteLocalRef(env, NativeActionClassLocal);
+	NativeAction_constructor = (*env)->GetMethodID(env, NativeActionClass, "<init>", "()V");
+	NativeAction_action = (*env)->GetFieldID(env, NativeActionClass, "action", "S");
+	NativeAction_obj = (*env)->GetFieldID(env, NativeActionClass, "obj", "Lorg/python/core/PyObject;");
+	NativeAction_nativeRef1 = (*env)->GetFieldID(env, NativeActionClass, "nativeRef1", "J");
+	NativeAction_nativeRef2 = (*env)->GetFieldID(env, NativeActionClass, "nativeRef2", "J");
+	NativeAction_cTypeName = (*env)->GetFieldID(env, NativeActionClass, "cTypeName", "Ljava/lang/String;");
+	NativeAction_cMethod = (*env)->GetFieldID(env, NativeActionClass, "cMethod", "Ljava/lang/String;");
+	NativeAction_cLine = (*env)->GetFieldID(env, NativeActionClass, "cLine", "I");
+	NativeAction_cFile = (*env)->GetFieldID(env, NativeActionClass, "cFile", "Ljava/lang/String;");
+
 	jclass JyReferenceMonitorClassLocal = (*env)->FindClass(env, "JyNI/JyReferenceMonitor");
 	JyReferenceMonitorClass = (jclass) (*env)->NewWeakGlobalRef(env, JyReferenceMonitorClassLocal);
 	(*env)->DeleteLocalRef(env, JyReferenceMonitorClassLocal);
-	JyRefMonitorMakeDebugInfo = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "makeDebugInfo",
-			"(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)LJyNI/JyReferenceMonitor$ObjectLogDebugInfo;");
+//	JyRefMonitorMakeDebugInfo = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "makeDebugInfo",
+//			"(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)LJyNI/JyReferenceMonitor$ObjectLogDebugInfo;");
 	JyRefMonitorAddAction = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "addNativeAction",
 			//"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V");
-			"(SLorg/python/core/PyObject;JJLJyNI/JyReferenceMonitor$ObjectLogDebugInfo;)V");
+			//"(SLorg/python/core/PyObject;JJLJyNI/JyReferenceMonitor$ObjectLogDebugInfo;)V");
+			"(LJyNI/JyReferenceMonitor$NativeAction;)V");
 
 	//Peer stuff:
 	jclass pyCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyCPeer");

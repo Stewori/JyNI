@@ -104,37 +104,35 @@ public class JyReferenceMonitor {
 		return result.substring(1);
 	}
 
-	public static class ObjectLogDebugInfo {
+	public static class NativeAction {
+		public short action;
+		public PyObject obj;
+		public long nativeRef1;
+		public long nativeRef2;
+
 		public String cTypeName;
 		public String cMethod;
-		public int line;
+		public int cLine;
 		public String cFile;
 	}
 
-	public static ObjectLogDebugInfo makeDebugInfo(String cTypeName, String cMethod,
-			int line, String cFile) {
-		ObjectLogDebugInfo result = new ObjectLogDebugInfo();
-		result.cTypeName = cTypeName;
-		result.cMethod = cMethod;
-		result.line = line;
-		result.cFile = cFile;
-		return result;
-	}
+//	public static ObjectLogDebugInfo makeDebugInfo(String cTypeName, String cMethod,
+//			int line, String cFile) {
+//		ObjectLogDebugInfo result = new ObjectLogDebugInfo();
+//		result.cTypeName = cTypeName;
+//		result.cMethod = cMethod;
+//		result.line = line;
+//		result.cFile = cFile;
+//		return result;
+//	}
 
 	public static class ObjectLogException extends Exception {
 		public ObjectLog src;
-		public String cMethod;
-		public int line;
-		public String cFile;
-		public short action;
+		public NativeAction action;
 
-		public ObjectLogException(String message, ObjectLog src, short action,
-				String cMethod, int line, String cFile) {
+		public ObjectLogException(String message, ObjectLog src, NativeAction action) {
 			super(message);
 			this.src = src;
-			this.cMethod = cMethod;
-			this.line = line;
-			this.cFile = cFile;
 			this.action = action;
 		}
 	}
@@ -257,8 +255,7 @@ public class JyReferenceMonitor {
 			if (op != null) object = new WeakReference<>(op);
 		}
 
-		public void updateInfo(short action, PyObject obj, long nativeRef1, long nativeRef2,
-				String nativeType, String cMethod, String cFile, int line)//, String repr)
+		public void updateInfo(NativeAction nvac)//, String repr)
 				throws ObjectLogException {
 //			if (nativeType == null) {
 //				System.out.println("JyNI-Warning: RefMonitor called with null-type.");
@@ -266,73 +263,73 @@ public class JyReferenceMonitor {
 //				System.out.println("    "+cMethod);
 //				System.out.println("    "+line);
 //			}
-			if (obj != null) {
-				if (object != null && object.get() != null && object.get() != obj) {
+			if (nvac.obj != null) {
+				if (object != null && object.get() != null && object.get() != nvac.obj) {
 					throw new ObjectLogException(
-						"Log-Object error: Contradictory PyObject: "+obj+" vs "+object.get(),
-						this, action, cMethod, line, cFile);
+						"Log-Object error: Contradictory PyObject: "+nvac.obj+" vs "+object.get(),
+						this, nvac);
 				} else if (object == null) {
-					object = new WeakReference<>(obj);
+					object = new WeakReference<>(nvac.obj);
 				}
 			}
 			if (nativeType != null) {
 				if (this.nativeType != null && !this.nativeType.equals(nativeType)) {
 					throw new ObjectLogException(
 						"Log-Type error: Contradictory native type-strings!",
-						this, action, cMethod, line, cFile);
+						this, nvac);
 				} else {
-					this.nativeType = nativeType;
+					this.nativeType = nvac.cTypeName;
 				}
 			}
-			if ((action & MEMORY_MASK) != 0) {
-				if ((action & INC_MASK) != 0 && (action &  DEC_MASK) != 0) {
+			if ((nvac.action & MEMORY_MASK) != 0) {
+				if ((nvac.action & INC_MASK) != 0 && (nvac.action &  DEC_MASK) != 0) {
 					if (nativeAlloc == 0)
 						throw new ObjectLogException(
 							"Log-Realloc error: Realloc on non-allocated ref!",
-							this, action, cMethod, line, cFile);
-					if (nativeRef != nativeRef1)
+							this, nvac);
+					if (nativeRef != nvac.nativeRef1)
 						throw new ObjectLogException(
 							"Log-Realloc error: Old ref doesn't match!",
-							this, action, cMethod, line, cFile);
-					nativeRef = nativeRef2;
+							this, nvac);
+					nativeRef = nvac.nativeRef2;
 					nativeLatestRealloc = System.currentTimeMillis();
-					nativeReallocFunc = cMethod+"/"+line;
-				} else if ((action & INC_MASK) != 0) {
+					nativeReallocFunc = nvac.cMethod+"/"+nvac.cLine;
+				} else if ((nvac.action & INC_MASK) != 0) {
 					if (nativeAlloc != 0)
 						throw new ObjectLogException(
 							"Log-Alloc error: Alloc on already allocated ref!",
-							this, action, cMethod, line, cFile);
+							this, nvac);
 					if (nativeFree != 0)
 						throw new ObjectLogException(
 							"Log-Alloc error: Alloc on already freed ref!",
-							this, action, cMethod, line, cFile);
+							this, nvac);
 					nativeAlloc = System.currentTimeMillis();
-					nativeAllocFunc = cMethod+"/"+line;
-				} else if ((action & DEC_MASK) != 0) {
+					nativeAllocFunc = nvac.cMethod+"/"+nvac.cLine;
+				} else if ((nvac.action & DEC_MASK) != 0) {
 					if (nativeAlloc == 0)
 						throw new ObjectLogException(
 							"Log-Free error: Free on non-allocated ref!",
-							this, action, cMethod, line, cFile);
+							this, nvac);
 					if (nativeFree != 0)
 						throw new ObjectLogException(
 							"Log-Free error: Free on already freed ref!",
-							this, action, cMethod, line, cFile);
+							this, nvac);
 					nativeFree = System.currentTimeMillis();
-					nativeFreeFunc = cMethod+"/"+line;
+					nativeFreeFunc = nvac.cMethod+"/"+nvac.cLine;
 				}
 			}
-			if ((action & IMMORTAL_MASK) != 0) {
+			if ((nvac.action & IMMORTAL_MASK) != 0) {
 				if (immortal != 0)
 					throw new ObjectLogException(
 						"Log-Immortal error: Object made immortal twice!",
-						this, action, cMethod, line, cFile);
+						this, nvac);
 				immortal = System.currentTimeMillis();
-				immortalFunc = cMethod+"/"+line;
+				immortalFunc = nvac.cMethod+"/"+nvac.cLine;
 			}
-			if ((action & GC_MASK) != 0) {
+			if ((nvac.action & GC_MASK) != 0) {
 				gc = true;
 			}
-			if ((action & INLINE_MASK) != 0) {
+			if ((nvac.action & INLINE_MASK) != 0) {
 				inline = true;
 			}
 			//if (repr != null) this.repr = repr;
@@ -446,25 +443,24 @@ public class JyReferenceMonitor {
 //		
 //	}
 
-	public static void addNativeAction(short action, PyObject obj, long nativeRef1, long nativeRef2,
-			ObjectLogDebugInfo debugInfo) {
+	public static void addNativeAction(NativeAction nvac) {
+//	public static void addNativeAction(short action, PyObject obj, long nativeRef1, long nativeRef2,
+//			ObjectLogDebugInfo debugInfo) {
 			//String nativeType, String cMethod, String cFile, int line, String nativeRepr) {
 		//System.out.println(actionToString(action)+" - "+action+" ("+cMethod+", "+nativeRef1+")");
-		ObjectLog log = nativeObjects.get(nativeRef1);
+		ObjectLog log = nativeObjects.get(nvac.nativeRef1);
 		if (log == null) {
-			log = new ObjectLog(nativeRef1);
-			nativeObjects.put(nativeRef1, log);
+			log = new ObjectLog(nvac.nativeRef1);
+			nativeObjects.put(nvac.nativeRef1, log);
 		} else if (log.nativeFree != 0) {
-			ObjectLog log2 = new ObjectLog(nativeRef1);
+			ObjectLog log2 = new ObjectLog(nvac.nativeRef1);
 			log2.previousLife = log;
-			nativeObjects.put(nativeRef1, log2);
+			nativeObjects.put(nvac.nativeRef1, log2);
 			log = log2;
 			//System.out.println("Replace log for reference "+nativeRef1+" ("+nativeType+") freed? "+log.nativeFree);
 		}
 		try {
-			log.updateInfo(action, obj, nativeRef1, nativeRef2,
-					debugInfo.cTypeName, debugInfo.cMethod, debugInfo.cFile, debugInfo.line);
-					//nativeType, cMethod, cFile, line, nativeRepr);
+			log.updateInfo(nvac);
 		} catch (ObjectLogException ole) {
 			System.err.println(ole.getMessage());
 		}

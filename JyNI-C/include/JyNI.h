@@ -941,6 +941,17 @@ extern jmethodID JyLockConstructor;
 extern jmethodID JyLockAcquire;
 extern jmethodID JyLockRelease;
 
+extern jclass NativeActionClass;
+extern jmethodID NativeAction_constructor;
+extern jfieldID NativeAction_action;
+extern jfieldID NativeAction_obj;
+extern jfieldID NativeAction_nativeRef1;
+extern jfieldID NativeAction_nativeRef2;
+extern jfieldID NativeAction_cTypeName;
+extern jfieldID NativeAction_cMethod;
+extern jfieldID NativeAction_cLine;
+extern jfieldID NativeAction_cFile;
+
 extern jclass JyReferenceMonitorClass;
 extern jmethodID JyRefMonitorMakeDebugInfo;
 extern jmethodID JyRefMonitorAddAction;

@@ -52,40 +52,46 @@ void JyRefMonitor_setMemDebugFlags(JNIEnv *env, jclass class, jint flags)
 void JyRefMonitor_addAction(jshort action, PyObject* op, JyObject* object,
 		size_t size, char* type, char* function, char* file, jint line)
 {
-	if (op)
-		assert(op == FROM_JY(object));
-	env();
-	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
-	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
-	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
-	jweak jop = NULL;
-	jstring repr = NULL;
-	//if (PyString_CheckExact(FROM_JY(object))) jputsLong(__LINE__);
-	//if (type && strcmp(type, "str")) jputsLong(__LINE__);
-//		repr = (*env)->NewStringUTF(env, PyString_AS_STRING(FROM_JY(object)));
-	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK)) jop = object->jy;
-	jobject dbgInfo = (*env)->CallStaticObjectMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorMakeDebugInfo, jtp, jcm, line, jfl);
-	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), NULL,
-			dbgInfo);//jtp, jcm, jfl, line, repr);
+	if (op) assert(op == FROM_JY(object));
+	JyRefMonitor_addAction2(action, object, NULL, size, type, function, file, line);
 }
 
 void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2, size_t size,
 		char* type, char* function, char* file, jint line)
 {
 	env();
-	jstring jtp = type == NULL ? NULL : (*env)->NewStringUTF(env, type);
-	jstring jcm = function == NULL ? NULL : (*env)->NewStringUTF(env, function);
-	jstring jfl = file == NULL ? NULL : (*env)->NewStringUTF(env, file);
-	jstring repr = NULL;
-//	if (PyString_Check(FROM_JY(object)))
-//		repr = (*env)->NewStringUTF(env, PyString_AS_STRING(FROM_JY(object)));
-	jweak jop = NULL;
-	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK)) jop = object->jy;
-	jobject dbgInfo = (*env)->CallStaticObjectMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorMakeDebugInfo, jtp, jcm, line, jfl);
-	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass,
-			JyRefMonitorAddAction, action, jop, (jlong) FROM_JY(object), (jlong) FROM_JY(object2),
-			dbgInfo);//jtp, jcm, jfl, line, repr);
+	jobject nativeAction = (*env)->NewObject(env, NativeActionClass, NativeAction_constructor);
+	(*env)->SetShortField(env, nativeAction, NativeAction_action, action);
+	(*env)->SetIntField(env, nativeAction, NativeAction_cLine, line);
+
+	(*env)->SetLongField(env, nativeAction, NativeAction_nativeRef1, (jlong) FROM_JY(object));
+
+	if (object2)
+		(*env)->SetLongField(env, nativeAction, NativeAction_nativeRef2, (jlong) FROM_JY(object));
+
+	if (type)
+	{
+		jstring jtp = (*env)->NewStringUTF(env, type);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_cTypeName, jtp);
+		(*env)->DeleteLocalRef(env, jtp);
+	}
+
+	if (function)
+	{
+		jstring jcm = (*env)->NewStringUTF(env, function);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_cMethod, jcm);
+		(*env)->DeleteLocalRef(env, jcm);
+	}
+
+	if (file)
+	{
+		jstring jfl = (*env)->NewStringUTF(env, file);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_cFile, jfl);
+		(*env)->DeleteLocalRef(env, jfl);
+	}
+
+	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK))
+		(*env)->SetObjectField(env, nativeAction, NativeAction_obj, object->jy);
+	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass, JyRefMonitorAddAction, nativeAction);
+	(*env)->DeleteLocalRef(env, nativeAction);
 }
