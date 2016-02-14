@@ -53,7 +53,7 @@ sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it 
 sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
 #built with setup.py on macosx 10.11:
-sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
+sys.path.append('../../DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from base dir
 
 sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
