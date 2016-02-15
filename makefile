@@ -6,6 +6,7 @@
 
 CC = gcc
 JC = javac
+JAVA = java
 OUTPUTDIR = ./build
 
 # Adjust the following line to point to Jython 2.7
@@ -56,6 +57,7 @@ $(JYNIBIN)/JyNI: $(JYNIBIN)
 
 $(JYNIBIN)/Lib: $(JYNIBIN)
 	cp -r JyNI-Lib/* $(JYNIBIN)
+	$(JAVA) -cp $(JYTHON) org.python.util.jython -c "import compileall; compileall.compile_dir('$(JYNIBIN)')"
 
 $(JYTHON):
 	@echo ''
@@ -74,7 +76,7 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 	jar cvf $(OUTPUTDIR)/JyNI.jar -C $(JYNIBIN) .
 
 cleanJ:
-	rm -rf $(JYNIBIN)/JyNI
+	rm -rf $(JYNIBIN)
 
 clean:
 	rm -rf $(JYNIBIN)
