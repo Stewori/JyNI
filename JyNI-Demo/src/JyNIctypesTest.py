@@ -61,7 +61,7 @@ printf = libc.printf
 printf("%d bottles of beer\n", 42)
 printf("%d bottles of beer\n", Bottles(73))
 
-#printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
+printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
 printf("String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
 
 buffer = c_buffer("\000", 10)
