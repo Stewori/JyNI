@@ -36,7 +36,6 @@ import JyNI.gc.JyNIFinalizeTriggerFactory;
 import java.io.File;
 import java.util.Properties;
 import org.python.core.JythonInitializer;
-import org.python.core.Py;
 import org.python.core.PySystemState;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.finalization.FinalizeTrigger;
