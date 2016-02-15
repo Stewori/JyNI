@@ -54,8 +54,14 @@ libJyNI: $(OBJECTS)
 libJyNI-Loader: ./JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
-$(JYNIBIN)/JyNI:
+$(JYNIBIN):
+	mkdir $(JYNIBIN)
+
+$(JYNIBIN)/JyNI: $(JYNIBIN)
 	$(JC) $(JFLAGS) $(JSOURCES)
+
+$(JYNIBIN)/Lib: $(JYNIBIN)
+	cp -r JyNI-Lib/* $(JYNIBIN)
 
 $(JYTHON):
 	@echo ''
@@ -69,11 +75,15 @@ $(JYTHON):
 	@echo ''
 	@false
 
-JyNI: $(JYTHON) $(JYNIBIN)/JyNI
+JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
+	cp -r JyNI-Java/META-INF $(JYNIBIN)
 	jar cvf $(OUTPUTDIR)/JyNI.jar -C $(JYNIBIN) .
 
-clean:
+cleanJ:
 	rm -rf $(JYNIBIN)/JyNI
+
+clean:
+	rm -rf $(JYNIBIN)
 	rm -f ./JyNI-C/src/*.o
 	rm -f ./JyNI-C/src/Python/*.o
 	rm -f ./JyNI-C/src/Objects/*.o

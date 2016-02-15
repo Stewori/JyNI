@@ -32,8 +32,11 @@ package JyNI;
 import JyNI.gc.JyGCHead;
 import JyNI.gc.JyWeakReferenceGC;
 import JyNI.gc.JyNIFinalizeTriggerFactory;
+
+import java.io.File;
 import java.util.Properties;
 import org.python.core.JythonInitializer;
+import org.python.core.Py;
 import org.python.core.PySystemState;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.finalization.FinalizeTrigger;
@@ -62,10 +65,20 @@ public class JyNIInitializer implements JythonInitializer {
 	public void initialize(Properties preProperties, Properties postProperties, String[] argv,
 			ClassLoader classLoader, ExtensiblePyObjectAdapter adapter)
 	{
-		//System.out.println("Init JyNI...");
+//		System.out.println("Init JyNI...");
+//		System.out.println(System.getProperty("java.class.path"));
+		//System.getProperties().list(System.out);
 		PySystemState initState = PySystemState.doInitialize(preProperties,
 				postProperties, argv, classLoader, adapter);
 		initState.path_hooks.append(new JyNIImporter());
+		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
+		String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
+		for (int i = 0; i < cp.length; ++i) {
+			//System.out.println(cp[i]);
+			if (cp[i].endsWith("JyNI.jar")) {
+				initState.path.add(0, cp[i]);
+			}
+		}
 //		initializeState(initState);
 //	}
 //

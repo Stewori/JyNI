@@ -26,7 +26,7 @@ JYNIBIN = ./JyNI-Java/bin
 INCLUDES = -I./JyNI-C/include -I./JyNI-C/include/Python_JyNI -I./JyNI-Java/include -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM) -I$(PY_INCLUDE)
 CFLAGS = -fPIC -Wl,--add-stdcall-alias -c $(INCLUDES)
 LDFLAGS = -shared
-JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN)
+JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN) -target 1.7
 
 SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
 OBJECTS = $(SOURCES:.c=.o)
@@ -48,8 +48,14 @@ libJyNI: $(OBJECTS)
 libJyNI-Loader: ./JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
-$(JYNIBIN)/JyNI:
+$(JYNIBIN):
+	mkdir $(JYNIBIN)
+
+$(JYNIBIN)/JyNI: $(JYNIBIN)
 	$(JC) $(JFLAGS) $(JSOURCES)
+
+$(JYNIBIN)/Lib: $(JYNIBIN)
+	cp -r JyNI-Lib/* $(JYNIBIN)
 
 $(JYTHON):
 	@echo ''
@@ -63,14 +69,15 @@ $(JYTHON):
 	@echo ''
 	@false
 
-JyNI: $(JYTHON) $(JYNIBIN)/JyNI
+JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
+	cp -r JyNI-Java/META-INF $(JYNIBIN)
 	jar cvf $(OUTPUTDIR)/JyNI.jar -C $(JYNIBIN) .
 
 cleanJ:
 	rm -rf $(JYNIBIN)/JyNI
 
 clean:
-	rm -rf $(JYNIBIN)/JyNI
+	rm -rf $(JYNIBIN)
 	rm -f ./JyNI-C/src/*.o
 	rm -f ./JyNI-C/src/Python/*.o
 	rm -f ./JyNI-C/src/Objects/*.o
