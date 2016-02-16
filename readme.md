@@ -80,7 +80,7 @@ JyNI has been tested on
 
 * Linux Mint Debian edition (LMDE) (64 bit)
 * Linux Mint 17 (64 bit)
-* Mac OS-X (10.10 and 10.11 intel-2.7)
+* Mac OS-X (10.10 and 10.11)
 
 It would presumably work also on other posix systems.
 If you try it on further distributions, please consider to report your results
