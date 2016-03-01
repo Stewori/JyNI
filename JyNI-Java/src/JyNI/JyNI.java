@@ -1134,6 +1134,25 @@ public class JyNI {
 		return FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 	}
 
+	public static boolean isLibraryFileAvailable(String libname) {
+		if (JyNIInitializer.importer == null) return false;
+		String suf = "."+JyNIImporter.getSystemDependendDynamicLibraryExtension();
+		for (String s : JyNIInitializer.importer.libPaths)
+		{
+			File fl = new File(s);
+			String[] ch = fl.list();
+			if (ch != null)
+			{
+				for (String m : ch)
+				{
+					if (m.startsWith(libname+".") && m.endsWith(suf))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public static void jPrint(String msg) {
 		System.out.println(msg);
 	}

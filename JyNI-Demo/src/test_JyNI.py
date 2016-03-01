@@ -32,6 +32,7 @@ Created on 02.09.2014
 '''
 
 import sys
+import os
 
 #Since invalid paths do no harm, we add several possible paths here, where
 #DemoExtension.so could be located in various build scenarios. If you use different
@@ -70,10 +71,17 @@ datetime_path = '/usr/lib/python2.7/lib-dynload'
 
 sys.path.insert(0, datetime_path)
 
+def hasNativeDatetime():
+	if os.name == 'java':
+		from JyNI import JyNI
+		return JyNI.isLibraryFileAvailable('datetime')
+	else:
+		# Let's assume native datetime is trivially available for non-Java case:
+		return True
+
 import DemoExtension
 import datetime
 import unittest
-import os
 
 class TestJyNI(unittest.TestCase):
 
@@ -175,7 +183,7 @@ class TestJyNI(unittest.TestCase):
 			self.assertEqual(exc[0], SystemError)
 			self.assertEqual(str(exc[1]), "This is a test exception message for JyNI.")
 
-	@unittest.skipUnless(os.path.exists(datetime_path+'/datetime.so'),
+	@unittest.skipUnless(hasNativeDatetime(),
 		'datetime.so not found (probably part of libpython2.7.so)')
 	def test_datetime(self):
 		self.assertEqual(datetime.__doc__, "Fast implementation of the datetime type.")

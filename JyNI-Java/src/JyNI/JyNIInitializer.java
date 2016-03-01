@@ -46,6 +46,7 @@ import org.python.modules._weakref.GlobalRef;
 public class JyNIInitializer implements JythonInitializer {
 
 	public static boolean initialized = false;
+	static JyNIImporter importer;
 
 	static class SentinelFinalizer implements JyGCHead {
 		public SentinelFinalizer() {
@@ -69,7 +70,8 @@ public class JyNIInitializer implements JythonInitializer {
 		//System.getProperties().list(System.out);
 		PySystemState initState = PySystemState.doInitialize(preProperties,
 				postProperties, argv, classLoader, adapter);
-		initState.path_hooks.append(new JyNIImporter());
+		importer = new JyNIImporter();
+		initState.path_hooks.append(importer);
 		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
 		String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
 		for (int i = 0; i < cp.length; ++i) {
