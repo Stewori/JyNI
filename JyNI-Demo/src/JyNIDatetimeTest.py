@@ -31,9 +31,9 @@ Created on 21.09.2013
 @author: Stefan Richthofer
 '''
 import sys
-
 #    exclude the following line to switch back to Jython's datetime:
 sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
+
 #    This path should be okay for linux systems and maybe some bsd-oids;
 #    if it does not work (i.e. doc below reads different than
 #    "Fast implementation of the datetime type."), check that the path is

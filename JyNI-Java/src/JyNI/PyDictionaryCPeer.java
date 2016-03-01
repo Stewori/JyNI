@@ -47,7 +47,7 @@ import org.python.core.finalization.FinalizableBuiltin;
  * PyDictionary is a pilot project on this front. Once we have implemented some
  * sample builtin-extending CPeer classes we will work out a generator script
  * like the one that generates the PyFooDerived-classes in Jython.
- * Such a script will basically have two modi:
+ * Such a script will basically have two modes:
  * One that implements magic methods entirely on top of native methods (e.g.
  * like in PyCPeerType) and one that uses Jython-builtin super-methods as
  * fallbacks, if a native one fails (like in PyDictionaryCPeer).
@@ -58,7 +58,7 @@ import org.python.core.finalization.FinalizableBuiltin;
  * Whenever we call a native method we interpret a null-result not accompanied
  * by an exception as a not-implemented hint. In that case we try the super method,
  * which is responsible for throwing a not-implemented exception if needed. This
- * way we emulate that native methods would override thuse from super-class.
+ * way we emulate that native methods would override these from super-class.
  * Todo: Clean up this concept for int-returning methods, etc.
  *
  * @author Stefan Richthofer

@@ -56,12 +56,24 @@ sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you
 sys.path.append('../../DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from base dir
 
+# datetime_path is expected to be folder containing datetime.so
 
-sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
+# This is the usual system path for datetime.so. On some distributions it actually
+# does not contain datetime.so; i.e. then datetime.so is part of libpython2.7.so.
+# (However JyNI cannot load libpython2.7.so for that purpose due to other symbol
+#  conflicts; you need to provide datetime.so in some other way then, e.g. by
+#  compiling CPython yourself)
+datetime_path = '/usr/lib/python2.7/lib-dynload'
+
+# This is an example-path for a self-compiled python:
+#datetime_path = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
+
+sys.path.insert(0, datetime_path)
 
 import DemoExtension
 import datetime
 import unittest
+import os
 
 class TestJyNI(unittest.TestCase):
 
@@ -157,12 +169,14 @@ class TestJyNI(unittest.TestCase):
 		self.assertRaisesRegexp(SystemError, "This is a test exception message for JyNI.", DemoExtension.exceptionTest)
 		try:
 			DemoExtension.exceptionTest()
-			self.assertEqual(1, 2) #would always fail, but is not reached, if everything works as expected
+			self.assertEqual(1, 2) #would always fail, but is not reached if everything works as expected
 		except SystemError:
 			exc = sys.exc_info()
 			self.assertEqual(exc[0], SystemError)
 			self.assertEqual(str(exc[1]), "This is a test exception message for JyNI.")
 
+	@unittest.skipUnless(os.path.exists(datetime_path+'/datetime.so'),
+		'datetime.so not found (probably part of libpython2.7.so)')
 	def test_datetime(self):
 		self.assertEqual(datetime.__doc__, "Fast implementation of the datetime type.")
 		self.assertEqual(datetime.__name__, "datetime")

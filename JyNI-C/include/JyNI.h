@@ -57,7 +57,7 @@
  */
 #define env(errRet) \
 	JNIEnv *env; \
-	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) \
+	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_6)) \
 		return errRet
 
 /* For now we assume, nobody would cache _PyThreadState_Current for
