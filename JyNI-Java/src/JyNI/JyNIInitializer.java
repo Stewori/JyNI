@@ -72,6 +72,7 @@ public class JyNIInitializer implements JythonInitializer {
 				postProperties, argv, classLoader, adapter);
 		importer = new JyNIImporter();
 		initState.path_hooks.append(importer);
+
 		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
 		String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
 		for (int i = 0; i < cp.length; ++i) {

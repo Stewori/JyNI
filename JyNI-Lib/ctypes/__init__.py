@@ -51,14 +51,14 @@ if __version__ != _ctypes_version:
 if _os.name in ("nt", "ce"):
     from _ctypes import FormatError
 
-isPosix = _os.name == "posix"
-if _os.name == "java":
-    from JyNI import JyNI
-    isPosix = JyNI.isPosix()
+#_os.name == "posix" = _os.name == "posix"
+#if _os.name == "java":
+#    from JyNI import JyNI
+#    _os.name == "posix" = JyNI._os.name == "posix"()
 
 DEFAULT_MODE = RTLD_LOCAL
 #todo: Work out Jython-compliant replacement for _sys.platform == "darwin"
-if isPosix and _sys.platform == "darwin":
+if _os.name == "posix" and _sys.platform == "darwin":
     # On OS X 10.3, we use RTLD_GLOBAL as default mode
     # because RTLD_LOCAL does not work at least on some
     # libraries.  OS X 10.3 is Darwin 7, so we check for
@@ -172,12 +172,12 @@ if _os.name in ("nt", "ce"):
     if WINFUNCTYPE.__doc__:
         WINFUNCTYPE.__doc__ = CFUNCTYPE.__doc__.replace("CFUNCTYPE", "WINFUNCTYPE")
 
-elif isPosix: #_os.name == "posix":
+elif _os.name == "posix": #_os.name == "posix":
     from _ctypes import dlopen as _dlopen
 
 # elif _os.name == "java":
 #     from JyNI import JyNI
-#     if JyNI.isPosix():
+#     if JyNI._os.name == "posix"():
 #         from _ctypes import dlopen as _dlopen
 #     #else:
 #     #    todo...
@@ -192,7 +192,7 @@ elif isPosix: #_os.name == "posix":
 # print "JyNI-os:"
 # from JyNI import JyNI
 # print JyNI.getPlatform()
-# print "is posix? "+str(JyNI.isPosix())
+# print "is posix? "+str(JyNI._os.name == "posix"())
 
 from _ctypes import sizeof, byref, addressof, alignment, resize
 from _ctypes import get_errno, set_errno

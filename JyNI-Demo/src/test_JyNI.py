@@ -33,6 +33,7 @@ Created on 02.09.2014
 
 import sys
 import os
+from os import name
 
 #Since invalid paths do no harm, we add several possible paths here, where
 #DemoExtension.so could be located in various build scenarios. If you use different

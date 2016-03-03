@@ -1134,6 +1134,33 @@ public class JyNI {
 		return FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 	}
 
+	/**
+	 * Emulates CPython's way to name sys.platform.
+	 */
+	public static String getNativePlatform() {
+		/* Works according to this table:
+
+		.---------------------.--------.
+		| System              | Value  |
+		|---------------------|--------|
+		| Linux (2.x and 3.x) | linux2 |
+		| Windows             | win32  |
+		| Windows/Cygwin      | cygwin |
+		| Mac OS X            | darwin |
+		| OS/2                | os2    |
+		| OS/2 EMX            | os2emx |
+		| RiscOS              | riscos |
+		| AtheOS              | atheos |
+		'---------------------'--------'
+		*/
+		String osname = System.getProperty("os.name");
+		if (osname.equals("Linux")) return "linux2";
+		if (osname.equals("Mac OS X")) return "darwin";
+		// Not considering cygwin for now...
+		if (osname.startsWith("Windows")) return "win32";
+		return osname.replaceAll("[\\s/]", "").toLowerCase();
+	}
+
 	public static boolean isLibraryFileAvailable(String libname) {
 		if (JyNIInitializer.importer == null) return false;
 		String suf = "."+JyNIImporter.getSystemDependendDynamicLibraryExtension();

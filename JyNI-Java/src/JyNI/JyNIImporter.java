@@ -30,8 +30,12 @@
 package JyNI;
 
 import org.python.core.Py;
+import org.python.core.PyModule;
 import org.python.core.PyObject;
+import org.python.core.PySystemState;
 import org.python.core.Untraversable;
+import org.python.core.imp;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
@@ -52,15 +56,20 @@ public class JyNIImporter extends PyObject {
 		super();
 	}
 	
-	public JyNIImporter(List<String> knownPaths) {
-		super();
-		this.knownPaths = knownPaths;
-	}
-	
-	public JyNIImporter(String... knownPaths) {
-		super();
-		this.knownPaths = Arrays.asList(knownPaths);
-	}
+// Currently not used:
+//	public JyNIImporter(List<String> knownPaths) {
+//		super();
+//		this.knownPaths = knownPaths;
+//		PyModule osModule = (PyModule) imp.importName("os", true);
+//		osModule.__setattr__("name".intern(), new PyOSNameString());
+//	}
+//	
+//	public JyNIImporter(String... knownPaths) {
+//		super();
+//		this.knownPaths = Arrays.asList(knownPaths);
+//		PyModule osModule = (PyModule) imp.importName("os", true);
+//		osModule.__setattr__("name".intern(), new PyOSNameString());
+//	}
 	
 	public PyObject __call__(PyObject args[], String keywords[]) {
 		String s = args[0].toString();
@@ -136,6 +145,17 @@ public class JyNIImporter extends PyObject {
 	}
 
 	public PyObject load_module(String name) {
+		PySystemState sysState = Py.getSystemState();
+		if (!(sysState.getPlatform() instanceof PyShadowString)) {
+			sysState.setPlatform(new PyShadowString(sysState.getPlatform(),
+					JyNI.getNativePlatform()));
+			PyModule osModule = (PyModule) imp.importName("os", true);
+			String _name = osModule.__getattr__("_name".intern()).toString();
+			String nameval = "name".intern();
+			PyObject osname = osModule.__getattr__(nameval);
+			osModule.__setattr__(nameval, new PyShadowString(osname, _name));
+		}
+
 		//ToDo:
 		//Maybe check via 
 		//imp.loadBuiltin and
