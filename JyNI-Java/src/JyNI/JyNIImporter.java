@@ -145,6 +145,8 @@ public class JyNIImporter extends PyObject {
 	}
 
 	public PyObject load_module(String name) {
+		// This stuff should move to JyNIInitializer, but there it currently
+		// breaks sysconfig.py. Will be fixed for Jython 2.7.2.
 		PySystemState sysState = Py.getSystemState();
 		if (!(sysState.getPlatform() instanceof PyShadowString)) {
 			sysState.setPlatform(new PyShadowString(sysState.getPlatform(),

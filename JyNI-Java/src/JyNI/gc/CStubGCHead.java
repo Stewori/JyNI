@@ -66,8 +66,9 @@ public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCH
 			JyNI.CStubRestoreAllReachables(object);
 			JyReferenceMonitor.notifyResurrect(handle, object);
 		} else if ((result & JyNI.JYNI_GC_CONFIRMED_FLAG) == 0) {
-			System.err.println("JyNI-Warning: Unconfirmed but finalized CStubGCHead: "+handle);
-			System.err.println("  "+object);
+// We make this temporarily silent. Todo: Investigate warnings!
+			//System.err.println("JyNI-Warning: Unconfirmed but finalized CStubGCHead: "+handle);
+			//System.err.println("  "+object);
 		}
 		if ((result & JyNI.JYNI_GC_LAST_CONFIRMATION_FLAG) != 0)
 			JyNI.postProcessCStubGCCycle();

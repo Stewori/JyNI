@@ -51,10 +51,10 @@ if __version__ != _ctypes_version:
 if _os.name in ("nt", "ce"):
     from _ctypes import FormatError
 
-#_os.name == "posix" = _os.name == "posix"
+#isPosix = _os.name == "posix"
 #if _os.name == "java":
 #    from JyNI import JyNI
-#    _os.name == "posix" = JyNI._os.name == "posix"()
+#    isPosix = JyNI._os.name == "posix"()
 
 DEFAULT_MODE = RTLD_LOCAL
 #todo: Work out Jython-compliant replacement for _sys.platform == "darwin"
@@ -172,27 +172,8 @@ if _os.name in ("nt", "ce"):
     if WINFUNCTYPE.__doc__:
         WINFUNCTYPE.__doc__ = CFUNCTYPE.__doc__.replace("CFUNCTYPE", "WINFUNCTYPE")
 
-elif _os.name == "posix": #_os.name == "posix":
+elif _os.name == "posix": #isPosix:
     from _ctypes import dlopen as _dlopen
-
-# elif _os.name == "java":
-#     from JyNI import JyNI
-#     if JyNI._os.name == "posix"():
-#         from _ctypes import dlopen as _dlopen
-#     #else:
-#     #    todo...
-
-# print "os:"
-# print _os.name
-# import platform
-# print platform.system()
-# print platform.java_ver()
-# import sys
-# print sys.platform
-# print "JyNI-os:"
-# from JyNI import JyNI
-# print JyNI.getPlatform()
-# print "is posix? "+str(JyNI._os.name == "posix"())
 
 from _ctypes import sizeof, byref, addressof, alignment, resize
 from _ctypes import get_errno, set_errno
@@ -326,6 +307,14 @@ def _reset_cache():
     # _SimpleCData.c_char_p_from_param
     POINTER(c_char).from_param = c_char_p.from_param
     _pointer_type_cache[None] = c_void_p
+#     print "Confirm None-cache:"
+    #print _pointer_type_cache[None]
+    #print type(_pointer_type_cache)
+#     import DemoExtension
+#     tst = DemoExtension.nativeDictGet(_pointer_type_cache, None)
+#     print tst
+#     print (tst == c_void_p)
+    
     # XXX for whatever reasons, creating the first instance of a callback
     # function is needed for the unittests on Win64 to succeed.  This MAY
     # be a compiler bug, since the problem occurs only when _ctypes is

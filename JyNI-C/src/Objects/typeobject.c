@@ -1820,6 +1820,7 @@ mro_internal(PyTypeObject *type)
 		PyObject *cls;
 		PyTypeObject *solid;
 
+//		printf("%i\n", __LINE__);
 		solid = solid_base(type);
 
 		len = PyTuple_GET_SIZE(tuple);
@@ -1837,6 +1838,7 @@ mro_internal(PyTypeObject *type)
 				return -1;
 			}
 			t = (PyTypeObject*)cls;
+//			printf("%i\n", __LINE__);
 			if (!PyType_IsSubtype(solid, solid_base(t))) {
 				PyErr_Format(PyExc_TypeError,
 			 "mro() returned base with unsuitable layout ('%.500s')",
@@ -1890,6 +1892,7 @@ best_base(PyObject *bases)
 			if (PyType_Ready(base_i) < 0)
 				return NULL;
 		}
+//		printf("%i\n", __LINE__);
 		candidate = solid_base(base_i);
 		if (winner == NULL) {
 			winner = candidate;
@@ -1921,6 +1924,17 @@ extra_ivars(PyTypeObject *type, PyTypeObject *base)
 	size_t t_size = type->tp_basicsize;
 	size_t b_size = base->tp_basicsize;
 
+	if (t_size < b_size) {
+//		printf("%i\n", __LINE__);
+//		if (!type) puts("type is NULL");
+//		if (!base) puts("base is NULL");
+//		printf("%i\n", __LINE__);
+//		if (!type->tp_name) puts("type name is NULL");
+//		puts(type->tp_name);
+//		puts(base->tp_name);
+//		printf("%i\n", __LINE__);
+	}
+
 	assert(t_size >= b_size); // Else type smaller than base!
 	if (type->tp_itemsize || base->tp_itemsize) {
 		// If itemsize is involved, stricter rules
@@ -1942,10 +1956,14 @@ extra_ivars(PyTypeObject *type, PyTypeObject *base)
 static PyTypeObject *
 solid_base(PyTypeObject *type)
 {
+//	puts(__FUNCTION__);
+//	puts(type->tp_name);
 	PyTypeObject *base;
 
-	if (type->tp_base)
+	if (type->tp_base) {
+//		printf("%i\n", __LINE__);
 		base = solid_base(type->tp_base);
+	}
 	else
 		base = &PyBaseObject_Type;
 	if (extra_ivars(type, base))
@@ -3874,44 +3892,44 @@ static PyMethodDef object_methods[] = {
 
 PyTypeObject PyBaseObject_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"object",								   // tp_name
-	sizeof(PyObject),						   // tp_basicsize
-	0,										  // tp_itemsize
-	object_dealloc,							 // tp_dealloc
-	0,										  // tp_print
-	0,										  // tp_getattr
-	0,										  // tp_setattr
-	0,										  // tp_compare
-	object_repr,								// tp_repr
-	0,										  // tp_as_number
-	0,										  // tp_as_sequence
-	0,										  // tp_as_mapping
-	0,//(hashfunc)_Py_HashPointer,				  // tp_hash
-	0,										  // tp_call
-	object_str,								 // tp_str
-	PyObject_GenericGetAttr,					// tp_getattro
-	PyObject_GenericSetAttr,					// tp_setattro
-	0,										  // tp_as_buffer
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, // tp_flags
-	PyDoc_STR("The most base type"),			// tp_doc
-	0,										  // tp_traverse
-	0,										  // tp_clear
-	0,										  // tp_richcompare
-	0,										  // tp_weaklistoffset
-	0,										  // tp_iter
-	0,										  // tp_iternext
-	0,//object_methods,							 // tp_methods
-	0,										  // tp_members
-	object_getsets,							 // tp_getset
-	0,										  // tp_base
-	0,										  // tp_dict
-	0,										  // tp_descr_get
-	0,										  // tp_descr_set
-	0,										  // tp_dictoffset
-	0,//object_init,								// tp_init
-	PyType_GenericAlloc,						// tp_alloc
-	0,//object_new,								 // tp_new
-	PyObject_Free,//JyNI_Del,//PyObject_Del,							   // tp_free
+	"object",                                 /* tp_name */
+	sizeof(PyObject),                         /* tp_basicsize */
+	0,                                        /* tp_itemsize */
+	object_dealloc,                           /* tp_dealloc */
+	0,                                        /* tp_print */
+	0,                                        /* tp_getattr */
+	0,                                        /* tp_setattr */
+	0,                                        /* tp_compare */
+	object_repr,                              /* tp_repr */
+	0,                                        /* tp_as_number */
+	0,                                        /* tp_as_sequence */
+	0,                                        /* tp_as_mapping */
+	0,//(hashfunc)_Py_HashPointer,            /* tp_hash */
+	0,                                        /* tp_call */
+	object_str,                               /* tp_str */
+	PyObject_GenericGetAttr,                  /* tp_getattro */
+	PyObject_GenericSetAttr,                  /* tp_setattro */
+	0,                                        /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+	PyDoc_STR("The most base type"),          /* tp_doc */
+	0,                                        /* tp_traverse */
+	0,                                        /* tp_clear */
+	0,                                        /* tp_richcompare */
+	0,                                        /* tp_weaklistoffset */
+	0,                                        /* tp_iter */
+	0,                                        /* tp_iternext */
+	0,//object_methods,                       /* tp_methods */
+	0,                                        /* tp_members */
+	object_getsets,                           /* tp_getset */
+	0,                                        /* tp_base */
+	0,                                        /* tp_dict */
+	0,                                        /* tp_descr_get */
+	0,                                        /* tp_descr_set */
+	0,                                        /* tp_dictoffset */
+	0,//object_init,                          /* tp_init */
+	PyType_GenericAlloc,                      /* tp_alloc */
+	0,//object_new,                           /* tp_new */
+	PyObject_Free,//JyNI_Del,//PyObject_Del,  /* tp_free */
 };
 
 

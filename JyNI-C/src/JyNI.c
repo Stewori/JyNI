@@ -407,6 +407,30 @@ jint JyNIcurrentNativeRefCount(JNIEnv *env, jclass class, jlong handle)
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    nativeIncref
+ * Signature: (JJ)I
+ */
+void JyNI_nativeIncref(jlong handle, jlong tstate)
+{
+	RE_ENTER_JyNI
+	Py_INCREF((PyObject*) handle);
+	RE_LEAVE_JyNI
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    nativeDecref
+ * Signature: (JJ)I
+ */
+void JyNI_nativeDecref(jlong handle, jlong tstate)
+{
+	RE_ENTER_JyNI
+	Py_DECREF((PyObject*) handle);
+	RE_LEAVE_JyNI
+}
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    getNativeTypeName
  * Signature: (J)Ljava/lang/String;
  */
@@ -2530,6 +2554,8 @@ inline jint JyNI_GetDLOpenFlags()
 
 inline void JyNI_CleanUp_JyObject(JyObject* obj)
 {
+//	jputs(__FUNCTION__);
+//	jputsLong(FROM_JY(obj));
 	//if (FROM_JY(obj) == Py_None) return;
 	//if (obj == NULL) return;
 	//if (FROM_JY(obj) == NULL) return;

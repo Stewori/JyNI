@@ -78,6 +78,18 @@
 	if (PyErr_Occurred()) JyErr_InsertCurExc(); \
 	LEAVE_JyNI0
 
+/*
+ * For methods that allow re-entering after a callback into JVM
+ * given the same thread state is used.
+ * Use with care!
+ */
+#define RE_ENTER_JyNI \
+	int reenter = _PyThreadState_Current == tstate; \
+	if (!reenter) { ENTER_JyNI }
+
+#define RE_LEAVE_JyNI \
+	if (!reenter) { LEAVE_JyNI }
+
 /* Cleanly convert a jstring to a cstring with minimal JVM lock-time.
  * Use only once per Function. For further conversions use
  * cstr_from_jstring2. Note that at least one call of "env()" must
@@ -576,6 +588,8 @@ jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tst
 jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 jobject JyNIlookupFromHandle(JNIEnv *env, jclass class, jlong handle);
 jint JyNIcurrentNativeRefCount(JNIEnv *env, jclass class, jlong handle);
+void JyNI_nativeIncref(jlong handle, jlong tstate);
+void JyNI_nativeDecref(jlong handle, jlong tstate);
 jstring JyNIgetNativeTypeName(JNIEnv *env, jclass class, jlong handle);
 //In gcmodule (declared here to preserve original gcmodule.h):
 jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray references, jlong tstate);

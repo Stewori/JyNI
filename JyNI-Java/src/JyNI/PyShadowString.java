@@ -98,4 +98,27 @@ public class PyShadowString extends PyString {
 //    	if (shadow.startswith(prefix, start, end)) return true;
 //        return super.startswith(prefix, start, end);
 //    }
+
+
+// Legacy variant specifically for os.name:
+//	@Override
+//	public PyObject __eq__(PyObject other) {
+//		String s = other.toString();
+//		if (s != null) {
+//			if (s.equals("posix")) return JyNI.isPosix() ? Py.True : Py.False;
+//			if (s.equals("ce"))
+//				return System.getProperty("os.name").equals("Windows CE") ?
+//						Py.True : Py.False;
+//			if (s.equals("nt"))
+//				return System.getProperty("os.name").startsWith("Windows") ?
+//						Py.True : Py.False;
+//			if (s.equals("os2"))
+//				return System.getProperty("os.name").toLowerCase().indexOf("os/2")
+//						!= -1 ? Py.True : Py.False;
+//			if (s.equals("riscos"))
+//				return System.getProperty("os.name").toLowerCase().indexOf("risc")
+//						!= -1 ? Py.True : Py.False;
+//		}
+//		return super.__eq__(other);
+//	}
 }

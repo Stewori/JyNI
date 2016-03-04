@@ -36,7 +36,11 @@ import JyNI.gc.JyNIFinalizeTriggerFactory;
 import java.io.File;
 import java.util.Properties;
 import org.python.core.JythonInitializer;
+import org.python.core.Py;
+import org.python.core.PyModule;
+import org.python.core.PyObject;
 import org.python.core.PySystemState;
+import org.python.core.imp;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.util.PythonInterpreter;
@@ -72,6 +76,22 @@ public class JyNIInitializer implements JythonInitializer {
 				postProperties, argv, classLoader, adapter);
 		importer = new JyNIImporter();
 		initState.path_hooks.append(importer);
+
+//	Currently this monkeypatching is done in JyNIImporter on first module import,
+//	because doing it here during initialization - although the more complete, better
+//	approach - currently breaks sysconfig.py.
+//		initState.setPlatform(new PyJavaPlatformString(initState.getPlatform()));
+//		PyModule osModule = (PyModule) imp.importName("os", true);
+//		osModule.__setattr__("name".intern(), new PyOSNameString());
+
+// Currently hosted in JyNIImporter until sysconfig.py is adjusted in Jython 2.7.2.:
+//		initState.setPlatform(new PyShadowString(initState.getPlatform(),
+//				JyNI.getNativePlatform()));
+//		PyModule osModule = (PyModule) imp.importName("os", true);
+//		String _name = osModule.__getattr__("_name".intern()).toString();
+//		String nameval = "name".intern();
+//		PyObject osname = osModule.__getattr__(nameval);
+//		osModule.__setattr__(nameval, new PyShadowString(osname, _name));
 
 		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
 		String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);

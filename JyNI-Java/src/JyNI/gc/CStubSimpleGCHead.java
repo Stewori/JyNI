@@ -86,7 +86,7 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 			 * So for now we assume that it is just natural gc-behavior that
 			 * a resurrected object with a direct strong reference (overall
 			 * just weakly reachable though) is kept alive for an additional
-			 * gc-cycle (maybe it has to do with gerneration management etc).
+			 * gc-cycle (maybe it has to do with generation management etc).
 			 * Since specification leaves these details undefined,
 			 * this is still valid behavior and only delays collection by one
 			 * cycle. Weak references hold somewhat longer, but apart from that
@@ -100,7 +100,8 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 			JyNI.CStubRestoreAllReachables(object);
 			JyReferenceMonitor.notifyResurrect(handle, object);
 		} else if ((result & JyNI.JYNI_GC_CONFIRMED_FLAG) == 0) {
-			System.err.println("JyNI-Warning: Unconfirmed but finalized CStubSimpleGCHead: "+handle);
+// We make this temporarily silent. Todo: Investigate warnings!
+			//System.err.println("JyNI-Warning: Unconfirmed but finalized CStubSimpleGCHead: "+handle);
 			//System.err.println("  "+object1);
 		}
 		//object = null;  //(also makes no difference)

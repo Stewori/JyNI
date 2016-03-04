@@ -123,6 +123,22 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_currentNativeRefCount
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    nativeIncref
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_nativeIncref
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    nativeDecref
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_JyNI_JyNI_nativeDecref
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    getNativeTypeName
  * Signature: (J)Ljava/lang/String;
  */

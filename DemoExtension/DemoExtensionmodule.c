@@ -270,6 +270,14 @@ intToBoolean(PyObject* self, PyObject* integer)
 	else Py_RETURN_NONE;
 }
 
+PyObject*
+nativeDictGet(PyObject* self, PyObject* args)
+{
+	PyObject* dict = PyTuple_GET_ITEM(args, 0);
+	PyObject* key = PyTuple_GET_ITEM(args, 1);
+	return PyDict_GetItem(dict, key);
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
@@ -291,6 +299,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"createTupleSelfContaining", createTupleSelfContaining, METH_NOARGS, "Natively create a self-containing tuple."},
 	{"booleanToInt", booleanToInt, METH_O, "Converts True to one, False to zero, everything else to None."},
 	{"intToBoolean", intToBoolean, METH_O, "Converts one to True, zero to False, everything else to None."},
+	{"nativeDictGet", nativeDictGet, METH_VARARGS, "Looks up a key in a dict."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

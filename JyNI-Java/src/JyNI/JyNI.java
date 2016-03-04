@@ -214,6 +214,8 @@ public class JyNI {
 	public static native PyString PyObjectAsPyString(long peerHandle, long tstate);
 	public static native PyObject lookupFromHandle(long handle);
 	public static native int currentNativeRefCount(long handle);
+	public static native void nativeIncref(long handle, long tstate);
+	public static native void nativeDecref(long handle, long tstate);
 	public static native String getNativeTypeName(long handle);
 	public static native PyObject getItem(long peerHandle, PyObject key, long tstate);
 	public static native int setItem(long peerHandle, PyObject key, PyObject value, long tstate);
@@ -512,12 +514,17 @@ public class JyNI {
 		if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
 		else
 		{
-			er = new PyModule(nm);
+//			try {
+			er = new PyModule(nm, new PyNativeRefHoldingStringMap());
 			//pss.modules.__setattr__(nm, er);
 			pss.modules.__setitem__(name, er);
 			//System.out.println("JYNY rr: "+er);
 			//System.out.println(er.getType().getName());
 			//ERRR
+//			} catch (Exception e) {
+//				System.err.println("Errrrr: "+e);
+//				e.printStackTrace(System.err);
+//			}
 			return er;
 		}
 	}
