@@ -744,27 +744,15 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 //		jputs("PyDict_GetItem - previous exception");
 //	}
 	jobject jop = JyNI_JythonPyObject_FromPyObject(op);
-	jobject jkey = JyNI_JythonPyObject_FromPyObject(key);
-//	if (jkey == JyNone) {
-//		jputs(__FUNCTION__);
-//		jputs("dict: ");
-//		jputsLong(op);
-//		//printf("%i\n", jkey == JyNone);
-//		jputsLong(jkey == JyNone);
-//		//jputsPy(op);
-//		//JyNI_jprintJ(jop);
-//	}
+
 	ENTER_SubtypeLoop_Safe_ModePy(jop, op, __finditem__)
 	PyObject* result = JyNI_PyObject_FromJythonPyObject(
 				(*env)->CallObjectMethod(env, jop, JMID(__finditem__),
-					jkey
+						JyNI_JythonPyObject_FromPyObject(key)
 				)
 			);
-//	if (jkey == JyNone) {
-//		jputsLong("Result:");
-//		jputsLong(result);
-//	}
 	LEAVE_SubtypeLoop_Safe_ModePy(jop, __finditem__)
+
 	if((*env)->ExceptionCheck(env)) {
 		(*env)->ExceptionClear(env);
 		return NULL;

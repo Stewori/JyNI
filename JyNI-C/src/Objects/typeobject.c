@@ -1924,7 +1924,9 @@ extra_ivars(PyTypeObject *type, PyTypeObject *base)
 	size_t t_size = type->tp_basicsize;
 	size_t b_size = base->tp_basicsize;
 
-	if (t_size < b_size) {
+// This is a typical new-style class symptom:
+// (i.e. when using new style classes although not yet supported)
+//	if (t_size < b_size) {
 //		printf("%i\n", __LINE__);
 //		if (!type) puts("type is NULL");
 //		if (!base) puts("base is NULL");
@@ -1933,7 +1935,7 @@ extra_ivars(PyTypeObject *type, PyTypeObject *base)
 //		puts(type->tp_name);
 //		puts(base->tp_name);
 //		printf("%i\n", __LINE__);
-	}
+//	}
 
 	assert(t_size >= b_size); // Else type smaller than base!
 	if (type->tp_itemsize || base->tp_itemsize) {

@@ -307,14 +307,7 @@ def _reset_cache():
     # _SimpleCData.c_char_p_from_param
     POINTER(c_char).from_param = c_char_p.from_param
     _pointer_type_cache[None] = c_void_p
-#     print "Confirm None-cache:"
-    #print _pointer_type_cache[None]
-    #print type(_pointer_type_cache)
-#     import DemoExtension
-#     tst = DemoExtension.nativeDictGet(_pointer_type_cache, None)
-#     print tst
-#     print (tst == c_void_p)
-    
+
     # XXX for whatever reasons, creating the first instance of a callback
     # function is needed for the unittests on Win64 to succeed.  This MAY
     # be a compiler bug, since the problem occurs only when _ctypes is
