@@ -58,14 +58,16 @@ if _os.name in ("nt", "ce"):
 
 DEFAULT_MODE = RTLD_LOCAL
 #todo: Work out Jython-compliant replacement for _sys.platform == "darwin"
-if _os.name == "posix" and _sys.platform == "darwin":
+#if _os.name == "posix" and _sys.platform == "darwin":
     # On OS X 10.3, we use RTLD_GLOBAL as default mode
     # because RTLD_LOCAL does not work at least on some
     # libraries.  OS X 10.3 is Darwin 7, so we check for
     # that.
 
-    if int(_os.uname()[2].split('.')[0]) < 8:
-        DEFAULT_MODE = RTLD_GLOBAL
+# JyNI-Note: So far we ignore OS-versions before 8.
+#            (at least until uname is added to Jython 2.7.2.)
+#    if int(_os.uname()[2].split('.')[0]) < 8:
+#        DEFAULT_MODE = RTLD_GLOBAL
 
 from _ctypes import FUNCFLAG_CDECL as _FUNCFLAG_CDECL, \
      FUNCFLAG_PYTHONAPI as _FUNCFLAG_PYTHONAPI, \
