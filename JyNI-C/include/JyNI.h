@@ -973,7 +973,7 @@ extern jmethodID JyListFromBackendHandleConstructor;
 
 extern jclass JySetClass;
 extern jmethodID JySetFromBackendHandleConstructor;
-extern jmethodID JySetInstallToPySet;
+//extern jmethodID JySetInstallToPySet;
 
 extern jclass JyLockClass;
 extern jmethodID JyLockConstructor;

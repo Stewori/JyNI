@@ -2755,7 +2755,7 @@ jmethodID JyListFromBackendHandleConstructor;
 
 jclass JySetClass;
 jmethodID JySetFromBackendHandleConstructor;
-jmethodID JySetInstallToPySet;
+//jmethodID JySetInstallToPySet;
 
 jclass JyLockClass;
 jmethodID JyLockConstructor;
@@ -3113,6 +3113,7 @@ jclass pyFastSequenceIterClass;
 jclass pyReversedIteratorClass;
 
 jclass pyBaseSetClass;
+jfieldID pyBaseSet_set;
 jmethodID pyBaseSetSize;
 //jmethodID pyBaseSetClear;
 //jmethodID pyBaseSetContains;
@@ -3424,28 +3425,21 @@ inline jint initJyNI(JNIEnv *env)
 	jclass JyNISetNextResultClassLocal = (*env)->FindClass(env, "JyNI/JyNISetNextResult");
 	JyNISetNextResultClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNISetNextResultClassLocal);
 	(*env)->DeleteLocalRef(env, JyNISetNextResultClassLocal);
-	//puts("   JyNISetNextResultClass created");
 	JyNISetNextResultKeyField = (*env)->GetFieldID(env, JyNISetNextResultClass, "key", "Lorg/python/core/PyObject;");
-	//puts("   key done");
 	JyNISetNextResultNewIndexField = (*env)->GetFieldID(env, JyNISetNextResultClass, "newIndex", "I");
-	//puts("   newIndex done");
 	JyNISetNextResultKeyHandleField = (*env)->GetFieldID(env, JyNISetNextResultClass, "keyHandle", "J");
-	//puts("   keyHandle done");
-	//puts("  initJyNISet done");
 
 	jclass JyListClassLocal = (*env)->FindClass(env, "JyNI/JyList");
 	JyListClass = (jclass) (*env)->NewWeakGlobalRef(env, JyListClassLocal);
 	(*env)->DeleteLocalRef(env, JyListClassLocal);
 	JyListFromBackendHandleConstructor = (*env)->GetMethodID(env, JyListClass, "<init>", "(J)V");
 	//JyListInstallToPyList = (*env)->GetMethodID(env, JyListClass, "installToPyList", "(Lorg/python/core/PyList;)V");
-	//puts("  initJyList done");
 
 	jclass JySetClassLocal = (*env)->FindClass(env, "JyNI/JySet");
 	JySetClass = (jclass) (*env)->NewWeakGlobalRef(env, JySetClassLocal);
 	(*env)->DeleteLocalRef(env, JySetClassLocal);
-	JySetFromBackendHandleConstructor = (*env)->GetMethodID(env, JySetClass, "<init>", "(J)V");
-	JySetInstallToPySet = (*env)->GetMethodID(env, JySetClass, "installToPySet", "(Lorg/python/core/BaseSet;)V");
-	//puts("  initJyNISet done");
+	JySetFromBackendHandleConstructor = (*env)->GetMethodID(env, JySetClass, "<init>", "(Ljava/util/Set;J)V");
+	//JySetInstallToPySet = (*env)->GetMethodID(env, JySetClass, "installToPySet", "(Lorg/python/core/BaseSet;)V");
 
 	jclass JyLockClassLocal = (*env)->FindClass(env, "JyNI/JyLock");
 	JyLockClass = (jclass) (*env)->NewWeakGlobalRef(env, JyLockClassLocal);
@@ -3991,6 +3985,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (pyBaseSetClassLocal == NULL) { return JNI_ERR;}
 	pyBaseSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseSetClassLocal);
 	(*env)->DeleteLocalRef(env, pyBaseSetClassLocal);
+	pyBaseSet_set = (*env)->GetFieldID(env, pyBaseSetClass, "_set", "Ljava/util/Set;");
 	pyBaseSetSize = (*env)->GetMethodID(env, pyBaseSetClass, "size", "()I");
 //	pyBaseSetClear = (*env)->GetMethodID(env, pyBaseSetClass, "clear", "()V");
 //	pyBaseSetContains = (*env)->GetMethodID(env, pyBaseSetClass, "contains", "(Ljava/lang/Object;)Z");

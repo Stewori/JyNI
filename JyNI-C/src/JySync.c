@@ -497,8 +497,10 @@ PyObject* JySync_Init_PySet_From_JySet(jobject src) //needed because truncation 
 //	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	env(NULL);
 	so->used = (*env)->CallIntMethod(env, src, pyBaseSetSize);
-	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, (jlong) so);
-	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src); //maybe do this directly to have less security manager issues
+	jobject _set = (*env)->GetObjectField(env, src, pyBaseSet_set);
+	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, _set, (jlong) so);
+//	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src);
+	(*env)->SetObjectField(env, src, pyBaseSet_set, jySet);
 	return (PyObject*) so;
 }
 
@@ -515,8 +517,10 @@ PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src) //needed because
 //	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	env(NULL);
 	so->used = (*env)->CallIntMethod(env, src, pyBaseSetSize);
-	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, (jlong) so);
-	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src); //maybe do this directly to have less security manager issues
+	jobject _set = (*env)->GetObjectField(env, src, pyBaseSet_set);
+	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, _set, (jlong) so);
+//	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src);
+	(*env)->SetObjectField(env, src, pyBaseSet_set, jySet);
 	return (PyObject*) so;
 }
 

@@ -242,6 +242,7 @@ extern jclass pyFastSequenceIterClass;
 extern jclass pyReversedIteratorClass;
 
 extern jclass pyBaseSetClass;
+extern jfieldID pyBaseSet_set;
 extern jmethodID pyBaseSetSize;
 extern jmethodID pyBaseSet_update;
 //extern jmethodID pyBaseSetbaseset_union;
