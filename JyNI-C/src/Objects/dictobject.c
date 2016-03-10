@@ -1244,12 +1244,12 @@ dict_dealloc(register PyDictObject *mp)
 static PyObject *
 dict_repr(PyDictObject *mp)
 {
-	jputs(__FUNCTION__);
-	jputs(Py_TYPE(mp)->tp_name);
+//	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(mp)->tp_name);
 	//PyString_FromString("{..dict_repr.}");
 	env(NULL);
 	jobject jop = JyNI_JythonPyObject_FromPyObject(mp);
-	JyNI_printJInfo(jop);
+//	JyNI_printJInfo(jop);
 
 	ENTER_SubtypeLoop_Safe_ModePy(jop, mp, __repr__)
 	PyObject* result = JyNI_PyObject_FromJythonPyObject(

@@ -2774,8 +2774,8 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 PyObject *
 _PyType_Lookup(PyTypeObject *type, PyObject *name)
 {
-	int dbg = strcmp(PyString_AS_STRING(name), "asArray") == 0;
-	if (dbg) printf("%s: %s in %s\n", __FUNCTION__, PyString_AS_STRING(name), type->tp_name);
+//	int dbg = strcmp(PyString_AS_STRING(name), "asArray") == 0;
+//	if (dbg) printf("%s: %s in %s\n", __FUNCTION__, PyString_AS_STRING(name), type->tp_name);
 	Py_ssize_t i, n;
 	PyObject *mro, *res, *base, *dict;
 	unsigned int h;
@@ -2804,12 +2804,12 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 	for (i = 0; i < n; i++) {
 		base = PyTuple_GET_ITEM(mro, i);
 		if (PyClass_Check(base)) {
-			if (dbg) printf("look in class %s\n", PyString_AS_STRING(((PyClassObject *)base)->cl_name));
+//			if (dbg) printf("look in class %s\n", PyString_AS_STRING(((PyClassObject *)base)->cl_name));
 			dict = ((PyClassObject *)base)->cl_dict;
 //			jputs("classdict");
 //			jputs(PyString_AS_STRING(((PyClassObject *)base)->cl_name));
 		} else {
-			if (dbg) printf("look in type %s\n", ((PyTypeObject *)base)->tp_name);
+//			if (dbg) printf("look in type %s\n", ((PyTypeObject *)base)->tp_name);
 			assert(PyType_Check(base));
 //			jputs("tp_dict");
 //			jputs(((PyTypeObject *)base)->tp_name);

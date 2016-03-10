@@ -604,7 +604,7 @@ _PyObject_Str(PyObject *v)
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-		jputs("delegate...");
+//		jputs("delegate...");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 				(*env)->CallObjectMethod(env, delegate, pyObject__str__));
@@ -1513,7 +1513,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 int
 PyObject_HasAttr(PyObject *v, PyObject *name)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	PyObject *res = PyObject_GetAttr(v, name);
 	if (res != NULL) {
 		Py_DECREF(res);

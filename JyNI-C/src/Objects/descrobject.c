@@ -799,7 +799,7 @@ static PySequenceMethods proxy_as_sequence = {
 static PyObject *
 proxy_has_key(proxyobject *pp, PyObject *key)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	int res = PyDict_Contains(pp->dict, key);
 	if (res < 0)
 		return NULL;
@@ -898,16 +898,15 @@ proxy_getiter(proxyobject *pp)
 static PyObject *
 proxy_str(proxyobject *pp)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	PyObject* result = PyObject_Str(pp->dict);
-	jputsLong(__LINE__);
 	return result;
 }
 
 static PyObject *
 proxy_repr(proxyobject *pp)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	PyObject *dictrepr;
 	PyObject *result;
 

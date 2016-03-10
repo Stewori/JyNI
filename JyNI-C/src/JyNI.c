@@ -4424,7 +4424,7 @@ inline void jputs(const char* msg)
 	(*env)->DeleteLocalRef(env, str);
 }
 
-inline void jputsLong0(jlong val)
+inline void jputsLong(jlong val)
 {
 	env();
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrintLong, val);
