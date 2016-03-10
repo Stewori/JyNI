@@ -66,7 +66,8 @@ The following built-in types are already supported:
 * Number types PyInt, PyLong, PyFloat, PyComplex
 * Sequence types PyTuple, PyList, PySlice, PyString, PyUnicode
 * Data structure types PyDict, PySet, PyFrozenSet
-* Operational types PyModule, PyClass, PyInstance, PyMethod, PyFunction, PyCode, PyCell
+* Operational types PyModule, PyFunction, PyCode, PyProperty, PyDictProxy, PyCell
+* OOP types PyClass, PyInstance, PyMethod, PyClassMethod, PyStaticMethod
 * Singleton types PyBool, PyNone, PyNotImplemented, PyEllipsis
 * Native types PyCFunction, PyCapsule, PyCObject
 * Natively defined custom-types
