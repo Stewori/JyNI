@@ -753,10 +753,11 @@ PyDescr_NewWrapper(PyTypeObject *type, struct wrapperbase *base, void *wrapped)
 /* This has no reason to be in this file except that adding new files is a
    bit of a pain */
 
-typedef struct {
-	PyObject_HEAD
-	PyObject *dict;
-} proxyobject;
+// Moved to JyNI.h:
+//typedef struct {
+//	PyObject_HEAD
+//	PyObject *dict;
+//} proxyobject;
 
 static Py_ssize_t
 proxy_len(proxyobject *pp)
@@ -798,6 +799,7 @@ static PySequenceMethods proxy_as_sequence = {
 static PyObject *
 proxy_has_key(proxyobject *pp, PyObject *key)
 {
+	jputs(__FUNCTION__);
 	int res = PyDict_Contains(pp->dict, key);
 	if (res < 0)
 		return NULL;
@@ -896,12 +898,16 @@ proxy_getiter(proxyobject *pp)
 static PyObject *
 proxy_str(proxyobject *pp)
 {
-	return PyObject_Str(pp->dict);
+	jputs(__FUNCTION__);
+	PyObject* result = PyObject_Str(pp->dict);
+	jputsLong(__LINE__);
+	return result;
 }
 
 static PyObject *
 proxy_repr(proxyobject *pp)
 {
+	jputs(__FUNCTION__);
 	PyObject *dictrepr;
 	PyObject *result;
 
@@ -1000,7 +1006,7 @@ typedef struct {
 static void
 wrapper_dealloc(wrapperobject *wp)
 {
-	PyObject_GC_UnTrack(wp);
+	_JyNI_GC_UNTRACK(wp);
 	Py_TRASHCAN_SAFE_BEGIN(wp)
 	Py_XDECREF(wp->descr);
 	Py_XDECREF(wp->self);
@@ -1208,14 +1214,15 @@ class property(object):
 
 */
 
-typedef struct {
-	PyObject_HEAD
-	PyObject *prop_get;
-	PyObject *prop_set;
-	PyObject *prop_del;
-	PyObject *prop_doc;
-	int getter_doc;
-} propertyobject;
+// Moved to JyNI.h:
+//typedef struct {
+//	PyObject_HEAD
+//	PyObject *prop_get;
+//	PyObject *prop_set;
+//	PyObject *prop_del;
+//	PyObject *prop_doc;
+//	int getter_doc;
+//} propertyobject;
 
 static PyObject * property_copy(PyObject *, PyObject *, PyObject *,
 								  PyObject *);
@@ -1416,7 +1423,7 @@ property_init(PyObject *self, PyObject *args, PyObject *kwds)
 			return -1;
 		}
 	}
-
+	if (!_JyNI_GC_IS_TRACKED(prop)) _JyNI_GC_TRACK(prop);
 	return 0;
 }
 

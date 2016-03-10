@@ -213,11 +213,28 @@ extern jfieldID pyFunction__doc__;
 extern jfieldID pyFunction__name__;
 
 extern jclass pyClassMethodClass;
+extern jmethodID pyClassMethodConstructor;
+extern jfieldID pyClassMethod_callable;
+
 extern jclass pyStaticMethodClass;
-extern jclass pyMethodDescrClass;
-extern jclass pyClassMethodDescrClass;
+extern jmethodID pyStaticMethodConstructor;
+extern jfieldID pyStaticMethod_callable;
+
+//extern jclass pyMethodDescrClass;
+//extern jclass pyClassMethodDescrClass;
+
 extern jclass pyDictProxyClass;
+extern jmethodID pyDictProxyConstructor;
+extern jfieldID pyDictProxy_dict;
+
 extern jclass pyPropertyClass;
+extern jmethodID pyPropertyConstructor;
+extern jfieldID pyProperty_fget;
+extern jfieldID pyProperty_fset;
+extern jfieldID pyProperty_fdel;
+extern jfieldID pyProperty_doc;
+extern jfieldID pyProperty_docFromGetter;
+
 extern jclass pyBaseStringClass;
 extern jclass pyXRangeClass;
 extern jclass pySequenceIterClass;

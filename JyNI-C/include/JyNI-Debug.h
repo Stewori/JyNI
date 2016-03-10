@@ -34,7 +34,10 @@
 #define JYNI_DEBUG_H_
 
 inline void jputs(const char* msg);
-inline void jputsLong(jlong val);
+#define jputsLong(val) \
+	jputs(__FUNCTION__); \
+	jputsLong0(val)
+inline void jputsLong0(jlong val);
 inline void jputsPy(PyObject* o);
 
 #endif /* JYNI_DEBUG_H_ */

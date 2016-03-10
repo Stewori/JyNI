@@ -352,6 +352,8 @@ PyMember_SetOne(char *addr, PyMemberDef *l, PyObject *v)
 		Py_XINCREF(v);
 		oldv = *(PyObject **)addr;
 		*(PyObject **)addr = v;
+// Todo: Maybe here is a smarter update policy possible via index-by-address-lookup
+		updateJyGCHeadLinks((PyObject*) (addr-l->offset), AS_JY(addr-l->offset));
 		Py_XDECREF(oldv);
 		break;
 	case T_CHAR:

@@ -186,6 +186,11 @@ public class PyDictionaryCPeer extends PyDictionary implements
 //			JyTState.prepareNativeThreadState(Py.getThreadState()));
 //	}
 
+//	@Override
+//	public String toString() {
+//		return super.toString();
+//	}
+
 	@Override
 	public long getHandle() {
 		return objectHandle;

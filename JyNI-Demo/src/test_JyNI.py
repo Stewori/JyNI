@@ -68,7 +68,7 @@ sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you
 datetime_path = '/usr/lib/python2.7/lib-dynload'
 
 # This is an example-path for a self-compiled python:
-#datetime_path = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
+datetime_path = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
 
 sys.path.insert(0, datetime_path)
 

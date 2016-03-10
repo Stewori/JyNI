@@ -38,7 +38,7 @@
 /* JyNI note:
  * Though only PyMethod would need mirroring because of the direct access
  * macros, we also implement PyClass and PyInstance this way. We do this,
- * because it is easier, cleaner and probably more performant.
+ * because it is easier, cleaner and probably yields better performance.
  */
 #include "JyNI.h"
 #include "structmember_JyNI.h"
@@ -279,6 +279,7 @@ class_lookup(PyClassObject *cp, PyObject *name, PyClassObject **pclass)
 static PyObject *
 class_getattr(register PyClassObject *op, PyObject *name)
 {
+	jputs(__FUNCTION__);
 	register PyObject *v;
 	register char *sname;
 	PyClassObject *klass;
@@ -765,7 +766,7 @@ instance_dealloc(register PyInstanceObject *inst)
 		else {
 			/*
 			 * JyNI-note:
-			 * With JyNI this brach is unlikely to happen. The __del__
+			 * With JyNI this branch is unlikely to happen. The __del__
 			 * method would be processed on Java-side and if this
 			 * instance was resurrected, this would be as a Java-object.
 			 * If needed on native side, this Java object would simply

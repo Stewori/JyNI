@@ -781,6 +781,31 @@ inline int decWeakRefCount(JyObject* referent);
 extern PyStringObject *nullstring;
 extern PyUnicodeObject *unicode_empty;
 
+//Other hidden stuff:
+typedef struct {
+	PyObject_HEAD
+	PyObject *cm_callable;
+} classmethod;
+
+typedef struct {
+	PyObject_HEAD
+	PyObject *sm_callable;
+} staticmethod;
+
+typedef struct {
+	PyObject_HEAD
+	PyObject *dict;
+} proxyobject;
+
+typedef struct {
+	PyObject_HEAD
+	PyObject *prop_get;
+	PyObject *prop_set;
+	PyObject *prop_del;
+	PyObject *prop_doc;
+	int getter_doc;
+} propertyobject;
+
 /* Some caches to be considered for eternal caching: */
 /* (These macros overwrite those in intobject.c.) */
 #define NSMALLPOSINTS           257

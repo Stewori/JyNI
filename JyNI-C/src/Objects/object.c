@@ -509,6 +509,8 @@ void _PyObject_Dump(PyObject* op)
 PyObject *
 PyObject_Repr(PyObject *v)
 {
+//	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(v)->tp_name);
 	//todo: support this:
 //	if (PyErr_CheckSignals())
 //		return NULL;
@@ -602,6 +604,7 @@ _PyObject_Str(PyObject *v)
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
+		jputs("delegate...");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 				(*env)->CallObjectMethod(env, delegate, pyObject__str__));
@@ -1378,6 +1381,7 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 {
 //	jputs("PyObject_GetAttrString");
 //	jputs(name);
+//	jputs(Py_TYPE(v)->tp_name);
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
@@ -1393,7 +1397,6 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 
 	if (Py_TYPE(v)->tp_getattr != NULL)
 	{
-		//puts(Py_TYPE(v)->tp_name);
 		return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
 	}
 	//puts("tp_getattr is NULL");
@@ -1415,6 +1418,7 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 int
 PyObject_HasAttrString(PyObject *v, const char *name)
 {
+//	jputs(__FUNCTION__);
 	PyObject *res = PyObject_GetAttrString(v, name);
 	if (res != NULL) {
 		Py_DECREF(res);
@@ -1459,7 +1463,8 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 PyObject *
 PyObject_GetAttr(PyObject *v, PyObject *name)
 {
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
+//	jputs(((PyStringObject*) name)->ob_sval);
 //	jputs("PyObject_GetAttr, PyObject key");
 	if (!PyString_Check(name)) {
 #ifdef Py_USING_UNICODE
@@ -1481,22 +1486,22 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-		//puts("delegate");
+//		jputs("delegate");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 	}
-//	puts("no delegate in PyString-version");
+//	jputs("no delegate in PyString-version");
 	PyTypeObject *tp = Py_TYPE(v);
-//	puts(tp->tp_name);
+//	jputs(tp->tp_name);
 	if (tp->tp_getattro != NULL)
 	{
-		//puts("tp_getattro not NULL");
+//		jputs("tp_getattro not NULL");
 		return (*tp->tp_getattro)(v, name);
 	}
 	if (tp->tp_getattr != NULL) {
-		//puts("tp_getattr not NULL");
+//		jputs("tp_getattr not NULL");
 		return (*tp->tp_getattr)(v, PyString_AS_STRING(name));
 	}
 	PyErr_Format(PyExc_AttributeError,
@@ -1508,6 +1513,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 int
 PyObject_HasAttr(PyObject *v, PyObject *name)
 {
+	jputs(__FUNCTION__);
 	PyObject *res = PyObject_GetAttr(v, name);
 	if (res != NULL) {
 		Py_DECREF(res);
@@ -1597,6 +1603,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 PyObject **
 _PyObject_GetDictPtr(PyObject *obj)
 { //JyNI-todo: Check for truncation to avoid segfault
+//	jputs(__FUNCTION__);
 	Py_ssize_t dictoffset;
 	PyTypeObject *tp = Py_TYPE(obj);
 	if (!(tp->tp_flags & Py_TPFLAGS_HAVE_CLASS))
@@ -1868,9 +1875,9 @@ _PyObject_NextNotImplemented(PyObject *self)
 PyObject *
 _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 {
-//	puts("_PyObject_GenericGetAttrWithDict:");
-//	puts(PyString_AS_STRING(name));
-//	puts(obj->ob_type->tp_name);
+//	jputs(__FUNCTION__);
+//	jputs(PyString_AS_STRING(name));
+//	jputs(obj->ob_type->tp_name);
 	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr = NULL;
 	PyObject *res = NULL;
@@ -2035,8 +2042,8 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 PyObject *
 PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 {
-//	puts("PyObject_GenericGetAttr:");
-//	puts(PyString_AS_STRING(name));
+//	jputs(__FUNCTION__);
+//	jputs(PyString_AS_STRING(name));
 	PyObject* er = _PyObject_GenericGetAttrWithDict(obj, name, NULL);
 //	puts("PyObject_GenericGetAttr done");
 	return er;
