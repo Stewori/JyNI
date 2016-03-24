@@ -38,14 +38,18 @@
 
 inline void JyErr_InsertCurExc()
 {
-	//puts(__FUNCTION__);
 	PyThreadState *tstate = PyThreadState_GET();
+	PyObject *curexc_type, *curexc_value, *curexc_traceback;
+	PyErr_Fetch(&curexc_type, &curexc_value, &curexc_traceback);
 	env();
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIJyErr_InsertCurExc,
 			TS_GET_JY(tstate),
-			JyNI_JythonPyObject_FromPyObject(tstate->curexc_type),
-			JyNI_JythonPyObject_FromPyObject(tstate->curexc_value),
-			JyNI_JythonPyObject_FromPyObject(tstate->curexc_traceback));
+			JyNI_JythonPyObject_FromPyObject(curexc_type),
+			JyNI_JythonPyObject_FromPyObject(curexc_value),
+			JyNI_JythonPyObject_FromPyObject(curexc_traceback));
+	Py_XDECREF(curexc_type);
+	Py_XDECREF(curexc_value);
+	Py_XDECREF(curexc_traceback);
 }
 
 /*
