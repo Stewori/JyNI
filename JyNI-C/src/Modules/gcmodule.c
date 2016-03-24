@@ -110,7 +110,8 @@ static void pushExStack(PyObject* op) {
 			stack->stack[stack->position++] = op;
 		} else {
 			Ex_Stack_Block* newNext = (Ex_Stack_Block*) malloc(sizeof(Ex_Stack_Block));
-			newNext->stack[newNext->position++] = op;
+			newNext->stack[0] = op;
+			newNext->position = 1;
 			newNext->next = stack;
 			explorationStack.next = newNext;
 		}
