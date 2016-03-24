@@ -904,12 +904,13 @@ public class JyNI {
 	}
 
 	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
-//		System.out.println("JyErr_InsertCurExc");
+//		System.out.println("JyErr_InsertCurExc "+tstate);
 //		System.out.println(value);
 		if (type == null) type = Py.None;
 		if (value == null) value = Py.None;
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
 		tstate0.exception = new PyException(type, value, traceback);
+//		System.out.println(tstate0.exception);
 //		PyException cur_exc = cur_excLookup.remove(tstate0);
 //		if (cur_exc != null)
 //		{
@@ -1168,8 +1169,19 @@ public class JyNI {
 		return osname.replaceAll("[\\s/]", "").toLowerCase();
 	}
 
+	/**
+	 * a variant of the builtin type() constructor producing a type
+	 * backed by old-style class.
+	 */
+	public static PyObject oldStyle_type(PyObject name, PyObject bases, PyObject dict) {
+		return PyClass.classobj___new__(name, bases, dict);
+	}
+
 	public static boolean isLibraryFileAvailable(String libname) {
 		if (JyNIInitializer.importer == null) return false;
+		if (JyNIImporter.dynModules.containsKey(libname))
+			// Must be checked here to account for statically linked libs
+			return true;
 		String suf = "."+JyNIImporter.getSystemDependendDynamicLibraryExtension();
 		for (String s : JyNIInitializer.importer.libPaths)
 		{
@@ -1469,7 +1481,7 @@ public class JyNI {
 //---------------Weak Reference section-------------------
 	
 	protected static ReferenceType createWeakReferenceFromNative(PyObject referent, long handle, PyObject callback) {
-		System.out.println("createWeakReferenceFromNative "+handle);
+//		System.out.println("createWeakReferenceFromNative "+handle);
 		if (referent == null)
 			return new ReferenceType(JyNIEmptyGlobalReference.defaultInstance, callback);
 		ReferenceBackend gref = GlobalRef.newInstance(referent);
@@ -1478,7 +1490,7 @@ public class JyNI {
 	}
 
 	protected static ProxyType createProxyFromNative(PyObject referent, long handle, PyObject callback) {
-		System.out.println("createProxyFromNative "+handle);
+//		System.out.println("createProxyFromNative "+handle);
 		if (referent == null)
 			return new ProxyType(JyNIEmptyGlobalReference.defaultInstance, callback);
 		ReferenceBackend gref = GlobalRef.newInstance(referent);

@@ -105,7 +105,7 @@ public class PyDictionaryCPeer extends PyDictionary implements
 
 	@Override
 	public PyObject __findattr_ex__(String name) {
-		//System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name+" "+(findAttrCount++));
+//		System.out.println("Look for attribute "+name+" in PyDictionaryCPeer "+this);//.name+" "+(findAttrCount++));
 		long ts = JyTState.prepareNativeThreadState(Py.getThreadState());
 		PyObject result = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name, ts));
 		return result != null ? result : super.__findattr_ex__(name);
@@ -141,6 +141,7 @@ public class PyDictionaryCPeer extends PyDictionary implements
 	@Override
 	public PyObject __finditem__(PyObject key) {
 //		return super.__finditem__(key);
+//		System.out.println("Look for item "+key+" in PyDictionaryCPeer "+this);
 //		System.out.println("__finditem__: "+key);
 //		System.out.println(getType().getName());
 		PyObject result = JyNI.maybeExc(JyNI.getItem(objectHandle, key,

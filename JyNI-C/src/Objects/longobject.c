@@ -442,6 +442,7 @@ PyLong_AsSsize_t(PyObject *vv) {
 unsigned long
 PyLong_AsUnsignedLong(PyObject *vv)
 {
+//	puts(__FUNCTION__);
 	register PyLongObject *v;
 	unsigned long x, prev;
 	Py_ssize_t i;
@@ -450,6 +451,7 @@ PyLong_AsUnsignedLong(PyObject *vv)
 		if (vv != NULL && PyInt_Check(vv)) {
 			long val = PyInt_AsLong(vv);
 			if (val < 0) {
+//				printf("%d\n", __LINE__);
 				PyErr_SetString(PyExc_OverflowError,
 								"can't convert negative value "
 								"to unsigned long");
@@ -458,12 +460,14 @@ PyLong_AsUnsignedLong(PyObject *vv)
 			return val;
 		}
 		PyErr_BadInternalCall();
+//		printf("%d\n", __LINE__);
 		return (unsigned long) -1;
 	}
 	v = (PyLongObject *)vv;
 	i = Py_SIZE(v);
 	x = 0;
 	if (i < 0) {
+//		printf("%d\n", __LINE__);
 		PyErr_SetString(PyExc_OverflowError,
 						"can't convert negative value to unsigned long");
 		return (unsigned long) -1;
@@ -472,11 +476,13 @@ PyLong_AsUnsignedLong(PyObject *vv)
 		prev = x;
 		x = (x << PyLong_SHIFT) | v->ob_digit[i];
 		if ((x >> PyLong_SHIFT) != prev) {
+//			printf("%d\n", __LINE__);
 			PyErr_SetString(PyExc_OverflowError,
 							"long int too large to convert");
 			return (unsigned long) -1;
 		}
 	}
+//	printf("%d\n", __LINE__);
 	return x;
 }
 
@@ -835,12 +841,18 @@ PyLong_AsVoidPtr(PyObject *vv)
 #if SIZEOF_VOID_P <= SIZEOF_LONG
 	long x;
 
-	if (PyInt_Check(vv))
+	if (PyInt_Check(vv)) {
+//		printf("%d\n", __LINE__);
 		x = PyInt_AS_LONG(vv);
-	else if (PyLong_Check(vv) && _PyLong_Sign(vv) < 0)
+	}
+	else if (PyLong_Check(vv) && _PyLong_Sign(vv) < 0) {
+//		printf("%d\n", __LINE__);
 		x = PyLong_AsLong(vv);
-	else
+	}
+	else {
+//		printf("%d\n", __LINE__);
 		x = PyLong_AsUnsignedLong(vv);
+	}
 #else
 
 #ifndef HAVE_LONG_LONG
@@ -860,8 +872,10 @@ PyLong_AsVoidPtr(PyObject *vv)
 
 #endif /* SIZEOF_VOID_P <= SIZEOF_LONG */
 
-	if (x == -1 && PyErr_Occurred())
+	if (x == -1 && PyErr_Occurred()) {
+//		printf("%d\n", __LINE__);
 		return NULL;
+	}
 	return (void *)x;
 }
 

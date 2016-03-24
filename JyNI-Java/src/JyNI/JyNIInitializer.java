@@ -75,6 +75,10 @@ public class JyNIInitializer implements JythonInitializer {
 		PySystemState initState = PySystemState.doInitialize(preProperties,
 				postProperties, argv, classLoader, adapter);
 		importer = new JyNIImporter();
+		// Add libs statically linked into JyNI:
+		// (Using null-path causes lookup in main executable)
+		//JyNIImporter.dynModules.put("_tkinter", new JyNIModuleInfo("_tkinter", null, null));
+
 		initState.path_hooks.append(importer);
 
 //	Currently this monkeypatching is done in JyNIImporter on first module import,
@@ -96,9 +100,11 @@ public class JyNIInitializer implements JythonInitializer {
 		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
 		String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
 		for (int i = 0; i < cp.length; ++i) {
-			//System.out.println(cp[i]);
+//			System.out.println(cp[i]);
 			if (cp[i].endsWith("JyNI.jar")) {
 				initState.path.add(0, cp[i]);
+
+				//initState.path.add(0, cp[i]+"/lib-tk");
 			}
 		}
 //		initializeState(initState);
@@ -133,7 +139,7 @@ public class JyNIInitializer implements JythonInitializer {
 		gc.addJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS);
 		gc.registerPreFinalizationProcess(new Runnable(){
 				public void run() {JyNI.preProcessCStubGCCycle();}});
-		//System.out.println("Init JyNI done");
+//		System.out.println("Init JyNI done");
 		initialized = true;
 	}
 }

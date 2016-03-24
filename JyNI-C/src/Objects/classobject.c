@@ -279,7 +279,7 @@ class_lookup(PyClassObject *cp, PyObject *name, PyClassObject **pclass)
 static PyObject *
 class_getattr(register PyClassObject *op, PyObject *name)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	register PyObject *v;
 	register char *sname;
 	PyClassObject *klass;

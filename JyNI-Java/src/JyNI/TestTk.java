@@ -83,8 +83,9 @@ public class TestTk {
 	public static void main(String[] args) {
 
 		PySystemState pystate = Py.getSystemState();
-		pystate.path.add("/usr/lib/python2.7/lib-dynload");
-		pystate.path.add("/usr/lib/python2.7/lib-tk");
+		//pystate.path.add("/usr/lib/python2.7/lib-dynload");
+		//pystate.path.add("/usr/lib/python2.7/lib-tk");
+		//pystate.path.add("build/JyNI.jar/lib-tk");
 		PyModule tkModule = (PyModule) imp.importName("Tkinter", true);
 
 		root = tkModule.newJ(Tk.class);
@@ -118,6 +119,7 @@ public class TestTk {
 
 		root.mainloop();
 
+		System.out.println();
 		System.out.println("====");
 		System.out.println("exit");
 		System.out.println("====");

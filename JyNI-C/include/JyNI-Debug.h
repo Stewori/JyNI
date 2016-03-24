@@ -33,7 +33,9 @@
 #ifndef JYNI_DEBUG_H_
 #define JYNI_DEBUG_H_
 
-inline void jputs(const char* msg);
+//#define jputs(msg) (_jputs(__FUNCTION__), _jputs(msg))
+#define jputs(msg) _jputs(msg)
+inline void _jputs(const char* msg);
 //#define jputsLong(val) \
 //	jputs(__FUNCTION__); \
 //	jputsLong0(val)

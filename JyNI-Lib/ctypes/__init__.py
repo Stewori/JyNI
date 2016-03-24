@@ -408,6 +408,7 @@ class CDLL():#object):
                 id(self) & (_sys.maxint*2 + 1))
 
     def __getattr__(self, name):
+    	#print "CDLL getattr: "+str(name)
         if name.startswith('__') and name.endswith('__'):
             raise AttributeError(name)
         func = self.__getitem__(name)

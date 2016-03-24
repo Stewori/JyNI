@@ -33,7 +33,7 @@
  *  Created on: 14.03.2013, 00:49:46
  *	  Author: Stefan Richthofer
  */
-//PyObject_MALLOC
+
 #include <JyNI.h>
 #include <JySync.h>
 #include <code_JyNI.h>
@@ -42,7 +42,7 @@
 #include "importdl.h"
 //#include <dlfcn.h>
 //#include "stringlib/string_format.h"
-//_Py_CheckInterval
+
 const char* excPrefix = "exceptions.";
 //jlong JyNIDebugMode = 0;
 
@@ -72,20 +72,27 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 	char mName[strlen(utf_string)+1];
 	strcpy(mName, utf_string);
 	(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
-	utf_string = (*env)->GetStringUTFChars(env, modulePath, NULL);
-	//"+1" for 0-termination:
-	char mPath[strlen(utf_string)+1];
-	strcpy(mPath, utf_string);
-	(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
-	FILE *fp;
-	fp = fopen(mPath, "r" PY_STDIOTEXTMODE);
-	if (fp == NULL)
-		//PyErr_SetFromErrno(PyExc_IOError);
-		jputs("some error happened opening the file");
 
-	jobject er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
-	if (fclose(fp))
-		jputs("Some error occurred on file close");
+	jobject er;
+
+	if (!(*env)->IsSameObject(env, modulePath, NULL)) {
+		utf_string = (*env)->GetStringUTFChars(env, modulePath, NULL);
+		//"+1" for 0-termination:
+		char mPath[strlen(utf_string)+1];
+		strcpy(mPath, utf_string);
+		(*env)->ReleaseStringUTFChars(env, moduleName, utf_string);
+		FILE *fp;
+		fp = fopen(mPath, "r" PY_STDIOTEXTMODE);
+		if (fp == NULL)
+			//PyErr_SetFromErrno(PyExc_IOError);
+			jputs("some error happened opening the file");
+
+		er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
+		if (fclose(fp)) jputs("Some error occurred on file close");
+	} else
+		// Attempt to load a module statically linked into JyNI.so:
+		er = _PyImport_LoadDynamicModuleJy(mName, NULL, NULL);
+
 	LEAVE_JyNI
 	return er;
 }
@@ -131,7 +138,7 @@ void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, j
  */
 jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate)
 {
-	//jputs("JyNI_callPyCPeer called");
+//	jputs("JyNI_callPyCPeer called");
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
@@ -140,6 +147,8 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 	ENTER_JyNI
 	jobject er;
+//	jputs("JyNI_call error before call?");
+//	jputsLong(PyErr_Occurred());
 	if (peer->ob_type->tp_call) {
 		PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
 //		if (jdbg) {
@@ -170,11 +179,11 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jlong tstate)
 {
 	//printf("JyNI_getAttrString %i\n", tstate);
-	//jputs("JyNI_getAttrString");
+//	jputs("JyNI_getAttrString");
 	//jputsLong(tstate);
 	if (handle == 0) return NULL;
 	cstr_from_jstring(cName, name);
-	//jputs(cName);
+//	jputs(cName);
 	ENTER_JyNI
 	//jint ensresult = (*env)->EnsureLocalCapacity(env, 100);
 	//jputs("ensresult:");
@@ -1977,11 +1986,11 @@ inline PyObject* JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject)
 inline void JyNI_SyncPy2Jy(PyObject* op, JyObject* jy)
 {
 	//todo: take care of the other flags
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(jy, JyAttributeSyncFunctions);
-	jputsLong(__LINE__);
+//	jputsLong(__LINE__);
 	if (sync != NULL && sync->py2jy != NULL) sync->py2jy(op, jy->jy);
-	jputsLong(__LINE__);
+//	jputsLong(__LINE__);
 }
 
 inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src, JyObject* srcJy)
@@ -4411,7 +4420,7 @@ inline void JyNI_printJInfo(jobject obj)
 	} else jputs("object is NULL");
 }
 
-inline void jputs(const char* msg)
+inline void _jputs(const char* msg)
 {
 	env();
 	jstring str = (*env)->NewStringUTF(env, msg);

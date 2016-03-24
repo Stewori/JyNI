@@ -64,7 +64,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	char *lastdot, *shortname, *packagecontext, *oldcontext;
 	dl_funcptr p;
 
-	//The following case is covered on java-side now:
+	//The following case is covered on Java-side now:
 	/*if ((m = _PyImport_FindExtension(name, pathname)) != NULL) {
 		Py_INCREF(m);
 		return m;
@@ -132,7 +132,8 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	// Remember the filename as the __file__ attribute
 	//if (PyModule_AddStringConstant(m, "__file__", pathname) < 0)
 	//puts("adding filename...");
-	if (PyModule_AddStringConstantJy(m, "__file__", pathname) < 0)
+	// Todo: If pathname is NULL set __file__ to PyNone or something.
+	if (pathname && PyModule_AddStringConstantJy(m, "__file__", pathname) < 0)
 		PyErr_Clear(); // Not important enough to report
 	//puts("filename added:");
 	//puts(PyModule_GetFilename(JyNI_PyObject_FromJythonPyObject(m)));

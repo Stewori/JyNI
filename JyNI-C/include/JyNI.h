@@ -842,7 +842,10 @@ inline PyObject* JyNI_NewPyObject_FromJythonPyObject(jobject jythonPyObject);
 inline void JyNI_ClearJyAttributes(JyObject* obj);
 inline void JyNI_ClearJyAttribute(JyObject* obj, const char* name);
 inline void JyNI_ClearJyAttributeValue(JyAttribute* att);
-inline void* JyNI_GetJyAttribute(JyObject* obj, const char* name);
+#define JyNI_GetJyAttribute(obj, name) \
+		_JyNI_GetJyAttribute(obj, name)
+		//(jputs(__FUNCTION__), jputsLong(__LINE__), _JyNI_GetJyAttribute(obj, name))
+inline void* _JyNI_GetJyAttribute(JyObject* obj, const char* name);
 inline void JyNI_AddJyAttribute(JyObject* obj, const char* name, void* value);
 inline void JyNI_AddJyAttributeWithFlags(JyObject* obj, const char* name, void* value, char flags);
 inline void JyNI_AddOrSetJyAttribute(JyObject* obj, const char* name, void* value);

@@ -143,6 +143,10 @@ PyErr_SetNone(PyObject *exception)
 void
 PyErr_SetString(PyObject *exception, const char *string)
 {
+//	puts(__FUNCTION__);
+//	puts(string);
+//	jputs(__FUNCTION__);
+//	jputs(string);
 	PyObject *value = PyString_FromString(string);
 	PyErr_SetObject(exception, value);
 	Py_XDECREF(value);
@@ -390,8 +394,15 @@ PyErr_Fetch(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 }
 
 void
+_PyErr_Clear(void)
+{
+	PyErr_Clear();
+}
+
+void
 PyErr_Clear(void)
 {
+//	puts(__FUNCTION__);
 //	env();
 //	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Clear);
 	PyErr_Restore(NULL, NULL, NULL);

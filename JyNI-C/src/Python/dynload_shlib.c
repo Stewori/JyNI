@@ -109,7 +109,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 	char pathbuf[260];
 	int dlopenflags=0;
 
-	if (strchr(pathname, '/') == NULL) {
+	if (pathname && strchr(pathname, '/') == NULL) {
 		/* Prefix bare filename with "./" */
 		PyOS_snprintf(pathbuf, sizeof(pathbuf), "./%-.255s", pathname);
 		pathname = pathbuf;
@@ -147,7 +147,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 #endif
 
 	if (Py_VerboseFlag)
-		PySys_WriteStderr("dlopen(\"%s\", %x);\n", pathname,
+		PySys_WriteStderr("dlopen(\"%s\", %x);\n", pathname ? pathname : "NULL",
 						  dlopenflags);
 
 #ifdef __VMS
