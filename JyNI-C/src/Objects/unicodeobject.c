@@ -385,7 +385,7 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 			unicode->str = (Py_UNICODE*) PyObject_RawMalloc(new_size);
 		}
 		PyObject_INIT(unicode, &PyUnicode_Type);
-		_PyObject_InitJy(unicode, &(builtinTypes[UNICODE_INDEX_TME]));
+		_PyObject_InitJy(unicode, &(builtinTypes[TME_INDEX_Unicode]));
 		JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, unicode, -1);
 	}
 	else {

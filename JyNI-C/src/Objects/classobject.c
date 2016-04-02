@@ -2356,7 +2356,7 @@ PyMethod_New(PyObject *func, PyObject *self, PyObject *klass)
 	if (im != NULL) {
 		free_list = (PyMethodObject *)(im->im_self);
 		PyObject_INIT(im, &PyMethod_Type);
-		_PyObject_GC_InitJy(im, &(builtinTypes[METHOD_INDEX_TME]));
+		_PyObject_GC_InitJy(im, &(builtinTypes[TME_INDEX_Method]));
 		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, im, AS_JY_WITH_GC(im), -1, PyMethod_Type.tp_name);
 		numfree--;
 	}

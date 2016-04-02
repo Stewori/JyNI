@@ -635,17 +635,63 @@ jobject JyNI_PyNumber_And(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Xor(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Or(jlong o1, jobject o2, jlong tstate);
 
-#define builtinTypeCount 46
+#define builtinTypeCount 36
 extern TypeMapEntry builtinTypes[builtinTypeCount];
-//extern TypeMapEntry specialPyInstance;
-
-#define  METHOD_INDEX_TME   8
-#define   FLOAT_INDEX_TME  17
-#define     INT_INDEX_TME  18
-#define UNICODE_INDEX_TME  21
-#define   TUPLE_INDEX_TME  27
-#define    LIST_INDEX_TME  29
-#define    DICT_INDEX_TME  32
+#define TME_INDEX_Type                   0
+#define TME_INDEX_NotImplemented         1
+#define TME_INDEX_None                   2
+#define TME_INDEX_File                   3
+#define TME_INDEX_Module                 4
+#define TME_INDEX_Cell                   5
+#define TME_INDEX_Class                  6
+#define TME_INDEX_Instance               7
+#define TME_INDEX_Method                 8
+#define TME_INDEX_Function               9
+#define TME_INDEX_ClassMethod           10
+#define TME_INDEX_StaticMethod          11
+//#define TME_INDEX_MethodDescr         12
+//#define TME_INDEX_ClassMethodDescr    13
+#define TME_INDEX_DictProxy             12
+#define TME_INDEX_Property              13
+#define TME_INDEX_Bool                  14
+#define TME_INDEX_Float                 15
+#define TME_INDEX_Int                   16
+#define TME_INDEX_Long                  17
+#define TME_INDEX_Complex               18
+#define TME_INDEX_Unicode               19
+#define TME_INDEX_String                20
+#define TME_INDEX_Weakref_Ref           21
+#define TME_INDEX_Weakref_Proxy         22
+#define TME_INDEX_Weakref_CallableProxy 23
+//#define TME_INDEX_BaseString          26
+//#define TME_INDEX_SeqIter             27
+//#define TME_INDEX_Range               28
+//#define TME_INDEX_rangeiter           29
+#define TME_INDEX_Tuple                 24
+//#define TME_INDEX_TupleIter           28
+#define TME_INDEX_List                  25
+//#define TME_INDEX_ListIter            30
+//#define TME_INDEX_ListRevIter         31
+#define TME_INDEX_Dict                  26
+#define TME_INDEX_StringMap             27
+#define TME_INDEX_Set                   28
+//#define TME_INDEX_SetIter             34
+#define TME_INDEX_FrozenSet             29
+//#define TME_INDEX_Enum                36
+#define TME_INDEX_Slice                 30
+#define TME_INDEX_Ellipsis              31
+//#define TME_INDEX_Gen                 39
+#define TME_INDEX_Code_Bytecode         32
+#define TME_INDEX_Code_Tablecode        33
+//#define TME_INDEX_Frame               42
+//#define TME_INDEX_Super               43
+#define TME_INDEX_Exc_BaseException     34
+#define TME_INDEX_TraceBack             35
+//#define TME_INDEX_ByteArray           46
+//#define TME_INDEX_Buffer              47
+//#define TME_INDEX_MemoryView          48
+//#define TME_INDEX_BaseObject          49
+//#define TME_INDEX_CallIter            50
 
 /* "Hidden" PyTypes: */
 extern PyTypeObject PyNone_Type;
@@ -669,8 +715,8 @@ extern PyTypeObject sortwrapper_type;
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type);
 inline jclass JyNI_JythonClassFromPyType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromPyType(PyTypeObject* type);
+inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubTypeWithPeer(PyTypeObject* type);
-//inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromName(char* name);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name);

@@ -147,7 +147,7 @@ PyInt_FromLong(long ival)
 	v = free_list;
 	free_list = (PyIntObject *)Py_TYPE(v);
 	PyObject_INIT(v, &PyInt_Type);
-	_PyObject_InitJy(v, &(builtinTypes[INT_INDEX_TME]));
+	_PyObject_InitJy(v, &(builtinTypes[TME_INDEX_Int]));
 	v->ob_ival = ival;
 	JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, v, -1);
 	return (PyObject *) v;
@@ -1516,7 +1516,7 @@ _PyInt_Init(void)
 		v = free_list;
 		free_list = (PyIntObject *)Py_TYPE(v);
 		PyObject_INIT(v, &PyInt_Type);
-		_PyObject_InitJy(v, &(builtinTypes[INT_INDEX_TME]));
+		_PyObject_InitJy(v, &(builtinTypes[TME_INDEX_Int]));
 		v->ob_ival = ival;
 		jy = AS_JY_NO_GC(v);
 		small_ints[ival + NSMALLNEGINTS] = jy;

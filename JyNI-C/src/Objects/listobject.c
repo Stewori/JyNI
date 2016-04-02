@@ -166,7 +166,7 @@ PyList_New(Py_ssize_t size)
 	if (numfree) {
 		numfree--;
 		op = free_list[numfree];
-		_PyObject_GC_InitJy(op, &(builtinTypes[LIST_INDEX_TME]));
+		_PyObject_GC_InitJy(op, &(builtinTypes[TME_INDEX_List]));
 		_Py_NewReference((PyObject *)op);
 		JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, op, AS_JY_WITH_GC(op), size, PyList_Type.tp_name);
 #ifdef SHOW_ALLOC_COUNT

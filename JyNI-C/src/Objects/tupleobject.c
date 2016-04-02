@@ -110,7 +110,7 @@ PyTuple_New(register Py_ssize_t size)
 		Py_SIZE(op) = size;
 		Py_TYPE(op) = &PyTuple_Type;
 #endif
-		_PyObject_GC_InitJy(op, &(builtinTypes[TUPLE_INDEX_TME]));
+		_PyObject_GC_InitJy(op, &(builtinTypes[TME_INDEX_Tuple]));
 		_Py_NewReference((PyObject *)op);
 //		jputs(__FUNCTION__);
 //		jputsLong(__LINE__);

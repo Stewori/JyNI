@@ -188,7 +188,7 @@ PyFloat_FromDouble(double fval)
 	op = free_list;
 	free_list = (PyFloatObject *)Py_TYPE(op);
 	PyObject_INIT(op, &PyFloat_Type);
-	_PyObject_InitJy(op, &(builtinTypes[FLOAT_INDEX_TME]));
+	_PyObject_InitJy(op, &(builtinTypes[TME_INDEX_Float]));
 	op->ob_fval = fval;
 	JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, op, -1);
 	return (PyObject *) op;

@@ -295,7 +295,7 @@ PyDict_New(void)
 		/* JyNI-note: Here we assume that the caller would not intend
 		 * to create a stringmap-dict.
 		 */
-		_PyObject_InitJy(mp, &(builtinTypes[DICT_INDEX_TME]));
+		_PyObject_InitJy(mp, &(builtinTypes[TME_INDEX_Dict]));
 		_Py_NewReference((PyObject *)mp);
 		JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, mp, -1);
 		/*if (mp->ma_fill) {
