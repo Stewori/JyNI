@@ -198,7 +198,8 @@ PyAPI_FUNC(PyVarObject *) _PyObject_NewVar(PyTypeObject *, Py_ssize_t);
 #define PyObject_INIT_VAR(op, typeobj, size) \
     ( Py_SIZE(op) = (size), PyObject_INIT((op), (typeobj)) )
 
-#define _PyObject_SIZE(typeobj) ( (typeobj)->tp_basicsize )
+#define _PyObject_SIZE(typeobj) ( (typeobj)->tp_basicsize ? (typeobj)->tp_basicsize : (jputs("Warning: uninitialized tp_basicsize"), jputs((typeobj)->tp_name), (typeobj)->tp_basicsize))
+//#define _PyObject_SIZE(typeobj) ( (typeobj)->tp_basicsize )
 
 /* _PyObject_VAR_SIZE returns the number of bytes (as size_t) allocated for a
    vrbl-size object with nitems items, exclusive of gc overhead (if any).  The

@@ -183,7 +183,7 @@ PyObject_GetItem(PyObject *o, PyObject *key)
 	m = o->ob_type->tp_as_mapping;
 //	jputsLong(__LINE__);
 	if (m && m->mp_subscript) {
-		return m->mp_subscript(o, key); // Hier krachts!
+		return m->mp_subscript(o, key);
 	}
 	//m->mp_subscript hat auf mac u.U. seltsamen Wert fffffffff5 oder so
 //	jputsLong(__LINE__);

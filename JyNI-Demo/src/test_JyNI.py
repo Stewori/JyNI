@@ -132,7 +132,9 @@ class TestJyNI(unittest.TestCase):
 		self.assertEqual(len(l), 3)
 		self.assertEqual(str(l), "['natively modified', [...], 'world']")
 
-	def test_native_tuple_selfcontaining(self):
+	def test_native_sequence_selfcontaining(self):
+		# In early JyNI-days self-containing sequences used
+		# to trigger infinite conversion loops
 		l = ["Hello", "lovely", "world"]
 		l[1] = (11, 12, l)
 		DemoExtension.listModifyTest(l, 2)
@@ -183,6 +185,53 @@ class TestJyNI(unittest.TestCase):
 			exc = sys.exc_info()
 			self.assertEqual(exc[0], SystemError)
 			self.assertEqual(str(exc[1]), "This is a test exception message for JyNI.")
+
+	def test_new_style_classes(self):
+
+		class testnewstyle(object):
+			pass
+
+		class testnewstyleString(str):
+			pass
+
+		class testnewstyleInt(int):
+			pass
+
+		strType = type("")
+		intType = type(6)
+
+		nobj = testnewstyle()
+		self.assertTrue(DemoExtension.newstyleCheck(nobj))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, strType))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
+
+		nobj = testnewstyleString()
+		self.assertTrue(DemoExtension.newstyleCheck(nobj))
+		self.assertTrue(DemoExtension.newstyleCheckSubtype(nobj, strType))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
+
+		nobj = testnewstyleInt()
+		self.assertTrue(DemoExtension.newstyleCheck(nobj))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, strType))
+		self.assertTrue(DemoExtension.newstyleCheckSubtype(nobj, intType))
+
+	@unittest.skipUnless(os.name == 'java',
+		'Not runnable with CPython, because it uses JyNI-classes for testing.')
+	def test_custom_classes(self):
+		from JyNI import JyNIImporter, PyShadowString
+
+		strType = type("")
+		intType = type(6)
+
+		nobj = JyNIImporter()
+		self.assertTrue(DemoExtension.newstyleCheck(nobj))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, strType))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
+
+		nobj = PyShadowString("a", "b")
+		self.assertTrue(DemoExtension.newstyleCheck(nobj))
+		self.assertTrue(DemoExtension.newstyleCheckSubtype(nobj, strType))
+		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
 
 	@unittest.skipUnless(hasNativeDatetime(),
 		'datetime.so not found (probably part of libpython2.7.so)')

@@ -612,7 +612,7 @@ manually remove this flag though!
 /* tp_richcompare is defined */
 #define Py_TPFLAGS_HAVE_RICHCOMPARE (1L<<5)
 
-/* Objects which are weakly referencable if their tp_weaklistoffset is >0 */
+/* Objects which are weakly referenceable if their tp_weaklistoffset is >0 */
 #define Py_TPFLAGS_HAVE_WEAKREFS (1L<<6)
 
 /* tp_iter is defined */
@@ -839,7 +839,7 @@ PyAPI_FUNC(void) _Py_AddToAllObjects(PyObject *, int force);
  * There are cases where it's safe to use the naive code, but they're brittle.
  * For example, if `op` points to a Python integer, you know that destroying
  * one of those can't cause problems -- but in part that relies on that
- * Python integers aren't currently weakly referencable.  Best practice is
+ * Python integers aren't currently weakly referenceable.  Best practice is
  * to use Py_CLEAR() even if you can't think of a reason for why you need to.
  */
 #define Py_CLEAR(op)                            \

@@ -169,17 +169,22 @@
  * PyObject-Head (and thus only java-side needs to be taken care of).
  * If it is not truncated, flags can include some information on how
  * data synchronization should take place. As a rule of thumb, we
- * manage Types as truncated, if there are no macros in the official
+ * manage types as truncated, if there are no macros in the official
  * Python-headers that directly modify the structure.
  * Additionally flags tell us whether a PyGC_Head is present (because
- * otherwise, it would be very tedious to write a macro like FROM_JY(o)).
- * They also tell whether jy refers to a PyCPeer, saving some
- * frequent type checking JNI-calls.
+ * otherwise, it would be very tedious or impossible to write a macro
+ * like FROM_JY(o)). They also tell whether jy refers to a PyCPeer,
+ * saving some frequent type checking JNI-calls.
  *
  * The INITIALIZED-flag indicates whether a java-side object is already
  * prepared. Note that jy == NULL is no indication for this, because
  * jy may be pre-initialized with the corresponding TypeMapEntry,
  * saving a lookup at allocation.
+ *
+ * The HAS_JHANDLE-flag indicates whether Java-side JyNI is already
+ * tracking the native object, i.e. that JyNISetNativeHandle was called.
+ * It is mainly an indicator for clean-up methods to call
+ * JyNIClearNativeHandle.
  */
 
 /* General Flags: */
@@ -190,11 +195,15 @@
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
 #define JY_CPEER_FLAG_MASK         16
 //#define JY_CACHE_GC_FLAG_MASK      32 /* (currently not used) */
-#define JY_SUBTYPE_FLAG_MASK       32 /* used to prevent and endless call-delegation loop for subtype PyCPeers */
+#define JY_SUBTYPE_FLAG_MASK       32 /* used to prevent an endless call-delegation loop for subtype PyCPeers */
 #define JY_CACHE_ETERNAL_FLAG_MASK 64
 //#define JY_GC_SINGLE_LINK        64
 #define JY_GC_VAR_SIZE            128 /* This distinguishes array-like vs list-like links. */
-#define JY_CACHE                   64 //96 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
+
+// Derived flags:
+#define JY_CACHE                   64 // Maybe 96 /* JY_CACHE_GC_FLAG_MASK | JY_CACHE_ETERNAL_FLAG_MASK */
+#define JY_NATIVE_SUBTYPE          48 // JY_SUBTYPE_FLAG_MASK | JY_CPEER_FLAG_MASK
+#define JY_POTENTIAL_DELEGATE      40 // JY_TRUNCATE_FLAG_MASK | JY_SUBTYPE_FLAG_MASK
 //#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
 //#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
@@ -427,7 +436,7 @@ typedef void (*jy2pySync)(jobject, PyObject*);
 typedef void (*py2jySync)(PyObject*, jobject);
 
 typedef jobject (*jyInitSync)(PyObject*, jclass);
-typedef PyObject* (*pyInitSync)(jobject);
+typedef PyObject* (*pyInitSync)(jobject, PyTypeObject*);
 typedef jobject (*jyFactoryMethod)();
 //typedef void (*jy2pyItemSync)(jobject, PyObject*, int index);
 //typedef void (*py2jyItemSync)(PyObject*, jobject, int index);
@@ -660,7 +669,8 @@ extern PyTypeObject sortwrapper_type;
 inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type);
 inline jclass JyNI_JythonClassFromPyType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromPyType(PyTypeObject* type);
-inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type);
+inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubTypeWithPeer(PyTypeObject* type);
+//inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromName(char* name);
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name);

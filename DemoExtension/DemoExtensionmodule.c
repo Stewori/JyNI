@@ -265,6 +265,7 @@ intToBoolean(PyObject* self, PyObject* integer)
 {
 	long int l = PyInt_AS_LONG(integer);
 	//For debugging reasons we make a strict 0/1 conversion here.
+	//(rather than 1 for non-NULL)
 	if (l == 1) Py_RETURN_TRUE;
 	else if (l == 0) Py_RETURN_FALSE;
 	else Py_RETURN_NONE;
@@ -276,6 +277,30 @@ nativeDictGet(PyObject* self, PyObject* args)
 	PyObject* dict = PyTuple_GET_ITEM(args, 0);
 	PyObject* key = PyTuple_GET_ITEM(args, 1);
 	return PyDict_GetItem(dict, key);
+}
+
+PyObject*
+newstyleCheck(PyObject* self, PyObject* args)
+{
+	PyObject* nobj = PyTuple_GET_ITEM(args, 0);
+//	if (nobj && PyString_Check(nobj))
+//		puts(PyString_AS_STRING(nobj));
+	if (nobj) Py_RETURN_TRUE;
+	else if (nobj == NULL) Py_RETURN_FALSE;
+	else Py_RETURN_NONE;
+}
+
+PyObject*
+newstyleCheckSubtype(PyObject* self, PyObject* args)
+{
+	PyObject* nobj = PyTuple_GET_ITEM(args, 0);
+	PyTypeObject* supertype = (PyTypeObject*) PyTuple_GET_ITEM(args, 1);
+	if (nobj && supertype)
+	{
+		if (PyType_IsSubtype(Py_TYPE(nobj), supertype)) Py_RETURN_TRUE;
+		else Py_RETURN_FALSE;
+	} else
+		Py_RETURN_NONE;
 }
 
 PyMethodDef DemoExtensionMethods[] = {
@@ -300,6 +325,8 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"booleanToInt", booleanToInt, METH_O, "Converts True to one, False to zero, everything else to None."},
 	{"intToBoolean", intToBoolean, METH_O, "Converts one to True, zero to False, everything else to None."},
 	{"nativeDictGet", nativeDictGet, METH_VARARGS, "Looks up a key in a dict."},
+	{"newstyleCheck", newstyleCheck, METH_VARARGS, "Checks integrity of new-style instance conversion."},
+	{"newstyleCheckSubtype", newstyleCheckSubtype, METH_VARARGS, "Checks subtype consistence new-style conversion."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

@@ -39,15 +39,12 @@
 /*
 typedef void (*jy2pySync)(jobject, PyObject*);
 typedef void (*py2jySync)(PyObject*, jobject);
-typedef jobject (*jyInitSync)(PyObject*);
-typedef PyObject* (*pyInitSync)(jobject);
-//typedef void (*jy2pyItemSync)(jobject, PyObject*, int index);
-//typedef void (*py2jyItemSync)(PyObject*, jobject, int index);
+typedef jobject (*jyInitSync)(PyObject*, jclass);
+typedef PyObject* (*pyInitSync)(jobject, PyTypeObject*);
 typedef jlong (*pyChecksum)(PyObject*);
 typedef jlong (*jyChecksum)(jobject);
 
 typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync pyInit; pyChecksum pyCheck; jyChecksum jyCheck;} SyncFunctions;
-//typedef struct {SyncInfo sync; jy2pyItemSync jy2pyItem; py2jyItemSync py2jyItem;} SyncVarInfo;
 */
 
 /*
@@ -55,7 +52,7 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
  * For every item in the tuple also a new reference is created. However the tuple
  * deallocator will take care of these.
  */
-PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src)
+PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	//jputs("JySync_Init_PyTuple_From_JyTuple");
 	env(NULL);
@@ -138,7 +135,7 @@ jboolean isPreAllocatedJythonString(jobject obj, char value)//jchar value)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyString_From_JyString(jobject src)
+PyObject* JySync_Init_PyString_From_JyString(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	jstring jstr = (*env)->CallObjectMethod(env, src, pyStringAsString);
@@ -150,7 +147,7 @@ PyObject* JySync_Init_PyString_From_JyString(jobject src)
 	char cstr[len+1];
 	strcpy(cstr, utf_string);
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string);
-	if (len == 1) {
+	if (len == 1 && !nonNativeSubtype) {
 		PyObject* result = PyString_FromString(cstr);
 		if (isPreAllocatedJythonString(src, cstr[0]))
 			/* The JY_CACHE_ETERNAL-flag tells JyNI permanently that accessing
@@ -164,6 +161,7 @@ PyObject* JySync_Init_PyString_From_JyString(jobject src)
 		return result;
 	} else {
 		PyObject* result = PyString_FromString(cstr);
+		if (nonNativeSubtype) ((PyStringObject *) result)->ob_sstate = SSTATE_NOT_INTERNED;
 		return result;
 	}
 }
@@ -182,7 +180,7 @@ jobject JySync_Init_JyString_From_PyString(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
+PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
@@ -204,7 +202,7 @@ PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 }
 
 //UTF-8 variant
-//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
+//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNativeSubtype)
 //{
 ////	jputs("JySync_Init_PyUnicode_From_JyUnicode");
 //	env(NULL);
@@ -222,7 +220,7 @@ PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
 //	return unicode;
 //}
 
-//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src)
+//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNativeSubtype)
 //{
 //	jputs("JySync_Init_PyUnicode_From_JyUnicode");
 //	env(NULL);
@@ -303,13 +301,13 @@ static inline jboolean isPreAllocatedJythonInt(jobject obj, jint value)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyInt_From_JyInt(jobject src)
+PyObject* JySync_Init_PyInt_From_JyInt(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	//return PyInt_FromLong((long) (*env)->CallLongMethod(env, src, pyIntAsLong));
 	jint value = (*env)->CallIntMethod(env, src, pyIntGetValue);
 	PyObject* result = PyInt_FromLong((long) value);
-	if (isPreAllocatedJythonInt(src, value))
+	if (!nonNativeSubtype && isPreAllocatedJythonInt(src, value))
 		/* The JY_CACHE_ETERNAL-flag tells JyNI permanently that accessing
 		 * AS_JY_NO_GC(blah)->jy is safe, i.e. the reference cannot be
 		 * garbage-collected on Java-side. Usually methods in JySync should
@@ -338,7 +336,7 @@ jobject JySync_Init_JyInt_From_PyInt(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyFloat_From_JyFloat(jobject src)
+PyObject* JySync_Init_PyFloat_From_JyFloat(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	return PyFloat_FromDouble((double) (*env)->CallDoubleMethod(env, src, pyFloatAsDouble));
@@ -353,7 +351,7 @@ jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyComplex_From_JyComplex(jobject src)
+PyObject* JySync_Init_PyComplex_From_JyComplex(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	return PyComplex_FromDoubles(
@@ -372,7 +370,7 @@ jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyLong_From_JyLong(jobject src)
+PyObject* JySync_Init_PyLong_From_JyLong(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	jobject bival = (*env)->CallObjectMethod(env, src, pyLongGetValue);
@@ -433,7 +431,7 @@ jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyList_From_JyList(jobject src)
+PyObject* JySync_Init_PyList_From_JyList(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	//maybe optimize a bit more here:
@@ -489,7 +487,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PySet_From_JySet(jobject src) //needed because truncation is only partial
+PyObject* JySync_Init_PySet_From_JySet(jobject src, PyTypeObject* nonNativeSubtype) //needed because truncation is only partial
 {
 	PySetObject* so = (PySetObject *) PySet_Type.tp_alloc(&PySet_Type, 0);
 	JyObject* jy = AS_JY(so);
@@ -509,7 +507,7 @@ PyObject* JySync_Init_PySet_From_JySet(jobject src) //needed because truncation 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src) //needed because truncation is only partial
+PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src, PyTypeObject* nonNativeSubtype) //needed because truncation is only partial
 {
 	PySetObject* so = (PySetObject *) PyFrozenSet_Type.tp_alloc(&PyFrozenSet_Type, 0);
 	JyObject* jy = AS_JY(so);
@@ -538,7 +536,7 @@ jobject JySync_Init_JyClass_From_PyClass(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyClass_From_JyClass(jobject src)
+PyObject* JySync_Init_PyClass_From_JyClass(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	jstring nm = (*env)->GetObjectField(env, src, pyClass__name__);
@@ -571,7 +569,7 @@ jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
+PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
@@ -584,7 +582,7 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_Special_PyInstance(jobject src)
+PyObject* JySync_Init_Special_PyInstance(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	//todo: Care for finalizer also in this case.
@@ -612,7 +610,7 @@ jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src)
+PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	return PyMethod_New(
@@ -628,7 +626,7 @@ jobject JySync_Init_JyClassMethod_From_PyClassMethod(PyObject* src, jclass subty
 		JyNI_JythonPyObject_FromPyObject(((classmethod*) src)->cm_callable));
 }
 
-PyObject* JySync_Init_PyClassMethod_From_JyClassMethod(jobject src)
+PyObject* JySync_Init_PyClassMethod_From_JyClassMethod(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	return PyClassMethod_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
@@ -642,7 +640,7 @@ jobject JySync_Init_JyStaticMethod_From_PyStaticMethod(PyObject* src, jclass sub
 		JyNI_JythonPyObject_FromPyObject(((staticmethod*) src)->sm_callable));
 }
 
-PyObject* JySync_Init_PyStaticMethod_From_JyStaticMethod(jobject src)
+PyObject* JySync_Init_PyStaticMethod_From_JyStaticMethod(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	return PyStaticMethod_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
@@ -656,7 +654,7 @@ jobject JySync_Init_JyDictProxy_From_PyDictProxy(PyObject* src, jclass subtype)
 		JyNI_JythonPyObject_FromPyObject(((proxyobject*) src)->dict));
 }
 
-PyObject* JySync_Init_PyDictProxy_From_JyDictProxy(jobject src)
+PyObject* JySync_Init_PyDictProxy_From_JyDictProxy(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	return PyDictProxy_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
@@ -680,7 +678,7 @@ jobject JySync_Init_JyProperty_From_PyProperty(PyObject* src, jclass subtype)
 	return result;
 }
 
-PyObject* JySync_Init_PyProperty_From_JyProperty(jobject src)
+PyObject* JySync_Init_PyProperty_From_JyProperty(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
 	propertyobject* result = PyObject_GC_New(propertyobject, &PyProperty_Type);
@@ -719,10 +717,10 @@ jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src, jclass s
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src)
+PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	// Todo: Handle case that the native counterpart of the Java-referent is
-	//       not weakly referencable in CPython-terms.
+	//       not weakly referenceable in CPython-terms.
 	//       See PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))
 	env(NULL);
 	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
@@ -755,10 +753,10 @@ jobject JySync_Init_JyWeakProxy_From_PyWeakProxy(PyObject* src, jclass subtype)
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyWeakProxy_From_JyWeakProxy(jobject src)
+PyObject* JySync_Init_PyWeakProxy_From_JyWeakProxy(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	// Todo: Handle case that the native counterpart of the Java-referent is
-	//       not weakly referencable in CPython-terms.
+	//       not weakly referenceable in CPython-terms.
 	//       See PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))
 	env(NULL);
 	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
@@ -786,10 +784,10 @@ jobject JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy(PyObject* src, 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
-PyObject* JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy(jobject src)
+PyObject* JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	// Todo: Handle case that the native counterpart of the Java-referent is
-	//       not weakly referencable in CPython-terms.
+	//       not weakly referenceable in CPython-terms.
 	//       See PyType_SUPPORTS_WEAKREFS(Py_TYPE(ob))
 	env(NULL);
 	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
@@ -951,6 +949,9 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	//bases:
 	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBases);
 	tp->tp_bases = JyNI_PyObject_FromJythonPyObject(jtmp);
+
+	//basicsize:
+	tp->tp_basicsize = tp->tp_base == Py_None ? sizeof(PyObject) : tp->tp_base->tp_basicsize;
 
 	//mro:
 //	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);

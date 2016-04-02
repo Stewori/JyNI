@@ -58,6 +58,7 @@ sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you
 
 import DemoExtension
 
+
 print "--------Access Docstring----------"
 #print DemoExtension
 print DemoExtension.__doc__
@@ -104,23 +105,24 @@ lst = ["Hello", "lovely", "world"]
 print lst.__class__
 DemoExtension.listReadTest(lst)
 print "(in JyNI-case see bottom for native outputs)"
+
 print ""
 print "--------Native list access writing----------"
 l = ["Hello", "lovely", "world"]
 print "input: "+str(l)
 DemoExtension.listModifyTest(l, 2)
 print "output: "+str(l)
+
 print ""
 print "--------Set testing----------"
 basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
 fruit = set(basket)
-#print fruit
-#DemoExtension.setTest(fruit)
 print fruit
 p = 2
 DemoExtension.setPopTest(fruit, p)
 print "after popping "+str(p)+" elements:"
 print fruit
+
 print ""
 print "--------Unicode testing----------"
 uc = u'a\xac\u1234\u20ac\U00008000'
@@ -128,6 +130,24 @@ print type(uc)
 print uc
 uc2 = DemoExtension.unicodeTest(uc)
 print uc2
+
+print ""
+print "--------New-style classes---------"
+
+class testnewstyle(str):
+	pass
+
+nobj = testnewstyle()
+print "Check conversion of new-style class: "+str(DemoExtension.newstyleCheck(nobj))
+print "Check new-style is string-subtype: "+str(DemoExtension.newstyleCheckSubtype(nobj, type("")))
+
+# Let's test instances of custom type that is not necessarily new-style class:
+from JyNI import PyShadowString
+nobj2 = PyShadowString("a", "b")
+
+print "Check conversion of Java-custom class: "+str(DemoExtension.newstyleCheck(nobj2))
+print "Check custom class is string-subtype: "+str(DemoExtension.newstyleCheckSubtype(nobj2, type("")))
+print "Check custom class is int-subtype (shouldn't be): "+str(DemoExtension.newstyleCheckSubtype(nobj2, type(6)))
 
 print ""
 print "======in JyNI-case expect native output after these lines on some consoles====="

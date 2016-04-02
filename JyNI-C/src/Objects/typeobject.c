@@ -842,7 +842,7 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 				return JyNI_ExceptionAlloc(eme);
 			}
 		}
-		tme = JyNI_JythonTypeEntry_FromSubType(type);
+		tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(type);
 		if (tme) return JyNI_AllocSubtypeVar(type, tme, nitems);
 //		if (tme->py_type->tp_itemsize == 0) return JyNI_AllocNative(type);
 //		else return JyNI_AllocNativeVar(type, nitems);

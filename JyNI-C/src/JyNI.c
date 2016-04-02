@@ -1219,8 +1219,44 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromPyType(PyTypeObject* type)
 	return NULL;
 }
 
-/* Does not work for Heap-Types. */
+#define Py_TPFLAGS_BASIC_SUBCLASS \
+	(Py_TPFLAGS_INT_SUBCLASS | \
+	Py_TPFLAGS_LONG_SUBCLASS | \
+	Py_TPFLAGS_LIST_SUBCLASS | \
+	Py_TPFLAGS_TUPLE_SUBCLASS | \
+	Py_TPFLAGS_STRING_SUBCLASS | \
+	Py_TPFLAGS_UNICODE_SUBCLASS | \
+	Py_TPFLAGS_DICT_SUBCLASS | \
+	Py_TPFLAGS_BASE_EXC_SUBCLASS | \
+	Py_TPFLAGS_TYPE_SUBCLASS)
+
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type)
+{
+	switch (type->tp_flags & Py_TPFLAGS_BASIC_SUBCLASS)
+	{
+		case Py_TPFLAGS_INT_SUBCLASS: return &(builtinTypes[18]);
+		case Py_TPFLAGS_LONG_SUBCLASS: return &(builtinTypes[19]);
+		case Py_TPFLAGS_LIST_SUBCLASS: return &(builtinTypes[29]);
+		case Py_TPFLAGS_TUPLE_SUBCLASS: return &(builtinTypes[27]);
+		case Py_TPFLAGS_STRING_SUBCLASS: return &(builtinTypes[22]);
+		case Py_TPFLAGS_UNICODE_SUBCLASS: return &(builtinTypes[21]);
+		case Py_TPFLAGS_DICT_SUBCLASS: return &(builtinTypes[32]); // todo: check how this works for stringmap
+		case Py_TPFLAGS_BASE_EXC_SUBCLASS: return &(builtinTypes[44]);
+		case Py_TPFLAGS_TYPE_SUBCLASS: return &(builtinTypes[0]);
+		default:
+		{
+			int i;
+			for (i = 0; i < builtinTypeCount; ++i)
+			{
+				if (PyType_IsSubtype(type, builtinTypes[i].py_type))
+					return &(builtinTypes[i]);
+			}
+			return NULL;
+		}
+	}
+}
+
+inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubTypeWithPeer(PyTypeObject* type)
 {
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
@@ -1245,7 +1281,6 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass
 	return NULL;
 }
 
-/* Does not work for Heap-Types. */
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromName(char* name)
 {
 //	jputs("JyNI_JythonTypeEntry_FromName");
@@ -1496,10 +1531,10 @@ inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, 
 	 *
 	 * obj + _PyObject_VAR_SIZE(tme->py_type, nitems+1)
 	 *
-	 * For now this memory is just wasted. Maybe we can return the unused section to the python memory
+	 * For now this memory is just wasted. Maybe we can return the unused section to the Python memory
 	 * manager one day. It would be -however- an effort then to get malloc and clean right. Especially
 	 * if the surrounding blocks are freed while the middle is still in use. On the other hand it might
-	 * be a rearely needed feature, so might not be worth any further optimization.
+	 * be a rarely needed feature, so might not be worth any further optimization.
 	 */
 
 	size_t size = _PyObject_VAR_SIZE(subtype, nitems+1);
@@ -1731,7 +1766,7 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
 		if (tme->sync != NULL && tme->sync->pyInit != NULL)
-			dest = tme->sync->pyInit(src);
+			dest = tme->sync->pyInit(src, NULL);
 		//todo: Check that JySync.c always returns new ref in sync on init methods.
 	} else
 	{
@@ -1818,6 +1853,106 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * Not intended for Heap-Types.
+ * These don't have an associated TypeMapEntry anyway.
+ */
+inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
+{
+//	jputs(__FUNCTION__);
+//	jputs(subtype->tp_name);
+
+//	jputsLong(subtype->tp_basicsize);
+//	jputsLong(_PyObject_SIZE(subtype));
+//	jputsLong(sizeof(PyObject));
+//	if (subtype->tp_base)
+//		jputs(subtype->tp_base->tp_name);
+//	else jputs("has no base");
+
+	PyObject* dest = NULL;
+	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromSubType(subtype);
+	if (tme)
+	{
+		if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
+		{
+			if (tme->sync != NULL && tme->sync->pyInit != NULL)
+				dest = tme->sync->pyInit(src, subtype);
+			Py_TYPE(dest) = subtype;
+		} else
+		{
+			//dest = PyObject_GC_New(tme->py_type);
+			//puts("InitPyObject by GC New");
+
+			//dest = tme->py_type->tp_itemsize ? JyNI_AllocVar(tme) : JyNI_Alloc(tme);
+			//dest = JyNI_Alloc(tme);
+			dest = JyNI_AllocSubtypeVar(subtype, tme, 0);
+
+			//printf("PyObject-size: %u\n", (jlong) sizeof(PyObject));
+			//PyObject_GC_Track(dest);
+			if (dest && tme->sync && tme->sync->jy2py)
+				tme->sync->jy2py(src, dest);
+			//else jputs("no sync needed");
+		}
+	} else
+	{
+//		jputs("object- or unknown subtye!");
+
+		size_t size = _PyObject_SIZE(subtype);
+
+		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
+		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
+		jy->jy = NULL;
+		jy->flags = 0;
+		jy->attr = NULL;
+		dest = (PyObject*) FROM_JY_NO_GC(jy);
+		JyNIDebug(JY_NATIVE_ALLOC, dest, jy, size+sizeof(JyObject), subtype->tp_name);
+
+		memset(dest, '\0', size);
+
+		PyObject_INIT(dest, subtype);
+	}
+	if (dest)
+	{
+		// Should not be relevant for subtype case:
+		if (PyType_CheckExact(dest))
+		{
+			jputs("JyNI-warning: dest is PyTypeObject in JyNI_InitPyObjectSubtype.");
+			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+		}
+		JyObject* jy = AS_JY(dest);
+		if (jy->flags & SYNC_NEEDED_MASK)
+			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
+		env(NULL);
+		jy->jy = (*env)->NewWeakGlobalRef(env, src);
+		if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+			jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+		}
+
+		/* Take care for already existing Jython-weak references */
+		jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src);
+		if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) {
+			gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory);
+		}
+		if (gref) {
+			Py_INCREF(dest);
+			incWeakRefCount(jy);
+			(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest);
+		}
+
+		// Add flag to enforce delegation to Java:
+		jy->flags |= JY_SUBTYPE_FLAG_MASK;
+
+		jy->flags |= JY_INITIALIZED_FLAG_MASK;
+		if (PyObject_IS_GC(dest)) {
+			JyNI_GC_ExploreObject(dest);
+		}
+	}
+	return dest;
+}
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
 PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType)
 {
@@ -1828,11 +1963,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 //	if (jythonPyObject == JyEllipsis) return Py_Ellipsis;
 	env(NULL);
 	if ((*env)->IsSameObject(env, jythonPyObject, NULL)) return NULL;
-	/* In principle, the caller is responsible to decide whether or not
-	 * the conversion-result should be INCREFed. However, in singleton cases
-	 * missing INCREFs do more harm than duplicate INCREFs, so for now, we
-	 * INCREF singletons here.
-	 */
 	if ((*env)->IsSameObject(env, jythonPyObject, JyNone)) Py_RETURN_NONE;
 	if ((*env)->IsSameObject(env, jythonPyObject, JyNotImplemented))
 	{
@@ -1958,11 +2088,25 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			if (!(*env)->IsSameObject(env, old_cls, NULL)) {
 				return JyNI_InitPyObject(&specialPyInstance, jythonPyObject);
 			}
-			//Todo: Add case for new-style classes or Jython-defined types.
-			jputs("JyNI-warning: Unable to handle object.");
-			//JyNI_jprintJ(jythonPyObject);
+
+			jobject tpe = (*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType);
+			PyTypeObject* pytpe = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(tpe);
+
+//			if (!pytpe) jputs("pytpe is NULL");
+//			else jputs(((PyTypeObject*) pytpe)->tp_name);
+//			if ((*env)->IsInstanceOf(env, jythonPyObject, pyStringClass)) jputs("is string J");
+//			if (PyType_FastSubclass((PyTypeObject*) pytpe, Py_TPFLAGS_STRING_SUBCLASS)) jputs("is string fast");
+//			if (PyType_IsSubtype(pytpe, &PyString_Type)) jputs("is string");
+
 			//JyNI_printJInfo(jythonPyObject);
-			return NULL;
+			PyObject* result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
+			if (!result)
+			{
+				jputs("JyNI-warning: Unable to handle object:");
+				if (pytpe) jputs(pytpe->tp_name);
+				else jputs("failed to convert type");
+			}
+			return result;
 		}
 	}
 	//PyObject* result = JyNI_NewPyObject_FromJythonPyObject(jythonPyObject);
@@ -2046,7 +2190,7 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			jputs(tme->py_type->tp_name);
 			PyErr_BadInternalCall();
 		}
-		// Subtype-case. We handle subtype case always with CPeer.
+		// Native subtype-case. We handle native subtype case always with CPeer.
 		Py_INCREF(src);
 		if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 		{
@@ -2209,7 +2353,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 		if (!tme) {
 			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
-			tme = JyNI_JythonTypeEntry_FromSubType(Py_TYPE(op));
+			tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(Py_TYPE(op));
 		}
 	}
 	//jputsLong(tme);
@@ -2469,8 +2613,15 @@ inline int decWeakRefCount(JyObject* referent)
  * At least in Truncate-Case, this is necessary and
  * at least in CPeer-Case, it is impossible.
  */
-//Only delegate if truncated and not subtype:
-#define JY_DELEGATE(v, flags) ((flags & JY_TRUNCATE_FLAG_MASK) && !(flags & JY_SUBTYPE_FLAG_MASK))
+// Only delegate if truncated and not native subtype:
+// (always delegate for non-native subtype)
+//#define JY_DELEGATE(v, flags) ((flags & JY_TRUNCATE_FLAG_MASK) && !(flags & JY_SUBTYPE_FLAG_MASK))
+// (trunc && !(peer && sub)) || (sub && !peer)
+// (trunc && (!peer || !sub)) || (sub && !peer)
+// t !p | t !s | s !p
+// (s | t) !p | t !s
+// !p && ( t | s)
+#define JY_DELEGATE(v, flags) ((flags & JY_POTENTIAL_DELEGATE) && !(flags & JY_CPEER_FLAG_MASK))
 
 //Delegate in every case but CPeer-case:
 //(actually the preferred variant, but lets JyNITkinterTest fail for some reason)
