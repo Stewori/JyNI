@@ -1385,6 +1385,9 @@ lookup_maybe(PyObject *self, char *attrstr, PyObject **attrobj)
 static PyObject *
 lookup_method(PyObject *self, char *attrstr, PyObject **attrobj)
 {
+//	puts(__FUNCTION__);
+//	puts(attrstr);
+//	if (self == Py_None) puts("self is None!!");
 	PyObject *res = lookup_maybe(self, attrstr, attrobj);
 	if (res == NULL && !PyErr_Occurred())
 		PyErr_SetObject(PyExc_AttributeError, *attrobj);
@@ -1794,8 +1797,8 @@ mro_external(PyObject *self)
 static int
 mro_internal(PyTypeObject *type)
 {
-//	jputs(__FUNCTION__);
-//	jputs(type->tp_name);
+//	puts(__FUNCTION__);
+//	puts(type->tp_name ? type->tp_name : "NULL type-name");
 	PyObject *mro, *result, *tuple;
 	int checkit = 0;
 
@@ -2774,6 +2777,8 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 PyObject *
 _PyType_Lookup(PyTypeObject *type, PyObject *name)
 {
+//	jputs(__FUNCTION__);
+//	jputsPy(name);
 //	int dbg = strcmp(PyString_AS_STRING(name), "asArray") == 0;
 //	if (dbg) printf("%s: %s in %s\n", __FUNCTION__, PyString_AS_STRING(name), type->tp_name);
 	Py_ssize_t i, n;
@@ -2792,6 +2797,7 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 	mro = type->tp_mro;
 //	jputsLong(__LINE__);
 //	jputsLong(mro);
+//	jputs(type->tp_name);
 //	jputsLong(mro->ob_refcnt);
 //	   If mro is NULL, the type is either not yet initialized
 //	   by PyType_Ready(), or already cleared by type_clear().
@@ -2856,7 +2862,9 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 static PyObject *
 type_getattro(PyTypeObject *type, PyObject *name)
 {
-//	jputs(__FUNCTION__);
+//	puts(__FUNCTION__);
+//	puts(type->tp_name);
+//	puts(((PyStringObject*) name)->ob_sval);
 	jobject delegate = JyNI_GetJythonDelegate(type);
 	if (delegate)
 	{
@@ -4355,7 +4363,9 @@ static int add_operators(PyTypeObject *);
 int
 PyType_Ready(PyTypeObject *type)
 {
-//	jputs("PyType_Ready:");
+//	puts("PyType_Ready");
+//	if (type == Py_None) puts("Called with None");
+	//puts(type ? PyString_AS_STRING(PyObject_Str(type)) : "NULL-PyObject");
 //	jputs(type->tp_name);
 	//if (type->tp_as_mapping) printf("has mapping, line %d\n", __LINE__);
 	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
@@ -4464,9 +4474,11 @@ PyType_Ready(PyTypeObject *type)
 	/* Calculate method resolution order */
 //	if (type->tp_as_mapping)
 //		printf("mp_subscript before calculationg mro: %d\n", type->tp_as_mapping->mp_subscript);
-	if (mro_internal(type) < 0) {
+//	jputsLong(__LINE__);
+	if (!type->tp_mro && mro_internal(type) < 0) {
 		goto error;
 	}
+//	jputsLong(__LINE__);
 //	jputs("MRO:");
 //	jputsLong(type->tp_mro);
 
@@ -4477,23 +4489,27 @@ PyType_Ready(PyTypeObject *type)
 //		printf("mp_subscript after inherit special: %d\n", type->tp_as_mapping->mp_subscript);
 	/* Initialize tp_dict properly */
 	bases = type->tp_mro;
+//	jputsLong(__LINE__);
 	assert(bases != NULL);
 	assert(PyTuple_Check(bases));
 	n = PyTuple_GET_SIZE(bases);
+//	jputsLong(__LINE__);
 //	if (type->tp_as_mapping)
 //		printf("mp_subscript before inherit slots: %d\n", type->tp_as_mapping->mp_subscript);
 	for (i = 1; i < n; i++) {
+//		jputsLong(i);
 		PyObject *b = PyTuple_GET_ITEM(bases, i);
 		if (PyType_Check(b))
 		{
-//			puts(type->tp_name);
-//			puts("inherits slots from");
-//			puts(((PyTypeObject *) b)->tp_name);
+//			jputs(type->tp_name);
+//			jputs("inherits slots from");
+//			jputs(((PyTypeObject *) b)->tp_name);
 			inherit_slots(type, (PyTypeObject *)b);
 //			if (type->tp_as_mapping)
 //				printf("mp_subscript: %d\n", type->tp_as_mapping->mp_subscript);
 		}
 	}
+//	jputsLong(__LINE__);
 //	if (type->tp_as_mapping)
 //			printf("mp_subscript after inherit slots: %d\n", type->tp_as_mapping->mp_subscript);
 	// Sanity check for tp_free.
@@ -4511,7 +4527,7 @@ PyType_Ready(PyTypeObject *type)
 					 type->tp_name);
 		goto error;
 	}
-
+//	jputsLong(__LINE__);
 //	   if the type dictionary doesn't contain a __doc__, set it from
 //	   the tp_doc slot.
 	//puts("doc slot...");

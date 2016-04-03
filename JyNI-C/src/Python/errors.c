@@ -129,6 +129,7 @@ void
 PyErr_SetObject(PyObject *exception, PyObject *value)
 {
 //	puts(__FUNCTION__);
+//	puts(value ? PyString_AS_STRING(PyObject_Str(value)) : "NULL-PyObject");
 	Py_XINCREF(exception);
 	Py_XINCREF(value);
 	PyErr_Restore(exception, value, (PyObject *)NULL);

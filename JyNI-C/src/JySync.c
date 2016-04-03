@@ -68,6 +68,7 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src, PyTypeObject* nonNativeS
 	int i;
 	for (i = 0; i < srcSize; ++i)
 	{
+		//jputsLong(i);
 		PyObject* item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyTuplePyGet, i));
 		//Py_XINCREF(item);
 		//PyTuple_SetItem(er, i, item);
@@ -75,7 +76,6 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src, PyTypeObject* nonNativeS
 //		if (!item) {
 //			jputs("Add null-item to tuple:");
 //			jputsLong(er);
-//			jputsLong(i);
 //			jobject jNull = (*env)->CallObjectMethod(env, src, pyTuplePyGet, i);
 //			if (!jNull) jputs("j also null");
 //			else if ((*env)->IsSameObject(env, jNull, NULL)) jputs("j equal null");
@@ -917,6 +917,22 @@ jobject JyExc_UnicodeTranslateErrorFactory()
 }
 #endif
 
+PyObject* JySync_Init_PyTuple_From_JyTupleForMRO(jobject src)
+{
+	env(NULL);
+	jint srcSize = (*env)->CallIntMethod(env, src, pyTupleSize);
+	PyObject* er = PyTuple_New(srcSize);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) er);
+	AS_JY_WITH_GC(er)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	int i;
+	for (i = 1; i < srcSize; ++i)
+	{
+		PyObject* item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyTuplePyGet, i));
+		PyTuple_SET_ITEM(er, i, item);
+	}
+	return er;
+}
+
 void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 {
 	PyTypeObject* tp = (PyTypeObject*) dest;
@@ -924,6 +940,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 
 	//name:
 	jobject jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetName);
+	//jobject jtmp = (*env)->GetObjectField(env, src, pyTypeNameField);
 	//if (!jtmp) jputs("JySync_PyType_From_JyType: type with NULL-name!");
 	//cstr_from_jstring(cname, jname);
 	char* utf_string = (*env)->GetStringUTFChars(env, jtmp, NULL);
@@ -953,15 +970,46 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	//basicsize:
 	tp->tp_basicsize = tp->tp_base == Py_None ? sizeof(PyObject) : tp->tp_base->tp_basicsize;
 
-	//mro:
-//	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);
-//	tp->tp_mro = JyNI_PyObject_FromJythonPyObject(jtmp);
-
 	//We try to get away with just setting this to default for now:
 	tp->tp_flags |= Py_TPFLAGS_DEFAULT;
 //	jputsLong(tp->tp_flags);// & Py_TPFLAGS_HAVE_CLASS);
-//	jputsLong(tp);
+	//jputsLong(tp->tp_mro);
 	//if (!tp->tp_alloc)
 	if (!(tp->tp_flags & Py_TPFLAGS_READY))
+	{
+		if (tp->tp_base == Py_None)
+			tp->tp_base = NULL;
 		PyType_Ready(tp);
+		//tp->tp_flags = (tp->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
+//		JyNI_GC_ExploreObject(tp);
+	}
+	//jputsLong(tp->tp_mro);
+	//jputsPy(tp->tp_mro);
+
+	//mro:
+	if (!tp->tp_mro) {
+		jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);
+		//JyNI_jprintJ(jtmp);
+		PyObject* mro = JySync_Init_PyTuple_From_JyTupleForMRO(jtmp);
+		PyTuple_SET_ITEM(mro, 0, tp);
+		//PyObject* mro = JyNI_PyObject_FromJythonPyObject(jtmp);
+		tp->tp_mro = mro;
+		//tp->tp_mro = JyNI_PyObject_FromJythonPyObject(jtmp);
+
+		// Currently tp_traverse is out-commented.
+		// Once we tested and stabilized heap-type exploration
+		// the following section must be included here, because
+		// we changed mro after initial exploration in PyType_Ready.
+		/* tp_traverse visits type members in this order:
+		 *	Py_VISIT(type->tp_dict);
+		 *	Py_VISIT(type->tp_cache);
+		 *	Py_VISIT(type->tp_mro);
+		 *	Py_VISIT(type->tp_bases);
+		 *	Py_VISIT(type->tp_base);
+		 * so mro-index is 2.
+		 */
+//		if (!IS_UNEXPLORED(tp))
+//			updateJyGCHeadLink(tp, AS_JY_WITH_GC(tp), 2 /* mro-index */,
+//					tp->tp_mro, AS_JY_WITH_GC(tp->tp_mro));
+	}
 }

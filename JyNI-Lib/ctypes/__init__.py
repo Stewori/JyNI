@@ -366,7 +366,7 @@ def ARRAY(typ, len):
 
 ################################################################
 
-class CDLL():#object):
+class CDLL(object):
     """An instance of this class represents a loaded dll/shared
     library, exporting functions using the standard C calling
     convention (named 'cdecl' on Windows).
@@ -471,6 +471,7 @@ class LibraryLoader(object):
         self._dlltype = dlltype
 
     def __getattr__(self, name):
+    	#print "LibraryLoader getattr: "+str(name)
         if name[0] == '_':
             raise AttributeError(name)
         dll = self._dlltype(name)

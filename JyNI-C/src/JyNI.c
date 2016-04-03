@@ -584,16 +584,16 @@ inline void initBuiltinTypes()
 
 	builtinTypes[TME_INDEX_Type].py_type = &PyType_Type;
 	builtinTypes[TME_INDEX_Type].jy_class = pyTypeClass;
-	builtinTypes[TME_INDEX_Type].flags = JY_TRUNCATE_FLAG_MASK;
+	//builtinTypes[TME_INDEX_Type].flags = JY_TRUNCATE_FLAG_MASK;
 	//builtinTypes[TME_INDEX_Type].truncate_trailing = sizeof(PyTypeObject)-sizeof(PyVarObject);
-	builtinTypes[TME_INDEX_Type].truncate_trailing = sizeof(PyTypeObject)-sizeof(PyObject);
+	//builtinTypes[TME_INDEX_Type].truncate_trailing = sizeof(PyTypeObject)-sizeof(PyObject);
 	//In fact, the trailing is so large that actually nothing is truncated.
 	//This currently serves testing purposes. We are still checking out,
 	//which fields are crucial and which are not. Although the only macros that
 	//access PyType directly just need tp_flags, there are several direct accesses to
 	//tp_-variables throughout CPython source.
 	builtinTypes[TME_INDEX_Type].sync = malloc(sizeof(SyncFunctions));
-	//builtinTypes[TME_INDEX_Type].sync->py2jy = (py2jySync) JySync_JyCell_From_PyCell;
+	//builtinTypes[TME_INDEX_Type].sync->py2jy = (py2jySync) JySync_JyType_From_PyType;
 	builtinTypes[TME_INDEX_Type].sync->jy2py = (jy2pySync) JySync_PyType_From_JyType;
 
 	builtinTypes[TME_INDEX_NotImplemented].py_type = &PyNotImplemented_Type; //(_Py_NotImplementedStruct.ob_type);
@@ -946,6 +946,21 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_CallIter].jy_class = pyCallIterClass;
 	builtinTypes[TME_INDEX_CallIter].flags = 0;
 	*/
+
+// This generates switch/case lookup code based on a trivial hash
+// function that is collision free on builtin type names. We will
+// use this for maybe faster type lookup one day.
+//	int i, j, hs;
+//	char* tn;
+//	for (i = 0; i < builtinTypeCount; ++i)
+//	{
+//		hs = 0;
+//		tn = builtinTypes[i].py_type->tp_name;
+//		if (builtinTypes[i].type_name) tn = builtinTypes[i].type_name;
+//		for (j = 1; j < 9 && tn[j]; ++j)
+//			hs += tn[j]*j;
+//		printf("case %4i:  return %2i;  // %s\n", hs, i, tn);
+//	}
 
 //	int i = 0;
 //	for (; i < builtinTypeCount; ++i) {
@@ -3183,9 +3198,10 @@ jmethodID pyTypeGetName;
 jmethodID pyTypeSetName;
 jmethodID pyTypeGetBase;
 jmethodID pyTypeGetBases;
-//jmethodID pyTypeGetMro;
+jmethodID pyTypeGetMro;
 jmethodID pyTypeIsSubType;
 jfieldID pyTypeMROField;
+jfieldID pyTypeNameField;
 
 jclass pyCodecsClass;
 jmethodID pyCodecsDecode;
@@ -3993,9 +4009,10 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyTypeSetName = (*env)->GetMethodID(env, pyTypeClass, "setName", "(Ljava/lang/String;)V");
 	pyTypeGetBase = (*env)->GetMethodID(env, pyTypeClass, "getBase", "()Lorg/python/core/PyObject;");
 	pyTypeGetBases = (*env)->GetMethodID(env, pyTypeClass, "getBases", "()Lorg/python/core/PyObject;");
-	//pyTypeGetMro = (*env)->GetMethodID(env, pyTypeClass, "getMro", "()Lorg/python/core/PyTuple;");
+	pyTypeGetMro = (*env)->GetMethodID(env, pyTypeClass, "getMro", "()Lorg/python/core/PyTuple;");
 	pyTypeIsSubType = (*env)->GetMethodID(env, pyTypeClass, "isSubType", "(Lorg/python/core/PyType;)Z");
 	pyTypeMROField = (*env)->GetFieldID(env, pyTypeClass, "mro", "[Lorg/python/core/PyObject;");
+	pyTypeNameField = (*env)->GetFieldID(env, pyTypeClass, "name", "Ljava/lang/String;");
 
 	jclass pyCodecsClassLocal = (*env)->FindClass(env, "org/python/core/codecs");
 	if (pyCodecsClassLocal == NULL) { return JNI_ERR;}
@@ -4496,7 +4513,6 @@ void JyNI_unload(JavaVM *jvm)
 	PyDict_Fini();
 	PyCFunction_Fini();
 	PySet_Fini();
-
 
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)

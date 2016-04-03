@@ -154,9 +154,10 @@ extern jmethodID pyTypeGetName;
 extern jmethodID pyTypeSetName;
 extern jmethodID pyTypeGetBase;
 extern jmethodID pyTypeGetBases;
-//extern jmethodID pyTypeGetMro;
+extern jmethodID pyTypeGetMro;
 extern jmethodID pyTypeIsSubType;
 extern jfieldID pyTypeMROField;
+extern jfieldID pyTypeNameField;
 
 extern jclass pySequenceClass;
 extern jmethodID pySequenceLen;
