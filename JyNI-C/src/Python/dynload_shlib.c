@@ -161,7 +161,15 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 	pathname = pathbuf;
 #endif
 
+#ifdef __APPLE__
+	/* on OSX, dlopen returns RTLD_MAIN_ONLY when called with a
+	 * pathname of NULL; instead RTLD_SELF is needed to match
+	 * Linux-behvior:
+	 */
+	handle = pathname ? dlopen(pathname, dlopenflags) : RTLD_SELF;
+#else
 	handle = dlopen(pathname, dlopenflags);
+#endif
 
 	if (handle == NULL) {
 		const char *error = dlerror();
