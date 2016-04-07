@@ -417,8 +417,15 @@ public class JyNI {
 //			nativeHandlesKeepAlive.put(object, object);
 //			//System.out.println("Would keep alive: "+handle+" - "+object);
 //		}
-		if (object instanceof PyCPeer) {
-			((PyCPeer) object).objectHandle = handle;
+//		if (object instanceof PyCPeer) {
+//			((PyCPeer) object).objectHandle = handle;
+		if (object instanceof CPeerInterface) {
+			/* CPeers should have been properly initialized and should keep the same
+			 * handle during entire lifetime. Once JyNI is better tested and established
+			 * we can remove the following check:
+			 */
+			if (((CPeerInterface) object).getHandle() != handle)
+				System.err.println("JyNI-Warning: CPeerInterface not properly initialized: "+object.getType());
 		} else {
 			JyAttribute.setAttr(object, JyAttribute.JYNI_HANDLE_ATTR, handle);
 		}
@@ -426,12 +433,14 @@ public class JyNI {
 
 	//public static long lookupNativeHandle(PyObject object)
 	public static long lookupNativeHandle(PyObject object) {
-		//System.out.println("lookup native handle: "+object);
 		if (object == null) return 0;
-		if (object instanceof PyCPeer) return ((PyCPeer) object).objectHandle;
+		//if (object instanceof PyCPeer) return ((PyCPeer) object).objectHandle;
+		if (object instanceof CPeerInterface)
+			return ((CPeerInterface) object).getHandle();
 		else {
 			//Long er = nativeHandles.get(object);
 			Long er = (Long) JyAttribute.getAttr(object, JyAttribute.JYNI_HANDLE_ATTR);
+//			if (er == null && object instanceof PyType) System.out.println("lookup failed: "+((PyType) object).getName());
 			return er == null ? 0 : er.longValue();
 
 //			System.out.println("Exception before:");
@@ -1201,10 +1210,12 @@ public class JyNI {
 
 	public static void jPrint(String msg) {
 		System.out.println(msg);
+		System.out.flush();
 	}
 	
 	public static void jPrint(long val) {
 		System.out.println(val);
+		System.out.flush();
 	}
 
 	public static void jPrintHash(Object val) {
@@ -1213,11 +1224,13 @@ public class JyNI {
 		} catch (Exception e) {
 			System.out.println("("+System.identityHashCode(val)+")");
 		}
+		System.out.flush();
 	}
 
 	public static void jPrintInfo(Object val) {
 		System.out.println("Object: "+val);
 		System.out.println("Class: "+val.getClass());
+		System.out.flush();
 	}
 
 //---------gc-section-----------

@@ -47,7 +47,7 @@ const char* excPrefix = "exceptions.";
 //jlong JyNIDebugMode = 0;
 
 TypeMapEntry builtinTypes[builtinTypeCount];
-static TypeMapEntry specialPyInstance;
+//static TypeMapEntry specialPyInstance;
 
 #define builtinExceptionCount 50
 //PyTypeObject* builtinExceptions[builtinExceptionCount];
@@ -634,11 +634,11 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Instance].sync->jyInit = (jyInitSync) JySync_Init_JyInstance_From_PyInstance;
 	builtinTypes[TME_INDEX_Instance].sync->pyInit = (pyInitSync) JySync_Init_PyInstance_From_JyInstance;
 
-	specialPyInstance.py_type = &PyInstance_Type;
-	specialPyInstance.jy_class = pyInstanceClass;
-	specialPyInstance.flags = JySYNC_ON_INIT_FLAGS;// | JY_GC_FIXED_SIZE; // 2 links
-	specialPyInstance.sync = malloc(sizeof(SyncFunctions));
-	specialPyInstance.sync->pyInit = (pyInitSync) JySync_Init_Special_PyInstance;
+//	specialPyInstance.py_type = &PyInstance_Type;
+//	specialPyInstance.jy_class = pyInstanceClass;
+//	specialPyInstance.flags = JySYNC_ON_INIT_FLAGS;// | JY_GC_FIXED_SIZE; // 2 links
+//	specialPyInstance.sync = malloc(sizeof(SyncFunctions));
+//	specialPyInstance.sync->pyInit = (pyInitSync) JySync_Init_Special_PyInstance;
 
 	builtinTypes[TME_INDEX_Method].py_type = &PyMethod_Type;
 	builtinTypes[TME_INDEX_Method].jy_class = pyMethodClass;
@@ -1770,32 +1770,36 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
- *
- * Not intended for Heap-Types.
- * These don't have an associated TypeMapEntry anyway.
  */
 inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 {
-//	jputs("JyNI_InitPyObject");
+//	jputs(__FUNCTION__);
 //	jputs(tme->py_type->tp_name);
 	PyObject* dest = NULL;
+	JyObject* jy;
+	env(NULL);
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 	{
 		if (tme->sync != NULL && tme->sync->pyInit != NULL)
 			dest = tme->sync->pyInit(src, NULL);
-		//todo: Check that JySync.c always returns new ref in sync on init methods.
 	} else
 	{
-		//dest = PyObject_GC_New(tme->py_type);
-		//puts("InitPyObject by GC New");
-
 		//dest = tme->py_type->tp_itemsize ? JyNI_AllocVar(tme) : JyNI_Alloc(tme);
 		dest = JyNI_Alloc(tme);
+		if (tme == &builtinTypes[0])
+			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+		jy = AS_JY(dest);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 
-		//printf("PyObject-size: %u\n", (jlong) sizeof(PyObject));
-		//PyObject_GC_Track(dest);
-		if (dest && tme->sync && tme->sync->jy2py)
+		if (dest && tme->sync && tme->sync->jy2py) {
+//			if (tme == &builtinTypes[0]) {
+//				jputs("convert type...");
+//				jstring tpname = (*env)->CallObjectMethod(env, src, pyTypeGetName);
+//				JyNI_jprintJ(tpname);
+//			}
 			tme->sync->jy2py(src, dest);
+		}
 		//else jputs("no sync needed");
 	}
 	if (dest)
@@ -1804,31 +1808,12 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		//(PyType_Ready won't be called, since JyNI
 		//truncates heap-PyType objects, so we have
 		//to set the flag here)
-		//if (PyType_Check(dest))
 		if (PyType_CheckExact(dest))
-		{
-			//puts("created heap type");
-			//puts(((PyTypeObject*) dest)->tp_name);
-			//PyType_HasFeature(dest->ob_type, Py_TPFLAGS_HEAPTYPE);
 			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
-		}
 
-		//printf("dest at %u\n", (jlong) dest);
-		JyObject* jy = AS_JY(dest);
-//		printf("jy at %u\n", (jlong) jy);
-//		printf("JyObject-size: %u\n", (jlong) sizeof(JyObject));
-//		printf("GC_Head-size: %u\n", (jlong) sizeof(PyGC_Head));
-//		puts("try access jy:");
-//		printf("jy-Flags: %u\n", (int) jy->flags);
-//		puts("try access dest:");
-//		printf("dest-type: %u\n", (int) dest->ob_type);
-//		puts("type-name:");
-//		puts(dest->ob_type->tp_name);
-//		printf("dest-check for module: %u\n", (int) PyModule_Check(dest));
-		//PyBaseObject_Type
+		jy = AS_JY(dest);
 		if (jy->flags & SYNC_NEEDED_MASK)
 			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
-		env(NULL);
 		jy->jy = (*env)->NewWeakGlobalRef(env, src);
 		if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
 			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
@@ -1842,7 +1827,6 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		}
 		if (gref) {
 			//jputs("native call to JyNIGlobalRef_initNativeHandle");
-			//jputsLong((jlong) dest);
 			Py_INCREF(dest);
 			incWeakRefCount(jy);
 			(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest);
@@ -1850,20 +1834,9 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
 		if (PyObject_IS_GC(dest)) {
-//			if (jy->flags & JY_INITIALIZED_FLAG_MASK) {
-//				jputs("start explore initialized");
-//				jputsLong(dest);
-//				jputsLong(jy);
-//			} else {
-//				jputs("start explore uninitialized");
-//				jputsLong(dest);
-//				jputsLong(jy);
-//			}
 			JyNI_GC_ExploreObject(dest);
 		}
-		//printf("dest-check for module2: %u\n", (int) PyModule_Check(dest));
 	}
-	//printf("dest-check for module3: %u\n", (int) PyModule_Check(dest));
 	return dest;
 }
 
@@ -1972,6 +1945,7 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
  */
 PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType)
 {
+//	jputs(__FUNCTION__);
 	if (jythonPyObject == NULL) return NULL;
 	//puts("Transform jython jobject to PyObject*...");
 //	if (jythonPyObject == JyNone) return Py_None;
@@ -2016,6 +1990,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		Py_INCREF(Py_Ellipsis);
 		return Py_Ellipsis;
 	}
+
 	if (checkForType && (*env)->IsInstanceOf(env, jythonPyObject, pyTypeClass))
 	{
 		/* No increfs here, since JyNI_PyTypeObject_FromJythonPyTypeObject returns NEW ref if any. */
@@ -2026,6 +2001,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		if (er) return er;
 		/* heap-type case: Proceed same way like for ordinary PyObjects. */
 	}
+
 	if (checkCPeer && (*env)->IsInstanceOf(env, jythonPyObject, cPeerInterface))
 	{
 		if ((*env)->IsInstanceOf(env, jythonPyObject, pyCPeerClass)) {
@@ -2039,6 +2015,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return er;
 		}
 	}
+
 	if (lookupNative)
 	{
 		PyObject* handle = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNILookupNativeHandle, jythonPyObject);
@@ -2053,17 +2030,13 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return handle;
 		}
 	}
-	//jputs("no handle exists yet");
+
 	//initialize PyObject*...
 	//find tme:
-//	jstring tpName = (*env)->CallObjectMethod(env,
-//			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType),
-//			pyTypeGetName);
 	jstring tpName = (*env)->CallStaticObjectMethod(env, JyNIClass,
 			JyNI_getTypeNameForNativeConversion, jythonPyObject);
 	//todo find out what name occurs if a Jython Java-proxy is used.
 	//     Can we make sense of it in default-instance case?
-	//jputs("tp name obtained:");
 	cstr_from_jstring(cName, tpName);
 //	if (strcmp(cName, "str") == 0) {
 //		jputs("is string!");
@@ -2072,38 +2045,35 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 //		jputs(strc);
 //		(*env)->ReleaseStringChars(env, str, strc);
 //	}
+
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
 	if (tme)
 	{
-		//jputsLong(__LINE__);
-		//jputs("initialize handle:");
-		//if (tme->type_name) jputs(tme->type_name);
-		//if (tme->py_type) jputs(tme->py_type->tp_name);
+//		jputs("initialize handle:");
+//		if (tme->type_name) jputs(tme->type_name);
+//		if (tme->py_type) jputs(tme->py_type->tp_name);
 
 		//No need to incref here, since JyNI_InitPyObject returns NEW ref.
 		return JyNI_InitPyObject(tme, jythonPyObject);
 	} else
 	{
-//		jputsLong(__LINE__);
-		//jputs("tme is NULL...");
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(
 			JyNI_PyExceptionType_FromJythonExceptionType(
 			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType)));
-		//jputs("exception type...");
 		if (eme)
 		{
-			//jputs("exception type2...");
-			//No need to incref here, since JyNI_InitPyException returns NEW ref.
+			// No need to incref here, since JyNI_InitPyException returns NEW ref.
 			PyObject* er = JyNI_InitPyException(eme, jythonPyObject);
 			return er;
-		} else {
-//			jputsLong(__LINE__);
+		} else
+		{
 			// We finally try a hack for some special new-style classes:
-			jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
-					JyNI_getTypeOldStyleParent, jythonPyObject);
-			if (!(*env)->IsSameObject(env, old_cls, NULL)) {
-				return JyNI_InitPyObject(&specialPyInstance, jythonPyObject);
-			}
+			// todo: Remove this
+//			jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
+//					JyNI_getTypeOldStyleParent, jythonPyObject);
+//			if (!(*env)->IsSameObject(env, old_cls, NULL)) {
+//				return JyNI_InitPyObject(&specialPyInstance, jythonPyObject);
+//			}
 
 			jobject tpe = (*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType);
 			PyTypeObject* pytpe = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(tpe);
@@ -2541,6 +2511,7 @@ inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type)
  */
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject)
 {
+//	jputs(__FUNCTION__);
 	env(NULL);
 	if ((*env)->IsInstanceOf(env, jythonPyTypeObject, pyCPeerTypeClass))
 	{
@@ -2549,7 +2520,6 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 		Py_INCREF(er);
 		return er;
 	}
-
 	//jstring name = (*env)->CallStaticObjectMethod(env, pyTypeClass, pyTypeGetName, jythonPyTypeObject);
 	jstring name = (*env)->CallObjectMethod(env, jythonPyTypeObject, pyTypeGetName);
 //	jboolean isCopy;
@@ -2561,6 +2531,9 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 //	(*env)->ReleaseStringUTFChars(env, name, utf_string);
 	cstr_from_jstring(mName, name);
 	int i;
+//	jputsLong(__LINE__);
+//	if ((*env)->IsSameObject(env, name, NULL)) jputs("name is NULL");
+//	if (!mName) jputs("mName is NULL");
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
 		if (builtinTypes[i].py_type != NULL && strcmp(builtinTypes[i].py_type->tp_name, mName) == 0)
@@ -4521,7 +4494,7 @@ void JyNI_unload(JavaVM *jvm)
 		if (builtinTypes[i].type_name != NULL) free(builtinTypes[i].type_name);
 	}
 
-	free(specialPyInstance.sync);
+	//free(specialPyInstance.sync);
 
 	env();
 	(*env)->DeleteWeakGlobalRef(env, JyNone);
