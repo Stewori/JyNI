@@ -769,6 +769,7 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 //inline void JyNI_JyErr_SetExceptionObject(jobject exception);
 //inline int JyNI_JyErr_ExceptionMatches(jobject exc);
 //inline PyObject* JyNI_JyErr_Format(jobject exception, const char *format, ...);
+void JyErr_SetFromJNIEnv();
 
 /* JyNI-Stuff: */
 //inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);

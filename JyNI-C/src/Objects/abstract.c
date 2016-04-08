@@ -2577,6 +2577,7 @@ PyObject_CallObject(PyObject *o, PyObject *a)
 PyObject *
 PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 {
+//	jputs(__FUNCTION__);
 	jobject delegate = JyNI_GetJythonDelegate(func);
 	if (delegate)
 	{
@@ -2616,7 +2617,7 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 		//maybe insert some exception check here...
 		if ((*env)->ExceptionCheck(env))
 		{
-			jputs("Exception on delegate call:");
+//			jputs("Exception on delegate call:");
 			jobject exc = (*env)->ExceptionOccurred(env);
 			JyNI_jprintJ(exc);
 		}
@@ -2624,26 +2625,30 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 	}
 	else
 	{
-//		puts("PyObject_Call no delegate");
-//		puts(func->ob_type->tp_name);
+//		jputs(func->ob_type->tp_name);
 		ternaryfunc call;
 
 		if ((call = func->ob_type->tp_call) != NULL) {
 			PyObject *result;
-			if (Py_EnterRecursiveCall(" while calling a Python object"))
+			if (Py_EnterRecursiveCall(" while calling a Python object")) {
 				return NULL;
+			}
 			//env(NULL);
 //			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
-
+//			jputs(func->ob_type->tp_name);
+//			if (func->ob_type == &PyFunction_Type)
+//				jputsPy(((PyFunctionObject*) func)->func_name);
 			result = (*call)(func, arg, kw);
 
 			Py_LeaveRecursiveCall();
 //			Jy_LeaveRecursiveCall();
 			//jboolean envExc = (*env)->ExceptionCheck(env);
 			if (result == NULL && !PyErr_Occurred())// && !envExc)
+			{
 				PyErr_SetString(
 					PyExc_SystemError,
 					"NULL result without error in PyObject_Call");
+			}
 //			if (envExc && !PyErr_Occurred())
 //			{
 //				(*env)->ExceptionClear(env);

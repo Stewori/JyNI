@@ -43,7 +43,7 @@
 #define func_module_gcindex   2
 #define func_defaults_gcindex 3
 //#define func_doc_gcindex   -1
-//#define func_name_gcindex  -1
+//#define func_name_gcindex     4
 //#define func_dict_gcindex  -1
 #define func_closure_gcindex  4
 
@@ -367,7 +367,7 @@ func_get_name(PyFunctionObject *op)
 static int
 func_set_name(PyFunctionObject *op, PyObject *value)
 {
-//	PyObject *tmp;
+	PyObject *tmp;
 //
 //	if (restricted())
 //		return -1;
@@ -381,17 +381,20 @@ func_set_name(PyFunctionObject *op, PyObject *value)
 	env(-1);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jName = JyNI_JythonPyObject_FromPyObject(value);
-	(*env)->CallObjectMethod(env, jFunc, pyFunctionSetCode, jName);
+	//(*env)->CallObjectMethod(env, jFunc, pyFunctionSetCode, jName);
+	(*env)->SetObjectField(env, jFunc, pyFunction__name__, jName);
 	if ((*env)->ExceptionCheck(env))
 	{
 		jputs("Exception in func_set_name");
 		(*env)->ExceptionClear(env);
 		return -1;
 	}
-//	tmp = op->func_name;
-//	Py_INCREF(value);
-//	op->func_name = value;
-//	Py_DECREF(tmp);
+	tmp = op->func_name;
+	Py_INCREF(value);
+	op->func_name = value;
+	Py_DECREF(tmp);
+//	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), func_name_gcindex,
+//					value, AS_JY_NO_GC(value));
 	return 0;
 }
 
@@ -543,9 +546,9 @@ func_new(PyTypeObject* type, PyObject* args, PyObject* kw)
 
 	if (name != Py_None) {
 		func_set_name(newfunc, name);
-//		Py_INCREF(name);
-//		Py_DECREF(newfunc->func_name);
-//		newfunc->func_name = name;
+		Py_INCREF(name);
+		Py_DECREF(newfunc->func_name);
+		newfunc->func_name = name;
 	}
 	if (defaults != Py_None) {
 		Py_INCREF(defaults);
@@ -568,7 +571,7 @@ func_dealloc(PyFunctionObject *op)
 	Py_DECREF(op->func_code);
 	Py_DECREF(op->func_globals);
 	Py_XDECREF(op->func_module);
-	//Py_DECREF(op->func_name);
+	Py_XDECREF(op->func_name);
 	Py_XDECREF(op->func_defaults);
 	//Py_XDECREF(op->func_doc);
 	//Py_XDECREF(op->func_dict);
@@ -601,7 +604,7 @@ func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
 	Py_VISIT(f->func_module);
 	Py_VISIT(f->func_defaults);
 	//Py_VISIT(f->func_doc);
-	//Py_VISIT(f->func_name);
+	Py_VISIT(f->func_name);
 	//Py_VISIT(f->func_dict);
 	Py_VISIT(f->func_closure);
 	return 0;
@@ -610,7 +613,7 @@ func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
 static PyObject *
 function_call(PyObject *func, PyObject *arg, PyObject *kw)
 {
-	//jputs("function_call");
+//	jputs(__FUNCTION__);
 	env(NULL);
 	//jobject jFunc = JyNI_JythonPyObject_FromPyObject(func);
 	jobject jdict = NULL;
@@ -646,11 +649,12 @@ function_call(PyObject *func, PyObject *arg, PyObject *kw)
 			pyObject__call__, args, jkw);
 //	if ((*env)->ExceptionCheck(env))
 //	{
-//		//jputs("Exception after function call");
-//		//(*env)->ExceptionDescribe(env);
+//		jputs("Exception after function call");
+//		(*env)->ExceptionDescribe(env);
 //	}
 	Py_END_ALLOW_THREADS
-	//if (!er) jputs("func result NULL");
+	JyErr_SetFromJNIEnv();
+//	if (!er) jputs("func result NULL");
 	return JyNI_PyObject_FromJythonPyObject(er);
 //	PyObject *result;
 //	PyObject *argdefs;

@@ -445,7 +445,6 @@ public class JyNI {
 
 //			System.out.println("Exception before:");
 //			System.out.println(Py.getThreadState().exception);
-			//We abuse PyCPeer as a dumb container for the native handle here.
 			//System.out.println("find handle...");
 			//PyCPeer peer = (PyCPeer) object.__findattr__(JyNIHandleAttr);
 //			System.out.println("Exception afterwards:");

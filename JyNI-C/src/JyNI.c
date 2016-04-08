@@ -138,7 +138,7 @@ void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, j
  */
 jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate)
 {
-//	jputs("JyNI_callPyCPeer called");
+//	jputs(__FUNCTION__);
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;

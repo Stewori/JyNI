@@ -850,6 +850,9 @@ void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
 	((PyFunctionObject*) dest)->func_defaults = JyNI_PyObject_FromJythonPyObject(jDefaults);
 	jobject jClosure = (*env)->GetObjectField(env, src, pyFunctionFuncClosure);
 	((PyFunctionObject*) dest)->func_closure = JyNI_PyObject_FromJythonPyObject(jClosure);
+	jstring jName = (*env)->GetObjectField(env, src, pyFunction__name__);
+	cstr_from_jstring(cName, jName);
+	((PyFunctionObject*) dest)->func_name = PyString_FromString(cName);
 }
 
 void JySync_JyCell_From_PyCell(PyObject* src, jobject dest)

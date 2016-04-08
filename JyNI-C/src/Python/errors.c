@@ -69,13 +69,13 @@ extern "C" {
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
-//	puts(__FUNCTION__);
-	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
-		/* XXX Should never happen -- fatal error instead? */
-		/* Well, it could be None. */
-		Py_DECREF(traceback);
-		traceback = NULL;
-	}
+//	jputs(__FUNCTION__);
+//	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
+//		/* XXX Should never happen -- fatal error instead? */
+//		/* Well, it could be None. */
+//		Py_DECREF(traceback);
+//		traceback = NULL;
+//	}
 //	env();
 //	jobject oldexc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyErr_GetCurExc, NULL);
 //	jobject jv = JyNI_JythonPyObject_FromPyObject(value);
@@ -133,6 +133,29 @@ PyErr_SetObject(PyObject *exception, PyObject *value)
 	Py_XINCREF(exception);
 	Py_XINCREF(value);
 	PyErr_Restore(exception, value, (PyObject *)NULL);
+}
+
+void
+JyErr_SetFromJNIEnv()
+{
+//	jputs(__FUNCTION__);
+	env();
+	if ((*env)->ExceptionCheck(env))
+	{
+		jthrowable exc = (*env)->ExceptionOccurred(env);
+		if ((*env)->IsInstanceOf(env, exc, pyExceptionClass))
+		{
+			PyObject* excType = JyNI_PyObject_FromJythonPyObject(
+					(*env)->GetObjectField(env, exc, pyExceptionTypeField));
+			PyObject* excValue = JyNI_PyObject_FromJythonPyObject(
+					(*env)->GetObjectField(env, exc, pyExceptionValueField));
+			PyObject* excTraceback = NULL;//JyNI_PyObject_FromJythonPyObject(
+//					(*env)->GetObjectField(env, exc, pyExceptionTracebackField));
+			//todo: Support traceback
+			PyErr_Restore(excType, excValue, excTraceback);
+			(*env)->ExceptionClear(env);
+		}
+	}
 }
 
 void

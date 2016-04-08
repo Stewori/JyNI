@@ -1601,7 +1601,7 @@ _PyGC_Dump(PyGC_Head *g)
 static inline jsize JyObject_FixedGCSize(PyObject* pyObject)
 {
 	if (Py_TYPE(pyObject) == &PyTuple_Type)    return Py_SIZE(pyObject);
-	if (Py_TYPE(pyObject) == &PyFunction_Type) return 5;
+	if (Py_TYPE(pyObject) == &PyFunction_Type) return 5; //6
 	if (Py_TYPE(pyObject) == &PyInstance_Type) return 2;
 	if (Py_TYPE(pyObject) == &PyMethod_Type)   return 3;
 	if (Py_TYPE(pyObject) == &PyClass_Type)    return 6;
