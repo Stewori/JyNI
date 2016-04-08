@@ -33,11 +33,13 @@ package JyNI;
 import java.util.HashMap;
 
 import org.python.core.Py;
+import org.python.core.ThreadState;
 import org.python.core.PyDictionary;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyObject;
+import org.python.core.PyException;
 import org.python.core.finalization.FinalizableBuiltin;
 
 public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBuiltin {
@@ -221,10 +223,30 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 //			if (cc != null) return cc;
 //			else classCache = null;
 //		}
-//		System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name+" "+(findAttrCount++));
-		long ts = JyTState.prepareNativeThreadState(Py.getThreadState());
+//		System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);//+" "+(findAttrCount++));
+		ThreadState tstate = Py.getThreadState();
+		long ts = JyTState.prepareNativeThreadState(tstate);
 		PyObject er = JyNI.getAttrString(objectHandle, name, ts);
-//		System.out.println("Result: "+er);
+		if (er == null && tstate.exception != null && tstate.exception.type == Py.AttributeError) {
+			// In attribute error case we give it another chance by redirecting to super.
+			//PyException tmp = tstate.exception;
+			// We clear exception to see whether super inserts its own exception.
+			tstate.exception = null;
+			// super call is now responsible to do exception stuff
+			return super.__findattr_ex__(name);
+
+//			er = super.__findattr_ex__(name);
+//			if (er != null) {
+//				// If result is promising we succeed, check for exception by super call though.
+//				// (This check can probably be removed since super would have thrown exception
+//				// if any and also should not insert exception and return non-null)
+//				er = JyNI.maybeExc(er);
+//				return er;
+//			} else if (tstate.exception == null)
+//				// If super behaves strange - returns null without throwing exception - we at least
+//				// remember our original exception and restore it:
+//				tstate.exception = tmp;
+		}
 		er = JyNI.maybeExc(er);
 //		if (name.equals("__class__") && classCache == null) classCache = new WeakReference(er);
 		return er != null ? er : super.__findattr_ex__(name);

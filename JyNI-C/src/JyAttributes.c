@@ -138,6 +138,8 @@ inline void* _JyNI_GetJyAttribute(JyObject* obj, const char* name)
 //No hashing is done, since use of JyAttributes is expected to be rare.
 inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name)
 {
+//	jputs(__FUNCTION__);
+//	jputs(name);
 	JyAttribute* nxt = obj->attr;
 	while (nxt != NULL)
 	{

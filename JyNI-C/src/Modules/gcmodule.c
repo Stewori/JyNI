@@ -1728,7 +1728,16 @@ static jobject obtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 		return er;
 	} else
 	{
+//		if (Py_TYPE(op) == &PyFloat_Type) {
+//			jputsLong(__LINE__);
+//			//jputs(Py_TYPE(op)->tp_name);
+//			jputsPy(op);
+//		}
 		jboolean hasHeadAttr = JyObject_HasJyGCHead(op, jy);
+//		if (Py_TYPE(op) == &PyFloat_Type) {
+//			jputsLong(hasHeadAttr);
+//			jputsLong(__LINE__);
+//		}
 		jobject result = NULL;
 		if (hasHeadAttr)
 		{
