@@ -604,7 +604,7 @@ func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
 	Py_VISIT(f->func_module);
 	Py_VISIT(f->func_defaults);
 	//Py_VISIT(f->func_doc);
-	Py_VISIT(f->func_name);
+	//Py_VISIT(f->func_name);
 	//Py_VISIT(f->func_dict);
 	Py_VISIT(f->func_closure);
 	return 0;
