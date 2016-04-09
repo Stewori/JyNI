@@ -158,7 +158,7 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name)
 //it. If it was already present, the caller would not add it anyway.
 inline void JyNI_AddJyAttribute(JyObject* obj, const char* name, void* value)
 {
-	if (!name) jputs("JyNI_AddJyAttribute NULL name");
+//	if (!name) jputs("JyNI_AddJyAttribute NULL name");
 	JyAttribute* nat = malloc(sizeof(JyAttribute));
 	nat->name = name;
 	nat->value = value;
@@ -169,7 +169,7 @@ inline void JyNI_AddJyAttribute(JyObject* obj, const char* name, void* value)
 
 inline void JyNI_AddJyAttributeWithFlags(JyObject* obj, const char* name, void* value, char flags)
 {
-	if (!name) jputs("JyNI_AddJyAttributeWithFlags NULL name");
+//	if (!name) jputs("JyNI_AddJyAttributeWithFlags NULL name");
 	JyAttribute* nat = malloc(sizeof(JyAttribute));
 	nat->name = name;
 	nat->value = value;

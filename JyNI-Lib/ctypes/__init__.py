@@ -594,6 +594,11 @@ from ctypes._endian import BigEndianStructure, LittleEndianStructure
 # Fill in specifically-sized types
 c_int8 = c_byte
 c_uint8 = c_ubyte
+
+# JyNI: Ensure c_int32 exists, so we avoid attribute errors,
+# even if the attribute currently does not work properly.
+c_int32 = None
+
 for kind in [c_short, c_int, c_long, c_longlong]:
     if sizeof(kind) == 2: c_int16 = kind
     elif sizeof(kind) == 4: c_int32 = kind
