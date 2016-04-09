@@ -72,6 +72,7 @@ static PyFloatObject *free_list = NULL;
 static PyFloatObject *
 fill_free_list(void)
 {
+//	jputs(__FUNCTION__);
 	JyFloatObject *p, *q;
 	/* XXX Float blocks escape the object heap. Use PyObject_MALLOC ??? */
 	p = (JyFloatObject *) PyMem_MALLOC(sizeof(PyFloatBlock));
@@ -88,6 +89,7 @@ fill_free_list(void)
 		Jy_InitImmutable((JyObject*) q);
 	}
 	Py_TYPE(FROM_JY_NO_GC(q)) = NULL;
+	Jy_InitImmutable((JyObject*) q);
 	return (PyFloatObject*) FROM_JY_NO_GC(p + N_FLOATOBJECTS - 1);
 }
 
@@ -279,6 +281,8 @@ PyFloat_FromString(PyObject *v, char **pend)
 static void
 float_dealloc(PyFloatObject *op)
 {
+//	jputs(__FUNCTION__);
+//	jputsLong(op);
 	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	if (PyFloat_CheckExact(op)) {
 		JyObject* jy = AS_JY_NO_GC(op);

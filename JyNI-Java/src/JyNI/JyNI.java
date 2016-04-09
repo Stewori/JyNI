@@ -1209,12 +1209,12 @@ public class JyNI {
 
 	public static void jPrint(String msg) {
 		System.out.println(msg);
-		System.out.flush();
+		//System.out.flush();
 	}
 	
 	public static void jPrint(long val) {
 		System.out.println(val);
-		System.out.flush();
+		//System.out.flush();
 	}
 
 	public static void jPrintHash(Object val) {
@@ -1223,13 +1223,13 @@ public class JyNI {
 		} catch (Exception e) {
 			System.out.println("("+System.identityHashCode(val)+")");
 		}
-		System.out.flush();
+		//System.out.flush();
 	}
 
 	public static void jPrintInfo(Object val) {
 		System.out.println("Object: "+val);
 		System.out.println("Class: "+val.getClass());
-		System.out.flush();
+		//System.out.flush();
 	}
 
 //---------gc-section-----------

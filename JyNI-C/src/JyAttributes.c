@@ -97,10 +97,10 @@ inline void JyNI_ClearJyAttributeValue(JyAttribute* att)
 inline void JyNI_ClearJyAttribute(JyObject* obj, const char* name)
 {
 	JyAttribute* nxt = obj->attr;
-	while (nxt != NULL)
+	while (nxt)
 	{
 		JyAttribute* nxt2 = nxt->next;
-		if (nxt2 != NULL && nxt2->name == name)
+		if (nxt2 && nxt2->name == name)
 		{
 			nxt->next = nxt2->next;
 			//if ((nxt2->flags & JY_ATTR_OWNS_VALUE_FLAG_MASK) && (nxt2->value))
@@ -141,8 +141,10 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name)
 //	jputs(__FUNCTION__);
 //	jputs(name);
 	JyAttribute* nxt = obj->attr;
-	while (nxt != NULL)
+	while (nxt)
 	{
+//		if (!nxt->name) jputs("JyNI_HasJyAttribute discovered NULL-name!");
+//		jputs(nxt->name);
 		if (nxt->name == name)
 			return JNI_TRUE;
 		else
@@ -156,6 +158,7 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name)
 //it. If it was already present, the caller would not add it anyway.
 inline void JyNI_AddJyAttribute(JyObject* obj, const char* name, void* value)
 {
+	if (!name) jputs("JyNI_AddJyAttribute NULL name");
 	JyAttribute* nat = malloc(sizeof(JyAttribute));
 	nat->name = name;
 	nat->value = value;
@@ -166,6 +169,7 @@ inline void JyNI_AddJyAttribute(JyObject* obj, const char* name, void* value)
 
 inline void JyNI_AddJyAttributeWithFlags(JyObject* obj, const char* name, void* value, char flags)
 {
+	if (!name) jputs("JyNI_AddJyAttributeWithFlags NULL name");
 	JyAttribute* nat = malloc(sizeof(JyAttribute));
 	nat->name = name;
 	nat->value = value;
