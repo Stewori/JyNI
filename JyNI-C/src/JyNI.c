@@ -4412,6 +4412,27 @@ inline jint initSingletons(JNIEnv *env)
 	return JNI_VERSION_1_2;
 }
 
+#define native_table_index_long 10
+#define native_table_index_ulong 11
+static inline void patchJythonStructModule(JNIEnv *env)
+{
+	if (sizeof(long) != 4)
+	{
+		jclass structModuleClass = (*env)->FindClass(env, "org/python/modules/struct");
+		jfieldID structModule_native_table = (*env)->GetStaticFieldID(env, structModuleClass,
+				"native_table", "[Lorg/python/modules/struct$FormatDef;");
+		jclass structModule_FormatDefClass = (*env)->FindClass(env, "org/python/modules/struct$FormatDef");
+		jfieldID structModule_FormatDef_size = (*env)->GetFieldID(env, structModule_FormatDefClass, "size", "I");
+		jfieldID structModule_FormatDef_align = (*env)->GetFieldID(env, structModule_FormatDefClass, "alignment", "I");
+		jarray struct_native_table = (*env)->GetStaticObjectField(env, structModuleClass, structModule_native_table);
+		jobject long_FormatDef = (*env)->GetObjectArrayElement(env, struct_native_table, native_table_index_long);
+		jobject ulong_FormatDef = (*env)->GetObjectArrayElement(env, struct_native_table, native_table_index_ulong);
+		(*env)->SetIntField(env, long_FormatDef, structModule_FormatDef_size, sizeof(long));
+		(*env)->SetIntField(env, long_FormatDef, structModule_FormatDef_align, sizeof(long));
+		(*env)->SetIntField(env, ulong_FormatDef, structModule_FormatDef_size, sizeof(long));
+		(*env)->SetIntField(env, ulong_FormatDef, structModule_FormatDef_align, sizeof(long));
+	}
+}
 
 int Py_DebugFlag; /* Needed by parser.c */
 int Py_VerboseFlag; /* Needed by import.c */
@@ -4462,6 +4483,8 @@ jint JyNI_init(JavaVM *jvm)
 	//puts("initBuiltinExceptions done");
 	if (initSingletons(env) == JNI_ERR) return JNI_ERR;
 	//puts("initSingletons done");
+
+	patchJythonStructModule(env);
 
 	//puts("characters-info:");
 	//characters[UCHAR_MAX + 1]

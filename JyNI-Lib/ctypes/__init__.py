@@ -36,6 +36,12 @@
 
 import os as _os, sys as _sys
 
+# JyNI-adjustment:
+# Usually Jython does not have lib-dynload on its path, so ensure it here
+lib_dynload = '/usr/lib/python2.7/lib-dynload'
+if not lib_dynload in _sys.path:
+    _sys.path.append(lib_dynload)
+
 __version__ = "1.1.0"
 
 from _ctypes import Union, Structure, Array
@@ -212,11 +218,11 @@ _check_size(c_ushort)
 
 class c_long(_SimpleCData):
     _type_ = "l"
-#_check_size(c_long)
+_check_size(c_long)
 
 class c_ulong(_SimpleCData):
     _type_ = "L"
-#_check_size(c_ulong)
+_check_size(c_ulong)
 
 if _calcsize("i") == _calcsize("l"):
     # if int and long have the same size, make c_int an alias for c_long
@@ -594,10 +600,6 @@ from ctypes._endian import BigEndianStructure, LittleEndianStructure
 # Fill in specifically-sized types
 c_int8 = c_byte
 c_uint8 = c_ubyte
-
-# JyNI: Ensure c_int32 exists, so we avoid attribute errors,
-# even if the attribute currently does not work properly.
-c_int32 = None
 
 for kind in [c_short, c_int, c_long, c_longlong]:
     if sizeof(kind) == 2: c_int16 = kind
