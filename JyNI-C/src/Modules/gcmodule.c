@@ -2152,9 +2152,14 @@ void JyNI_GC_ExploreObject(PyObject* op)
 static int
 visit_refCheckDec(PyObject *op, void *arg)
 {
-	int pos = (int) JyNI_GetJyAttribute(AS_JY(op), JyAttributeJyGCRefTmp);
-	if (pos > 0)
-		--(((jint*) arg)[pos-1]);
+//	if (op == Py_None) {
+//		jputs("Warning: visit_refCheckDec called with PyNone!");
+//	}
+	if (op != Py_None) {
+		int pos = (int) JyNI_GetJyAttribute(AS_JY(op), JyAttributeJyGCRefTmp);
+		if (pos > 0)
+			--(((jint*) arg)[pos-1]);
+	}
 	return 0;
 }
 
