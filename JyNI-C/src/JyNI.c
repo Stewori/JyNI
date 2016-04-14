@@ -64,7 +64,7 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 	//jputs("JyNI_loadModule...");
 	//JyNI_jprintJ(moduleName);
 //	jputsLong(tstate);
-	ENTER_JyNI
+	RE_ENTER_JyNI
 	if (PyErr_Occurred()) jputs("PyErrOccured01 (beginning of JyNI_loadModule)");//this should never happen!
 	const char* utf_string;
 	utf_string = (*env)->GetStringUTFChars(env, moduleName, NULL);
@@ -93,7 +93,7 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 		// Attempt to load a module statically linked into JyNI.so:
 		er = _PyImport_LoadDynamicModuleJy(mName, NULL, NULL);
 
-	LEAVE_JyNI
+	RE_LEAVE_JyNI
 	return er;
 }
 
@@ -3371,8 +3371,12 @@ jclass pyBufferClass;
 jclass pyMemoryViewClass;
 
 jclass __builtin__Class;
-jmethodID __builtin__Import;
+//jmethodID __builtin__Import;
 jmethodID __builtin__ImportLevel;
+
+jclass impClass;
+jmethodID imp_importName;
+jmethodID imp_reload;
 
 jclass exceptionsClass;
 jmethodID exceptionsKeyError;
@@ -4329,8 +4333,15 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (__builtin__ClassLocal == NULL) { return JNI_ERR;}
 	__builtin__Class = (jclass) (*env)->NewWeakGlobalRef(env, __builtin__ClassLocal);
 	(*env)->DeleteLocalRef(env, __builtin__ClassLocal);
-	__builtin__Import = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+	//__builtin__Import = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	__builtin__ImportLevel = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__", "(Ljava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;I)Lorg/python/core/PyObject;");
+
+	jclass impClassLocal = (*env)->FindClass(env, "org/python/core/imp");
+	if (!impClassLocal) return JNI_ERR;
+	impClass = (jclass) (*env)->NewWeakGlobalRef(env, impClassLocal);
+	(*env)->DeleteLocalRef(env, impClassLocal);
+	imp_importName = (*env)->GetStaticMethodID(env, impClass, "importName", "(Ljava/lang/String;Z)Lorg/python/core/PyObject;");
+	imp_reload = (*env)->GetStaticMethodID(env, impClass, "reload", "(Lorg/python/core/PyModule;)Lorg/python/core/PyObject;");
 
 	jclass exceptionsClassLocal = (*env)->FindClass(env, "org/python/core/exceptions");
 	if (exceptionsClassLocal == NULL) { return JNI_ERR;}
@@ -4444,7 +4455,7 @@ int Py_DontWriteBytecodeFlag; /* Suppress writing bytecode files (*.py[co]) */
 int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
 int Py_FrozenFlag; /* Needed by getpath.c */
 int Py_UnicodeFlag = 0; /* Needed by compile.c */
-int Py_OptimizeFlag = 0; /* Usually in compile.c */
+int Py_OptimizeFlag = 0; /* Originally hosted in compile.c */
 int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
 /* _XXX Py_QnewFlag should go away in 2.3.  It's true iff -Qnew is passed,
   on the command line, and is used in 2.2 by ceval.c to make all "/" divisions

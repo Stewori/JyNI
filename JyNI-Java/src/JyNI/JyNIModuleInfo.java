@@ -35,7 +35,7 @@ public class JyNIModuleInfo {
 	PyModule module;
 	String name;
 	String path;
-	
+
 	public JyNIModuleInfo(String name, String path, PyModule module)
 	{
 		this.name = name;

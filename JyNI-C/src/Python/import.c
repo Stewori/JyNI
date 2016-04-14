@@ -2167,10 +2167,15 @@ PyImport_AddModule(const char *name)
 PyObject *
 PyImport_ImportModule(const char *name)
 {
+//	jputs(__FUNCTION__);
+//	jputs(name);
 	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject(
-		(*env)->CallStaticObjectMethod(env, __builtin__Class,
-		__builtin__Import, (*env)->NewStringUTF(env, name)));
+	PyObject* result = JyNI_PyObject_FromJythonPyObject(
+		(*env)->CallStaticObjectMethod(env, impClass,
+			imp_importName, (*env)->NewStringUTF(env, name), JNI_FALSE));
+//	if (!result) jputs("Result is NULL");
+//	else jputs(PyModule_GetName(result));
+	return result;
 //    PyObject *pname;
 //    PyObject *result;
 //
@@ -2767,14 +2772,18 @@ PyImport_ImportModuleLevel(char *name, PyObject *globals, PyObject *locals,
 //
 //    return m;
 //}
-//
-//
-///* Re-import a module of any kind and return its module object, WITH
-//   INCREMENTED REFERENCE COUNT */
-//
-//PyObject *
-//PyImport_ReloadModule(PyObject *m)
-//{
+
+
+/* Re-import a module of any kind and return its module object, WITH
+   INCREMENTED REFERENCE COUNT */
+
+PyObject *
+PyImport_ReloadModule(PyObject *m)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallObjectMethod(env, impClass, imp_reload,
+			JyNI_JythonPyObject_FromPyObject(m)));
 //    PyInterpreterState *interp = PyThreadState_Get()->interp;
 //    PyObject *modules_reloading = interp->modules_reloading;
 //    PyObject *modules = PyImport_GetModuleDict();
@@ -2872,21 +2881,22 @@ PyImport_ImportModuleLevel(char *name, PyObject *globals, PyObject *locals,
 //    imp_modules_reloading_clear();
 //    PyMem_FREE(buf);
 //    return newm;
-//}
-//
-//
-///* Higher-level import emulator which emulates the "import" statement
-//   more accurately -- it invokes the __import__() function from the
-//   builtins of the current globals.  This means that the import is
-//   done using whatever import hooks are installed in the current
-//   environment, e.g. by "rexec".
-//   A dummy list ["__doc__"] is passed as the 4th argument so that
-//   e.g. PyImport_Import(PyString_FromString("win32com.client.gencache"))
-//   will return <module "gencache"> instead of <module "win32com">. */
-//
-//PyObject *
-//PyImport_Import(PyObject *module_name)
-//{
+}
+
+
+/* Higher-level import emulator which emulates the "import" statement
+   more accurately -- it invokes the __import__() function from the
+   builtins of the current globals.  This means that the import is
+   done using whatever import hooks are installed in the current
+   environment, e.g. by "rexec".
+   A dummy list ["__doc__"] is passed as the 4th argument so that
+   e.g. PyImport_Import(PyString_FromString("win32com.client.gencache"))
+   will return <module "gencache"> instead of <module "win32com">. */
+
+PyObject *
+PyImport_Import(PyObject *module_name)
+{
+	return PyImport_ImportModule(PyString_AS_STRING(module_name));
 //    static PyObject *silly_list = NULL;
 //    static PyObject *builtins_str = NULL;
 //    static PyObject *import_str = NULL;
@@ -2949,9 +2959,9 @@ PyImport_ImportModuleLevel(char *name, PyObject *globals, PyObject *locals,
 //    Py_XDECREF(import);
 //
 //    return r;
-//}
-//
-//
+}
+
+
 ///* Module 'imp' provides Python access to the primitives used for
 //   importing modules.
 //*/

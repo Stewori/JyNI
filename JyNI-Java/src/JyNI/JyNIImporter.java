@@ -121,7 +121,7 @@ public class JyNIImporter extends PyObject {
 	 *		 otherwise
 	 */
 	public PyObject find_module(String name, PyObject path) {
-//		System.out.println("find... "+name);
+//		System.out.println("JyNI find... "+name);
 		if (dynModules.containsKey(name)) return this;
 		/*Py.writeDebug("import", "trying " + name
 				+ " in packagemanager for path " + path);
@@ -130,9 +130,22 @@ public class JyNIImporter extends PyObject {
 			Py.writeComment("import", "'" + name + "' as java package");
 			return this;
 		}*/
+		String subPath;
+		String modname;
+		int lastDot = name.lastIndexOf('.');
+		if (lastDot == -1) {
+			subPath = null;
+			modname = name;
+		} else {
+			subPath = name.substring(0, lastDot);
+			modname = name.substring(lastDot+1);
+			subPath = subPath.replace('.', File.separatorChar);
+		}
 		String suf = "."+getSystemDependendDynamicLibraryExtension();
 		for (String s : libPaths)
 		{
+//			System.out.println("JyNI look in "+s+File.separatorChar+subPath);
+			if (subPath != null) s = s+File.separatorChar+subPath;
 			File fl = new File(s);
 			//if (fl.exists())
 			String[] ch = fl.list();
@@ -142,7 +155,7 @@ public class JyNIImporter extends PyObject {
 				{
 					//System.out.println("Check: "+m);
 					//if (m.equals(name+suf))
-					if (m.startsWith(name+".") && m.endsWith(suf))
+					if (m.startsWith(modname+".") && m.endsWith(suf))
 					{
 						//System.out.println("CPythonExtensionImporter found extension "+name);
 						//System.out.println("Extension-Path: "+s+File.separatorChar+m);
@@ -159,7 +172,7 @@ public class JyNIImporter extends PyObject {
 	}
 
 	public PyObject load_module(String name) {
-//		System.out.println("load... "+name);
+//		System.out.println("JyNI load... "+name);
 		// This stuff should move to JyNIInitializer, but there it currently
 		// breaks sysconfig.py. Will be fixed for Jython 2.7.2.
 		PySystemState sysState = Py.getSystemState();
@@ -181,6 +194,11 @@ public class JyNIImporter extends PyObject {
 		//CPython also works as usual if an ordinary script is called foo.so.
 		//System.out.println("JyNIImporter.load module: "+name);
 		JyNIModuleInfo inf = dynModules.get(name);
+//		if (inf == null) {
+//			System.out.println("inf null: "+name);
+//			for (String key: dynModules.keySet())
+//				System.out.println(key);
+//		}
 		if (inf.module == null)
 		{
 			inf.module = JyNI.loadModule(name, inf.path, JyTState.prepareNativeThreadState(Py.getThreadState()));

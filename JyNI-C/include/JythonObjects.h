@@ -339,8 +339,12 @@ extern jclass pyBufferClass;
 extern jclass pyMemoryViewClass;
 
 extern jclass __builtin__Class;
-extern jmethodID __builtin__Import;
+//extern jmethodID __builtin__Import;
 extern jmethodID __builtin__ImportLevel;
+
+extern jclass impClass;
+extern jmethodID imp_importName;
+extern jmethodID imp_reload;
 
 extern jclass threadStateCurExcInfoClass;
 extern jfieldID threadStateCurExcInfo_curexc_type;
