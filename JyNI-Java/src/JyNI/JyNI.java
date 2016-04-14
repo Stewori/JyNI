@@ -899,8 +899,11 @@ public class JyNI {
 	}*/
 
 	protected static PyObject maybeExc(PyObject obj) throws PyException {
-		if (obj == null && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
-		else return obj;
+		if (obj == null && Py.getThreadState().exception != null) {
+//			System.out.println(Py.getThreadState().exception.getMessage());
+//			System.out.println(Py.getThreadState().exception.value);
+			throw Py.getThreadState().exception;
+		} else return obj;
 	}
 
 	protected static void maybeExc(int res) throws PyException {

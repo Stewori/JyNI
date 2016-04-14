@@ -83,7 +83,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	//jputs("got dyn load func");
 	if (PyErr_Occurred())
 	{
-		jputs("PyErrOccured00");
+		//jputs("PyErrOccured00");
 		return NULL;
 	}
 	//jputs("error check done");

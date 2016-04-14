@@ -128,7 +128,8 @@ PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 void
 PyErr_SetObject(PyObject *exception, PyObject *value)
 {
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
+//	jputsPy(value);
 //	puts(value ? PyString_AS_STRING(PyObject_Str(value)) : "NULL-PyObject");
 	Py_XINCREF(exception);
 	Py_XINCREF(value);
@@ -167,8 +168,6 @@ PyErr_SetNone(PyObject *exception)
 void
 PyErr_SetString(PyObject *exception, const char *string)
 {
-//	puts(__FUNCTION__);
-//	puts(string);
 //	jputs(__FUNCTION__);
 //	jputs(string);
 	PyObject *value = PyString_FromString(string);

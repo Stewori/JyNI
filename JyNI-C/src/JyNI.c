@@ -1352,7 +1352,7 @@ inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc)
 	env(NULL);
 	jboolean isCopy;
 	jobject name = (*env)->CallObjectMethod(env, exc, pyTypeGetName);
-	char* utf_string = (*env)->GetStringUTFChars(env, name, &isCopy);
+	const char* utf_string = (*env)->GetStringUTFChars(env, name, &isCopy);
 	//char mName[strlen(excPrefix)+strlen(utf_string)+1];
 	char mName[strlen(utf_string)+12];
 	strcpy(mName, excPrefix);
@@ -1978,12 +1978,12 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	if ((*env)->IsSameObject(env, jythonPyObject, JyEmptyString) && nullstring)
 	{
 		Py_INCREF(nullstring);
-		return nullstring;
+		return (PyObject*) nullstring;
 	}
 	if ((*env)->IsSameObject(env, jythonPyObject, JyEmptyUnicode) && unicode_empty)
 	{
 		Py_INCREF(unicode_empty);
-		return unicode_empty;
+		return (PyObject*) unicode_empty;
 	}
 	if ((*env)->IsSameObject(env, jythonPyObject, JyEllipsis))
 	{
@@ -2137,7 +2137,7 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 	} else
 	{
 		//Create base exception...
-		jobject type = JyNI_JythonExceptionType_FromPyExceptionType(Py_TYPE(src));
+		jobject type = JyNI_JythonExceptionType_FromPyExceptionType((PyObject*) Py_TYPE(src));
 		if (type)
 			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseExceptionSubTypeConstructor, type);
 		else
@@ -2171,8 +2171,8 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			jputs("Subtype:");
 			jputs(Py_TYPE(src)->tp_name);
 			jputs("Mapping-type:");
-			jputsLong(tme);
-			jputsLong(tme->py_type);
+			jputsLong((jlong) tme);
+			jputsLong((jlong) tme->py_type);
 			jputs(tme->py_type->tp_name);
 			PyErr_BadInternalCall();
 		}
@@ -2246,15 +2246,15 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	 * Uninitialized nullstring cannot trigger "return JyEmptyString" here,
 	 * since it would already have triggered "return NULL" some lines above.
 	 */
-	if (op == nullstring) return JyEmptyString;
-	if (op == unicode_empty) return JyEmptyUnicode;
+	if ((PyStringObject*) op == nullstring) return JyEmptyString;
+	if ((PyUnicodeObject*) op == unicode_empty) return JyEmptyUnicode;
 	if (op->ob_type == NULL)
 	{
 		/* we assume that only type-objects (and as such also exception types) can have ob_type == NULL.
 		 * So we call PyType_Ready to init it. However this might fail brutally, if ob_type was
 		 * NULL for some other reason. However this would not go far without segfault then anyway.
 		 */
-		PyType_Ready(op); //this is the wrong place to do this... it's just a quick hack. TODO: Find better solution...
+		PyType_Ready((PyTypeObject*) op); //this is the wrong place to do this... it's just a quick hack. TODO: Find better solution...
 	}
 	/* The following block cares for statically defined type objects.
 	 * Heap-types are treated like ordinary objects.
@@ -2400,7 +2400,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 				return _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op, NULL);
 			}
 
-			jobject opType = JyNI_JythonPyObject_FromPyObject(Py_TYPE(op));
+			jobject opType = JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(op));
 			jobject er = PyObject_IS_GC(op) ?
 					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType) :
 					(*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
@@ -2437,7 +2437,7 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			Py_INCREF(type);
 			jobject er;// = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeConstructor, (jlong) type);
 			//if (Py_TYPE(type) == NULL) jputs("JyNI-warning: Attempt to convert PyTypeObject with NULL-type.");
-			if (!PyObject_IS_GC(type)) {
+			if (!PyObject_IS_GC((PyObject*) type)) {
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameAndDictConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
@@ -2446,7 +2446,7 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameDictTypeConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
-							JyNI_JythonPyObject_FromPyObject(Py_TYPE(type)));
+							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
 				}
 			} else {
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
@@ -2457,7 +2457,7 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructorSubtype,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
-							JyNI_JythonPyObject_FromPyObject(Py_TYPE(type)));
+							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
 				}
 			}
 			jweak ref = (*env)->NewWeakGlobalRef(env, er);
@@ -4444,6 +4444,7 @@ int Py_DontWriteBytecodeFlag; /* Suppress writing bytecode files (*.py[co]) */
 int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
 int Py_FrozenFlag; /* Needed by getpath.c */
 int Py_UnicodeFlag = 0; /* Needed by compile.c */
+int Py_OptimizeFlag = 0; /* Usually in compile.c */
 int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
 /* _XXX Py_QnewFlag should go away in 2.3.  It's true iff -Qnew is passed,
   on the command line, and is used in 2.2 by ceval.c to make all "/" divisions

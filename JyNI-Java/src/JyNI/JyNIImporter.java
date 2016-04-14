@@ -184,6 +184,7 @@ public class JyNIImporter extends PyObject {
 		if (inf.module == null)
 		{
 			inf.module = JyNI.loadModule(name, inf.path, JyTState.prepareNativeThreadState(Py.getThreadState()));
+			JyNI.maybeExc(inf.module);
 			//System.out.println("had to call JyNI.loadModule, which returned "+inf.module);
 		}
 		//return JyNI.loadModule(name, "path");

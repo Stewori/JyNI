@@ -50,14 +50,14 @@ void JyRefMonitor_setMemDebugFlags(JNIEnv *env, jclass class, jint flags)
 }
 
 void JyRefMonitor_addAction(jshort action, PyObject* op, JyObject* object,
-		size_t size, char* type, char* function, char* file, jint line)
+		size_t size, const char* type, const char* function, const char* file, jint line)
 {
 	if (op) assert(op == FROM_JY(object));
 	JyRefMonitor_addAction2(action, object, NULL, size, type, function, file, line);
 }
 
 void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2, size_t size,
-		char* type, char* function, char* file, jint line)
+		const char* type, const char* function, const char* file, jint line)
 {
 	env();
 	jobject nativeAction = (*env)->NewObject(env, NativeActionClass, NativeAction_constructor);

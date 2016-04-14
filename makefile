@@ -26,7 +26,7 @@ JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
 INCLUDES = -I./JyNI-C/include -I./JyNI-C/include/Python_JyNI -I./JyNI-Java/include -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM) -I$(PY_INCLUDE)
 #-I/usr/include/tcl8.6
-CFLAGS = -fPIC -Wl,--add-stdcall-alias -c $(INCLUDES)
+CFLAGS = -fPIC -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Wl,--add-stdcall-alias -c $(INCLUDES)
 LDFLAGS = -shared
 # -ltk8.6 -ltcl8.6
 #-L/usr/X11/lib -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib -ltk8.6 -ltcl8.6 -lX11

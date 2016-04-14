@@ -171,11 +171,19 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 	handle = dlopen(pathname, dlopenflags);
 #endif
 
-	if (handle == NULL) {
+	if (!handle) {
 		const char *error = dlerror();
-		if (error == NULL)
+		if (!error)
 			error = "unknown dlopen() error";
-		PyErr_SetString(PyExc_ImportError, error);
+
+		/* For some reason error is somehow unstable and
+		   uses to disappear (become empty string) after first access.
+		   (No idea what causes this!)
+		   So we copy it quickly:
+		 */
+		char error2[strlen(error)];
+		strcpy(error2, error);
+		PyErr_SetString(PyExc_ImportError, error2);
 		return NULL;
 	}
 	if (fp != NULL && nhandles < 128)

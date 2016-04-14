@@ -84,7 +84,7 @@
  * Use with care!
  */
 #define RE_ENTER_JyNI \
-	int reenter = _PyThreadState_Current == tstate; \
+	int reenter = _PyThreadState_Current == (PyThreadState*) tstate; \
 	if (!reenter) { ENTER_JyNI }
 
 #define RE_LEAVE_JyNI \
@@ -97,13 +97,13 @@
  * ("+1" in 3rd line is for 0-termination)
  */
 #define cstr_from_jstring(cstrName, jstr) \
-	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+	const char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char cstrName[strlen(utf_string)+1]; \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
 #define global_cstr_from_jstring(cstrName, jstr) \
-	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+	const char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
@@ -560,7 +560,7 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 //Todo: Find better solution.
 #define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op))
 
-#define AS_JY(o) ((JyObject *)(  (PyObject_IS_GC(o)) ? _Py_AS_GC(o) : (o)  )-1)
+#define AS_JY(o) ((  (PyObject_IS_GC(o)) ? (JyObject *) _Py_AS_GC(o) : (JyObject *) (o)  )-1)
 #define FROM_JY(o) ((JyObject_IS_GC(o)) ? JyNI_FROM_GC((((JyObject *)(o))+1)) : ((PyObject *)(((JyObject *)(o))+1)))
 #define GC_FROM_JY(o) (PyGC_Head*) (((JyObject *)(o))+1)
 #define FROM_JY_WITH_GC(o) (JyNI_FROM_GC((((JyObject *)(o))+1)))
