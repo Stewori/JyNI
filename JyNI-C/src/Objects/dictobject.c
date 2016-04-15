@@ -2731,8 +2731,8 @@ PyDict_GetItemString(PyObject *v, const char *key)
 int
 PyDict_SetItemString(PyObject *v, const char *key, PyObject *item)
 {
-	//puts("PyDict_SetItemString");
-	//puts(key);
+//	jputs("PyDict_SetItemString");
+//	jputs(key);
 	if (!PyDict_Check(v)) {
 		return -1;
 	}

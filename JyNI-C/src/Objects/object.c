@@ -2965,24 +2965,45 @@ PyTypeObject *_Py_cobject_hack = &PyCObject_Type;
 Py_ssize_t (*_Py_abstract_hack)(PyObject *) = PyObject_Size;
 */
 
-// Python's malloc wrappers (see pymem.h)
+/* Python's malloc wrappers (see pymem.h) */
+
+/* JyNI-Note:
+ * Some extensions actually use PyMem_Malloc/Realloc/Free
+ * for PyObject subtypes, e.g. for numpy.core.ufunc.
+ * So we have to allocate extra space for JyObject header,
+ * although this often might waste memory. (At least the
+ * potentially memory-heavy numpy-extension uses its own
+ * malloc-family wrappers for array data
+ * (PyDataMem_NEW/FREE/RENEW in multiarray/alloc.c).
+ */
 
 void *
 PyMem_Malloc(size_t nbytes)
 {
-	return PyMem_MALLOC(nbytes);
+	JyObject* er = (JyObject*) PyMem_MALLOC(nbytes+sizeof(JyObject));
+	er->attr = NULL;
+	er->flags = 0;
+	er->jy = NULL;
+	return FROM_JY_NO_GC(er);
 }
 
 void *
 PyMem_Realloc(void *p, size_t nbytes)
 {
-	return PyMem_REALLOC(p, nbytes);
+	JyObject* er = (JyObject*) PyMem_REALLOC(AS_JY_NO_GC(p), nbytes+sizeof(JyObject));
+	er->attr = NULL;
+	er->flags = 0;
+	er->jy = NULL;
+	return FROM_JY_NO_GC(er);
 }
 
 void
 PyMem_Free(void *p)
 {
-	PyMem_FREE(p);
+	if (p)
+	{
+		PyMem_FREE(AS_JY_NO_GC(p));
+	}
 }
 
 /*

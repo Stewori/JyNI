@@ -2260,6 +2260,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	 * Heap-types are treated like ordinary objects.
 	 * Note: Don't confuse the following line with checking op->ob_type rather than op itself.
 	 */
+//	jboolean dbg = strcmp("numpy.ufunc", Py_TYPE(op)->tp_name) == 0;
 	env(NULL);
 	if (PyType_Check(op) && !PyType_HasFeature((PyTypeObject*) op, Py_TPFLAGS_HEAPTYPE))
 	{
@@ -2306,13 +2307,18 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 					JyNI_SyncPy2Jy(op, jy);
 				return result;
 			} else {
+//				if (!(*env)->IsSameObject(env, result, NULL)) jputs("False positive!");
 				/* This is actually okay. It can happen if the Java-counterpart
 				 * of a mirrored object was collected by Java-gc.
 				 */
-				//jputs("JyNI-Warning: Deleted object was not cleared!");
+//				jputs("JyNI-Warning: Deleted object was not cleared!");
+//				if (dbg)
+//				{
+//					jputs(Py_TYPE(op)->tp_name);
+//					jputsLong(op);
+//				}
 				JyNI_CleanUp_JyObject(jy);
 			}
-			//jputsLong(__LINE__);
 		}
 		//jputsLong(__LINE__);
 //		if ((*env)->IsSameObject(env, jy->jy, NULL)) {
@@ -2333,13 +2339,16 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		//if (bl) jputsLong(__LINE__);
 		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = (TypeMapEntry*) jy->jy;
+		//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 	} else {
 		//if (bl) jputsLong(__LINE__);
 		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
+		//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 		if (!tme) {
 			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(Py_TYPE(op));
+			//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 		}
 	}
 	//jputsLong(tme);
@@ -2394,7 +2403,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 //				}
 			//jputs("opType-address:");
 			//printf("%u\n", (jlong) opType);
-//			jputs("create PyCPeer for ");
+			//if (dbg) {jputs("create PyCPeer for ufunc"); jputsLong(op);}
 //			jputs(Py_TYPE(op)->tp_name);
 			if (PyType_Check(op)) {
 				return _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op, NULL);
@@ -2405,6 +2414,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType) :
 					(*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
 			//jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
+			//if (dbg) {jputsLong(__LINE__); jputsLong(op);}
 			jy->flags |= JY_INITIALIZED_FLAG_MASK;
 			jy->flags |= JY_CPEER_FLAG_MASK;
 			jy->jy = (*env)->NewWeakGlobalRef(env, er);
@@ -2719,6 +2729,7 @@ inline jint JyNI_GetDLOpenFlags()
 inline void JyNI_CleanUp_JyObject(JyObject* obj)
 {
 //	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(FROM_JY(obj))->tp_name);
 //	jputsLong(FROM_JY(obj));
 	//if (FROM_JY(obj) == Py_None) return;
 	//if (obj == NULL) return;

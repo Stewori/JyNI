@@ -513,15 +513,15 @@ extern const char* JyAttributeWeakRefCount;
 #define JY_ATTR_VAR_SIZE_FLAG_MASK 2
 #define JY_ATTR_JWEAK_VALUE_FLAG_MASK 4
 typedef struct JyAttribute JyAttribute; /* Forward declaration */
-struct JyAttribute { const char* name; void* value; char flags; JyAttribute* next;};
+struct JyAttribute { void* value; JyAttribute* next; const char* name;  char flags;};
 typedef struct JyAttributeElement JyAttributeElement; /* Forward declaration */
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
-typedef struct { jweak jy; unsigned short flags; JyAttribute* attr;} JyObject;
+typedef struct { jweak jy; JyAttribute* attr; unsigned short flags;} JyObject;
 typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject; /* only used for pre-allocated blocks */
 typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;  /* only used for pre-allocated blocks */
 /* type_name is optional and defaults to py_type->tp_name */
-typedef struct { PyTypeObject* py_type; jclass jy_class; jclass jy_subclass; unsigned short flags;
-		SyncFunctions* sync; size_t truncate_trailing; char* type_name;} TypeMapEntry;
+typedef struct { PyTypeObject* py_type; jclass jy_class; jclass jy_subclass;
+		SyncFunctions* sync; size_t truncate_trailing; unsigned short flags; char* type_name;} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
 
 #define JyObject_HasJyGCHead(pyObject, jyObject) \
@@ -566,7 +566,7 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 #define FROM_JY_WITH_GC(o) (JyNI_FROM_GC((((JyObject *)(o))+1)))
 #define FROM_JY_NO_GC(o) ((PyObject *)(((JyObject *)(o))+1))
 #define AS_JY_WITH_GC(o) ((JyObject *)(_Py_AS_GC(o))-1)
-#define AS_JY_NO_GC(o) ((JyObject *)(o)-1)
+#define AS_JY_NO_GC(o) (((JyObject *)(o))-1)
 
 #define JySYNC_ON_INIT_FLAGS (SYNC_ON_PY_INIT_FLAG_MASK | SYNC_ON_JY_INIT_FLAG_MASK)
 #define Jy_InitImmutable(jyObj) \
@@ -896,7 +896,10 @@ inline PyObject* JyNI_NewPyObject_FromJythonPyObject(jobject jythonPyObject);
  */
 
 /* JyAttribute management: */
-inline void JyNI_ClearJyAttributes(JyObject* obj);
+#define JyNI_ClearJyAttributes(obj) \
+		_JyNI_ClearJyAttributes(obj)
+		//(jputs(__FUNCTION__), jputsLong(__LINE__), _JyNI_ClearJyAttributes(obj))
+inline void _JyNI_ClearJyAttributes(JyObject* obj);
 inline void JyNI_ClearJyAttribute(JyObject* obj, const char* name);
 inline void JyNI_ClearJyAttributeValue(JyAttribute* att);
 #define JyNI_GetJyAttribute(obj, name) \

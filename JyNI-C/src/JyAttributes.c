@@ -50,7 +50,7 @@ const char* JyAttributeWeakRefCount   = "wrct";
 //defaults to 0; note that on alloc this value is added to the anyway allocated size sizeof(PyObjectHead)
 //const char* JyAttributeTruncateSize = "trSi";
 
-inline void JyNI_ClearJyAttributes(JyObject* obj)
+inline void _JyNI_ClearJyAttributes(JyObject* obj)
 {
 	JyAttribute* nxt = obj->attr;
 	while (nxt != NULL)
