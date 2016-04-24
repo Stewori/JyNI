@@ -4624,3 +4624,32 @@ inline void jputsPy(PyObject* o)
 {
 	jputs(o ? PyString_AS_STRING(PyObject_Str(o)) : "NULL-PyObject");
 }
+
+PyObject *
+PyMemoryView_FromObject(PyObject *base)
+{
+	puts(__FUNCTION__);
+	return NULL;
+//    PyMemoryViewObject *mview;
+//    Py_buffer view;
+//
+//    if (!PyObject_CheckBuffer(base)) {
+//        PyErr_SetString(PyExc_TypeError,
+//            "cannot make memory view because object does "
+//            "not have the buffer interface");
+//        return NULL;
+//    }
+//
+//    if (PyObject_GetBuffer(base, &view, PyBUF_FULL_RO) < 0)
+//        return NULL;
+//
+//    mview = (PyMemoryViewObject *)PyMemoryView_FromBuffer(&view);
+//    if (mview == NULL) {
+//        PyBuffer_Release(&view);
+//        return NULL;
+//    }
+//
+//    mview->base = base;
+//    Py_INCREF(base);
+//    return (PyObject *)mview;
+}

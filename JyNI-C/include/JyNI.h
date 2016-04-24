@@ -1105,4 +1105,7 @@ extern jfieldID pyCPeerTypeObjectHandle;
 extern jfieldID pyCPeerTypeRefHandle;
 
 //extern jlong JyNIDebugMode;
+
+PyObject* PyMemoryView_FromObject(PyObject *base);
+
 #endif /* JYNI_H_ */

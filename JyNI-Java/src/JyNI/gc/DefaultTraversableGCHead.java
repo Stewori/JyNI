@@ -97,6 +97,8 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			if (links instanceof List) {
 //				System.out.println("Old length: "+((List<JyGCHead>) links).size());
 //				System.out.println("set list");
+				while (index >= ((List) links).size())
+					((List) links).add(null);
 				((List<JyGCHead>) links).set(index, link);
 //				System.out.println("New length: "+((List<JyGCHead>) links).size());
 				return 0;
