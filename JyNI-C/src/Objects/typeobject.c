@@ -970,6 +970,9 @@ traverse_slots(PyTypeObject *type, PyObject *self, visitproc visit, void *arg)
 static int
 subtype_traverse(PyObject *self, visitproc visit, void *arg)
 {
+//	jboolean dbug = strcmp(Py_TYPE(self)->tp_name, "CFunctionType") == 0;
+//	if (dbug) jputs(__FUNCTION__);
+//	if (dbug) jputsLong(self);
 	PyTypeObject *type, *base;
 	traverseproc basetraverse;
 
@@ -991,8 +994,16 @@ subtype_traverse(PyObject *self, visitproc visit, void *arg)
 //		jputs(__FUNCTION__);
 //		jputsLong(__LINE__);
 		PyObject **dictptr = _PyObject_GetDictPtr(self);
-		if (dictptr && *dictptr)
+		if (dictptr && *dictptr) {
+//			if (dbug) jputs("visit dict via dictptr:");
+//			if (dbug) jputsLong(*dictptr);
 			Py_VISIT(*dictptr);
+		}
+//		else if (dbug) {
+//			jputs("something's wrong:");
+//			jputsLong(dictptr);
+//			jputsLong(*dictptr);
+//		}
 	}
 
 	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
@@ -2030,6 +2041,7 @@ raise_dict_descr_error(PyObject *obj)
 static PyObject *
 subtype_dict(PyObject *obj, void *context)
 {
+	jputs(__FUNCTION__);
 	PyObject **dictptr;
 	PyObject *dict;
 	PyTypeObject *base;
@@ -2049,24 +2061,33 @@ subtype_dict(PyObject *obj, void *context)
 		}
 		return func(descr, obj, (PyObject *)(obj->ob_type));
 	}
-//	jputs(__FUNCTION__);
-//	jputsLong(__LINE__);
+	jputsLong(__LINE__);
 	dictptr = _PyObject_GetDictPtr(obj);
 	if (dictptr == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
 						"This object has no __dict__");
 		return NULL;
 	}
+	jputsLong(__LINE__);
 	dict = *dictptr;
+	jputsLong(dict);
+	jputsLong(AS_JY(dict)->jy);
+	jputsLong(dict->ob_refcnt);
 	if (dict == NULL)
+	{
+		jputsLong(__LINE__);
 		*dictptr = dict = PyDict_New();
+	}
 	Py_XINCREF(dict);
+	jputsLong(__LINE__);
 	return dict;
 }
 
 static int
 subtype_setdict(PyObject *obj, PyObject *value, void *context)
 {
+	jputs(__FUNCTION__);
+	jputsLong(value);
 	PyObject **dictptr;
 	PyObject *dict;
 	PyTypeObject *base;

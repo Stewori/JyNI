@@ -406,6 +406,12 @@ public class JyNI {
 		JyNICriticalObjectSet.remove(handle);
 	}
 
+	public static int getNativeRefCount(PyObject obj) {
+		long handle = lookupNativeHandle(obj);
+		if (handle == 0) return -2;
+		else return currentNativeRefCount(handle);
+	}
+
 	public static void setNativeHandle(PyObject object, long handle) {//, boolean keepAlive) {
 		//no WeakReferences needed here, because clearNativeHandle is always called
 		//when a corresponding PyObject on C-Side is deallocated
@@ -1441,7 +1447,7 @@ public class JyNI {
 		//gc.notifyPreFinalization(); (maybe include this later)
 		gc.removeJythonGCFlags(gc.FORCE_DELAYED_FINALIZATION);
 		//Here we care to repair the referenceGraph and to restore weak references.
-		//System.out.println("preProcessCStubGCCycle");
+//		System.out.println("preProcessCStubGCCycle");
 		JyWeakReferenceGC headRef;
 		JyGCHead head;
 		boolean delayFinalization = false;
@@ -1478,6 +1484,7 @@ public class JyNI {
 			//System.out.println("Force delayed finalization...");
 			gc.addJythonGCFlags(gc.FORCE_DELAYED_FINALIZATION);
 		}
+//		System.out.println("preProcessCStubGCCycle done");
 	}
 
 	protected static void suspendPyInstanceFinalizer(PyInstance inst) {

@@ -273,6 +273,8 @@ PyObject_InitVar(PyVarObject *op, PyTypeObject *tp, Py_ssize_t size)
 PyObject *
 _PyObject_New(PyTypeObject *tp)
 {
+//	jputs(__FUNCTION__);
+//	jputs(tp->tp_name);
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(tp);
 	return _JyObject_New(tp, tme);
 }
@@ -1379,24 +1381,25 @@ PyObject_Hash(PyObject *v)
 PyObject *
 PyObject_GetAttrString(PyObject *v, const char *name)
 {
-//	jputs("PyObject_GetAttrString");
+//	jputs(__FUNCTION__);
 //	jputs(name);
 //	jputs(Py_TYPE(v)->tp_name);
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-		//puts("delegate");
+//		jputs("delegate GetAttrString");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
 	}
-	//puts("no delegate");
+//	jputs("no delegate GetAttrString");
 
 	PyObject *w, *res;
 
 	if (Py_TYPE(v)->tp_getattr != NULL)
 	{
+//		jputs("Use type's own getattr");
 		return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
 	}
 	//puts("tp_getattr is NULL");
@@ -1504,6 +1507,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 //		jputs("tp_getattr not NULL");
 		return (*tp->tp_getattr)(v, PyString_AS_STRING(name));
 	}
+//	jputsLong(__LINE__);
 	PyErr_Format(PyExc_AttributeError,
 					"'%.50s' object has no attribute '%.400s'",
 					tp->tp_name, PyString_AS_STRING(name));
@@ -1604,6 +1608,8 @@ PyObject **
 _PyObject_GetDictPtr(PyObject *obj)
 { //JyNI-todo: Check for truncation to avoid segfault
 //	jputs(__FUNCTION__);
+//	jputs(Py_TYPE(obj)->tp_name);
+//	jputsLong(Py_TYPE(obj)->tp_dictoffset);
 	Py_ssize_t dictoffset;
 	PyTypeObject *tp = Py_TYPE(obj);
 	if (!(tp->tp_flags & Py_TPFLAGS_HAVE_CLASS))

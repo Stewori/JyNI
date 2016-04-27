@@ -32,17 +32,19 @@ import JyNI.JyNI;
 import org.python.core.PyObject;
 import org.python.core.PyInstance;
 import org.python.core.finalization.*;
+import org.python.modules.gc;
 
 public class JyNIFinalizeTriggerFactory implements FinalizeTriggerFactory {
 
 	static class JyNIFinalizeTrigger extends FinalizeTrigger {
-		// For now this is just a stub.
 		protected JyNIFinalizeTrigger(PyObject obj) {
 			super(obj);
 		}
 
+		@Override
 		public void performFinalization() {
-			JyNI.waitForCStubs();
+			if (gc.delayedFinalizationEnabled())
+				JyNI.waitForCStubs();
 			super.performFinalization();
 		}
 	}
@@ -59,6 +61,8 @@ public class JyNIFinalizeTriggerFactory implements FinalizeTriggerFactory {
 			 * its native counter-part dies, the native object detects this
 			 * and won't perform finalization, but instead reactivates this
 			 * finalizeTrigger.
+			 *
+			 * TODO: What about new-style instances?
 			 */
 				result.clear();
 		}

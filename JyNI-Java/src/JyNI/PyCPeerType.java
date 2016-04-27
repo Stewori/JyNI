@@ -223,7 +223,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 //			if (cc != null) return cc;
 //			else classCache = null;
 //		}
-//		System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);//+" "+(findAttrCount++));
+		//System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);//+" "+(findAttrCount++));
 		ThreadState tstate = Py.getThreadState();
 		long ts = JyTState.prepareNativeThreadState(tstate);
 		PyObject er = JyNI.getAttrString(objectHandle, name, ts);

@@ -110,11 +110,10 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __findattr_ex__(String name) {
-		//System.out.println("Look for attribute "+name+" in PyCPeer");
+//		System.out.println("Look for attribute "+name+" in PyCPeer");
 		PyObject er = JyNI.maybeExc(JyNI.getAttrString(objectHandle, name,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
-		//System.out.println("result:");
-		//System.out.println(er);
+//		System.out.println("result: "+er);
 		return er != null ? er : Py.None;
 		//return super.__findattr_ex__(name);
 	}

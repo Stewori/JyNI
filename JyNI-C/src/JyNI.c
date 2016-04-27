@@ -1885,6 +1885,7 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 	} else
 	{
 //		jputs("object- or unknown subtye!");
+//		jputs(subtype->tp_name);
 
 		size_t size = _PyObject_SIZE(subtype);
 
@@ -1902,9 +1903,8 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 	}
 	if (dest)
 	{
-		// Should not be relevant for subtype case:
 		if (PyType_CheckExact(dest))
-		{
+		{ // Should not be relevant for subtype case:
 			jputs("JyNI-warning: dest is PyTypeObject in JyNI_InitPyObjectSubtype.");
 			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
 		}
@@ -2637,8 +2637,6 @@ inline int decWeakRefCount(JyObject* referent)
 /*returns local ref!*/
 inline jobject JyNI_GetJythonDelegate(PyObject* v)
 {
-
-
 	if (!PyType_Check(v)) // && !PyExc_Check(v)
 	{
 		//jputs(Py_TYPE(v)->tp_name);
@@ -4625,10 +4623,16 @@ inline void jputsPy(PyObject* o)
 	jputs(o ? PyString_AS_STRING(PyObject_Str(o)) : "NULL-PyObject");
 }
 
+/*
+ * This method currently only exists to prevent symbol lookup errors,
+ * but must not be actually called. It will be implemented with
+ * BufferProtocol support in JyNI 2.7-alpha.5
+ */
 PyObject *
 PyMemoryView_FromObject(PyObject *base)
 {
-	puts(__FUNCTION__);
+	//puts(__FUNCTION__);
+	jputs("JyNI-Warning: PyMemoryView_FromObject is not implemented!");
 	return NULL;
 //    PyMemoryViewObject *mview;
 //    Py_buffer view;
