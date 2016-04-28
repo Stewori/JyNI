@@ -2041,7 +2041,7 @@ raise_dict_descr_error(PyObject *obj)
 static PyObject *
 subtype_dict(PyObject *obj, void *context)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	PyObject **dictptr;
 	PyObject *dict;
 	PyTypeObject *base;
@@ -2061,33 +2061,37 @@ subtype_dict(PyObject *obj, void *context)
 		}
 		return func(descr, obj, (PyObject *)(obj->ob_type));
 	}
-	jputsLong(__LINE__);
+//	jputsLong(__LINE__);
 	dictptr = _PyObject_GetDictPtr(obj);
 	if (dictptr == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
 						"This object has no __dict__");
 		return NULL;
 	}
-	jputsLong(__LINE__);
+//	jputsLong(__LINE__);
 	dict = *dictptr;
-	jputsLong(dict);
-	jputsLong(AS_JY(dict)->jy);
-	jputsLong(dict->ob_refcnt);
+//	if (!dict) jputs("Dict is NULL");
+//	jputsLong(__LINE__);
+//	jputsLong(dict);
+//	jputsLong(__LINE__);
+	//jputsLong(AS_JY(dict)->jy);
+	//jputsLong(dict->ob_refcnt);
+//	jputsLong(__LINE__);
 	if (dict == NULL)
 	{
-		jputsLong(__LINE__);
+//		jputsLong(__LINE__);
 		*dictptr = dict = PyDict_New();
 	}
 	Py_XINCREF(dict);
-	jputsLong(__LINE__);
+//	jputsLong(__LINE__);
 	return dict;
 }
 
 static int
 subtype_setdict(PyObject *obj, PyObject *value, void *context)
 {
-	jputs(__FUNCTION__);
-	jputsLong(value);
+//	jputs(__FUNCTION__);
+//	jputsLong(value);
 	PyObject **dictptr;
 	PyObject *dict;
 	PyTypeObject *base;

@@ -1614,10 +1614,12 @@ _PyObject_GetDictPtr(PyObject *obj)
 	PyTypeObject *tp = Py_TYPE(obj);
 	if (!(tp->tp_flags & Py_TPFLAGS_HAVE_CLASS))
 		return NULL;
+//	jputs("is class");
 	dictoffset = tp->tp_dictoffset;
 	if (dictoffset == 0)
 		return NULL;
 	if (dictoffset < 0) {
+//		jputs("real offset");
 		Py_ssize_t tsize;
 		size_t size;
 		tsize = ((PyVarObject *)obj)->ob_size;
@@ -1627,6 +1629,8 @@ _PyObject_GetDictPtr(PyObject *obj)
 		dictoffset += (long)size;
 		assert(dictoffset > 0);
 		assert(dictoffset % SIZEOF_VOID_P == 0);
+//		jputs("Final offset:");
+//		jputsLong(dictoffset);
 	}
 	return (PyObject **) ((char *)obj + dictoffset);
 }
