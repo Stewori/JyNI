@@ -288,8 +288,9 @@ PyDict_New(void)
 #endif
 	}*/
 	if (numfree) {
-		//jputs("from free");
+//		jputs("dict from free:");
 		mp = free_list[--numfree];
+//		jputsLong(mp);
 		assert (mp != NULL);
 		assert (Py_TYPE(mp) == &PyDict_Type);
 		/* JyNI-note: Here we assume that the caller would not intend
@@ -1160,6 +1161,8 @@ PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
 static void
 dict_dealloc(register PyDictObject *mp)
 {
+//	jputs(__FUNCTION__);
+//	jputsLong(mp);
 	JyNIDebugOp(JY_NATIVE_FINALIZE, mp, -1);
 	//register PyDictEntry *ep;
 	//Py_ssize_t fill = mp->ma_fill;

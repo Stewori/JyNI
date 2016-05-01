@@ -74,7 +74,7 @@ public class JyReferenceMonitor {
 	public static HashMap<Long, ObjectLog> permanentLeaks = new HashMap<>();
 	public static long lastClearRefTime = 0;
 	public static long lastGCRun = 0;
-	public static boolean lastClearGraphValid = false;
+	public static boolean lastClearGraphValid = true;
 
 	public static String actionToString(short action) {
 		StringBuilder result = new StringBuilder();
@@ -233,7 +233,7 @@ public class JyReferenceMonitor {
 			String inGC = gc ? "_GC" : "";
 			if (jyWeakRef != 0) inGC += "_J";
 			return nativeRef+inGC+" ("+nativeType+") #"+
-					JyNI.currentNativeRefCount(nativeRef)+
+					JyNI.currentNativeRefCount(nativeRef)+(immortal != 0 ? " (immortal)" : "")+
 					": "+os+" *"+(nativeAlloc-startTime);
 		}
 

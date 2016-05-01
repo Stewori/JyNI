@@ -216,9 +216,7 @@ class TestJyNI_gc(unittest.TestCase):
 		DemoExtension.listSetIndex(l, 0, d)
 		del d
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 4)
-		#monitor.listAll()
 		runGC()
-		#monitor.listAll()
 		self.assertFalse(monitor.lastClearGraphValid)
 		self.assertIsNotNone(wkl.get())
 		self.assertIsNone(wkd.get())
@@ -229,8 +227,7 @@ class TestJyNI_gc(unittest.TestCase):
 		self.assertEqual(len(l[0]), 2)
 		del l
 		runGC()
-		#monitor.listAll()
-		self.assertTrue(monitor.lastClearGraphValid)
+		#self.assertTrue(monitor.lastClearGraphValid)
 
  		# For some reason resurrected objects persist one more
  		# gc-cycle in principle. So we have to run gc again before
@@ -241,12 +238,31 @@ class TestJyNI_gc(unittest.TestCase):
 		# referent alive for one more cycle. So also the monitor-refcount
 		# test only passes after another gc-run now.
  		runGC()
- 		#monitor.listAll()
 		self.assertTrue(monitor.lastClearGraphValid)
-
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		self.assertIsNone(wkl2())
 		self.assertIsNone(wkd2())
+
+
+# 	def test_gc_list_modify_silent2(self):
+# 		#from JyNI import JyNI
+# 		#This line makes it fail. Why the heck!?!?!?!?
+# 		DemoExtension.argCountToString.__doc__
+# 		#print DemoExtension.__dict__
+# 		#monitor.listAll()
+# 		monitor.listLeaks()
+# 		clearCurrentLeaks()
+# 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
+# 		l = [0, "test1"]
+# 		d = {'a': 7, 'b': "test6"}
+# 		wkd2 = weakref.ref(d)
+# 		DemoExtension.listSetIndex(l, 0, d)
+# 		del d
+# 		del l
+#  		runGC()
+#  		monitor.listLeaks()
+# 		self.assertTrue(monitor.lastClearGraphValid)
+# 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 
 
 if __name__ == '__main__':

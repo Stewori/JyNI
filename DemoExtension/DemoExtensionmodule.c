@@ -72,6 +72,12 @@ intSquare1(PyObject *self, PyObject *integer)
 	return PyInt_FromLong(l*l);
 }
 
+PyObject *
+refcount(PyObject *self, PyObject *object)
+{
+	return PyInt_FromLong(object->ob_refcnt);
+}
+
 PyObject*
 keywordTest(PyObject* self, PyObject* args, PyObject* kw)
 {
@@ -327,6 +333,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"nativeDictGet", nativeDictGet, METH_VARARGS, "Looks up a key in a dict."},
 	{"newstyleCheck", newstyleCheck, METH_VARARGS, "Checks integrity of new-style instance conversion."},
 	{"newstyleCheckSubtype", newstyleCheckSubtype, METH_VARARGS, "Checks subtype consistence new-style conversion."},
+	{"refcount", refcount, METH_VARARGS, "Provides the current native refcount of the given object."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

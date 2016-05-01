@@ -63,6 +63,7 @@ public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCH
 			newHead.gclinks = gclinks;
 			JyNI.JyGC_restoreCStubBackend(handle, object, newHead);
 			new JyWeakReferenceGC(newHead);
+//			System.out.println("Resurrect CStub "+object);
 			JyNI.CStubRestoreAllReachables(object);
 			JyReferenceMonitor.notifyResurrect(handle, object);
 		} else if ((result & JyNI.JYNI_GC_CONFIRMED_FLAG) == 0) {

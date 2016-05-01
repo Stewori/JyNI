@@ -98,6 +98,8 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 			JyNI.JyGC_restoreCStubBackend(handle, object, newHead);
 			new JyWeakReferenceGC(newHead);
 			JyNI.CStubRestoreAllReachables(object);
+//			System.out.println("Resurrect CStubSimple "+object);
+//			System.out.println(JyNI.lookupNativeHandle(object)+" ("+JyNI.getNativeRefCount(object)+")");
 			JyReferenceMonitor.notifyResurrect(handle, object);
 		} else if ((result & JyNI.JYNI_GC_CONFIRMED_FLAG) == 0) {
 // We make this temporarily silent. Todo: Investigate warnings!

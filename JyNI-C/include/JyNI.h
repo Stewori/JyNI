@@ -88,7 +88,8 @@
 	if (!reenter) { ENTER_JyNI }
 
 #define RE_LEAVE_JyNI \
-	if (!reenter) { LEAVE_JyNI }
+	if (!reenter) { LEAVE_JyNI } \
+	else {JyNI_GC_Explore();} //maybe also JyErr_InsertCurExc()...?
 
 /* Cleanly convert a jstring to a cstring with minimal JVM lock-time.
  * Use only once per Function. For further conversions use
@@ -818,6 +819,8 @@ PyAPI_FUNC(void) PyObject_RawFree(void *);
 #define GC_OBJECT_JNIFAIL     -7
 void JyNI_GC_Explore();
 void JyNI_GC_ExploreObject(PyObject* op);
+jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy);
+void JyNI_GC_Track_CStub(PyObject* op);
 void PyObject_GC_Track_NoExplore(void *op);
 int updateJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		PyObject* newItem, JyObject* newItemJy);

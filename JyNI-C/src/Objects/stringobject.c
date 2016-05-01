@@ -4827,6 +4827,7 @@ PyString_InternInPlace(PyObject **p)
 		return;
 	if (interned == NULL) {
 		interned = PyDict_New();
+		AS_JY_NO_GC(interned)->flags |= JY_CACHE_ETERNAL_FLAG_MASK;
 		if (interned == NULL) {
 			PyErr_Clear(); /* Don't leave an exception */
 			return;

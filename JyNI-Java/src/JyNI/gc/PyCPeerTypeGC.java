@@ -50,7 +50,8 @@ public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 		super(objectHandle, name, dict, metatype);
 	}
 
-	public void setLinks(Object links) {
+	@Override
+	public void setLinks(Object links){
 		this.links = links;
 	}
 

@@ -2159,10 +2159,7 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
  */
 inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
 {
-	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 	jobject dest = NULL;
-	//jputs(__FUNCTION__);
-	//jputsLong(__LINE__);
 	env(NULL);
 	if (Py_TYPE(src) != tme->py_type) {
 		if (!tme->jy_subclass || !PyType_IsSubtype(Py_TYPE(src), tme->py_type))
@@ -2180,16 +2177,13 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		Py_INCREF(src);
 		if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
 		{
-			//jputsLong(__LINE__);
 			if (tme->sync && tme->sync->jyInit)
 				dest = tme->sync->jyInit(src, tme->jy_subclass);
 		} else
 		{
 			jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
-			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>",
 					"(JLJyNI/PyCPeerType;)V");
-			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType);
 		}
 		srcJy->flags |= JY_CPEER_FLAG_MASK;
@@ -2201,10 +2195,7 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 			dest = tme->sync->jyInit(src, NULL);
 	} else
 	{
-		//jputsLong(__LINE__);
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		jmethodID cm = (*env)->GetMethodID(env, tme->jy_class, "<init>", "()V");
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		if (cm)
 		{
 			dest = (*env)->NewObject(env, tme->jy_class, cm);
@@ -2212,18 +2203,21 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 				tme->sync->py2jy(src, dest);
 		}
 	}
-	//jputsLong(__LINE__);
 	if (!dest) return NULL;
 	if (dest && (srcJy->flags & SYNC_NEEDED_MASK))
 		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
 	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some sync-on-init methods might already init this
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest,
-				(jlong) src);//, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
-	//printf("%d_______%s\n", __LINE__, __FUNCTION__);
+
+	if ((tme->flags & JY_TRUNCATE_FLAG_MASK) && !(srcJy->flags & JY_CACHE_ETERNAL_FLAG_MASK)) {
+		/* we create GC-head here to secure the Java-side backend from
+		 * gc until a proper exploration of the owner takes place. */
+		JyNI_GC_Track_CStub(src);
+	}
 	return dest;
 }
 

@@ -1402,7 +1402,7 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 //		jputs("Use type's own getattr");
 		return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
 	}
-	//puts("tp_getattr is NULL");
+//	jputs("tp_getattr is NULL");
 	w = PyString_InternFromString(name);
 	if (w == NULL)
 		return NULL;
@@ -1887,6 +1887,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 {
 //	jputs(__FUNCTION__);
 //	jputs(PyString_AS_STRING(name));
+//	jputsLong(dict);
 //	jputs(obj->ob_type->tp_name);
 	PyTypeObject *tp = Py_TYPE(obj);
 	PyObject *descr = NULL;
@@ -1921,7 +1922,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 	jobject delegate = JyNI_GetJythonDelegate(obj);
 	if (delegate)
 	{
-//		puts("delegate");
+//		jputs("delegate");
 //		jputsLong(__LINE__);
 		env(NULL);
 		res = JyNI_PyObject_FromJythonPyObject(
@@ -1929,7 +1930,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 		goto done;
 	}
-//	puts("no delegate");
+//	jputs("no delegate");
 	if (tp->tp_dict == NULL) {
 		if (PyType_Ready(tp) < 0)
 			goto done;
@@ -1962,7 +1963,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 //	}
 //#else
 	descr = _PyType_Lookup(tp, name);
-	//jputs("descr:");
+//	jputs("descr");
 	//jputsLong(descr);
 //#endif
 	Py_XINCREF(descr);
@@ -1971,8 +1972,9 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 	if (descr != NULL &&
 		PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
 		f = descr->ob_type->tp_descr_get;
-//		puts("call descr_get");
-		//jputs(descr->ob_type->tp_name);
+//		jputs("call descr_get");
+//		jputs(descr->ob_type->tp_name);//getset_descriptor
+//		jputs(((PyGetSetDescrObject*) descr)->d_name);
 		if (f != NULL && PyDescr_IsData(descr)) {
 			res = f(descr, obj, (PyObject *)obj->ob_type);
 			Py_DECREF(descr);

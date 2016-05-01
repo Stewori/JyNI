@@ -848,11 +848,14 @@ public class JyNI {
 	}
 
 	public static PyObjectGCHead makeGCHead(long handle, boolean forMirror, boolean gc) {
+		PyObject obj = lookupFromHandle(handle);
+		//System.out.println("makeGCHead for "+obj+" of type "+(obj != null ? obj.getType().getName() : "N/A"));
 		//Todo: Use a simpler head if object cannot have links.
 		PyObjectGCHead result;
 		if (gc) result = forMirror ? new CMirrorGCHead(handle) : new CStubGCHead(handle);
 		else result = forMirror ? new CMirrorSimpleGCHead(handle) : new CStubSimpleGCHead(handle);
 		new JyWeakReferenceGC(result);
+		//System.out.println(result.getClass());
 		return result;
 	}
 
@@ -1340,7 +1343,7 @@ public class JyNI {
 						int result = --confirmationsUnconsumed != 0 ?
 								(JYNI_GC_RESURRECTION_FLAG) :
 								(JYNI_GC_RESURRECTION_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
-						//System.out.println("consumeConfirmation "+handle+" is resurrection");
+						//System.out.println("consumedConfirmation "+handle+" is resurrection");
 						CStubGCHead.class.notify();
 						return result;
 					}
