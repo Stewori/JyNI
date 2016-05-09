@@ -51,13 +51,19 @@ public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 	}
 
 	@Override
-	public void setLinks(Object links){
+	public void setLinks(Object links) {
 		this.links = links;
 	}
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-		return DefaultTraversableGCHead.setLink(links, index, link);
+//		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
+		int result = DefaultTraversableGCHead.setLink(links, index, link);
+		if (result == 1) {
+			links = link;
+			return 0;
+		}
+		return result;
 	}
 
 	@Override
@@ -83,5 +89,15 @@ public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 	@Override
 	public long[] toHandleArray() {
 		return DefaultTraversableGCHead.toHandleArray(links);
+	}
+
+	@Override
+	public void ensureSize(int size) {
+		links = DefaultTraversableGCHead.ensureSize(links, size);
+	}
+
+	@Override
+	public void printLinks(java.io.PrintStream out) {
+		DefaultTraversableGCHead.printLinksAsHashes(links, out);
 	}
 }

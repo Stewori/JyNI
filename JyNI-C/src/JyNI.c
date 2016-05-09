@@ -180,7 +180,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 {
 	//printf("JyNI_getAttrString %i\n", tstate);
 //	jputs("JyNI_getAttrString");
-	//jputsLong(tstate);
+//	jputsLong(handle);
 	if (handle == 0) return NULL;
 	cstr_from_jstring(cName, name);
 //	jputs(cName);
@@ -1765,6 +1765,9 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	if (PyType_IS_GC(eme->exc_type))
 		JyNI_GC_ExploreObject(obj);
+	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+	 * JY_INITIALIZED_FLAG_MASK has been set.
+	 */
 	return obj;
 }
 
@@ -1836,6 +1839,9 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 		if (PyObject_IS_GC(dest)) {
 			JyNI_GC_ExploreObject(dest);
 		}
+		/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+		 * JY_INITIALIZED_FLAG_MASK has been set.
+		 */
 	}
 	return dest;
 }
@@ -1933,9 +1939,11 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 		jy->flags |= JY_SUBTYPE_FLAG_MASK;
 
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
-		if (PyObject_IS_GC(dest)) {
+		if (PyObject_IS_GC(dest))
 			JyNI_GC_ExploreObject(dest);
-		}
+		/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+		 * JY_INITIALIZED_FLAG_MASK has been set.
+		 */
 	}
 	return dest;
 }
@@ -2151,6 +2159,9 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
+	/* Is JyNI_GC_EnsureHeadObject needed for exceptions?
+	 * For now we try it without.
+	 */
 	return srcJy->jy;
 }
 
@@ -2216,7 +2227,11 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 	if ((tme->flags & JY_TRUNCATE_FLAG_MASK) && !(srcJy->flags & JY_CACHE_ETERNAL_FLAG_MASK)) {
 		/* we create GC-head here to secure the Java-side backend from
 		 * gc until a proper exploration of the owner takes place. */
-		JyNI_GC_Track_CStub(src);
+		if (!JyNI_GC_EnsureHeadObject(env, src, srcJy)) {
+			JyNI_GC_Track_CStub(src);
+//			JyNI_GC_ObtainJyGCHead(env, src, srcJy);
+//			JyNI_GC_ExploreObject(src);
+		}
 	}
 	return dest;
 }
@@ -2410,6 +2425,9 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			//jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
 			//if (dbg) {jputsLong(__LINE__); jputsLong(op);}
 			jy->flags |= JY_INITIALIZED_FLAG_MASK;
+			/* JyNI_GC_EnsureHeadObject not needed here because the head is the
+			 * CPeer itself and this has surely been properly initialized.
+			 */
 			jy->flags |= JY_CPEER_FLAG_MASK;
 			jy->jy = (*env)->NewWeakGlobalRef(env, er);
 			//(*env)->SetLongField(env, er, pyCPeerRefHandle, (jlong) ref);
@@ -2952,6 +2970,7 @@ jmethodID traversableGCHeadSetLink;
 jmethodID traversableGCHeadInsertLink;
 jmethodID traversableGCHeadClearLink;
 jmethodID traversableGCHeadClearLinksFromIndex;
+jmethodID traversableGCHeadEnsureSize;
 jmethodID pyObjectGCHeadSetObject;
 jmethodID jyGCHeadGetHandle;
 
@@ -3676,6 +3695,7 @@ inline jint initJyNI(JNIEnv *env)
 	traversableGCHeadInsertLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "insertLink", "(ILJyNI/gc/JyGCHead;)I");
 	traversableGCHeadClearLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "clearLink", "(I)I");
 	traversableGCHeadClearLinksFromIndex = (*env)->GetMethodID(env, traversableGCHeadInterface, "clearLinksFromIndex", "(I)I");
+	traversableGCHeadEnsureSize = (*env)->GetMethodID(env, traversableGCHeadInterface, "ensureSize", "(I)V");
 	(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
 
 	jclass jyGCHeadClassLocal = (*env)->FindClass(env, "JyNI/gc/JyGCHead");

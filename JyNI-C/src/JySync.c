@@ -472,6 +472,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src, PyTypeObject* nonNativeSub
 	}
 	//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
 	(*env)->SetObjectField(env, src, pyListBackend, jyList);
+//	jputsLong(__LINE__);
 	(*env)->CallObjectMethod(env, jyList, pyObjectGCHeadSetObject, src);
 	(*env)->DeleteLocalRef(env, jyList);
 

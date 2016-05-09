@@ -44,7 +44,7 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 
 	@Override
 	public void setPyObject(PyObject object) {
-		//System.out.println("CStubSimpleGCHead.setPyObject: "+handle);//object.getType().getName());
+//		System.out.println("CStubSimpleGCHead.setPyObject: "+System.identityHashCode(this)+" / "+handle+" "+System.identityHashCode(object));//object.getType().getName());
 		this.object = object;
 	}
 
@@ -59,6 +59,8 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 //	Object obj = null;
 	@Override
 	protected void finalize() throws Throwable {
+//		System.out.println("CStubSimple finalize "+System.identityHashCode(this)+" "+object+" "+handle+" ("+JyNI.getNativeRefCount(object)+")");
+//		System.out.println(Thread.currentThread().getName());
 		gc.notifyPreFinalization();
 		//System.out.println("CStubSimpleGCHead.finalize "+handle+nt);
 		int result = JyNI.consumeConfirmation(handle);

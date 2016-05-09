@@ -41,6 +41,7 @@ public class CMirrorSimpleGCHead extends SimpleGCHead implements PyObjectGCHead 
 	}
 
 	public void setPyObject(PyObject object) {
+//		System.out.println("CMirrorSimpleGCHead.setPyObject");
 		//this.object = new SoftReference<>(object);
 		this.object = new WeakReference<>(object);
 	}

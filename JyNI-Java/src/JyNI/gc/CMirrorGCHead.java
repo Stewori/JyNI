@@ -41,6 +41,7 @@ public class CMirrorGCHead extends DefaultTraversableGCHead implements PyObjectG
 	}
 
 	public void setPyObject(PyObject object) {
+//		System.out.println("CMirrorGCHead.setPyObject");
 		//this.object = new SoftReference<>(object);
 		this.object = new WeakReference<>(object);
 	}

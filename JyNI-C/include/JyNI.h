@@ -195,7 +195,7 @@
 #define JY_TRUNCATE_FLAG_MASK       8
 //#define JY_PARTLY_TRUNCATE_MASK   8 (deprecated; indicated by JY_TRUNCATE_FLAG_MASK + non-zero truncate_trailing)
 #define JY_CPEER_FLAG_MASK         16
-//#define JY_CACHE_GC_FLAG_MASK      32 /* (currently not used) */
+//#define JY_CACHE_GC_FLAG_MASK    32 /* (currently not used) */
 #define JY_SUBTYPE_FLAG_MASK       32 /* used to prevent an endless call-delegation loop for subtype PyCPeers */
 #define JY_CACHE_ETERNAL_FLAG_MASK 64
 //#define JY_GC_SINGLE_LINK        64
@@ -213,6 +213,9 @@
 
 #define Is_StaticTypeObject(pyObject) \
 	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))
+// Todo: This should rather be the line below, but that would currently break ctypes.
+	//(PyType_Check(pyObject) && !PyType_HasFeature((PyTypeObject*) pyObject, Py_TPFLAGS_HEAPTYPE))
+
 
 #define Is_JyNICriticalType(tp) \
 	(tp == &PyList_Type || tp == &PyCell_Type || !JyNI_IsBuiltinPyType(tp))
@@ -569,6 +572,14 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 #define AS_JY_WITH_GC(o) ((JyObject *)(_Py_AS_GC(o))-1)
 #define AS_JY_NO_GC(o) (((JyObject *)(o))-1)
 
+#define AS_GC(o) ((PyGC_Head *)(o)-1)
+#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
+#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
+#define GC_EXPLORING _PyGC_REFS_EXPLORING
+#define GC_EXPLORED _PyGC_REFS_EXPLORED
+#define IS_UNEXPLORED(op) \
+	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
+
 #define JySYNC_ON_INIT_FLAGS (SYNC_ON_PY_INIT_FLAG_MASK | SYNC_ON_JY_INIT_FLAG_MASK)
 #define Jy_InitImmutable(jyObj) \
 	(jyObj)->flags = JySYNC_ON_INIT_FLAGS; \
@@ -819,6 +830,7 @@ PyAPI_FUNC(void) PyObject_RawFree(void *);
 #define GC_OBJECT_JNIFAIL     -7
 void JyNI_GC_Explore();
 void JyNI_GC_ExploreObject(PyObject* op);
+jboolean JyNI_GC_EnsureHeadObject(JNIEnv* env, PyObject* op, JyObject* jy);
 jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy);
 void JyNI_GC_Track_CStub(PyObject* op);
 void PyObject_GC_Track_NoExplore(void *op);
@@ -1084,6 +1096,7 @@ extern jmethodID traversableGCHeadSetLink;
 extern jmethodID traversableGCHeadInsertLink;
 extern jmethodID traversableGCHeadClearLink;
 extern jmethodID traversableGCHeadClearLinksFromIndex;
+extern jmethodID traversableGCHeadEnsureSize;
 extern jmethodID pyObjectGCHeadSetObject;
 extern jmethodID jyGCHeadGetHandle;
 

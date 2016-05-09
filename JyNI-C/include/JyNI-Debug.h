@@ -33,6 +33,22 @@
 #ifndef JYNI_DEBUG_H_
 #define JYNI_DEBUG_H_
 
+/* We define some debug macros for JyNI: */
+char mbuf[100];
+
+#define XSTR(s) STR(s)
+#define STR(s) #s
+#define debug_log(message) jputs(message)
+//jputs(XSTR(__LINE__) message)
+//#define call_log(fkt) (debug_log(__LINE__ ## :  ## fkt), fkt)
+#define call_log(fkt) (debug_log((sprintf(mbuf, "%d: %s", __LINE__, #fkt), mbuf)), fkt)
+//(debug_log(#fkt), fkt)
+#define fkt_log debug_log((sprintf(mbuf, "\n%s (%d)", __FUNCTION__, __LINE__), mbuf));
+#define msg_log(msg) debug_log((sprintf(mbuf, "%d (%s): %s", __LINE__, __FUNCTION__, msg), mbuf));
+#define debugPy(obj) debug_log((sprintf(mbuf, "%s %lld (%s)", __FUNCTION__, (jlong) obj, Py_TYPE(obj)->tp_name), mbuf));
+#define debugContext(pre, obj, post) debug_log((sprintf(mbuf, "%s %lld (%s) %s", pre, (jlong) obj, Py_TYPE(obj)->tp_name, post), mbuf));
+
+
 //#define jputs(msg) (_jputs(__FUNCTION__), _jputs(msg))
 #define jputs(msg) _jputs(msg)
 inline void _jputs(const char* msg);

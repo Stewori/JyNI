@@ -804,7 +804,9 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 			obj = NULL;
 		}
 	}
+	//_JyNI_GC_TRACK(obj);
 //	jputs("type_call done2.");
+//	jputsLong(obj);
 //	if (type->tp_name) puts(type->tp_name);
 //	else jputs("name is null");
 	return obj;
@@ -2042,6 +2044,7 @@ static PyObject *
 subtype_dict(PyObject *obj, void *context)
 {
 //	jputs(__FUNCTION__);
+//	jputsLong(obj);
 	PyObject **dictptr;
 	PyObject *dict;
 	PyTypeObject *base;
@@ -2061,29 +2064,19 @@ subtype_dict(PyObject *obj, void *context)
 		}
 		return func(descr, obj, (PyObject *)(obj->ob_type));
 	}
-//	jputsLong(__LINE__);
 	dictptr = _PyObject_GetDictPtr(obj);
 	if (dictptr == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
 						"This object has no __dict__");
 		return NULL;
 	}
-//	jputsLong(__LINE__);
 	dict = *dictptr;
-//	if (!dict) jputs("Dict is NULL");
-//	jputsLong(__LINE__);
-//	jputsLong(dict);
-//	jputsLong(__LINE__);
-	//jputsLong(AS_JY(dict)->jy);
-	//jputsLong(dict->ob_refcnt);
-//	jputsLong(__LINE__);
 	if (dict == NULL)
 	{
-//		jputsLong(__LINE__);
 		*dictptr = dict = PyDict_New();
+		updateJyGCHeadLinks(obj, AS_JY(obj));
 	}
 	Py_XINCREF(dict);
-//	jputsLong(__LINE__);
 	return dict;
 }
 
@@ -2109,6 +2102,7 @@ subtype_setdict(PyObject *obj, PyObject *value, void *context)
 			raise_dict_descr_error(obj);
 			return -1;
 		}
+		// maybe call updateJyGCHeadLinks(value, AS_JY(value))
 		return func(descr, obj, value);
 	}
 	//jputs(__FUNCTION__);
@@ -2128,6 +2122,7 @@ subtype_setdict(PyObject *obj, PyObject *value, void *context)
 	dict = *dictptr;
 	Py_XINCREF(value);
 	*dictptr = value;
+	updateJyGCHeadLinks(value, AS_JY(value));
 	Py_XDECREF(dict);
 	return 0;
 }
@@ -4608,7 +4603,6 @@ PyType_Ready(PyTypeObject *type)
 	type->tp_flags = (type->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
 
 	JyNI_GC_ExploreObject(type);
-	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
 	return 0;
 
   error:

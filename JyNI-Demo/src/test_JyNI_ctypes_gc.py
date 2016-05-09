@@ -69,9 +69,12 @@ class TestJyNI_gc(unittest.TestCase):
 		from ctypes import CFUNCTYPE, c_int
 
 		test = CFUNCTYPE(c_int, c_int)()
+		dct = test.__dict__
 		test.__name__ = "testName"
+		dct = None
 		self.assertTrue(hasattr(test, "__name__"))
 		self.assertEqual(test.__name__, "testName")
+		runGC()
 		runGC()
 		self.assertTrue(hasattr(test, "__name__"))
 		self.assertEqual(test.__name__, "testName")

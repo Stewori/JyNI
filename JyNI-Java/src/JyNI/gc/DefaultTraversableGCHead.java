@@ -81,13 +81,25 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-		return setLink(gclinks, index, link);
+//		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
+		int result = setLink(gclinks, index, link);
+		if (result == 1) {
+			gclinks = link;
+			return 0;
+		} else
+			return result;
 	}
 
+	/**
+	 * The result-value 1 tells the caller it shall perform
+	 * links = link.
+	 * This is needed, because this helper method cannot
+	 * do this step for the caller.
+	 */
 	public static int setLink(Object links, int index, JyGCHead link) {
-//		System.out.println("setLink");
+//		System.out.println(".setLink ("+System.identityHashCode(link)+") "+index);
 //		System.out.println(index);
-		if (links == null) return -2;
+		if (links == null && index != 0) return -1;
 		if (links instanceof JyGCHead[]) {
 			JyGCHead[] ar = (JyGCHead[]) links;
 			if (index >= ar.length) return -1;
@@ -95,12 +107,9 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			return 0;
 		} else if (links instanceof Iterable) {
 			if (links instanceof List) {
-//				System.out.println("Old length: "+((List<JyGCHead>) links).size());
-//				System.out.println("set list");
 				while (index >= ((List) links).size())
 					((List) links).add(null);
 				((List<JyGCHead>) links).set(index, link);
-//				System.out.println("New length: "+((List<JyGCHead>) links).size());
 				return 0;
 			} else if (links instanceof Collection) {
 				int result = clearLink(links, index);
@@ -108,10 +117,10 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 					((Collection<JyGCHead>) links).add(link);
 				return result;
 			} else throw new UnsupportedOperationException();
-		} else if (links instanceof JyGCHead) {
-			if (index > 0) return -1;
-			links = link;
-			return 0;
+		} else if (links == null || links instanceof JyGCHead) {
+			if (index != 0) return -1;
+			//result-value 1 tells the caller to set links = link
+			return 1;
 		} else return -3;
 	}
 
@@ -247,6 +256,7 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 		return 0;
 	}
 
+	@Override
 	public long[] toHandleArray() {
 		return toHandleArray(gclinks);
 	}
@@ -289,5 +299,59 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void ensureSize(int size) {
+		gclinks = ensureSize(gclinks, size);
+	}
+
+//	public static Object ensureSize(Object links, int size) {
+//		Object result = ensureSize0(links, size);
+//		System.out.println("After ensure:");
+//		printLinksAsHashes(result, System.out);
+//		return result;
+//	}
+
+	public static Object ensureSize(Object links, int size) {
+		if (links == null || links instanceof JyGCHead)
+		{
+			if (size > 1) {
+				JyGCHead[] result = new JyGCHead[size];
+				result[0] = (JyGCHead) links;
+				return result;
+			} else if (size == 1) return links;
+			else return null;
+		} else if (links instanceof JyGCHead[]) {
+			if (size > ((JyGCHead[]) links).length) {
+				JyGCHead[] result = new JyGCHead[size];
+				for (int i = 0; i < ((JyGCHead[]) links).length; ++i)
+					result[i] = ((JyGCHead[]) links)[i];
+				return result;
+			} else return links;
+		} else if (links instanceof Collection) {
+			while (((Collection<JyGCHead>) links).size() < size)
+				((Collection<JyGCHead>) links).add(null);
+			return links;
+		} else throw new IllegalArgumentException("links must be JyGCHead, JyGCHead[] or Collection<JyGCHead>.");
+	}
+
+	public static void printLinksAsHashes(Object links, java.io.PrintStream out) {
+		if (links == null)
+			out.println("no links");
+		else if (links instanceof JyGCHead)
+		{
+			out.println(System.identityHashCode(links));
+		} else if (links instanceof JyGCHead[]) {
+			for (JyGCHead link: ((JyGCHead[]) links))
+				out.println(link == null ? "null-link" : System.identityHashCode(link));
+		} else if (links instanceof Collection) {
+			for (JyGCHead link: ((Iterable<JyGCHead>) links))
+				out.println(link == null ? "null-link" : System.identityHashCode(link));
+		}
+	}
+
+	public void printLinks(java.io.PrintStream out) {
+		printLinksAsHashes(gclinks, out);
 	}
 }

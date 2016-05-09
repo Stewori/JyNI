@@ -32,9 +32,10 @@ package JyNI.gc;
 import JyNI.PyCPeer;
 import org.python.core.Untraversable;
 import org.python.core.PyType;
+import org.python.core.finalization.FinalizableBuiltin;
 
 @Untraversable
-public class PyCPeerGC extends PyCPeer implements TraversableGCHead {
+public class PyCPeerGC extends PyCPeer implements TraversableGCHead {//, FinalizableBuiltin {
 	protected Object links;
 
 	public PyCPeerGC(long objectHandle, PyType subtype) {
@@ -43,40 +44,25 @@ public class PyCPeerGC extends PyCPeer implements TraversableGCHead {
 	}
 
 	public void setLinks(Object links) {
+//		System.out.println("PyCPeer.setLinks");
+//		printLinks(System.out);
 		this.links = links;
+//		System.out.println("PyCPeer.setLinks done:");
+//		printLinks(System.out);
 	}
-
-	/*
-	public PyCPeerGC(JyGCHead[] links, long objectHandle, PyType subtype) {
-		super(objectHandle, subtype);
-		this.links = links;
-	}
-
-	public PyCPeerGC(Iterable<JyGCHead> links, long objectHandle, PyType subtype) {
-		super(objectHandle, subtype);
-		this.links = links;
-	}
-
-	public PyCPeerGC(JyGCHead link, long objectHandle, PyType subtype) {
-		super(objectHandle, subtype);
-		this.links = link;
-	}
-
-	private void setLinks(JyGCHead[] links) {
-		this.links = links;
-	}
-
-	private void setLinks(Iterable<JyGCHead> links) {
-		this.links = links;
-	}
-
-	private void setLinks(JyGCHead link) {
-		this.links = link;
-	}*/
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-		return DefaultTraversableGCHead.setLink(links, index, link);
+//		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+" / "+objectHandle+") "+System.identityHashCode(link)+"  @"+index);
+//		printLinks(System.out);
+		int result = DefaultTraversableGCHead.setLink(links, index, link);
+		if (result == 1) {
+			links = link;
+			return 0;
+		}
+//		System.out.println("Result: "+result);
+//		printLinks(System.out);
+		return result;
 	}
 
 	@Override
@@ -102,5 +88,20 @@ public class PyCPeerGC extends PyCPeer implements TraversableGCHead {
 	@Override
 	public long[] toHandleArray() {
 		return DefaultTraversableGCHead.toHandleArray(links);
+	}
+
+	@Override
+	public void ensureSize(int size) {
+		links = DefaultTraversableGCHead.ensureSize(links, size);
+	}
+
+//	@Override
+//	public void __del_builtin__() {
+//		System.out.println("PyCPeerGC __del__builtin "+System.identityHashCode(this)+" / "+objectHandle);
+//	}
+
+	@Override
+	public void printLinks(java.io.PrintStream out) {
+		DefaultTraversableGCHead.printLinksAsHashes(links, out);
 	}
 }

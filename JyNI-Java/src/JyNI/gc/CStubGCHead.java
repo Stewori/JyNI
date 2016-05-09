@@ -43,6 +43,7 @@ public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCH
 
 	@Override
 	public void setPyObject(PyObject object) {
+//		System.out.println("CStubGCHead.setPyObject");
 		this.object = object;
 	}
 

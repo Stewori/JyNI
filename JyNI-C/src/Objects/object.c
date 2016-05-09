@@ -2138,30 +2138,21 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 	}
 
 	if (dict == NULL) {
-//		jputs("_PyObject_GenericSetAttrWithDict 1");
-//		jputs(Py_TYPE(obj)->tp_name);
-		//if (PyModule_Check(obj)) {
-		//	jputs(PyModule_GetName(obj));
-		//	jputsLong((jlong) obj);
-		//}
-
 		dictptr = _PyObject_GetDictPtr(obj);
-		//printf("Dict-offset: %d\n",Py_TYPE(obj)->tp_dictoffset);
 		if (dictptr != NULL) {
-//			jputsLong(__LINE__);
 			dict = *dictptr;
 			if (dict == NULL && value != NULL) {
 				dict = PyDict_New();
-				//printf("%d\n", __LINE__);
 //				jputsLong(__LINE__);
+//				jputsLong(dict);
 				if (dict == NULL)
 					goto done;
 				*dictptr = dict;
+				updateJyGCHeadLinks(obj, AS_JY(obj));
 			}
 		}
 	}
 	if (dict != NULL) {
-		//puts(Py_TYPE(dict)->tp_name);
 		Py_INCREF(dict);
 		if (value == NULL)
 			res = PyDict_DelItem(dict, name);

@@ -848,7 +848,7 @@ public class JyNI {
 	}
 
 	public static PyObjectGCHead makeGCHead(long handle, boolean forMirror, boolean gc) {
-		PyObject obj = lookupFromHandle(handle);
+//		PyObject obj = lookupFromHandle(handle);
 		//System.out.println("makeGCHead for "+obj+" of type "+(obj != null ? obj.getType().getName() : "N/A"));
 		//Todo: Use a simpler head if object cannot have links.
 		PyObjectGCHead result;
@@ -1539,5 +1539,13 @@ public class JyNI {
 //			return (GlobalRef) result;
 //		else
 //			return null;
+	}
+
+	public static void listGCLinks(PyObject obj) {
+		System.out.println("GC-Links of "+System.identityHashCode(obj));
+		if (obj instanceof TraversableGCHead) {
+			((TraversableGCHead) obj).printLinks(System.out);
+		} else System.out.println("not a TraversableGCHead");
+		System.out.println();
 	}
 }

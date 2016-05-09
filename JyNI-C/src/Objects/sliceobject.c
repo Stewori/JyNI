@@ -103,6 +103,12 @@ PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 			JyNI_JythonPyObject_FromPyObject(stop),
 			JyNI_JythonPyObject_FromPyObject(step));
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+	/*
+	 * Todo:
+	 * - Maybe call JyNI_GC_EnsureHeadObject here.
+	 * - Maybe call JyNI_GC_Track_CStub
+	 */
+
 //	PySliceObject *obj = PyObject_New(PySliceObject, &PySlice_Type);
 //
 //	if (obj == NULL)

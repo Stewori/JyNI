@@ -38,8 +38,8 @@ public interface TraversableGCHead extends JyGCHead {
 	 * links must be of one of these types:
 	 * JyGCHead, JyGCHead[] or Iterable<JyGCHead>
 	 * 
-	 * We do not enforce this by overloading this method with
-	 * these three variants, because this would complicate
+	 * We do not enforce these types by overloading with
+	 * all three variants, because this would complicate
 	 * (and slow down) native calling unnecessarily.
 	 */
 	public void setLinks(Object links);
@@ -95,4 +95,8 @@ public interface TraversableGCHead extends JyGCHead {
 	public int jyTraverse(JyVisitproc visit, Object arg);
 
 	public long[] toHandleArray();
+
+	public void ensureSize(int size);
+	
+	public void printLinks(java.io.PrintStream out);
 }

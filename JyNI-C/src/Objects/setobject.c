@@ -1244,7 +1244,11 @@ make_new_set(PyTypeObject *type, PyObject *iterable)
 		srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
 			//so->used = (*env)->CallIntMethod(env, jobj, pyFrozenSetSize);
 	}//else leave srcJy uninitialized - JyNI's default initialization approach should do the job in this case.
-
+	/*
+	 * Todo:
+	 * - Maybe call JyNI_GC_EnsureHeadObject here.
+	 * - Maybe call JyNI_GC_Track_CStub
+	 */
 	return (PyObject *)so;
 }
 

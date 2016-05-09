@@ -213,7 +213,13 @@ public class PyTupleCPeer extends PyTuple implements
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-		return DefaultTraversableGCHead.setLink(links, index, link);
+		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
+		int result = DefaultTraversableGCHead.setLink(links, index, link);
+		if (result == 1) {
+			links = link;
+			return 0;
+		}
+		return result;
 	}
 
 	@Override
@@ -232,6 +238,12 @@ public class PyTupleCPeer extends PyTuple implements
 	}
 
 	@Override
+	public void ensureSize(int size)
+	{
+		DefaultTraversableGCHead.ensureSize(links, size);
+	}
+
+	@Override
 	public int jyTraverse(JyVisitproc visit, Object arg) {
 		return DefaultTraversableGCHead.jyTraverse(links, visit, arg);
 	}
@@ -239,5 +251,10 @@ public class PyTupleCPeer extends PyTuple implements
 	@Override
 	public long[] toHandleArray() {
 		return DefaultTraversableGCHead.toHandleArray(links);
+	}
+
+	@Override
+	public void printLinks(java.io.PrintStream out) {
+		DefaultTraversableGCHead.printLinksAsHashes(links, out);
 	}
 }
