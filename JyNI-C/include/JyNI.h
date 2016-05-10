@@ -211,10 +211,11 @@
 #define Is_StaticSingleton(pyObject) \
 	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented || pyObject == Py_True || pyObject == Py_False)
 
+//#define Is_StaticTypeObject(pyObject) \
+//	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))
+
 #define Is_StaticTypeObject(pyObject) \
-	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))
-// Todo: This should rather be the line below, but that would currently break ctypes.
-	//(PyType_Check(pyObject) && !PyType_HasFeature((PyTypeObject*) pyObject, Py_TPFLAGS_HEAPTYPE))
+	(PyType_Check(pyObject) && !PyType_HasFeature((PyTypeObject*) pyObject, Py_TPFLAGS_HEAPTYPE))
 
 
 #define Is_JyNICriticalType(tp) \
@@ -572,13 +573,13 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 #define AS_JY_WITH_GC(o) ((JyObject *)(_Py_AS_GC(o))-1)
 #define AS_JY_NO_GC(o) (((JyObject *)(o))-1)
 
-#define AS_GC(o) ((PyGC_Head *)(o)-1)
-#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
-#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
-#define GC_EXPLORING _PyGC_REFS_EXPLORING
-#define GC_EXPLORED _PyGC_REFS_EXPLORED
-#define IS_UNEXPLORED(op) \
-	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
+//#define AS_GC(o) ((PyGC_Head *)(o)-1)
+//#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
+//#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
+//#define GC_EXPLORING _PyGC_REFS_EXPLORING
+//#define GC_EXPLORED _PyGC_REFS_EXPLORED
+//#define IS_UNEXPLORED(op) \
+//	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
 
 #define JySYNC_ON_INIT_FLAGS (SYNC_ON_PY_INIT_FLAG_MASK | SYNC_ON_JY_INIT_FLAG_MASK)
 #define Jy_InitImmutable(jyObj) \

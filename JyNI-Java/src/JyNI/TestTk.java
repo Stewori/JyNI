@@ -108,7 +108,7 @@ public class TestTk {
 		Button buttonTimestamp = tkModule.newJ(Button.class, kwTxtCmd,
 				root, "print timestamp", Py.newJavaFunc(TestTk.class, "printTimeStamp"));
 //		For Java8 I want this to work:
-//		Button button = tkModule.newJ(Button.class, kwTxtCmd,
+//		Button buttonTimestamp = tkModule.newJ(Button.class, kwTxtCmd,
 //				root, "print timestamp", TestTk::printTimeStamp);
 		buttonTimestamp.pack();
 

@@ -91,6 +91,7 @@ elif sys.byteorder == "big":
     _OTHER_ENDIAN = "__ctype_le__"
 
     BigEndianStructure = Structure
+
     class LittleEndianStructure(Structure):
         """Structure with little endian byte order"""
         __metaclass__ = _swapped_meta

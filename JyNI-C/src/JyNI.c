@@ -268,6 +268,7 @@ jobject JyNI_getItem
 jint JyNI_setItem
 	(JNIEnv *env, jclass class, jlong handle, jobject key, jobject value, jlong tstate)
 {
+//	jputs(__FUNCTION__);
 	ENTER_JyNI
 	PyObject* pkey = JyNI_PyObject_FromJythonPyObject(key);
 	PyObject* pval = JyNI_PyObject_FromJythonPyObject(value);
@@ -1954,6 +1955,8 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType)
 {
 //	jputs(__FUNCTION__);
+//	jputsLong(jythonPyObject);
+//	jputsLong(__LINE__);
 	if (jythonPyObject == NULL) return NULL;
 	//puts("Transform jython jobject to PyObject*...");
 //	if (jythonPyObject == JyNone) return Py_None;
@@ -1967,7 +1970,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		Py_INCREF(Py_NotImplemented);
 		return Py_NotImplemented;
 	}
-
 	//Special treatment for boolean. We cannot just compare with singletons,
 	//because via Java-API it is possible in Jython to create non-singleton
 	//PyBooleans (Honestly, that constructor should be protected, but changing
@@ -1979,7 +1981,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		if ((*env)->GetBooleanField(env, pyBooleanClass, pyBoolVal)) Py_RETURN_TRUE;
 		else Py_RETURN_FALSE;
 	}
-
 	//Todo: Maybe the check for nullstring and unicode_empty is not needed
 	//here and should be processed via usual lookup. (Since these singletons
 	//are on the heap)
@@ -1998,7 +1999,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		Py_INCREF(Py_Ellipsis);
 		return Py_Ellipsis;
 	}
-
 	if (checkForType && (*env)->IsInstanceOf(env, jythonPyObject, pyTypeClass))
 	{
 		/* No increfs here, since JyNI_PyTypeObject_FromJythonPyTypeObject returns NEW ref if any. */
@@ -2009,7 +2009,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		if (er) return er;
 		/* heap-type case: Proceed same way like for ordinary PyObjects. */
 	}
-
 	if (checkCPeer && (*env)->IsInstanceOf(env, jythonPyObject, cPeerInterface))
 	{
 		if ((*env)->IsInstanceOf(env, jythonPyObject, pyCPeerClass)) {
@@ -2053,7 +2052,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 //		jputs(strc);
 //		(*env)->ReleaseStringChars(env, str, strc);
 //	}
-
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
 	if (tme)
 	{
@@ -2091,7 +2089,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 //			if ((*env)->IsInstanceOf(env, jythonPyObject, pyStringClass)) jputs("is string J");
 //			if (PyType_FastSubclass((PyTypeObject*) pytpe, Py_TPFLAGS_STRING_SUBCLASS)) jputs("is string fast");
 //			if (PyType_IsSubtype(pytpe, &PyString_Type)) jputs("is string");
-
 			//JyNI_printJInfo(jythonPyObject);
 			PyObject* result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
 			if (!result)
@@ -2533,6 +2530,7 @@ inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type)
  */
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject)
 {
+// Todo: Some issue here breaks TestTk.java
 //	jputs(__FUNCTION__);
 	env(NULL);
 	if ((*env)->IsInstanceOf(env, jythonPyTypeObject, pyCPeerTypeClass))

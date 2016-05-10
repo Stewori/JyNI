@@ -57,10 +57,10 @@
 
 
 // Get an object's GC head
-//#define AS_GC(o) ((PyGC_Head *)(o)-1)
+#define AS_GC(o) ((PyGC_Head *)(o)-1)
 
 // Get the object given the GC head
-//#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
+#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
 
 // *** Global GC state ***
 
@@ -352,12 +352,12 @@ static jint exStackBlockCount() {
 #define GC_REACHABLE					_PyGC_REFS_REACHABLE
 #define GC_TENTATIVELY_UNREACHABLE	  _PyGC_REFS_TENTATIVELY_UNREACHABLE
 
-//#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
-//#define GC_EXPLORING _PyGC_REFS_EXPLORING
-//#define GC_EXPLORED _PyGC_REFS_EXPLORED
+#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
+#define GC_EXPLORING _PyGC_REFS_EXPLORING
+#define GC_EXPLORED _PyGC_REFS_EXPLORED
 
-//#define IS_UNEXPLORED(op) \
-//	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
+#define IS_UNEXPLORED(op) \
+	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
 
 //not used
 //#define IS_EXPLORED(op) \

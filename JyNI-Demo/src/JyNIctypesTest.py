@@ -36,84 +36,86 @@ import sys
 #Include native ctypes:
 sys.path.append('/usr/lib/python2.7/lib-dynload')
 
-import platform
-isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
-from ctypes import *
+import ctypes
 
-print "Demo of ctypes with os.name: "+platform.os.name
-print ""
-
-if isMac:
-	libc = CDLL('libc.dylib')
-else:
-	libc = CDLL('libc.so.6')
-
-class Bottles:
-	def __init__(self, number):
-		self._as_parameter_ = number
-
-print libc
-print type(libc.strlen)
-print libc.strlen
-print libc.strlen("abcdef")
-print "--------------------"
-printf = libc.printf
-printf("%d bottles of beer\n", 42)
-printf("%d bottles of beer\n", Bottles(73))
-
-printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
-printf("String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
-
-buffer = c_buffer("\000", 10)
-libc.sprintf(buffer, "Spam%d", 776)
-
-print repr(buffer.value)
-# Currently fails:
-print repr(buffer.raw),
-print "(should be 'Spam776\\x00\\x00\\x00')"
-
-class cell(Structure):
-	pass
-
-print "Testing ctypes-pointers:"
-
-cell._fields_ = [("name", c_char_p), ("next", POINTER(cell))]
-c1 = cell()
-c1.name = "foo"
-c2 = cell()
-c2.name = "bar"
-c1.next = pointer(c2)
-c2.next = pointer(c1)
-p = c1
-print p.next[0]
-for i in range(8):
-	print p.name,
-	p = p.next[0]
-
-print ""
-print "--------------------"
-
-IntArray6 = c_int * 6
-
-#print type(IntArray6)
-#print IntArray6.mro()
-
-ia = IntArray6(5, 1, 7, 33, 99, -7)
-print ia
-qsort = libc.qsort
-
-def py_cmp_func(a, b):
-	print "py_cmp_func", a[0], b[0]
-	return a[0] - b[0]
-
-CMPFUNC = CFUNCTYPE(c_int, POINTER(c_int), POINTER(c_int))
-cmp_func = CMPFUNC(py_cmp_func)
-qsort(ia, len(ia), sizeof(c_int), cmp_func)
-for i in range(len(ia)):
-	print ia[i],
-
-# Iterator-related builtins not yet supported:
-# for i in ia: print i,
+# import platform
+# isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
+# from ctypes import *
+# 
+# print "Demo of ctypes with os.name: "+platform.os.name
+# print ""
+# 
+# if isMac:
+# 	libc = CDLL('libc.dylib')
+# else:
+# 	libc = CDLL('libc.so.6')
+# 
+# class Bottles:
+# 	def __init__(self, number):
+# 		self._as_parameter_ = number
+# 
+# print libc
+# print type(libc.strlen)
+# print libc.strlen
+# print libc.strlen("abcdef")
+# print "--------------------"
+# printf = libc.printf
+# printf("%d bottles of beer\n", 42)
+# printf("%d bottles of beer\n", Bottles(73))
+# 
+# printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
+# printf("String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
+# 
+# buffer = c_buffer("\000", 10)
+# libc.sprintf(buffer, "Spam%d", 776)
+# 
+# print repr(buffer.value)
+# # Currently fails:
+# print repr(buffer.raw),
+# print "(should be 'Spam776\\x00\\x00\\x00')"
+# 
+# class cell(Structure):
+# 	pass
+# 
+# print "Testing ctypes-pointers:"
+# 
+# cell._fields_ = [("name", c_char_p), ("next", POINTER(cell))]
+# c1 = cell()
+# c1.name = "foo"
+# c2 = cell()
+# c2.name = "bar"
+# c1.next = pointer(c2)
+# c2.next = pointer(c1)
+# p = c1
+# print p.next[0]
+# for i in range(8):
+# 	print p.name,
+# 	p = p.next[0]
+# 
+# print ""
+# print "--------------------"
+# 
+# IntArray6 = c_int * 6
+# 
+# #print type(IntArray6)
+# #print IntArray6.mro()
+# 
+# ia = IntArray6(5, 1, 7, 33, 99, -7)
+# print ia
+# qsort = libc.qsort
+# 
+# def py_cmp_func(a, b):
+# 	print "py_cmp_func", a[0], b[0]
+# 	return a[0] - b[0]
+# 
+# CMPFUNC = CFUNCTYPE(c_int, POINTER(c_int), POINTER(c_int))
+# cmp_func = CMPFUNC(py_cmp_func)
+# qsort(ia, len(ia), sizeof(c_int), cmp_func)
+# for i in range(len(ia)):
+# 	print ia[i],
+# 
+# # Iterator-related builtins not yet supported:
+# # for i in ia: print i,
 
 print ""
 print "===================="

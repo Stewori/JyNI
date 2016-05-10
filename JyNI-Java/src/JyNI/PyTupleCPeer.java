@@ -213,7 +213,7 @@ public class PyTupleCPeer extends PyTuple implements
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
+//		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
 		int result = DefaultTraversableGCHead.setLink(links, index, link);
 		if (result == 1) {
 			links = link;

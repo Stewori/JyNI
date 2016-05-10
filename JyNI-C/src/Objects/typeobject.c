@@ -2276,7 +2276,8 @@ type_init(PyObject *cls, PyObject *args, PyObject *kwds)
 static PyObject *
 type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 {
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
+//	jputs(metatype->tp_name);
 //	printf("metatype: %s\n", metatype->tp_name);
 	//printf("type_new %i\n", __LINE__);
 	/*
@@ -2287,11 +2288,8 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 	 */
 	PyObject *name, *bases, *dict;
 	static char *kwlist[] = {"name", "bases", "dict", 0};
-//	printf("type_new %i\n", __LINE__);
-//	jputsLong(__LINE__);
 	assert(args != NULL && PyTuple_Check(args));
 	assert(kwds == NULL || PyDict_Check(kwds));
-
 	// Special case: type(x) should return x->ob_type
 	{
 //		printf("type_new %i\n", __LINE__);
@@ -2314,7 +2312,6 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 			return NULL;
 		}
 	}
-//	printf("type_new %i\n", __LINE__);
 
 	/* Check arguments: (name, bases, dict) */
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "SO!O!:type", kwlist,
@@ -2334,10 +2331,16 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 //			jputs("has no class!");
 //	}
 
-
 	env(NULL);
-	if (!Is_StaticTypeObject(metatype))
+	// applying the new static type check for metatype currently fails:
+	// e.g. for _swapped_meta in ctypes
+	// todo: Figure out a proper delegation check here!
+	if (!Is_StaticTypeObject(metatype) && JyNI_GetJythonDelegate(metatype))
 	{
+//		jputsLong(__LINE__);
+//		jputsLong(Is_StaticTypeObject(metatype));
+//		jputsLong(Is_StaticTypeObject0(metatype));
+//		jputsLong(JyNI_GetJythonDelegate(metatype));
 		JyObject* mtjy = AS_JY(metatype);
 		if (JyObject_IS_INITIALIZED(mtjy))
 		{
@@ -2358,13 +2361,12 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 					//Py_XINCREF(PyTuple_GET_ITEM(src, i));
 				}
 				jobject dct = JyNI_JythonPyObject_FromPyObject(dict);
-			//	printf("type_new %i\n", __LINE__);
-			//	jputsLong(__LINE__);
 				/*
 				 * Since makeClass can call back into the JyNI, this would likely deadlock
 				 * if called without Py_BEGIN_ALLOW_THREADS.
 				 * However, this might still not be the right and final solution. We should
 				 * tread such cases by the original native tp_new-code.
+				 * Note: Switching to RE_ENTER_JYNI macros in JyNI.c can probably solve this.
 				 */
 				jobject jtp;
 				Py_BEGIN_ALLOW_THREADS
@@ -2372,16 +2374,16 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 						(*env)->NewStringUTF(env, PyString_AS_STRING(name)), jbases,
 						dct);
 				Py_END_ALLOW_THREADS
-			//	jputsLong(__LINE__);
 				(*env)->DeleteLocalRef(env, jmtjy);
 				return JyNI_PyObject_FromJythonPyObject(jtp);
 			} else
+			{
 				(*env)->DeleteLocalRef(env, jmtjy);
+			}
 		}
 	}
-
-//	puts("type_new no delegate:");
-//	puts(metatype->tp_name);
+//	jputs("type_new no delegate:");
+//	jputs(metatype->tp_name);
 
 	/*
 	 * JyNI-note:

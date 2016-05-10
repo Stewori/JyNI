@@ -106,9 +106,12 @@ PyCFunction_GetFlags(PyObject *op)
 PyObject *
 PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 {
+//	jputs(__FUNCTION__);
 	PyCFunctionObject* f = (PyCFunctionObject*)func;
+//	jputs(f->m_ml->ml_name);
 	PyCFunction meth = PyCFunction_GET_FUNCTION(func);
 	PyObject *self = PyCFunction_GET_SELF(func);
+	//jputs(Py_TYPE(self)->tp_name);
 	Py_ssize_t size;
 
 	switch (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST)) {
