@@ -1397,33 +1397,6 @@ inline void JyNI_SyncJy2Py(JyObject* jy, PyObject* op)
 }
 
 /*
- * This method returns a NEW reference. Also note that the object is not yet
- * tracked by GC.
- */
-/*
-inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems)
-{
-	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
-	if (tme)
-	{
-		if (tme->py_type->tp_itemsize == 0) return JyNI_Alloc(tme);
-		else return JyNI_AllocVar(tme, nitems);
-	} else
-	{
-		//We don't have to take care of exception allocation at other places (hopefully)
-		//because all exception types use this method for allocation.
-		if (PyExceptionClass_Check(type))
-		{
-			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(type);
-			if (eme != NULL) return JyNI_ExceptionAlloc(eme);
-		}
-		if (tme->py_type->tp_itemsize == 0) return JyNI_AllocNative(type);
-		else return JyNI_AllocNativeVar(type, nitems);
-	}
-}
-*/
-
-/*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  * Should do the same as JyNI_AllocVar with nitems == -1.
  */
@@ -1698,7 +1671,8 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 		((PyTypeObject*) obj)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
 
 	if (PyType_IS_GC(type))
-		_JyNI_GC_TRACK_NoExplore(obj);
+		_JyNI_GC_TRACK(obj);
+		//_JyNI_GC_TRACK_NoExplore(obj);
 
 	return obj;
 }
@@ -2437,7 +2411,8 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls)
 {
 	//if (type == NULL) return NULL;
-	//jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
 	env(NULL);
 	if (cls != NULL)
 	{
@@ -2456,23 +2431,38 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			Py_INCREF(type);
 			jobject er;// = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeConstructor, (jlong) type);
 			//if (Py_TYPE(type) == NULL) jputs("JyNI-warning: Attempt to convert PyTypeObject with NULL-type.");
-			if (!PyObject_IS_GC((PyObject*) type)) {
+			if (!PyObject_IS_GC((PyObject*) type))
+			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
+				{
+//					jputs("abc");
+//					jputs(type->tp_name);
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameAndDictConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict));
-				else {
+				} else
+				{
+//					jputs("abc d");
+//					jputs(type->tp_name);
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameDictTypeConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
 							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
 				}
-			} else {
+			} else
+			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
+				{
+//					jputs("abcGC");
+//					jputs(type->tp_name);
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict));
-				else {
+				} else
+				{
+//					jputs("abc d GC");
+//					jputs(type->tp_name);
+//					jputsLong(type);
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructorSubtype,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict),

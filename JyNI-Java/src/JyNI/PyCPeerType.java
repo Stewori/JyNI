@@ -123,14 +123,16 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 	public long objectHandle, refHandle;
 
-	public PyCPeerType(long objectHandle) {
-		super(fromClass(PyType.class));
-		this.objectHandle = objectHandle;
-		JyNI.CPeerHandles.put(objectHandle, this);
-	}
+//	public PyCPeerType(long objectHandle) {
+//		super(fromClass(PyType.class));
+//		System.out.println("created raw PyCPeerType");
+//		this.objectHandle = objectHandle;
+//		JyNI.CPeerHandles.put(objectHandle, this);
+//	}
 
 	public PyCPeerType(long objectHandle, String name, PyObject dict) {
 		this(objectHandle, name, dict, fromClass(PyType.class));
+//		System.out.println("handle_name_dict");
 //		super(fromClass(PyType.class));
 //		this.objectHandle = objectHandle;
 //		super.name = name;
@@ -141,7 +143,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 	public PyCPeerType(long objectHandle, String name, PyObject dict, PyType metatype) {
 		super(metatype);
-		//System.out.println("created PyCPeerType "+name+" withe metatype "+metatype.getName());
+//		System.out.println("created PyCPeerType "+name+" withe metatype "+metatype.getName());
 		this.objectHandle = objectHandle;
 		super.name = name;
 		//super.setName(name);
@@ -342,6 +344,13 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public long getHandle() {
 		return objectHandle;
 	}
+
+//	@Override
+//	public PyTuple getMro() {
+//		System.out.println("getMro of "+name+"/"+objectHandle+": "+(mro == null ? mro : new PyTuple(mro)));
+//		return super.getMro();
+//        //return mro == null ? Py.EmptyTuple : new PyTuple(mro);
+//    }
 
 	@Override
 	public void __del_builtin__() {

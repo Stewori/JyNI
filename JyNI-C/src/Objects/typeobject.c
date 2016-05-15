@@ -850,10 +850,16 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 //		else return JyNI_AllocNativeVar(type, nitems);
 //		jputs("AllocNativeVar");
 		PyObject* result = JyNI_AllocNativeVar(type, nitems);
-//		jputsLong(__LINE__);
+
 		if (PyType_IS_GC(type))
-			JyNI_GC_ExploreObject(result);
-//		jputsLong(__LINE__);
+		{
+			//JyNI_GC_ExploreObject(result);
+			//PyObject_GC_Track(result);
+			if (Is_Static_PyObject(result)) {
+				jputs("JyNI-warning: Static Type-object not successfully tracked by gc!");
+			}
+		}
+
 		return result;
 	}
 //	//JyNI-note: This method has been adjusted to alloc additional space for JyObject.
@@ -2320,7 +2326,9 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 									 &PyDict_Type, &dict))
 		return NULL;
 	//puts(metatype->tp_name);
-	//puts(name);
+//	jboolean dbg = (strcmp( ((PyStringObject*)name)->ob_sval, "c_float_Array_4") == 0);
+//	if (dbg) jputs("type_new c_float_Array_4");
+
 //	if (strcmp(metatype->tp_name, "_ctypes.PyCSimpleType") == 0) {
 //		jputs("type_new");
 //		jputs(metatype->tp_name);
@@ -2337,7 +2345,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 	// todo: Figure out a proper delegation check here!
 	if (!Is_StaticTypeObject(metatype) && JyNI_GetJythonDelegate(metatype))
 	{
-//		jputsLong(__LINE__);
+//		if (dbg) jputsLong(__LINE__);
 //		jputsLong(Is_StaticTypeObject(metatype));
 //		jputsLong(Is_StaticTypeObject0(metatype));
 //		jputsLong(JyNI_GetJythonDelegate(metatype));
@@ -2382,6 +2390,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 			}
 		}
 	}
+//	if (dbg) jputsLong(__LINE__);
 //	jputs("type_new no delegate:");
 //	jputs(metatype->tp_name);
 
@@ -2615,7 +2624,16 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 
 	/* Allocate the type object */
 //	puts("tp_new_alloc...");
+//	if (dbg) jputsLong(__LINE__);
 	type = (PyTypeObject *)metatype->tp_alloc(metatype, nslots);
+//	if (dbg) jputsLong(__LINE__);
+//	if (dbg) {
+//		jputsLong(__LINE__);
+//		jputs("initial mro:");
+//		jputsPy(type->tp_mro);
+//		jputs(type->tp_name);
+//		jputsLong(type);
+//	}
 //	jputsLong(__LINE__);
 //	printf("tp_as_mapping after tp_new_alloc: %d\n", type->tp_as_mapping);
 	//puts("tp_new_alloc done");
@@ -2781,6 +2799,12 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 	/* Initialize the rest */
 //	printf("mp_subscript before PyType_Ready: %d\n", type->tp_as_mapping->mp_subscript);
 //	if (type->tp_as_mapping) printf("has mapping, line %d\n", __LINE__);
+//	if (dbg) {
+//		jputsLong(__LINE__);
+//		jputs("pre-ready mro:");
+//		jputsPy(type->tp_mro);
+//		jputs(type->tp_name);
+//	}
 	if (PyType_Ready(type) < 0) {
 		Py_DECREF(type);
 		return NULL;
@@ -2791,6 +2815,15 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 	//printf("Dict-offset in line %d: %d\n", __LINE__, type->tp_dictoffset);
 //	jputsLong(__LINE__);
 //	jputs(metatype->tp_name);
+//	if (dbg) {
+//		jputsLong(__LINE__);
+//		jputs("final mro:");
+//		jputsPy(type->tp_mro);
+//		jputsPy(type->tp_bases);
+//		jputsPy(type->tp_base);
+//		jputs(type->tp_name);
+//		jputsLong(type);
+//	}
 	return (PyObject *)type;
 }
 

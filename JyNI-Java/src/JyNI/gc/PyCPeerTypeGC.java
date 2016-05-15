@@ -38,16 +38,18 @@ import org.python.core.PyType;
 public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 	protected Object links;
 
-	public PyCPeerTypeGC(long objectHandle) {
-		super(objectHandle);
-	}
+//	public PyCPeerTypeGC(long objectHandle) {
+//		super(objectHandle);
+//	}
 
 	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict) {
 		super(objectHandle, name, dict);
+//		System.out.println("handle name dict GC");
 	}
 
 	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict, PyType metatype) {
 		super(objectHandle, name, dict, metatype);
+//		System.out.println("handle name dict meta GC");
 	}
 
 	@Override

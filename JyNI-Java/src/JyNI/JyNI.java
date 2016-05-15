@@ -1444,6 +1444,11 @@ public class JyNI {
 	 * Do not call this method, it is internal API.
 	 */
 	public static void preProcessCStubGCCycle() {
+	// It seems this method causes ConcurrentModificationException from time to time.
+	// This might lead to an ill state!
+	// Also observed:
+	// java.lang.ClassCastException: JyNI.JyList cannot be cast to org.python.core.PyObject
+
 		/* We pretend to be another finalizer here ending in postProcessCStubGCCycle().
 		 * We can do that, because we know when the last CStub finalizer is processed.
 		 */
