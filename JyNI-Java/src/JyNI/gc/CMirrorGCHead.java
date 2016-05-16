@@ -33,7 +33,7 @@ import java.lang.ref.WeakReference;
 import org.python.core.PyObject;
 
 public class CMirrorGCHead extends DefaultTraversableGCHead implements PyObjectGCHead {
-	//SoftReference<PyObject> object; //For now use WeaReference for easier debugging.
+	//SoftReference<PyObject> object; //For now use WeakReference for easier debugging.
 	WeakReference<PyObject> object; //Later change this to SoftReference
 
 	public CMirrorGCHead(long handle) {

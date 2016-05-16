@@ -55,6 +55,8 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 	 */
 	@Override
 	public void setLinks(Object links) {
+//		if (links instanceof Iterable)
+//			System.out.println(this.getClass()+".setLinks ("+System.identityHashCode(this)+") "+links.getClass()+" ("+System.identityHashCode(links)+")");
 		gclinks = links;
 	}
 
@@ -81,7 +83,7 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-//		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
+		//System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
 		int result = setLink(gclinks, index, link);
 		if (result == 1) {
 			gclinks = link;
@@ -105,6 +107,17 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			if (index >= ar.length) return -1;
 			ar[index] = link;
 			return 0;
+		} else if (links == null || links instanceof JyGCHead) {
+			/* Note: This case must be tested before check for Iterable, i.e.
+			 * var-length case to avoid misinterpretation if links is both
+			 * JyGCHead and Iterable (e.g. JyList). In this case JyGCHead
+			 * comes first. The var-lenght case must always ground on an
+			 * iterable data structure that is not a JyGCHead itself!
+			 * So far we use a plain array-list there.
+			 */
+			if (index != 0) return -1;
+			//result-value 1 tells the caller to set links = link
+			return 1;
 		} else if (links instanceof Iterable) {
 			if (links instanceof List) {
 				while (index >= ((List) links).size())
@@ -117,10 +130,6 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 					((Collection<JyGCHead>) links).add(link);
 				return result;
 			} else throw new UnsupportedOperationException();
-		} else if (links == null || links instanceof JyGCHead) {
-			if (index != 0) return -1;
-			//result-value 1 tells the caller to set links = link
-			return 1;
 		} else return -3;
 	}
 

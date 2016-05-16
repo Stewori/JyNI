@@ -1966,6 +1966,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 					JyObject* jy = AS_JY(singleLink);
 					jobject result0 = JyNI_GC_ObtainJyGCHead(env, singleLink, jy);
 					//jputsLong(__LINE__);
+					//JyNI_jprintHash(result0);
 					return result0;
 					//return JyNI_GC_ObtainJyGCHead(env, singleLink, AS_JY(singleLink));
 				} else {
@@ -1979,11 +1980,9 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 					return NULL;
 				}
 			} else {
-//				jputsLong(__LINE__);
 				jobject result = (*env)->NewObjectArray(env, fixedSize, jyGCHeadClass, NULL);
 				exploreJNI expl = {env, result, 0};
 				trav(op, visit_exploreArrayLink, &expl);
-//				jputsLong(__LINE__);
 				return result;
 			}
 		}
@@ -2002,7 +2001,6 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	jobject result = (*env)->NewObject(env, arrayListClass, arrayListConstructor, initSize);
 	exploreJNI expl = {env, result, 0};
 	trav(op, visit_exploreListLink, &expl);
-//	jputsLong(__LINE__);
 	return result;
 }
 

@@ -399,11 +399,15 @@ public class JyNI {
 	}
 
 	public static void addJyNICriticalObject(long handle) {
-		JyNICriticalObjectSet.add(handle);
+		synchronized (JyNICriticalObjectSet) {
+			JyNICriticalObjectSet.add(handle);
+		}
 	}
 
 	public static void removeJyNICriticalObject(long handle) {
-		JyNICriticalObjectSet.remove(handle);
+		synchronized (JyNICriticalObjectSet) {
+			JyNICriticalObjectSet.remove(handle);
+		}
 	}
 
 	public static int getNativeRefCount(PyObject obj) {
@@ -1444,11 +1448,6 @@ public class JyNI {
 	 * Do not call this method, it is internal API.
 	 */
 	public static void preProcessCStubGCCycle() {
-	// It seems this method causes ConcurrentModificationException from time to time.
-	// This might lead to an ill state!
-	// Also observed:
-	// java.lang.ClassCastException: JyNI.JyList cannot be cast to org.python.core.PyObject
-
 		/* We pretend to be another finalizer here ending in postProcessCStubGCCycle().
 		 * We can do that, because we know when the last CStub finalizer is processed.
 		 */
@@ -1459,36 +1458,37 @@ public class JyNI {
 		JyWeakReferenceGC headRef;
 		JyGCHead head;
 		boolean delayFinalization = false;
-		for (long handle: JyNICriticalObjectSet) {
-			//System.out.println("  "+handle);
+		long[] criticalHandles;
+		synchronized (JyNICriticalObjectSet) {
+			/* We cache current handles in synchronized manner before the actual operation
+			 * to avoid concurrent modification exception.
+			 */
+			criticalHandles = new long[JyNICriticalObjectSet.size()];
+			int i = 0;
+			for (long handle: JyNICriticalObjectSet) {
+				criticalHandles[i++] = handle;
+			}
+		}
+		for (long handle: criticalHandles) {
 			headRef = JyWeakReferenceGC.lookupJyGCHead(handle);
 			/*
 			 * Evaluate JyGC_validateGCHead first, since it has the side-effect to
 			 * update the JyNI-critical's GCHead if necessary. This is also the reason
 			 * why we cannot break this loop on early success.
 			 */
-//			if (headRef == null) {
-//				System.out.println("unexplored!");
-//				//delayFinalization = JyGC_validateGCHead(handle, null) || delayFinalization;
-//			} else {
 			if (headRef != null) {
 				head = headRef.get();
-//				if (head == null) {
-//					System.out.println("j-deleted!");
-//				}// else
 				if (head != null && head instanceof TraversableGCHead) {
 					delayFinalization = JyGC_validateGCHead(handle,
 							((TraversableGCHead) head).toHandleArray()) || delayFinalization;
-//					boolean tmp = JyGC_validateGCHead(handle,
-//							((TraversableGCHead) head).toHandleArray());
-//					delayFinalization = tmp || delayFinalization;
-//					if (tmp)
-//						System.out.println("check update repair: "+JyGC_validateGCHead(handle, ((TraversableGCHead) head).toHandleArray()));
-				} else if (head != null) System.err.println(
-						"JyNI-error: Encountered JyNI-critical with non-traversable JyGCHead! "+headRef.getNativeRef());
+				} else if (head != null)
+					System.err.println(
+							"JyNI-error: Encountered JyNI-critical with non-traversable JyGCHead! "
+							+headRef.getNativeRef());
 			}
 		}
-		if (delayFinalization) {//enable delayed finalization in GC-module
+		if (delayFinalization) {
+			//enable delayed finalization in GC-module
 			//System.out.println("Force delayed finalization...");
 			gc.addJythonGCFlags(gc.FORCE_DELAYED_FINALIZATION);
 		}
