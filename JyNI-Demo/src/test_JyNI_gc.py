@@ -91,6 +91,7 @@ class TestJyNI_gc(unittest.TestCase):
 
 	def test_gc_doc(self):
 		#print "test_gc_doc"
+		clearCurrentLeaks()
 		doc = DemoExtension.argCountToString.__doc__
 		#monitor.listLeaks()
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)

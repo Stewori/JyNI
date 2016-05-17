@@ -42,6 +42,58 @@ import java.io.File;
 import java.nio.file.FileSystems;
 
 public class JyNI {
+	public static final int NATIVE_INT_METHOD_NOT_IMPLEMENTED = -2;
+
+	/**Lazy function call binding.*/
+	public static final int RTLD_LAZY = 0x00001;
+	/**Immediate function call binding.*/
+	public static final int RTLD_NOW = 0x00002;
+	/**Mask of binding time value.*/
+	public static final int RTLD_BINDING_MASK = 0x3;
+	/**Do not load the object.*/
+	public static final int RTLD_NOLOAD = 0x00004;
+	/**Use deep binding.*/
+	public static final int RTLD_DEEPBIND = 0x00008;
+
+	/**If the following bit is set in the MODE argument to `dlopen',
+	   the symbols of the loaded object and its dependencies are made
+	   visible as if the object were linked directly into the program.*/
+	public static final int RTLD_GLOBAL = 0x00100;
+
+	/**Unix98 demands the following flag which is the inverse to RTLD_GLOBAL.
+	   The implementation does this by default and so we can define the
+	   value to zero.*/
+	public static final int RTLD_LOCAL = 0;
+
+	/** Do not delete object when closed.*/
+	public static final int RTLD_NODELETE = 0x01000;
+
+	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
+
+	//Note: nativeHandles keeps (exclusively) natively needed objects save from beeing gc'ed.
+	//protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
+
+	/*
+	 * This keeps alive objects (especially CStub-backends) reachable from PyObjects
+	 * allocated on the C-stack rather than on the heap.
+	 */
+	public static HashMap<Long, JyGCHead> nativeStaticPyObjectHeads = new HashMap<>();
+	public static Set<Long> JyNICriticalObjectSet = new HashSet<>();
+
+	/*
+	 * This is to keep the backend of the native interned string-dict alive.
+	 * Todo: Arrange that this is a PyStringMap rather than PyDictionary.
+	 * Todo: Join this with nativeStaticPyObjectHeads using a CStub(Simple?)GCHead.
+	 */
+	public static PyObject nativeInternedStrings = null;
+	
+	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
+	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
+	/*
+	 * Todo: Make this a weak HashMap to allow PyCPeers to be mortal.
+	 */
+	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
+
 	static {
 		try {
 			/* To make configuration easier, we not only search on the library-path for the libs,
@@ -142,60 +194,6 @@ public class JyNI {
 			System.err.println("JyNI: Exception in initializer: "+ex);
 		}
 	}
-	
-	public static final String JyNIHandleAttr = "_JyNIHandleAttr".intern();
-
-	public static final int NATIVE_INT_METHOD_NOT_IMPLEMENTED = -2;
-
-	/**Lazy function call binding.*/
-	public static final int RTLD_LAZY = 0x00001;
-	/**Immediate function call binding.*/
-	public static final int RTLD_NOW = 0x00002;
-	/**Mask of binding time value.*/
-	public static final int RTLD_BINDING_MASK = 0x3;
-	/**Do not load the object.*/
-	public static final int RTLD_NOLOAD = 0x00004;
-	/**Use deep binding.*/
-	public static final int RTLD_DEEPBIND = 0x00008;
-
-	/**If the following bit is set in the MODE argument to `dlopen',
-	   the symbols of the loaded object and its dependencies are made
-	   visible as if the object were linked directly into the program.*/
-	public static final int RTLD_GLOBAL = 0x00100;
-
-	/**Unix98 demands the following flag which is the inverse to RTLD_GLOBAL.
-	   The implementation does this by default and so we can define the
-	   value to zero.*/
-	public static final int RTLD_LOCAL = 0;
-
-	/** Do not delete object when closed.*/
-	public static final int RTLD_NODELETE = 0x01000;
-
-	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
-
-	//Note: nativeHandles keeps (exclusively) natively needed objects save from beeing gc'ed.
-	//protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
-
-	/*
-	 * This keeps alive objects (especially CStub-backends) reachable from PyObjects
-	 * allocated on the C-stack rather than on the heap.
-	 */
-	public static HashMap<Long, JyGCHead> nativeStaticPyObjectHeads = new HashMap<>();
-	public static Set<Long> JyNICriticalObjectSet = new HashSet<>();
-
-	/*
-	 * This is to keep the backend of the native interned string-dict alive.
-	 * Todo: Arrange that this is a PyStringMap rather than PyDictionary.
-	 * Todo: Join this with nativeStaticPyObjectHeads using a CStub(Simple?)GCHead.
-	 */
-	public static PyObject nativeInternedStrings = null;
-	
-	//protected static IdentityHashMap<PyObject, Long> nativeHandles;// = new HashMap<PyObject, Long>();
-	//protected static IdentityHashMap<ThreadState, PyException> cur_excLookup;
-	/*
-	 * Todo: Make this a weak HashMap to allow PyCPeers to be mortal.
-	 */
-	protected static HashMap<Long, PyObject> CPeerHandles = new HashMap<Long, PyObject>();
 
 	public static native void initJyNI(String JyNILibPath);
 	public static native void clearPyCPeer(long objectHandle, long refHandle);

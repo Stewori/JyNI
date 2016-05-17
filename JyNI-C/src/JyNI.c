@@ -2435,15 +2435,11 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
 				{
-//					jputs("abc");
-//					jputs(type->tp_name);
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameAndDictConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict));
 				} else
 				{
-//					jputs("abc d");
-//					jputs(type->tp_name);
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameDictTypeConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
@@ -2453,16 +2449,11 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
 				{
-//					jputs("abcGC");
-//					jputs(type->tp_name);
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict));
 				} else
 				{
-//					jputs("abc d GC");
-//					jputs(type->tp_name);
-//					jputsLong(type);
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructorSubtype,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
@@ -2499,7 +2490,6 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 				// For now we try to get away without it.
 			//}
 			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, er, (jlong) type);
-
 			return er;
 		}
 	}
@@ -4519,6 +4509,7 @@ jint JyNI_init(JavaVM *jvm)
 	//init native objects where necessary:
 	PyEval_InitThreads();
 	_PyInt_Init();
+	PyType_Ready(&PyBool_Type);
 
 	return JNI_VERSION_1_2;
 }

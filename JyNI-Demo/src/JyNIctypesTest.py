@@ -38,34 +38,37 @@ sys.path.append('/usr/lib/python2.7/lib-dynload')
 
 import ctypes
 
-# import platform
-# isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
-# from ctypes import *
+import platform
+isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
+from ctypes import *
 # 
 # print "Demo of ctypes with os.name: "+platform.os.name
 # print ""
-# 
-# if isMac:
-# 	libc = CDLL('libc.dylib')
-# else:
-# 	libc = CDLL('libc.so.6')
-# 
-# class Bottles:
-# 	def __init__(self, number):
-# 		self._as_parameter_ = number
-# 
+
+if isMac:
+	libc = CDLL('libc.dylib')
+else:
+	libc = CDLL('libc.so.6')
+
+class Bottles:
+	def __init__(self, number):
+		self._as_parameter_ = number
+
 # print libc
 # print type(libc.strlen)
 # print libc.strlen
 # print libc.strlen("abcdef")
 # print "--------------------"
-# printf = libc.printf
+printf = libc.printf
 # printf("%d bottles of beer\n", 42)
 # printf("%d bottles of beer\n", Bottles(73))
-# 
+#
 # printf.argtypes = [c_char_p, c_char_p, c_int, c_double]
 # printf("String '%s'; Int %d; Double %f\n", "Hi", 10, 2.2)
-# 
+
+printf.argtypes = [c_char_p, c_int]
+printf("Int %d\n", False)
+
 # buffer = c_buffer("\000", 10)
 # libc.sprintf(buffer, "Spam%d", 776)
 # 

@@ -111,7 +111,7 @@ public class DefaultTraversableGCHead implements TraversableGCHead {
 			/* Note: This case must be tested before check for Iterable, i.e.
 			 * var-length case to avoid misinterpretation if links is both
 			 * JyGCHead and Iterable (e.g. JyList). In this case JyGCHead
-			 * comes first. The var-lenght case must always ground on an
+			 * comes first. The var-length case must always ground on an
 			 * iterable data structure that is not a JyGCHead itself!
 			 * So far we use a plain array-list there.
 			 */

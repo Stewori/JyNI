@@ -148,6 +148,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		super.name = name;
 		//super.setName(name);
 		if (dict != null) super.dict = dict;
+		//System.out.println("CPeerHandles: "+JyNI.CPeerHandles);
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
 

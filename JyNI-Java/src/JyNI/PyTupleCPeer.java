@@ -64,7 +64,7 @@ public class PyTupleCPeer extends PyTuple implements
 	public PyTupleCPeer(long objectHandle, PyCPeerType subtype, PyObject[] init) {
 		super(subtype, init);
 		this.objectHandle = objectHandle;
-		JyNI.CPeerHandles.put(objectHandle, this);
+		//JyNI.CPeerHandles.put(objectHandle, this);
 	}
 
 	@Override

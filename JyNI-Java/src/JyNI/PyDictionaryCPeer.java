@@ -75,6 +75,10 @@ public class PyDictionaryCPeer extends PyDictionary implements
 	public PyDictionaryCPeer(long objectHandle, PyCPeerType subtype) {
 		super(subtype);
 		this.objectHandle = objectHandle;
+		// Todo: The follwing line should not be needed.
+		// (CPeerHandles is only used for PyCPeerType today)
+		// However, removing it breaks JyOpenGL. Why?
+		// Somehow stgdict is not kept alive as it should.
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
 
