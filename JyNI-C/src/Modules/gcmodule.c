@@ -1718,7 +1718,7 @@ jboolean JyNI_GC_EnsureHeadObject(JNIEnv* env, PyObject* op, JyObject* jy)
 jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 {
 //	jputs(__FUNCTION__);
-//	jputsLong(op);
+//	jputs(op->ob_type->tp_name);
 	if (Is_Static_PyObject(op))
 	{
 		//jputs("JyNI-Warning: JyNI_GC_ObtainJyGCHead was called with non-heap object.");
@@ -1734,10 +1734,6 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 	}
 	if (jy->flags & JY_CPEER_FLAG_MASK)
 	{
-//		if (PyType_Check(op)) {
-//			jputs("Warning: Exploring Type:");
-//			jputs(((PyTypeObject*) op)->tp_name);
-//		}
 //		if (!(jy->flags & JY_INITIALIZED_FLAG_MASK))
 //			jputs("JyNI-Warning: uninitialized CPeer at explore!");
 		jobject er = JyNI_JythonPyObject_FromPyObject(op);
@@ -1761,14 +1757,9 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 		if (hasHeadAttr)
 		{
 			result = (*env)->NewLocalRef(env, JyObject_GetJyGCHead(op, jy));
-//			jputs("looked up head:");
-//			jputsLong(op);
-//			JyNI_jprintHash(result);
 		}
-		//jputsLong(__LINE__);
 		if (!result || (*env)->IsSameObject(env, result, NULL))
 		{
-			//jputsLong(__LINE__);
 			if (result)
 			{
 				jputs("Still needed JyGCHead was collected!");
@@ -1921,7 +1912,8 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	//jputs(__FUNCTION__);
 	//jputs(Py_TYPE(op)->tp_name);
 	traverseproc trav;
-	if (PyType_CheckExact(op)) {// && !Py_TYPE((PyObject*) op)->tp_traverse)
+	if (PyType_Check(op)) {// && !Py_TYPE((PyObject*) op)->tp_traverse)
+		//todo: use heap-types own traverse method for heap-types again.
 //		jputsLong(__LINE__);
 		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
 	} else trav = Py_TYPE((PyObject*) op)->tp_traverse;
@@ -2138,8 +2130,6 @@ void JyNI_GC_ExploreObject(PyObject* op)
 //	jputs(__FUNCTION__);
 //	jputsLong(op);
 //	jputs(Py_TYPE(op)->tp_name);
-//	debugPy(op);
-	//jputsPy(op);
 	/*
 	 * Note that not only GC-objects (in terms of PyObject_IS_GC) must be explored,
 	 * but every traversable object. Non-heap types are an example of this. They
@@ -2163,51 +2153,26 @@ void JyNI_GC_ExploreObject(PyObject* op)
 //	}
 	if (Is_Static_PyObject(op) || IS_UNEXPLORED(op))
 	{ //For now we force re-exploration of static PyObjects whenever it occurs.
-//		jputs("explore object:");
-//		puts(Py_TYPE((PyObject*) op)->tp_name);
-	//	jputsLong(op);
-	//	if (AS_GC(op)->gc.gc_refs == GC_UNTRACKED) {
-	//		jputs("GC explore untracked object... this will cause problems...");
-	//	}
-		//jputs("count references...");
-//		if (PyObject_IS_GC(op))
-//			AS_GC(op)->gc.gc_refs = GC_EXPLORING;
-//		if (Py_TYPE((PyObject*) op)->tp_traverse) {
-//			int refCount = 0;
-//			Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_count, &refCount);
-//			//For now we only explore tracked objects. Only in GIL-free mode this will be different.
-//			//Py_TYPE((PyObject*) op)->tp_traverse((PyObject*) op, (visitproc)visit_explore, NULL);
-//		} //else {
-		/* This is okay to happen since mirrored objects are explored
-		 * and get a JyGCHead even if they are not subject to GC.
-		 */
-	//	}
+
 		JyObject* jy;
 		env();
 		if (PyObject_IS_GC(op))
 			AS_GC(op)->gc.gc_refs = GC_EXPLORED; // Todo: Use GC_EXPLORED vs GC_EXPLORING properly
-		//else {jputs("Explored non-gc: "); jputs(Py_TYPE(op)->tp_name); jputsLong(Is_Static_PyObject(op));}
 		else if (!Is_Static_PyObject(op))
 		{
-//			jputs("explore CStub");
 			/* Pure CStub-case (as pure CStubs are the only tracked non-gc objects,
 			 * except some static ones.) Just create GCHead and get out of here: */
 			jy = AS_JY_NO_GC(op);
 			JyNI_GC_ObtainJyGCHead(env, op, jy);
-//			debugContext("explore CStub done", op, "");
 			return;
 		}
-
 		jy = AS_JY_WITH_GC(op);
 		/* Note that JyNI_GC_ObtainJyGCHead checks again for staticness and doesn't
 		 * use jy in static case (which would otherwise result in a memory flaw).*/
 		jobject jyHead = JyNI_GC_ObtainJyGCHead(env, op, jy);
-
 		/* perform exploration here and add all reachable JyGCHeads as links to jyHead.
 		 * If the object is JyNI-GC-Var, use a list or something as head-links.*/
 		jobject linkHeads = exploreJyGCHeadLinks(env, op, jy);
-//		jputs("set linkHeads... ");
-//		if ((*env)->IsSameObject(env, linkHeads, NULL)) jputs("linkHeads NULL");
 		(*env)->CallVoidMethod(env, jyHead, traversableGCHeadSetLinks, linkHeads);
 	}
 	/*

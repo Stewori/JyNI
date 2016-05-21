@@ -1408,13 +1408,13 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 
 	if (PyType_IS_GC(tme->py_type))
 	{
-		//jputs("alloc gc");
+//		jputs("alloc gc");
 		obj = _PyObject_GC_Malloc(size);
 		if (obj == NULL) return PyErr_NoMemory();
 		AS_JY_WITH_GC(obj)->flags |= tme->flags;
 	} else
 	{
-		//jputs("ordinary alloc");
+//		jputs("ordinary alloc");
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->jy = (jobject) tme; //tme->jy_class;
@@ -1428,12 +1428,20 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 
 	memset(obj, '\0', size);
 
+	/* We cannot use PyType_Check here, because obj->ob_type might not be fully
+	 * initialized and not yet recognized as a Type-subclass.
+	 * (e.g. <type 'java.lang.Class'> from Jython-side can cause problems here)
+	 */
+	if (tme == &builtinTypes[TME_INDEX_Type])
+		((PyTypeObject*) obj)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+
 	if (tme->py_type->tp_flags & Py_TPFLAGS_HEAPTYPE)
 		Py_INCREF(tme->py_type);
 
 	//In contrast to var variant of this method, no decision needed here:
 	PyObject_INIT(obj, tme->py_type);
-
+//	if (AS_JY(obj) == AS_JY_WITH_GC(obj)) jputs("confirm gc");
+//	else jputs("confirm no-gc");
 	if (PyType_IS_GC(tme->py_type))
 		_JyNI_GC_TRACK(obj);
 	return obj;
@@ -1469,11 +1477,13 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 
 	if (PyType_IS_GC(tme->py_type))
 	{
+//		jputs("alloc gc var");
 		obj = _PyObject_GC_Malloc(size);
 		if (obj == NULL) return PyErr_NoMemory();
 		AS_JY_WITH_GC(obj)->flags |= tme->flags;
 	} else
 	{
+//		jputs("ordinary alloc var");
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->jy = (jobject) tme; //tme->jy_class;
@@ -1494,7 +1504,8 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
 		PyObject_INIT(obj, tme->py_type);
 	else
 		PyObject_INIT_VAR((PyVarObject *)obj, tme->py_type, nitems);
-
+//	if (AS_JY(obj) == AS_JY_WITH_GC(obj)) jputs("confirm gc");
+//	else jputs("confirm no-gc");
 	if (PyType_IS_GC(tme->py_type))
 		_JyNI_GC_TRACK(obj);
 	return obj;
@@ -1505,6 +1516,7 @@ inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems)
  */
 inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, Py_ssize_t nitems)
 {
+//	jputs(__FUNCTION__);
 	PyObject *obj;
 //	size_t typesize = _PyObject_VAR_SIZE(tme->py_type, nitems+1);
 //	size_t size = (tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : typesize;
@@ -1526,17 +1538,18 @@ inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, 
 	 * if the surrounding blocks are freed while the middle is still in use. On the other hand it might
 	 * be a rarely needed feature, so might not be worth any further optimization.
 	 */
-
+//	jputs(subtype->tp_name);
 	size_t size = _PyObject_VAR_SIZE(subtype, nitems+1);
 	/* note that we need to add one, for the sentinel */
-
 	if (PyType_IS_GC(subtype))
 	{
+//		jputs("alloc gc subtype");
 		obj = _PyObject_GC_Malloc(size);
 		if (obj == NULL) return PyErr_NoMemory();
 		AS_JY_WITH_GC(obj)->flags |= tme->flags;
 	} else
 	{
+//		jputs("ordinary alloc subtype");
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->jy = (jobject) tme;
@@ -1557,6 +1570,12 @@ inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, 
 		PyObject_INIT(obj, subtype);
 	else
 		PyObject_INIT_VAR((PyVarObject *)obj, subtype, nitems);
+
+	if (PyType_Check(obj))
+		((PyTypeObject*) obj)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+
+//	if (AS_JY(obj) == AS_JY_WITH_GC(obj)) jputs("confirm gc");
+//	else jputs("confirm no-gc");
 
 	if (PyType_IS_GC(subtype))
 		_JyNI_GC_TRACK(obj);
@@ -1579,12 +1598,14 @@ inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 
 	if (PyType_IS_GC(type))
 	{
+		jputs("native alloc gc");
 		obj = _PyObject_GC_Malloc(size);
 		if (obj == NULL) return PyErr_NoMemory();
 		JyObject* jy = AS_JY_WITH_GC(obj);
 		jy->flags |= JY_CPEER_FLAG_MASK;
 	} else
 	{
+		jputs("ordinary native alloc");
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->flags = JY_CPEER_FLAG_MASK;
@@ -1594,15 +1615,14 @@ inline PyObject* JyNI_AllocNative(PyTypeObject* type)
 		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
 	}
 
-	//if (obj == NULL) return PyErr_NoMemory();
-
 	memset(obj, '\0', size);
 
 	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
 		Py_INCREF(type);
 
 	PyObject_INIT(obj, type);
-
+	if (AS_JY(obj) == AS_JY_WITH_GC(obj)) jputs("confirm gc");
+	else jputs("confirm no-gc");
 	if (PyType_IS_GC(type))
 		_JyNI_GC_TRACK_NoExplore(obj);
 	return obj;
@@ -1632,24 +1652,19 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 	//jputsLong((jlong) offsetof(PyTypeObject, tp_name));
 	if (PyType_IS_GC(type))
 	{
+//		jputs("alloc native gc var");
 		obj = _PyObject_GC_Malloc(size);
 		if (obj == NULL) return PyErr_NoMemory();
 		JyObject* jy = AS_JY_WITH_GC(obj);
 		jy->flags |= JY_CPEER_FLAG_MASK;
-//		jputs("JyNI_AllocNativeVar GC-allocated jy:");
-//		jputsLong((jlong) jy);
-//		jputsLong(size+sizeof(JyObject));
 	} else
 	{
+//		jputs("ordinary alloc native var");
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
-//		jputs("JyNI_AllocNativeVar allocated jy:");
-//		jputsLong((jlong) jy);
-//		jputsLong(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->flags = JY_CPEER_FLAG_MASK;
 		jy->attr = NULL;
 		jy->jy = NULL;
-		//jputsLong(jy);
 		obj = (PyObject*) FROM_JY_NO_GC(jy);
 		JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
 	}
@@ -1668,8 +1683,9 @@ inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems)
 		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
 
 	if (PyType_Check(obj))
-		((PyTypeObject*) obj)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
-
+		((PyTypeObject*) obj)->tp_flags |= Py_TPFLAGS_HEAPTYPE;// | Py_TPFLAGS_TYPE_SUBCLASS;
+//	if (AS_JY(obj) == AS_JY_WITH_GC(obj)) jputs("confirm gc");
+//	else jputs("confirm no-gc");
 	if (PyType_IS_GC(type))
 		_JyNI_GC_TRACK(obj);
 		//_JyNI_GC_TRACK_NoExplore(obj);
@@ -1764,8 +1780,8 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 	{
 		//dest = tme->py_type->tp_itemsize ? JyNI_AllocVar(tme) : JyNI_Alloc(tme);
 		dest = JyNI_Alloc(tme);
-		if (tme == &builtinTypes[0])
-			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+		if (tme == &builtinTypes[TME_INDEX_Type])
+			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;// | Py_TPFLAGS_TYPE_SUBCLASS;
 		jy = AS_JY(dest);
 		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
 		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
@@ -1782,13 +1798,6 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 	}
 	if (dest)
 	{
-		//if dest is a PyType, mark it as heap-type
-		//(PyType_Ready won't be called, since JyNI
-		//truncates heap-PyType objects, so we have
-		//to set the flag here)
-		if (PyType_CheckExact(dest))
-			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
-
 		jy = AS_JY(dest);
 		if (jy->flags & SYNC_NEEDED_MASK)
 			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
@@ -1821,23 +1830,60 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 	return dest;
 }
 
+inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject src)
+{
+//	jputs(__FUNCTION__);
+//	jputs(tme->py_type->tp_name);
+	PyTypeObject* dest = NULL;
+	JyObject* jy;
+	env(NULL);
+	dest = (PyTypeObject*) JyNI_Alloc(tme);
+	dest->ob_type = dest;
+	dest->tp_flags |= Py_TPFLAGS_HEAPTYPE | Py_TPFLAGS_TYPE_SUBCLASS | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE;
+	jy = AS_JY(dest);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	tme->sync->jy2py(src, dest);
+
+	if (jy->flags & SYNC_NEEDED_MASK)
+		JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);
+	jy->jy = (*env)->NewWeakGlobalRef(env, src);
+	if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	}
+
+	/* Take care for already existing Jython-weak references */
+	jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src);
+	if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) {
+		gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory);
+	}
+	if (gref) {
+		//jputs("native call to JyNIGlobalRef_initNativeHandle");
+		Py_INCREF(dest);
+		incWeakRefCount(jy);
+		(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest);
+	}
+
+	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+	if (PyObject_IS_GC(dest)) {
+		JyNI_GC_ExploreObject(dest);
+	}
+	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+	 * JY_INITIALIZED_FLAG_MASK has been set.
+	 */
+	return dest;
+}
+
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
- *
- * Not intended for Heap-Types.
- * These don't have an associated TypeMapEntry anyway.
  */
 inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 {
 //	jputs(__FUNCTION__);
 //	jputs(subtype->tp_name);
-
-//	jputsLong(subtype->tp_basicsize);
-//	jputsLong(_PyObject_SIZE(subtype));
-//	jputsLong(sizeof(PyObject));
-//	if (subtype->tp_base)
-//		jputs(subtype->tp_base->tp_name);
-//	else jputs("has no base");
+//	jputsLong(subtype->tp_flags);
+//	JyNI_jprintJ(src);
 
 	PyObject* dest = NULL;
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromSubType(subtype);
@@ -1859,9 +1905,11 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 
 			//printf("PyObject-size: %u\n", (jlong) sizeof(PyObject));
 			//PyObject_GC_Track(dest);
-			if (dest && tme->sync && tme->sync->jy2py)
+			if (dest && tme->sync && tme->sync->jy2py) {
+//				if (PyType_CheckExact(subtype))
+//					((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
 				tme->sync->jy2py(src, dest);
-			//else jputs("no sync needed");
+			}
 		}
 	} else
 	{
@@ -1869,7 +1917,6 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 //		jputs(subtype->tp_name);
 
 		size_t size = _PyObject_SIZE(subtype);
-
 		JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
 		if (jy == NULL) return (PyObject *) PyErr_NoMemory();
 		jy->jy = NULL;
@@ -1891,7 +1938,7 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 		}
 		JyObject* jy = AS_JY(dest);
 		if (jy->flags & SYNC_NEEDED_MASK)
-			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
+			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);
 		env(NULL);
 		jy->jy = (*env)->NewWeakGlobalRef(env, src);
 		if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
@@ -1912,14 +1959,30 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 
 		// Add flag to enforce delegation to Java:
 		jy->flags |= JY_SUBTYPE_FLAG_MASK;
-
 		jy->flags |= JY_INITIALIZED_FLAG_MASK;
-		if (PyObject_IS_GC(dest))
+		if (PyObject_IS_GC(dest)) {
 			JyNI_GC_ExploreObject(dest);
+		}
 		/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
 		 * JY_INITIALIZED_FLAG_MASK has been set.
 		 */
 	}
+	return dest;
+}
+
+inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
+{
+//	jputs(__FUNCTION__);
+	env(NULL);
+	jstring jName = (*env)->GetObjectField(env, srctype, pyTypeNameField);
+	cstr_from_jstring(cName, jName);
+//	jputs(cName);
+	PyTypeObject* dest =
+			JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);
+	JyObject* jy = AS_JY(dest);
+	// Add flag to enforce delegation to Java:
+	jy->flags |= JY_SUBTYPE_FLAG_MASK;
+
 	return dest;
 }
 
@@ -1930,7 +1993,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 {
 //	jputs(__FUNCTION__);
 //	jputsLong(jythonPyObject);
-//	jputsLong(__LINE__);
 	if (jythonPyObject == NULL) return NULL;
 	//puts("Transform jython jobject to PyObject*...");
 //	if (jythonPyObject == JyNone) return Py_None;
@@ -1982,6 +2044,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		er = (PyObject*) JyNI_PyExceptionType_FromJythonExceptionType(jythonPyObject);
 		if (er) return er;
 		/* heap-type case: Proceed same way like for ordinary PyObjects. */
+//		jputs("heap-type case!");
 	}
 	if (checkCPeer && (*env)->IsInstanceOf(env, jythonPyObject, cPeerInterface))
 	{
@@ -2011,7 +2074,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return handle;
 		}
 	}
-
 	//initialize PyObject*...
 	//find tme:
 	jstring tpName = (*env)->CallStaticObjectMethod(env, JyNIClass,
@@ -2047,24 +2109,48 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return er;
 		} else
 		{
-			// We finally try a hack for some special new-style classes:
-			// todo: Remove this
-//			jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
-//					JyNI_getTypeOldStyleParent, jythonPyObject);
-//			if (!(*env)->IsSameObject(env, old_cls, NULL)) {
-//				return JyNI_InitPyObject(&specialPyInstance, jythonPyObject);
-//			}
-
 			jobject tpe = (*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType);
-			PyTypeObject* pytpe = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(tpe);
-
+//			jputsLong(__LINE__);
+//			JyNI_jprintJ(tpe);
+//			JyNI_jprintJ(jythonPyObject);
+//			jobject old_cls0 = (*env)->CallStaticObjectMethod(env, JyNIClass,
+//									JyNI_getTypeOldStyleParent, jythonPyObject);
+//			if (old_cls0) JyNI_jprintJ(old_cls0);
+			PyTypeObject* pytpe;
+			PyObject* result;
+			if ((*env)->IsSameObject(env, jythonPyObject, tpe))
+			{
+//				jputsLong(__LINE__);
+//				jputs(cName);
+//				JyNI_jprintJ(tpe);
+//				JyNI_jprintJ(jythonPyObject);
+				pytpe = JyNI_InitPyObjectNativeTypePeer(tpe);
+				result = pytpe;//JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
+//				pytpe = NULL;
+//				jputs(pytpe->tp_name);
+			} else
+			{
+				pytpe = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(tpe);
+//				jputsLong(__LINE__);
+				result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
+			}
+//			if (!pytpe)
+//			{
+//				jputs("type seems to be not convertible. Try old hack...");
+//				// We finally try a hack for some special new-style classes:
+//				// todo: Remove this
+//				jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
+//						JyNI_getTypeOldStyleParent, jythonPyObject);
+//				//jputsLong(old_cls);
+//				if (!old_cls) return NULL;
+//			}
 //			if (!pytpe) jputs("pytpe is NULL");
 //			else jputs(((PyTypeObject*) pytpe)->tp_name);
 //			if ((*env)->IsInstanceOf(env, jythonPyObject, pyStringClass)) jputs("is string J");
 //			if (PyType_FastSubclass((PyTypeObject*) pytpe, Py_TPFLAGS_STRING_SUBCLASS)) jputs("is string fast");
 //			if (PyType_IsSubtype(pytpe, &PyString_Type)) jputs("is string");
 			//JyNI_printJInfo(jythonPyObject);
-			PyObject* result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
+			//PyObject* result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
 			if (!result)
 			{
 				jputs("JyNI-warning: Unable to handle object:");
@@ -2506,11 +2592,10 @@ inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type)
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  *
  * No support for derived types for now...
- * Only builtin types or native declared types work.
+ * Only builtin types or natively declared types work.
  */
 inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTypeObject)
 {
-// Todo: Some issue here breaks TestTk.java
 //	jputs(__FUNCTION__);
 	env(NULL);
 	if ((*env)->IsInstanceOf(env, jythonPyTypeObject, pyCPeerTypeClass))
@@ -2531,9 +2616,6 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 //	(*env)->ReleaseStringUTFChars(env, name, utf_string);
 	cstr_from_jstring(mName, name);
 	int i;
-//	jputsLong(__LINE__);
-//	if ((*env)->IsSameObject(env, name, NULL)) jputs("name is NULL");
-//	if (!mName) jputs("mName is NULL");
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
 		if (builtinTypes[i].py_type != NULL && strcmp(builtinTypes[i].py_type->tp_name, mName) == 0)

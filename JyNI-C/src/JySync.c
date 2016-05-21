@@ -943,7 +943,6 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 //	jputsLong(dest);
 	PyTypeObject* tp = (PyTypeObject*) dest;
 	env();
-
 	//name:
 	jobject jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetName);
 	//jobject jtmp = (*env)->GetObjectField(env, src, pyTypeNameField);
@@ -953,12 +952,10 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	char* cname = malloc(strlen(utf_string)+1);
 	strcpy(cname, utf_string);
 	(*env)->ReleaseStringUTFChars(env, jtmp, utf_string);
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(dest), JyAttributeTypeName, cname, JY_ATTR_OWNS_VALUE_FLAG_MASK);
-	tp->tp_name = cname;
-//	jputs("Sync-Type:");
 //	jputs(cname);
-//	jputsLong(dest);
-//	jputsLong(AS_JY_WITH_GC(dest));
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY(dest), JyAttributeTypeName, cname, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	tp->tp_name = cname;
+
 	//SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(AS_JY_WITH_GC(dest), JyAttributeSyncFunctions);
 
 	//dict:
@@ -969,12 +966,14 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBase);
 	tp->tp_base = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(jtmp);
 
+	// Note that basicsize must be set before bases, because some bases access basicsize
+	// during convertion to native objects.
+	//basicsize:
+	tp->tp_basicsize = tp->tp_base == Py_None ? sizeof(PyObject) : tp->tp_base->tp_basicsize;
+
 	//bases:
 	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBases);
 	tp->tp_bases = JyNI_PyObject_FromJythonPyObject(jtmp);
-
-	//basicsize:
-	tp->tp_basicsize = tp->tp_base == Py_None ? sizeof(PyObject) : tp->tp_base->tp_basicsize;
 
 	//We try to get away with just setting this to default for now:
 	tp->tp_flags |= Py_TPFLAGS_DEFAULT;
@@ -991,15 +990,12 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	}
 
 	//mro:
-	if (!tp->tp_mro) {
-		//jputsLong(__LINE__);
+	if (!tp->tp_mro)
+	{
 		jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);
-		//JyNI_jprintJ(jtmp);
 		PyObject* mro = JySync_Init_PyTuple_From_JyTupleForMRO(jtmp);
 		PyTuple_SET_ITEM(mro, 0, tp);
-		//PyObject* mro = JyNI_PyObject_FromJythonPyObject(jtmp);
 		tp->tp_mro = mro;
-		//tp->tp_mro = JyNI_PyObject_FromJythonPyObject(jtmp);
 
 		// Currently tp_traverse is out-commented.
 		// Once we tested and stabilized heap-type exploration

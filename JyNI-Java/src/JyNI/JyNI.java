@@ -590,6 +590,8 @@ public class JyNI {
 
 	public static PyClass getTypeOldStyleParent(PyObject obj) {
 		PyObject bases = obj.getType().getBases();
+		System.out.println(obj);
+		System.out.println(bases);
 		PyObject result;
 		for (int i = 0; i < bases.__len__(); ++i) {
 			result = bases.__getitem__(i);

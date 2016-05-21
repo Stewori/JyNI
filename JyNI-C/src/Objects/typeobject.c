@@ -1527,6 +1527,11 @@ classic_mro(PyObject *cls)
 {
 	PyObject *mro;
 
+//	if (!PyClass_Check(cls)) {
+//		jputsLong(__LINE__);
+//		jputsPy(cls);
+//		jputsPy(cls->ob_type);
+//	}
 	assert(PyClass_Check(cls));
 	mro = PyList_New(0);
 	if (mro != NULL) {
@@ -1735,6 +1740,8 @@ pmerge(PyObject *acc, PyObject* to_merge) {
 static PyObject *
 mro_implementation(PyTypeObject *type)
 {
+//	jputs(__FUNCTION__);
+//	jputsPy(type);
 	Py_ssize_t i, n;
 	int ok;
 	PyObject *bases, *result;
@@ -1760,14 +1767,23 @@ mro_implementation(PyTypeObject *type)
 	if (to_merge == NULL)
 		return NULL;
 
+//	for (i = 0; i < n; i++) {
+//			PyObject *base = PyTuple_GET_ITEM(bases, i);
+//			jputsPy(base);
+//			jputsPy(base->ob_type);
+//			jputs("");
+//	}
 	for (i = 0; i < n; i++) {
 		PyObject *base = PyTuple_GET_ITEM(bases, i);
 		PyObject *parentMRO;
 		if (PyType_Check(base))
+		{
 			parentMRO = PySequence_List(
 				((PyTypeObject*)base)->tp_mro);
-		else
+		} else
+		{
 			parentMRO = classic_mro(base);
+		}
 		if (parentMRO == NULL) {
 			Py_DECREF(to_merge);
 			return NULL;
@@ -4049,8 +4065,9 @@ add_methods(PyTypeObject *type, PyMethodDef *meth)
 static int
 add_members(PyTypeObject *type, PyMemberDef *memb)
 {
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
 	PyObject *dict = type->tp_dict;
-
 	for (; memb->name != NULL; memb++) {
 		PyObject *descr;
 		if (PyDict_GetItemString(dict, memb->name))
@@ -4418,7 +4435,7 @@ static int add_operators(PyTypeObject *);
 int
 PyType_Ready(PyTypeObject *type)
 {
-//	puts("PyType_Ready");
+//	jputs(__FUNCTION__);
 //	if (type == Py_None) puts("Called with None");
 	//puts(type ? PyString_AS_STRING(PyObject_Str(type)) : "NULL-PyObject");
 //	jputs(type->tp_name);
