@@ -26,22 +26,18 @@
  * License along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef INCLUDE_JYALLOC_H_
+#define INCLUDE_JYALLOC_H_
 
-/*
- * JySet.h
- *
- *  Created on: 02.08.2013, 07:29:20
- *      Author: Stefan Richthofer
- */
+#include <JyNI.h>
 
-#ifndef JYSET_H_
-#define JYSET_H_
+inline PyObject* JyNI_Alloc(TypeMapEntry* tme);
+inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems);
+inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, Py_ssize_t nitems);
+inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems);
+inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype);
+inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme);
+inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject src);
 
-/*
- * Class:     JyNI_JyNI
- * Method:    JySet_putSize
- * Signature: (JI)V
- */
-void JySet_putSize(JNIEnv *env, jclass class, jlong handle, jint size);
 
-#endif /* JYSET_H_ */
+#endif /* INCLUDE_JYALLOC_H_ */

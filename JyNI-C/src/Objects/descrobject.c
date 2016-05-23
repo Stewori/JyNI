@@ -34,8 +34,9 @@
 
 /* Descriptors -- a new, flexible way to describe attributes */
 
-#include "JyNI.h"
-#include "structmember_JyNI.h" /* Why is this not included in Python.h? */
+#include <JyNI.h>
+#include <JyAlloc.h>
+#include <structmember_JyNI.h> /* Why is this not included in Python.h? */
 
 static void
 descr_dealloc(PyDescrObject *descr)
