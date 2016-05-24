@@ -42,10 +42,10 @@
 #include <jni.h>
 #include <Python_JyNI.h>
 //#include <JyNI_JyNI.h>
-#include "JythonSite.h"
-#include "JyList.h"
-#include "JyTState.h"
-#include "JyNI-Debug.h"
+#include <JythonSite.h>
+#include <JyList.h>
+#include <JyTState.h>
+#include <JyNI-Debug.h>
 
 // We could alternatively include JyNI-Java/include/JyNI_JyNI.h,
 // but for now it feels more lightweight to simply redefine the
@@ -779,37 +779,16 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 inline jstring JyNI_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op);
 
-//Use PyErr_* methods with converted PyObject*-Exception instead!
 /* Exception-Stuff: */
-//inline void JyNI_JyErr_SetString(jobject exception, const char *string);
-//inline void JyNI_JyErr_SetObject(jobject exception, PyObject *value);
-//inline void JyNI_JyErr_SetExceptionObject(jobject exception);
-//inline int JyNI_JyErr_ExceptionMatches(jobject exc);
-//inline PyObject* JyNI_JyErr_Format(jobject exception, const char *format, ...);
 void JyErr_SetFromJNIEnv();
 
 /* JyNI-Stuff: */
-//inline PyObject* JyNI_GenericAlloc(PyTypeObject* type, Py_ssize_t nitems);
-//inline PyObject* JyNI_Alloc(TypeMapEntry* tme);
-//inline PyObject* JyNI_AllocVar(TypeMapEntry* tme, Py_ssize_t nitems);
-//inline PyObject* JyNI_AllocSubtypeVar(PyTypeObject* subtype, TypeMapEntry* tme, Py_ssize_t nitems);
-//inline PyObject* JyNI_AllocNative(PyTypeObject* type);
-//inline PyObject* JyNI_AllocNativeVar(PyTypeObject* type, Py_ssize_t nitems);
-//inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme);
 inline jint JyNI_GetDLOpenFlags();
 inline void JyNI_CleanUp_JyObject(JyObject* obj);
 inline jobject JyNI_GetJythonDelegate(PyObject* v);
-//Should be used as replacement for PyObject_Del, taking care of JyObjects:
-//void JyNI_Del(void * obj);
-//inline void JyNI_Py_CLEAR(jobject obj);
-//inline char* PyLongToJavaSideString(PyObject* pl);
-//inline void JyNI_printJ(jobject obj);
 inline void JyNI_printJInfo(jobject obj);
 inline void JyNI_jprintHash(jobject obj);
 inline void JyNI_jprintJ(jobject obj);
-//inline void jputs(const char* msg);
-//inline void jputsLong(jlong val);
-//inline void jputsPy(PyObject* o);
 
 /* To save lookups: */
 inline void _PyObject_GC_InitJy(PyObject *op, TypeMapEntry* tme);
@@ -858,7 +837,7 @@ inline int decWeakRefCount(JyObject* referent);
 extern PyStringObject *nullstring;
 extern PyUnicodeObject *unicode_empty;
 
-//Other hidden stuff:
+/* Other hidden stuff: */
 typedef struct {
 	PyObject_HEAD
 	PyObject *cm_callable;

@@ -34,7 +34,7 @@
 
 #include <JyNI.h>
 #include <JyAlloc.h>
-#include "structmember_JyNI.h"
+#include <structmember_JyNI.h>
 
 #include <ctype.h>
 
