@@ -179,16 +179,11 @@ PyErr_SetString(PyObject *exception, const char *string)
 PyObject *
 PyErr_Occurred(void)
 {
+//	jputs(__FUNCTION__);
 //	env(NULL);
 //	return JyNI_PyObject_FromJythonPyObject(
 //		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Occurred));
 	PyThreadState *tstate = PyThreadState_GET();
-	//jputs("got thread state");
-	//jputsLong(tstate);
-
-//	PyObject* res = tstate->curexc_type;
-//	jputs("got result in PyErr_Occurred");
-//	return res;
 	return tstate->curexc_type;
 }
 
@@ -396,6 +391,7 @@ PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 void
 PyErr_Fetch(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 {
+//	jputs(__FUNCTION__);
 //	env();
 //	jobject pyExc = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyErr_Fetch);
 //	if (pyExc)
@@ -425,7 +421,7 @@ _PyErr_Clear(void)
 void
 PyErr_Clear(void)
 {
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
 //	env();
 //	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIPyErr_Clear);
 	PyErr_Restore(NULL, NULL, NULL);
@@ -719,7 +715,8 @@ PyErr_BadInternalCall(void)
 PyObject *
 PyErr_Format(PyObject *exception, const char *format, ...)
 {
-	//puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
+//	jputs(format);
 	va_list vargs;
 	PyObject* string;
 
@@ -730,7 +727,7 @@ PyErr_Format(PyObject *exception, const char *format, ...)
 #endif
 
 	string = PyString_FromFormatV(format, vargs);
-	//puts(PyString_AS_STRING(string));
+//	jputs(PyString_AS_STRING(string));
 	PyErr_SetObject(exception, string);
 	Py_XDECREF(string);
 	va_end(vargs);

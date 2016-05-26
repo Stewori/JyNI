@@ -868,6 +868,8 @@ public class JyNI {
 	}
 
 	//--------------errors-section-----------------
+	private static PyException JyNI_exc;
+
 	public static PyObject exceptionByName(String name) {
 		//System.out.println("look for exception: "+name);
 		String rawName = name;
@@ -912,19 +914,27 @@ public class JyNI {
 	}*/
 
 	protected static PyObject maybeExc(PyObject obj) throws PyException {
-		if (obj == null && Py.getThreadState().exception != null) {
-//			System.out.println(Py.getThreadState().exception.getMessage());
-//			System.out.println(Py.getThreadState().exception.value);
-			throw Py.getThreadState().exception;
+		if (obj == null && JyNI_exc != null) {
+			PyException tmp_exc = JyNI_exc;
+			JyNI_exc = null;
+			throw tmp_exc;
 		} else return obj;
 	}
 
 	protected static void maybeExc(int res) throws PyException {
-		if (res != 0 && Py.getThreadState().exception != null) throw Py.getThreadState().exception;
+		if (res != 0 && JyNI_exc != null) {
+			PyException tmp_exc = JyNI_exc;
+			JyNI_exc = null;
+			throw tmp_exc;
+		}
 	}
 
 	protected static void maybeExc() throws PyException {
-		if (Py.getThreadState().exception != null) throw Py.getThreadState().exception;
+		if (JyNI_exc != null) {
+			PyException tmp_exc = JyNI_exc;
+			JyNI_exc = null;
+			throw tmp_exc;
+		}
 	}
 
 	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
@@ -932,37 +942,10 @@ public class JyNI {
 //		System.out.println(value);
 		if (type == null) type = Py.None;
 		if (value == null) value = Py.None;
+		JyNI_exc = new PyException(type, value, traceback);
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
-		tstate0.exception = new PyException(type, value, traceback);
-//		System.out.println(tstate0.exception);
-//		PyException cur_exc = cur_excLookup.remove(tstate0);
-//		if (cur_exc != null)
-//		{
-//			tstate0.exception = cur_exc;
-//		}
-		//System.out.println("JyErr_InsertCurExc 3");
+		tstate0.exception = JyNI_exc;
 	}
-
-	/*
-	These simplified versions are currently not used.
-
-	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type, PyObject value) {
-		if (type == null) type = Py.None;
-		if (value == null) value = Py.None;
-		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
-		tstate0.exception = new PyException(type, value);
-	}
-
-	public static void JyErr_InsertCurExc(ThreadState tstate, PyObject type) {
-		if (type == null) type = Py.None;
-		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
-		tstate0.exception = new PyException(type);
-	}
-
-	public static void JyErr_InsertCurExc(ThreadState tstate) {
-		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
-		tstate0.exception = new PyException();
-	}*/
 
 	public static void JyErr_PrintEx(boolean set_sys_last_vars, ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback) {
 		ThreadState tstate0 = tstate == null ? Py.getThreadState() : tstate;
@@ -974,6 +957,16 @@ public class JyNI {
 			PyException exc = new PyException(type, value, traceback);
 			exc.normalize();
 			Py.printException(exc);
+		}
+	}
+
+	public static void JyErr_DebugPrintEx() {
+		ThreadState tstate0 = Py.getThreadState();
+		PyException exc = tstate0.exception;
+		System.out.println(exc);
+		if (exc != null) {
+			System.out.println(exc.type);
+			System.out.println(exc.value);
 		}
 	}
 

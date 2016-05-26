@@ -595,7 +595,6 @@ if _os.name in ("nt", "ce"): # COM stuff
             return 0 # S_OK
         return ccom.DllCanUnloadNow()
 
-#This line causes nullpointerexception
 from ctypes._endian import BigEndianStructure, LittleEndianStructure
 
 # Fill in specifically-sized types

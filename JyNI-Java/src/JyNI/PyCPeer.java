@@ -160,6 +160,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __get__(PyObject obj, PyObject type) {
+//		System.out.println("PyCPeer.__get__ "+obj+"  "+type);
 		PyObject result = JyNI.maybeExc(JyNI.descr_get(objectHandle, obj, type,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 		return result != null ? result : super.__get__(obj, type);
