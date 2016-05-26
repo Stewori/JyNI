@@ -1747,6 +1747,11 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
  */
 inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
 {
+//	jputs(__FUNCTION__);
+//	if (tme) jputs("tme");//tme->py_type->tp_name);
+//	else jputs("no tme");
+//	jputs(src->ob_type->tp_name);
+//	jputsPy(src->ob_type->tp_bases); //bool_arrtype_new
 	jobject dest = NULL;
 	env(NULL);
 	if (Py_TYPE(src) != tme->py_type) {
@@ -1846,7 +1851,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	 * Heap-types are treated like ordinary objects.
 	 * Note: Don't confuse the following line with checking op->ob_type rather than op itself.
 	 */
-//	jboolean dbg = strcmp("numpy.ufunc", Py_TYPE(op)->tp_name) == 0;
 	env(NULL);
 	if (PyType_Check(op) && !PyType_HasFeature((PyTypeObject*) op, Py_TPFLAGS_HEAPTYPE))
 	{
@@ -1920,14 +1924,15 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	//if (bl) jputs("converting bool2");
 	//jputsLong(__LINE__);
 	TypeMapEntry* tme;
-	if (jy->jy != NULL)
+	if (jy->jy)
 	{
-		//if (bl) jputsLong(__LINE__);
+		//if (bl)
 		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = (TypeMapEntry*) jy->jy;
 		//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 	} else {
-		//if (bl) jputsLong(__LINE__);
+		//if (bl)
+		//jputsLong(__LINE__);
 		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
 		//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}

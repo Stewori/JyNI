@@ -61,9 +61,14 @@
 //PyObject *curexc_type;
 //PyObject *curexc_value;
 //PyObject *curexc_traceback;
+
+//PyObject *exc_type; (not used by JyNI)
+//PyObject *exc_value; (not used by JyNI)
+//PyObject *exc_traceback; (not used by JyNI)
+//PyObject *dict;
 #define TS_TRUNCATED_SIZE (sizeof(struct _ts*) + sizeof(PyInterpreterState*) \
 		+ sizeof(struct _frame*) + 3*sizeof(int) + 2*sizeof(Py_tracefunc) \
-		+ 5*sizeof(PyObject*))
+		+ 9*sizeof(PyObject*))
 //#define TS_TRUNCATED_SIZE sizeof(PyThreadState)
 
 inline void JyErr_InsertCurExc();

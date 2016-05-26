@@ -39,7 +39,6 @@
 ######################################################################
 import sys
 from ctypes import *
-from JyNI import JyNI
 
 _array_type = type(Array)
 

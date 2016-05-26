@@ -82,7 +82,8 @@ jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState
 {
 	//TODO jyTState is currently not used here. Maybe clean it away later...
 //	jputs("init native ThreadState...");
-	PyThreadState* tstate = (PyThreadState*) PyObject_RawMalloc(TS_TRUNCATED_SIZE);
+	//PyThreadState* tstate = (PyThreadState*) PyObject_RawMalloc(TS_TRUNCATED_SIZE);
+	PyThreadState* tstate = (PyThreadState*) malloc(TS_TRUNCATED_SIZE);
 	tstate->next = NULL;
 	tstate->interp = NULL;
 	tstate->frame = NULL;
@@ -101,6 +102,10 @@ jlong JyTState_initNativeThreadState(JNIEnv *env, jclass class, jobject jyTState
 	tstate->curexc_type = NULL;
 	tstate->curexc_value = NULL;
 	tstate->curexc_traceback = NULL;
+	tstate->exc_type = NULL; // (not used)
+	tstate->exc_value = NULL; // (not used)
+	tstate->exc_traceback = NULL; // (not used)
+	tstate->dict = NULL;
 	TS_SET_JY(tstate, (*env)->NewWeakGlobalRef(env, threadState));
 //	jputs("done");
 //	jputsLong(tstate);
@@ -120,10 +125,14 @@ void JyTState_clearNativeThreadState(JNIEnv *env, jclass class, jlong threadStat
 {
 	(*env)->DeleteWeakGlobalRef(env, TS_GET_JY((PyThreadState*) threadState));
 	if (!--((PyThreadState*) threadState)->JyNI_gilstate_counter)
+	{
+		PyThreadState_Clear((PyThreadState*) threadState);
 		_delNativeThreadState((PyThreadState*) threadState);
+	}
 }
 
 void _delNativeThreadState(PyThreadState* threadState)
 {
-	PyObject_RawFree(threadState);
+	//PyObject_RawFree(threadState);
+	free(threadState);
 }

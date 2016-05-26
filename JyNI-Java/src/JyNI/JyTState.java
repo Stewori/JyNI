@@ -40,7 +40,10 @@ public class JyTState {
 	protected static int nativeRecursionLimit;
 	
 	//No IdentityHashMap needed, since ThreadState does not overwrite hashCode().
-	protected static WeakHashMap<ThreadState, JyTState> tStateLookup = new WeakHashMap<ThreadState, JyTState>();
+	//Note that WeakHashMap has weak keys and "strong" values, so this mapping implements a
+	//keep-alive relationship with each ThreadState keeping alive the corresponding JyTState.
+	protected static WeakHashMap<ThreadState, JyTState> tStateLookup =
+			new WeakHashMap<ThreadState, JyTState>();
 	
 	protected WeakReference<ThreadState> tState;
 	protected int nativeCallDepth;

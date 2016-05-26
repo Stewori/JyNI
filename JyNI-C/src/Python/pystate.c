@@ -267,8 +267,8 @@ PyThreadState_Clear(PyThreadState *tstate)
 //		  "PyThreadState_Clear: warning: thread still has a frame\n");
 //
 //	Py_CLEAR(tstate->frame);
-//
-//	Py_CLEAR(tstate->dict);
+
+	Py_CLEAR(tstate->dict);
 //	Py_CLEAR(tstate->async_exc);
 
 	Py_CLEAR(tstate->curexc_type);
@@ -286,7 +286,7 @@ PyThreadState_Clear(PyThreadState *tstate)
 }
 
 
-///* Common code for PyThreadState_Delete() and PyThreadState_DeleteCurrent() */
+/* Common code for PyThreadState_Delete() and PyThreadState_DeleteCurrent() */
 static void
 tstate_delete_common(PyThreadState *tstate)
 {
@@ -392,28 +392,28 @@ PyThreadState_Swap(PyThreadState *newts)
 	return oldts;
 }
 
-///* An extension mechanism to store arbitrary additional per-thread state.
-//   PyThreadState_GetDict() returns a dictionary that can be used to hold such
-//   state; the caller should pick a unique key and store its state there.  If
-//   PyThreadState_GetDict() returns NULL, an exception has *not* been raised
-//   and the caller should assume no per-thread state is available. */
-//
-//PyObject *
-//PyThreadState_GetDict(void)
-//{
-//	if (_PyThreadState_Current == NULL)
-//		return NULL;
-//
-//	if (_PyThreadState_Current->dict == NULL) {
-//		PyObject *d;
-//		_PyThreadState_Current->dict = d = PyDict_New();
-//		if (d == NULL)
-//			PyErr_Clear();
-//	}
-//	return _PyThreadState_Current->dict;
-//}
-//
-//
+/* An extension mechanism to store arbitrary additional per-thread state.
+   PyThreadState_GetDict() returns a dictionary that can be used to hold such
+   state; the caller should pick a unique key and store its state there.  If
+   PyThreadState_GetDict() returns NULL, an exception has *not* been raised
+   and the caller should assume no per-thread state is available. */
+
+PyObject *
+PyThreadState_GetDict(void)
+{
+	if (_PyThreadState_Current == NULL)
+		return NULL;
+
+	if (_PyThreadState_Current->dict == NULL) {
+		PyObject *d;
+		_PyThreadState_Current->dict = d = PyDict_New();
+		if (d == NULL)
+			PyErr_Clear();
+	}
+	return _PyThreadState_Current->dict;
+}
+
+
 ///* Asynchronously raise an exception in a thread.
 //   Requested by Just van Rossum and Alex Martelli.
 //   To prevent naive misuse, you must write your own extension
