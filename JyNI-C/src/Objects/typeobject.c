@@ -761,20 +761,13 @@ static PyObject *
 type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyObject *obj;
-//	jputs("type_call:");
-//	if (type->tp_name) puts(type->tp_name);
-//	else jputs("name is null");
 	if (type->tp_new == NULL) {
 		PyErr_Format(PyExc_TypeError,
 					 "cannot create '%.100s' instances (raised in type_call)",
 					 type->tp_name);
 		return NULL;
 	}
-//	jputsLong(__LINE__);
-//	printf("%d\n", __LINE__);
 	obj = type->tp_new(type, args, kwds);
-//	printf("%d\n", __LINE__);
-//	jputsLong(__LINE__);
 	if (obj != NULL) {
 		// Ugly exception: when the call was type(something),
 		// don't call tp_init on the result.
@@ -782,18 +775,12 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 			PyTuple_Check(args) && PyTuple_GET_SIZE(args) == 1 &&
 			(kwds == NULL ||
 			 (PyDict_Check(kwds) && PyDict_Size(kwds) == 0))) {
-//			jputs("type_call done0.");
-//			if (type->tp_name) puts(type->tp_name);
-//			else jputs("name is null");
 			return obj;
 		}
 
 		// If the returned object is not an instance of type,
 		// it won't be initialized.
 		if (!PyType_IsSubtype(obj->ob_type, type)) {
-//			jputs("type_call done1.");
-//			if (type->tp_name) puts(type->tp_name);
-//			else jputs("name is null");
 			return obj;
 		}
 		type = obj->ob_type;
@@ -805,11 +792,6 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 			obj = NULL;
 		}
 	}
-	//_JyNI_GC_TRACK(obj);
-//	jputs("type_call done2.");
-//	jputsLong(obj);
-//	if (type->tp_name) puts(type->tp_name);
-//	else jputs("name is null");
 	return obj;
 }
 
@@ -832,9 +814,6 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
 	if (tme)
 	{
-//		jputs("AllocVar...");
-//		if (tme->py_type->tp_itemsize == 0) return JyNI_Alloc(tme);
-//		else return JyNI_AllocVar(tme, nitems);
 		return JyNI_AllocVar(tme, nitems);
 	} else
 	{
@@ -847,9 +826,6 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 		}
 		tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(type);
 		if (tme) return JyNI_AllocSubtypeVar(type, tme, nitems);
-//		if (tme->py_type->tp_itemsize == 0) return JyNI_AllocNative(type);
-//		else return JyNI_AllocNativeVar(type, nitems);
-//		jputs("AllocNativeVar");
 		PyObject* result = JyNI_AllocNativeVar(type, nitems);
 
 		if (PyType_IS_GC(type))
@@ -860,89 +836,8 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 				jputs("JyNI-warning: Static Type-object not successfully tracked by gc!");
 			}
 		}
-
 		return result;
 	}
-//	//JyNI-note: This method has been adjusted to alloc additional space for JyObject.
-//	PyObject *obj;
-//	size_t size;// = _PyObject_VAR_SIZE(type, nitems+1);
-//	// note that we need to add one, for the sentinel
-//	size_t truncate_trailing = 0;
-//	signed int truncate = 0;
-//	ExceptionMapEntry* eme = NULL;
-//	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
-//	if (tme)
-//	{
-//		truncate = tme->flags & JY_TRUNCATE_FLAG_MASK;
-//		truncate_trailing = tme->truncate_trailing;
-//	} else
-//	{
-//		//We don't have to take care of exception allocation at other places (hopefully)
-//		//because all exception types use this method for allocation.
-//		eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(type);
-//		if (eme)// != NULL)
-//		{
-//			truncate = 1;
-//		}
-//	}
-//	if (PyType_IS_GC(type))
-//	{
-//		size = _PyObject_VAR_SIZE(type, nitems+1);
-//		//obj = _PyObject_GC_Malloc(size);
-//		obj = _PyObject_GC_Malloc(truncate ? sizeof(PyVarObject)+truncate_trailing : size);
-//		if (obj == NULL) return PyErr_NoMemory();
-//	} else
-//	{
-//		//obj = (PyObject *)PyObject_MALLOC(size);
-//		//TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(type);
-//		if (tme)// != NULL)
-//		{
-//			size = (truncate ? sizeof(PyVarObject)+truncate_trailing : _PyObject_VAR_SIZE(type, nitems+1));
-//			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
-//			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
-//			jy->jy = (jobject) tme; //tme->jy_class;
-//			jy->flags = tme->flags;
-//			jy->attr = NULL;
-//			obj = (PyObject*) FROM_JY_NO_GC(jy);
-//			JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
-//		} else if (eme)
-//		{
-//			size = (truncate ? sizeof(PyVarObject)+truncate_trailing : _PyObject_VAR_SIZE(type, nitems+1));
-//			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
-//			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
-//			jy->jy = NULL;//(jobject) eme;//JyNI_JythonExceptionType_FromPyExceptionType(type);
-//			jy->flags = JY_GC_FLAG_MASK | JY_TRUNCATE_FLAG_MASK;
-//			jy->attr = NULL;
-//			obj = (PyObject*) FROM_JY_NO_GC(jy);
-//			JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
-//		} else
-//		{
-//			size = _PyObject_VAR_SIZE(type, nitems+1);
-//			JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject));
-//			if (jy == NULL) return (PyObject *) PyErr_NoMemory();
-//			jy->flags = JY_CPEER_FLAG_MASK;
-//			jy->attr = NULL;
-//			jy->jy = NULL;
-//			obj = (PyObject*) FROM_JY_NO_GC(jy);
-//			JyNIDebug(JY_NATIVE_ALLOC, obj, jy, size+sizeof(JyObject), type->tp_name);
-//		}
-//	}
-//
-//	//if (obj == NULL) return PyErr_NoMemory();
-//
-//	memset(obj, '\0', size);
-//
-//	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE)
-//		Py_INCREF(type);
-//
-//	if (type->tp_itemsize == 0)
-//		PyObject_INIT(obj, type);
-//	else
-//		(void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
-//
-//	if (PyType_IS_GC(type))
-//		_JyNI_GC_TRACK(obj);
-//	return obj;
 }
 
 

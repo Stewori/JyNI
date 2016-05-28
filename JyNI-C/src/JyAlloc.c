@@ -29,71 +29,6 @@
 #include <JyAlloc.h>
 
 
-#define ORDINARY_ALLOC_FULL(size, allocFlags, tme, dest, type) \
-	JyObject* jy = (JyObject *) PyObject_RawMalloc(size+sizeof(JyObject)); \
-	if (jy == NULL) return (PyObject *) PyErr_NoMemory(); \
-	jy->jy = (jweak) tme; \
-	jy->flags = allocFlags; \
-	jy->attr = NULL; \
-	dest = (PyObject*) FROM_JY_NO_GC(jy); \
-	JyNIDebug(JY_NATIVE_ALLOC, dest, jy, size+sizeof(JyObject), ((PyTypeObject*) type)->tp_name);
-
-#define ALLOC_FULL(size, allocFlags, tme, type) \
-	PyObject *obj; \
-	if (PyType_IS_GC(type)) \
-	{ \
-		obj = _PyObject_GC_Malloc(size); \
-		if (obj == NULL) return PyErr_NoMemory(); \
-		AS_JY_WITH_GC(obj)->flags |= allocFlags; \
-	} else \
-	{ \
-		ORDINARY_ALLOC_FULL(size, allocFlags, tme, obj, type) \
-	} \
-	memset(obj, '\0', size);
-
-#define INIT(obj, type, nitems) \
-	if (type->tp_itemsize == 0) PyObject_INIT(obj, type); \
-	else PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
-
-#define INIT_FULL(obj, type, nitems) \
-	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE) \
-		Py_INCREF(type); \
-	INIT(obj, type, nitems) \
-	if (PyType_Check(obj)) \
-		((PyTypeObject*) obj)->tp_flags |= Py_TPFLAGS_HEAPTYPE; \
-	if (PyType_IS_GC(type)) \
-		_JyNI_GC_TRACK(obj);
-
-#define INIT_GREF(src, dest) \
-	jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src); \
-	if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) { \
-		gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory); \
-	} \
-	if (gref) { \
-		Py_INCREF(dest); \
-		incWeakRefCount(jy); \
-		(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest); \
-	}
-
-#define INIT_JY(jy, tme, src, dest) \
-	if (jy->flags & SYNC_NEEDED_MASK) \
-		JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync); \
-	jy->jy = (*env)->NewWeakGlobalRef(env, src); \
-	if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { /*some sync-on-init methods might already init this */ \
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest); \
-		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK; \
-	} \
-	/* Take care for already existing Jython-weak references */ \
-	INIT_GREF(src, dest) \
-	jy->flags |= JY_INITIALIZED_FLAG_MASK; \
-	if (PyObject_IS_GC(dest)) { \
-		JyNI_GC_ExploreObject(dest); \
-	}
-	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
-	 * JY_INITIALIZED_FLAG_MASK has been set.
-	 */
-
-
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  * Should do the same as JyNI_AllocVar with nitems == -1.
@@ -115,6 +50,7 @@ inline PyObject* JyNI_Alloc(TypeMapEntry* tme)
 
 	//In contrast to var variant of this method, no decision needed here:
 	PyObject_INIT(obj, tme->py_type);
+	Py_TYPE(obj)->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	if (tme->py_type->tp_flags & Py_TPFLAGS_HEAPTYPE)
 		Py_INCREF(tme->py_type);
@@ -234,6 +170,74 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 }
 
 
+#define INIT_GREF(src, dest) \
+	jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src); \
+	if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) { \
+		gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory); \
+	} \
+	if (gref) { \
+		Py_INCREF(dest); \
+		incWeakRefCount(jy); \
+		(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest); \
+	}
+
+#define INIT_JY(_jy, tme, src, dest) \
+	if (_jy->flags & SYNC_NEEDED_MASK) \
+		JyNI_AddJyAttribute(_jy, JyAttributeSyncFunctions, tme->sync); \
+	_jy->jy = (*env)->NewWeakGlobalRef(env, src); \
+	if (!(_jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { /*some sync-on-init methods might already init this */ \
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest); \
+		_jy->flags |= JY_HAS_JHANDLE_FLAG_MASK; \
+	} \
+	/* Take care for already existing Jython-weak references */ \
+	INIT_GREF(src, dest) \
+	_jy->flags |= JY_INITIALIZED_FLAG_MASK; \
+	if (PyObject_IS_GC(dest)) { \
+		JyNI_GC_ExploreObject(dest); \
+	}
+	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+	 * JY_INITIALIZED_FLAG_MASK has been set.
+	 */
+
+#define INIT_OBJECT_TME(dest, subtype, alloc_cmd) \
+	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK) \
+	{ \
+		if (tme->sync != NULL && tme->sync->pyInit != NULL) \
+			dest = tme->sync->pyInit(src, subtype); \
+	} else \
+	{ \
+		dest = alloc_cmd; \
+		if (tme == &builtinTypes[TME_INDEX_Type]) \
+			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE; \
+		jy = AS_JY(dest); \
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest); \
+		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK; \
+		if (dest && tme->sync && tme->sync->jy2py) { \
+			tme->sync->jy2py(src, dest); \
+		} \
+	}
+
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ */
+inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
+{
+//	jputs(__FUNCTION__);
+//	jputs(tme->py_type->tp_name);
+	PyObject* dest = NULL;
+	JyObject* jy;
+	env(NULL);
+	INIT_OBJECT_TME(dest, NULL, JyNI_Alloc(tme))
+	if (dest)
+	{
+		jy = AS_JY(dest);
+		INIT_JY(jy, tme, src, dest)
+	}
+	return dest;
+}
+
+
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
@@ -241,38 +245,27 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 {
 //	jputs(__FUNCTION__);
 //	jputs(subtype->tp_name);
-//	JyNI_jprintJ(src);
 
 	PyObject* dest = NULL;
+	JyObject* jy;
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromSubType(subtype);
+	env(NULL);
 	if (tme)
 	{
-		if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
-		{
-			if (tme->sync != NULL && tme->sync->pyInit != NULL)
-				dest = tme->sync->pyInit(src, subtype);
-			Py_TYPE(dest) = subtype;
-		} else
-		{
-			dest = JyNI_AllocSubtypeVar(subtype, tme, 0);
-			if (dest && tme->sync && tme->sync->jy2py) {
-//				if (PyType_CheckExact(subtype))
-//					((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
-				tme->sync->jy2py(src, dest);
-			}
-		}
+		INIT_OBJECT_TME(dest, subtype, JyNI_AllocSubtypeVar(subtype, tme, 0))
 	} else
 	{
 		size_t size = _PyObject_SIZE(subtype);
-
 		ORDINARY_ALLOC_FULL(size, 0, NULL, dest, subtype)
 
 		memset(dest, '\0', size);
 
 		PyObject_INIT(dest, subtype);
+		subtype->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 	}
 	if (dest)
 	{
+		Py_TYPE(dest) = subtype;
 		if (PyType_CheckExact(dest))
 		{ // Should not be relevant for subtype case:
 			jputs("JyNI-warning: dest is PyTypeObject in JyNI_InitPyObjectSubtype.");
@@ -280,10 +273,7 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 		}
 		JyObject* jy = AS_JY(dest);
 		jy->flags |= JY_SUBTYPE_FLAG_MASK;
-
-		env(NULL);
 		INIT_JY(jy, tme, src, dest)
-
 	}
 	return dest;
 }
@@ -307,5 +297,158 @@ inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject
 
 	INIT_JY(jy, tme, src, dest)
 
+	return dest;
+}
+
+
+/*
+ * This function returns a NEW reference, i.e. caller must decref it in the end.
+ *
+ * Not intended for Heap-Type exceptions.
+ * These don't have an associated ExceptionMapEntry anyway.
+ */
+inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
+{
+	PyObject* obj = JyNI_ExceptionAlloc(eme);
+	if (obj == NULL) return PyErr_NoMemory();
+	JyObject* jy = AS_JY(obj);
+	env(NULL);
+	jy->jy = (*env)->NewWeakGlobalRef(env, src);
+	//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+	if (PyType_IS_GC(eme->exc_type))
+		JyNI_GC_ExploreObject(obj);
+	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+	 * JY_INITIALIZED_FLAG_MASK has been set.
+	 */
+	return obj;
+}
+
+
+inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
+{
+//	jputs(__FUNCTION__);
+	env(NULL);
+	jstring jName = (*env)->GetObjectField(env, srctype, pyTypeNameField);
+	cstr_from_jstring(cName, jName);
+//	jputs(cName);
+	PyTypeObject* dest =
+			JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);
+	JyObject* jy = AS_JY(dest);
+	// Add flag to enforce delegation to Java:
+	jy->flags |= JY_SUBTYPE_FLAG_MASK;
+
+	return dest;
+}
+
+
+#define SUBTYPE_ERROR(src, tme) \
+	jputs(__FUNCTION__); \
+	jputs("called with inconsistent args!"); \
+	jputs("Subtype:"); \
+	jputs(Py_TYPE(src)->tp_name); \
+	jputs("Mapping-type:"); \
+	jputs(tme->py_type->tp_name); \
+	PyErr_BadInternalCall();
+
+#define SUBTYPE_J_INIT(src, dest, tme) \
+	if (!tme->jy_subclass || !PyType_IsSubtype(Py_TYPE(src), tme->py_type)) \
+	{ \
+		SUBTYPE_ERROR(src, tme) \
+	} \
+	/* Native subtype-case. We handle native subtype case always with CPeer. */ \
+	Py_INCREF(src); \
+	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK) \
+	{ \
+		if (tme->sync && tme->sync->jyInit) \
+			dest = tme->sync->jyInit(src, tme->jy_subclass); \
+	} else \
+	{ \
+		jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src)); \
+		jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>", \
+				"(JLJyNI/PyCPeerType;)V"); \
+		dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType); \
+		if (tme->sync && tme->sync->py2jy) \
+			tme->sync->py2jy(src, dest); \
+	}
+
+#define J_INIT(src, dest, tme) \
+	if (Py_TYPE(src) != tme->py_type) { \
+		SUBTYPE_J_INIT(src, dest, tme) \
+	} else if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK) \
+	{ \
+		if (tme->sync && tme->sync->jyInit) \
+			dest = tme->sync->jyInit(src, NULL); \
+	} else \
+	{ \
+		jmethodID cm = (*env)->GetMethodID(env, tme->jy_class, "<init>", "()V"); \
+		if (cm) \
+		{ \
+			dest = (*env)->NewObject(env, tme->jy_class, cm); \
+			if (tme->sync && tme->sync->py2jy) \
+				tme->sync->py2jy(src, dest); \
+		} \
+	}
+
+
+inline jobject JyNI_InitStaticJythonPyObject(PyObject* src)
+{
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
+	env(NULL);
+	//setup and return PyCPeer in this case...
+	jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) src);
+	if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
+	else {
+		TypeMapEntry* tme = JyNI_JythonTypeEntry_FromSubType(Py_TYPE(src));
+		if (tme)
+		{
+			J_INIT(src, er, tme)
+		} else
+		{
+			er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) src,
+					JyNI_JythonPyObject_FromPyObject(Py_TYPE(src)));
+		}
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, er, (jlong) src);
+		return er;
+	}
+}
+
+
+/*
+ * Returns a JNI LocalRef.
+ */
+inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
+{
+//	jputs(__FUNCTION__);
+	jobject dest = NULL;
+	env(NULL);
+
+	J_INIT(src, dest, tme)
+
+	if (!dest) return NULL;
+	if (Py_TYPE(src) != tme->py_type) {
+		// Set flags for subtype-case...
+		srcJy->flags |= JY_CPEER_FLAG_MASK;
+		srcJy->flags |= JY_SUBTYPE_FLAG_MASK;
+	}
+	if (dest && (srcJy->flags & SYNC_NEEDED_MASK))
+		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);
+	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
+	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some sync-on-init methods might already init this
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);
+		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+	}
+	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
+
+	if ((tme->flags & JY_TRUNCATE_FLAG_MASK) && !(srcJy->flags & JY_CACHE_ETERNAL_FLAG_MASK)) {
+		/* we create GC-head here to secure the Java-side backend from
+		 * gc until a proper exploration of the owner takes place. */
+		if (!JyNI_GC_EnsureHeadObject(env, src, srcJy)) {
+			JyNI_GC_Track_CStub(src);
+		}
+	}
 	return dest;
 }

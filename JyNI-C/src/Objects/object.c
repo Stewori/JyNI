@@ -32,8 +32,9 @@
 
 /* Generic object operations; and implementation of None (NoObject) */
 
-#include "JyNI.h"
-#include "structmember_JyNI.h"
+#include <JyNI.h>
+#include <JyAlloc.h>
+#include <structmember_JyNI.h>
 //#include "frameobject.h"
 
 #ifdef __cplusplus
@@ -250,6 +251,9 @@ Py_DecRef(PyObject *o)
 PyObject *
 PyObject_Init(PyObject *op, PyTypeObject *tp)
 {
+//	jboolean dbg = strcmp("numpy.bool_", tp->tp_name) == 0;
+//	if (dbg) jputs("PyObject_Init numpy.");
+	tp->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 	if (op == NULL)
 		return PyErr_NoMemory();
 	// Any changes should be reflected in PyObject_INIT (objimpl.h)
@@ -261,6 +265,7 @@ PyObject_Init(PyObject *op, PyTypeObject *tp)
 PyVarObject *
 PyObject_InitVar(PyVarObject *op, PyTypeObject *tp, Py_ssize_t size)
 {
+	tp->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 	if (op == NULL)
 		return (PyVarObject *) PyErr_NoMemory();
 	// Any changes should be reflected in PyObject_INIT_VAR
@@ -295,60 +300,29 @@ inline void _PyObject_InitJy(PyObject *op, TypeMapEntry* tme)
 	 * A non-NULL jy-field and lacking the INITIALIZED-flag
 	 * indicate that a tme was stored in the jy-field.
 	 */
-	jy->jy = (jweak) tme;
-	jy->flags = tme->flags;
-	//jy->attr = NULL;
-	//JyNI_SetUpJyObject((JyObject*) op);
+	INIT_JY_BASIC(jy, tme, tme->flags)
 }
 
 inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme)
 {
 //	jputs(__FUNCTION__);
 //	jputs(tp->tp_name);
-//	if (tme) jputs(tme->py_type->tp_name);
-//	else jputs("no tme");
 	PyObject *op;
 	JyObject *jy;
-	//if (JyNI_IsBuiltinType(tp))
 	if (tme != NULL)
 	{
-//		jputsLong(__LINE__);
-//		jputsLong(((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp)));
-		//op = (PyObject *) PyObject_MALLOC(JyObjectBasicSize);
-		//jy = (JyObject*) PyObject_MALLOC(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject) : _PyObject_SIZE(tp)) );
-		jy = (JyObject*) PyObject_RawMalloc(sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp)) );
-		if (jy == NULL) return PyErr_NoMemory();
-		//jy->jy = (jobject) tme;//tme->jy_class;
-		//jy->flags = tme->flags;
-		jy->attr = NULL;
-		op = FROM_JY_NO_GC(jy);
-		_PyObject_InitJy(op, tme);
-		op = PyObject_INIT(op, tp);
-		JyNIDebug(JY_NATIVE_ALLOC, op, jy,
-				sizeof(JyObject)+((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp)),
-				tp->tp_name);
-		if (PyObject_IS_GC(op)) jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_New");
-		//JyNI_SetUpJyObject(jy);
-		return op;
+		size_t size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ?
+				sizeof(PyObject)+tme->truncate_trailing : _PyObject_SIZE(tp));
+		ORDINARY_ALLOC_FULL(size, tme->flags, tme, op, tp)
 	} else
 	{
-//		jputsLong(__LINE__);
-//		jputsLong(_PyObject_SIZE(tp));
-//		jputsLong(sizeof(JyObject)+_PyObject_SIZE(tp));
-		//jy = (JyObject *) PyObject_MALLOC(sizeof(JyObject)+_PyObject_SIZE(tp));
-		jy = (JyObject *) PyObject_RawMalloc(sizeof(JyObject)+_PyObject_SIZE(tp));
-//		jputsLong(jy);
-		if (jy == NULL) return PyErr_NoMemory();
-		jy->flags = JY_CPEER_FLAG_MASK;
-		jy->attr = NULL;
-		jy->jy = NULL;
-		op = FROM_JY_NO_GC(jy);
-		//if (op == NULL) return PyErr_NoMemory();
-		op = PyObject_INIT(op, tp);
-		JyNIDebug(JY_NATIVE_ALLOC, op, jy, sizeof(JyObject)+_PyObject_SIZE(tp), tp->tp_name);
-		if (PyObject_IS_GC(op)) jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_New");
-		return op;
+		ORDINARY_ALLOC_FULL(_PyObject_SIZE(tp), JY_CPEER_FLAG_MASK, NULL, op, tp)
 	}
+	op = PyObject_INIT(op, tp);
+	tp->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
+	if (PyObject_IS_GC(op))
+		jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_New");
+	return op;
 }
 
 PyVarObject *
@@ -359,37 +333,19 @@ _PyObject_NewVar(PyTypeObject *tp, Py_ssize_t nitems)
 	JyObject *jy;
 	if (tme != NULL)
 	{
-		const size_t size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ? sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(tp, nitems))+sizeof(JyObject);
-		//jy = (JyObject *) PyObject_MALLOC(size);
-		jy = (JyObject *) PyObject_RawMalloc(size);
-		if (jy == NULL) return (PyVarObject *) PyErr_NoMemory();
-		//jy->jy = (jobject) tme;//->jy_class;
-		//jy->flags = tme->flags;
-		jy->attr = NULL;
-		op = (PyVarObject*) FROM_JY_NO_GC(jy);
-		_PyObject_InitJy(op, tme);
-		op = PyObject_INIT_VAR(op, tp, nitems);
-		JyNIDebug(JY_NATIVE_ALLOC, op, jy, size, tp->tp_name);
-		//JyNI_SetUpJyVarObject((JyVarObject*) op);
-		////if (PyObject_IS_GC(op)) puts("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_NewVar");
-		return op;
+		size_t size = ((tme->flags & JY_TRUNCATE_FLAG_MASK) ?
+				sizeof(PyVarObject)+tme->truncate_trailing : _PyObject_VAR_SIZE(tp, nitems));
+		ORDINARY_ALLOC_FULL(size, tme->flags, tme, op, tp)
 	} else
 	{
-		const size_t size = _PyObject_VAR_SIZE(tp, nitems)+sizeof(JyObject);
-		//jy = (JyObject *) PyObject_MALLOC(size);
-		jy = (JyObject *) PyObject_RawMalloc(size);
-		if (jy == NULL) return (PyVarObject *) PyErr_NoMemory();
-		jy->flags = JY_CPEER_FLAG_MASK;
-		jy->attr = NULL;
-		jy->jy = NULL;
-		//op = (PyVarObject *) PyObject_MALLOC(size);
-		op = (PyVarObject*) FROM_JY_NO_GC(jy);
-		//if (op == NULL) return (PyVarObject *) PyErr_NoMemory();
-		op = PyObject_INIT_VAR(op, tp, nitems);
-		JyNIDebug(JY_NATIVE_ALLOC, op, jy, size, tp->tp_name);
-		//if (PyObject_IS_GC(op)) puts("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_NewVar");
-		return op;
+		ORDINARY_ALLOC_FULL(_PyObject_VAR_SIZE(tp, nitems), JY_CPEER_FLAG_MASK, NULL, op, tp)
 	}
+
+	op = PyObject_INIT_VAR(op, tp, nitems);
+	tp->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
+	if (PyObject_IS_GC(op))
+		jputs("conflict: Macro PyObject_IS_GC indicates GC although object was created in _PyObject_NewVar");
+	return op;
 }
 
 // for binary compatibility with 2.2
@@ -402,15 +358,6 @@ _PyObject_Del(PyObject *op)
 		jputs("conflict: _PyObject_Del was called with an object that seems to have a GC header.");
 	JyNI_CleanUp_JyObject(jy);
 	PyObject_RawFree(jy);
-
-	/*if (JyNI_IsJyObject(op))
-	{
-		if (op->ob_type->tp_itemsize == 0)
-			JyNI_CleanUpJyObject((JyObject*) op);
-		else
-			JyNI_CleanUpJyVarObject((JyVarObject*) op);
-	}
-	PyObject_FREE(op);*/
 }
 
 /* Implementation of PyObject_Print with recursion checking */

@@ -609,11 +609,13 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_File].py_type = &PyFile_Type;
 	builtinTypes[TME_INDEX_File].jy_class = pyFileClass;
 	builtinTypes[TME_INDEX_File].flags = JY_TRUNCATE_FLAG_MASK;
+	PyFile_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	//In JyNI no GC-type since it is fully truncated.
 	builtinTypes[TME_INDEX_Module].py_type = &PyModule_Type;
 	builtinTypes[TME_INDEX_Module].jy_class = pyModuleClass;
 	builtinTypes[TME_INDEX_Module].flags = JY_TRUNCATE_FLAG_MASK;
+	PyModule_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Cell].py_type = &PyCell_Type;
 	builtinTypes[TME_INDEX_Cell].jy_class = pyCellClass;
@@ -621,6 +623,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Cell].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Cell].sync->py2jy = (py2jySync) JySync_JyCell_From_PyCell;
 	builtinTypes[TME_INDEX_Cell].sync->jy2py = (jy2pySync) JySync_PyCell_From_JyCell;
+	PyCell_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Class].py_type = &PyClass_Type;
 	builtinTypes[TME_INDEX_Class].jy_class = pyClassClass;
@@ -628,6 +631,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Class].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Class].sync->jyInit = (jyInitSync) JySync_Init_JyClass_From_PyClass;
 	builtinTypes[TME_INDEX_Class].sync->pyInit = (pyInitSync) JySync_Init_PyClass_From_JyClass;
+	PyClass_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Instance].py_type = &PyInstance_Type;
 	builtinTypes[TME_INDEX_Instance].jy_class = pyInstanceClass;
@@ -635,6 +639,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Instance].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Instance].sync->jyInit = (jyInitSync) JySync_Init_JyInstance_From_PyInstance;
 	builtinTypes[TME_INDEX_Instance].sync->pyInit = (pyInitSync) JySync_Init_PyInstance_From_JyInstance;
+	PyInstance_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 //	specialPyInstance.py_type = &PyInstance_Type;
 //	specialPyInstance.jy_class = pyInstanceClass;
@@ -648,6 +653,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Method].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Method].sync->jyInit = (jyInitSync) JySync_Init_JyMethod_From_PyMethod;
 	builtinTypes[TME_INDEX_Method].sync->pyInit = (pyInitSync) JySync_Init_PyMethod_From_JyMethod;
+	PyMethod_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	//Note: PyFunction is actually truncated in the sense that JyNI does not populate
 	//all fields. However no memory can be saved because e.g. the last field func_module
@@ -664,6 +670,7 @@ inline void initBuiltinTypes()
 	//builtinTypes[TME_INDEX_Function].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFunction_From_PyFunction;
 	//builtinTypes[TME_INDEX_Function].sync->pyInit = (pyInitSync) JySync_Init_PyFunction_From_JyFunction;
 	builtinTypes[TME_INDEX_Function].sync->jy2py = (jy2pySync) JySync_PyFunction_From_JyFunction;
+	PyFunction_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_ClassMethod].py_type = &PyClassMethod_Type;
 	builtinTypes[TME_INDEX_ClassMethod].jy_class = pyClassMethodClass;
@@ -671,6 +678,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_ClassMethod].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_ClassMethod].sync->jyInit = (jyInitSync) JySync_Init_JyClassMethod_From_PyClassMethod;
 	builtinTypes[TME_INDEX_ClassMethod].sync->pyInit = (pyInitSync) JySync_Init_PyClassMethod_From_JyClassMethod;
+	PyClassMethod_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_StaticMethod].py_type = &PyStaticMethod_Type;
 	builtinTypes[TME_INDEX_StaticMethod].jy_class = pyStaticMethodClass;
@@ -678,14 +686,17 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_StaticMethod].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_StaticMethod].sync->jyInit = (jyInitSync) JySync_Init_JyStaticMethod_From_PyStaticMethod;
 	builtinTypes[TME_INDEX_StaticMethod].sync->pyInit = (pyInitSync) JySync_Init_PyStaticMethod_From_JyStaticMethod;
+	PyStaticMethod_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_MethodDescr].py_type = &PyMethodDescr_Type;
 	builtinTypes[TME_INDEX_MethodDescr].jy_class = pyMethodDescrClass;
 	builtinTypes[TME_INDEX_MethodDescr].flags = 0;
+	PyMethodDescr_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_ClassMethodDescr].py_type = &PyClassMethodDescr_Type;
 	builtinTypes[TME_INDEX_ClassMethodDescr].jy_class = pyClassMethodDescrClass;
-	builtinTypes[TME_INDEX_ClassMethodDescr].flags = 0;*/
+	builtinTypes[TME_INDEX_ClassMethodDescr].flags = 0;
+	PyClassMethodDescr_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	builtinTypes[TME_INDEX_DictProxy].py_type = &PyDictProxy_Type;
 	builtinTypes[TME_INDEX_DictProxy].jy_class = pyDictProxyClass;
@@ -693,6 +704,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_DictProxy].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_DictProxy].sync->jyInit = (jyInitSync) JySync_Init_JyDictProxy_From_PyDictProxy;
 	builtinTypes[TME_INDEX_DictProxy].sync->pyInit = (pyInitSync) JySync_Init_PyDictProxy_From_JyDictProxy;
+	PyDictProxy_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Property].py_type = &PyProperty_Type;
 	builtinTypes[TME_INDEX_Property].jy_class = pyPropertyClass;
@@ -700,6 +712,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Property].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Property].sync->jyInit = (jyInitSync) JySync_Init_JyProperty_From_PyProperty;
 	builtinTypes[TME_INDEX_Property].sync->pyInit = (pyInitSync) JySync_Init_PyProperty_From_JyProperty;
+	PyProperty_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Bool].py_type = &PyBool_Type;
 	builtinTypes[TME_INDEX_Bool].jy_class = pyBooleanClass;
@@ -711,6 +724,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Float].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Float].sync->jyInit = (jyInitSync) JySync_Init_JyFloat_From_PyFloat;
 	builtinTypes[TME_INDEX_Float].sync->pyInit = (pyInitSync) JySync_Init_PyFloat_From_JyFloat;
+	PyFloat_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Int].py_type = &PyInt_Type;
 	builtinTypes[TME_INDEX_Int].jy_class = pyIntClass;
@@ -718,6 +732,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Int].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Int].sync->jyInit = (jyInitSync) JySync_Init_JyInt_From_PyInt;
 	builtinTypes[TME_INDEX_Int].sync->pyInit = (pyInitSync) JySync_Init_PyInt_From_JyInt;
+	PyInt_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	//for computational efficiency we mirror PyLong, although it could also be wrapped
 	//later we are going to offer both options by a configuration-parameter in JyNI.
@@ -727,6 +742,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Long].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Long].sync->jyInit = (jyInitSync) JySync_Init_JyLong_From_PyLong;
 	builtinTypes[TME_INDEX_Long].sync->pyInit = (pyInitSync) JySync_Init_PyLong_From_JyLong;
+	PyLong_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Complex].py_type = &PyComplex_Type;
 	builtinTypes[TME_INDEX_Complex].jy_class = pyComplexClass;
@@ -734,6 +750,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Complex].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Complex].sync->jyInit = (jyInitSync) JySync_Init_JyComplex_From_PyComplex;
 	builtinTypes[TME_INDEX_Complex].sync->pyInit = (pyInitSync) JySync_Init_PyComplex_From_JyComplex;
+	PyComplex_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Unicode].py_type = &PyUnicode_Type;
 	builtinTypes[TME_INDEX_Unicode].jy_class = pyUnicodeClass;
@@ -741,6 +758,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Unicode].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Unicode].sync->jyInit = (jyInitSync) JySync_Init_JyUnicode_From_PyUnicode;
 	builtinTypes[TME_INDEX_Unicode].sync->pyInit = (pyInitSync) JySync_Init_PyUnicode_From_JyUnicode;
+	PyUnicode_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_String].py_type = &PyString_Type;
 	builtinTypes[TME_INDEX_String].jy_class = pyStringClass;
@@ -748,6 +766,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_String].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_String].sync->jyInit = (jyInitSync) JySync_Init_JyString_From_PyString;
 	builtinTypes[TME_INDEX_String].sync->pyInit = (pyInitSync) JySync_Init_PyString_From_JyString;
+	PyString_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Weakref_Ref].py_type = &_PyWeakref_RefType;
 	builtinTypes[TME_INDEX_Weakref_Ref].jy_class = pyWeakReferenceClass;
@@ -755,6 +774,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Weakref_Ref].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Weakref_Ref].sync->jyInit = (jyInitSync) JySync_Init_JyWeakReference_From_PyWeakReference;
 	builtinTypes[TME_INDEX_Weakref_Ref].sync->pyInit = (pyInitSync) JySync_Init_PyWeakReference_From_JyWeakReference;
+	_PyWeakref_RefType.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Weakref_Proxy].py_type = &_PyWeakref_ProxyType;
 	builtinTypes[TME_INDEX_Weakref_Proxy].jy_class = pyWeakProxyClass;
@@ -762,6 +782,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Weakref_Proxy].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Weakref_Proxy].sync->jyInit = (jyInitSync) JySync_Init_JyWeakProxy_From_PyWeakProxy;
 	builtinTypes[TME_INDEX_Weakref_Proxy].sync->pyInit = (pyInitSync) JySync_Init_PyWeakProxy_From_JyWeakProxy;
+	_PyWeakref_ProxyType.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Weakref_CallableProxy].py_type = &_PyWeakref_CallableProxyType;
 	builtinTypes[TME_INDEX_Weakref_CallableProxy].jy_class = pyWeakCallableProxyClass;
@@ -771,22 +792,27 @@ inline void initBuiltinTypes()
 			(jyInitSync) JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy;
 	builtinTypes[TME_INDEX_Weakref_CallableProxy].sync->pyInit =
 			(pyInitSync) JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy;
+	_PyWeakref_CallableProxyType.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_BaseString].py_type = &PyBaseString_Type;
 	builtinTypes[TME_INDEX_BaseString].jy_class = pyBaseStringClass;
 	builtinTypes[TME_INDEX_BaseString].flags = 0;
+	PyBaseStringType.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_SeqIter].py_type = &PySeqIter_Type;
 	builtinTypes[TME_INDEX_SeqIter].jy_class = pySequenceIterClass;
 	builtinTypes[TME_INDEX_SeqIter].flags = 0;
+	PySeqIter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Range].py_type = &PyRange_Type;
 	builtinTypes[TME_INDEX_Range].jy_class = pyXRangeClass;
 	builtinTypes[TME_INDEX_Range].flags = 0;
+	PyRange_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_rangeiter].py_type = &Pyrangeiter_Type; //jython uses PySequenceIter. Map this to PySeqIter_Typ
 	builtinTypes[TME_INDEX_rangeiter].jy_class = pySequenceIterClass;
-	builtinTypes[TME_INDEX_rangeiter].flags = 0;*/
+	builtinTypes[TME_INDEX_rangeiter].flags = 0;
+	Pyrangeiter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	builtinTypes[TME_INDEX_Tuple].py_type = &PyTuple_Type;
 	builtinTypes[TME_INDEX_Tuple].jy_class = pyTupleClass;
@@ -795,10 +821,12 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Tuple].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Tuple].sync->jyInit = (jyInitSync) JySync_Init_JyTuple_From_PyTuple;
 	builtinTypes[TME_INDEX_Tuple].sync->pyInit = (pyInitSync) JySync_Init_PyTuple_From_JyTuple;
+	PyTuple_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_TupleIter].py_type = &PyTupleIter_Type; //jython uses PyFastSequenceIter. Map this to PySeqIter_Type
 	builtinTypes[TME_INDEX_TupleIter].jy_class = pyFastSequenceIterClass;
-	builtinTypes[TME_INDEX_TupleIter].flags = 0;*/
+	builtinTypes[TME_INDEX_TupleIter].flags = 0;
+	PyTupleIter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	builtinTypes[TME_INDEX_List].py_type = &PyList_Type;
 	builtinTypes[TME_INDEX_List].jy_class = pyListClass;
@@ -807,14 +835,17 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_List].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_List].sync->jyInit = (jyInitSync) JySync_Init_JyList_From_PyList;
 	builtinTypes[TME_INDEX_List].sync->pyInit = (pyInitSync) JySync_Init_PyList_From_JyList;
+	PyList_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_ListIter].py_type = &PyListIter_Type; //jython uses PyFastSequenceIter. Map this to PySeqIter_Type
 	builtinTypes[TME_INDEX_ListIter].jy_class = pyFastSequenceIterClass;
 	builtinTypes[TME_INDEX_ListIter].flags = 0;
+	PyListIter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_ListRevIter].py_type = &PyListRevIter_Type; //jython uses PyReversedIterator.
 	builtinTypes[TME_INDEX_ListRevIter].jy_class = pyReversedIteratorClass;
-	builtinTypes[TME_INDEX_ListRevIter].flags = 0;*/
+	builtinTypes[TME_INDEX_ListRevIter].flags = 0;
+	PyListRevIter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	/* In JyNI no GC-type since it is fully truncated. */
 	// Todo: What about subtype/subclass?
@@ -822,6 +853,7 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Dict].jy_class = pyDictClass;
 	builtinTypes[TME_INDEX_Dict].jy_subclass = pyDictCPeerClass;
 	builtinTypes[TME_INDEX_Dict].flags = JY_TRUNCATE_FLAG_MASK;
+	PyDict_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	/* In the CPython->Java lookup direction, this is
 	   overwritten by the previous entry with pyDictClass.
@@ -846,10 +878,12 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_Set].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_Set].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JySet_From_PySet;
 	builtinTypes[TME_INDEX_Set].sync->pyInit = (pyInitSync) JySync_Init_PySet_From_JySet;
+	PySet_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_SetIter].py_type = &PySetIter_Type; //jython uses inline subclass of PyIterator. Map this to PySeqIter_Type for now
 	builtinTypes[TME_INDEX_SetIter].jy_class = pySequenceIterClass;
-	builtinTypes[TME_INDEX_SetIter].flags = 0;*/
+	builtinTypes[TME_INDEX_SetIter].flags = 0;
+	PySetIter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	//In JyNI no GC-type since it is almost fully truncated.
 	builtinTypes[TME_INDEX_FrozenSet].py_type = &PyFrozenSet_Type;
@@ -859,14 +893,17 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_FrozenSet].sync = malloc(sizeof(SyncFunctions));
 	builtinTypes[TME_INDEX_FrozenSet].sync->jyInit = NULL;//(jyInitSync) JySync_Init_JyFrozenSet_From_PyFrozenSet;
 	builtinTypes[TME_INDEX_FrozenSet].sync->pyInit = (pyInitSync) JySync_Init_PyFrozenSet_From_JyFrozenSet;
+	PyFrozenSet_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_Enum].py_type = &PyEnum_Type;
 	builtinTypes[TME_INDEX_Enum].jy_class = pyEnumerationClass;
-	builtinTypes[TME_INDEX_Enum].flags = 0;*/
+	builtinTypes[TME_INDEX_Enum].flags = 0;
+	PyEnum_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	builtinTypes[TME_INDEX_Slice].py_type = &PySlice_Type;
 	builtinTypes[TME_INDEX_Slice].jy_class = pySliceClass;
 	builtinTypes[TME_INDEX_Slice].flags = JY_TRUNCATE_FLAG_MASK;
+	PySlice_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Ellipsis].py_type = &PyEllipsis_Type;
 	builtinTypes[TME_INDEX_Ellipsis].jy_class = pyEllipsisClass;
@@ -874,7 +911,8 @@ inline void initBuiltinTypes()
 
 /*	builtinTypes[TME_INDEX_Gen].py_type = &PyGen_Type;
 	builtinTypes[TME_INDEX_Gen].jy_class = pyGeneratorClass;
-	builtinTypes[TME_INDEX_Gen].flags = 0;*/
+	builtinTypes[TME_INDEX_Gen].flags = 0;
+	PyGen_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	/* Code objects are not subject to GC in CPython although they contain some links.
 	 * However the contained links are always strings or string-tuples and nothing that
@@ -898,6 +936,7 @@ inline void initBuiltinTypes()
 	char* tp_nameBytecode = "bytecode";
 	builtinTypes[TME_INDEX_Code_Bytecode].type_name = malloc(strlen(tp_nameBytecode)+1);
 	strcpy(builtinTypes[TME_INDEX_Code_Bytecode].type_name, tp_nameBytecode);
+	PyCode_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Code_Tablecode].py_type = &PyCode_Type;
 	builtinTypes[TME_INDEX_Code_Tablecode].jy_class = pyTableCodeClass;
@@ -913,41 +952,73 @@ inline void initBuiltinTypes()
 /*	builtinTypes[TME_INDEX_Frame].py_type = &PyFrame_Type;
 	builtinTypes[TME_INDEX_Frame].jy_class = pyFrameClass;
 	builtinTypes[TME_INDEX_Frame].flags = 0;
+	PyFrame_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Super].py_type = &PySuper_Type;
 	builtinTypes[TME_INDEX_Super].jy_class = pySuperClass;
-	builtinTypes[TME_INDEX_Super].flags = 0;*/
+	builtinTypes[TME_INDEX_Super].flags = 0;
+	PySuper_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	//In JyNI no GC-type since it is fully truncated.
 	builtinTypes[TME_INDEX_Exc_BaseException].py_type = (PyTypeObject*) PyExc_BaseException;
 	builtinTypes[TME_INDEX_Exc_BaseException].jy_class = pyBaseExceptionClass;
 	builtinTypes[TME_INDEX_Exc_BaseException].flags = JY_TRUNCATE_FLAG_MASK;
+	((PyTypeObject*) PyExc_BaseException)->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	//todo: Improve PyTraceBack-implementation
 	builtinTypes[TME_INDEX_TraceBack].py_type = &PyTraceBack_Type;
 	builtinTypes[TME_INDEX_TraceBack].jy_class = pyTracebackClass;
 	builtinTypes[TME_INDEX_TraceBack].flags = JY_TRUNCATE_FLAG_MASK;
+	PyTraceBack_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 /*	builtinTypes[TME_INDEX_ByteArray].py_type = &PyByteArray_Type;
 	builtinTypes[TME_INDEX_ByteArray].jy_class = pyByteArrayClass;
 	builtinTypes[TME_INDEX_ByteArray].flags = 0;
+	PyByteArray_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_Buffer].py_type = &PyBuffer_Type;
 	builtinTypes[TME_INDEX_Buffer].jy_class = pyBufferClass;
 	builtinTypes[TME_INDEX_Buffer].flags = 0;
+	PyBuffer_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_MemoryView].py_type = &PyMemoryView_Type;
 	builtinTypes[TME_INDEX_MemoryView].jy_class = pyMemoryViewClass;
 	builtinTypes[TME_INDEX_MemoryView].flags = 0;
+	PyMemoryView_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_BaseObject].py_type = &PyBaseObject_Type;
 	builtinTypes[TME_INDEX_BaseObject].jy_class = pyObjectClass;
 	builtinTypes[TME_INDEX_BaseObject].flags = 0;
+	PyBaseObject_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
 	builtinTypes[TME_INDEX_CallIter].py_type = &PyCallIter_Type;
 	builtinTypes[TME_INDEX_CallIter].jy_class = pyCallIterClass;
 	builtinTypes[TME_INDEX_CallIter].flags = 0;
+	PyCallIter_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 	*/
+
+	// Set tp_flags |= Jy_TPFLAGS_DYN_OBJECTS for remaining builtin types:
+	PyCFunction_Type.tp_flags        |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyCapsule_Type.tp_flags          |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyCObject_Type.tp_flags          |= Jy_TPFLAGS_DYN_OBJECTS;
+
+	PyGetSetDescr_Type.tp_flags      |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyMemberDescr_Type.tp_flags      |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyWrapperDescr_Type.tp_flags     |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyMethodDescr_Type.tp_flags      |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyClassMethodDescr_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
+	EncodingMapType.tp_flags         |= Jy_TPFLAGS_DYN_OBJECTS;
+	wrappertype.tp_flags             |= Jy_TPFLAGS_DYN_OBJECTS;
+	cmpwrapper_type.tp_flags         |= Jy_TPFLAGS_DYN_OBJECTS;
+	sortwrapper_type.tp_flags        |= Jy_TPFLAGS_DYN_OBJECTS;
+	Long_InfoType.tp_flags           |= Jy_TPFLAGS_DYN_OBJECTS;
+	FloatInfoType.tp_flags           |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyListIter_Type.tp_flags         |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyListRevIter_Type.tp_flags      |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyTupleIter_Type.tp_flags        |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyBaseString_Type.tp_flags       |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyBaseObject_Type.tp_flags       |= Jy_TPFLAGS_DYN_OBJECTS;
+
 
 // This generates switch/case lookup code based on a trivial hash
 // function that is collision free on builtin type names. We will
@@ -1140,6 +1211,13 @@ inline void initBuiltinExceptions()
 
 	builtinExceptions[49].exc_type = (PyTypeObject*) PyExc_BytesWarning;
 	builtinExceptions[49].exc_factory = NULL;
+
+	int i;
+	for (i = 0; i < builtinExceptionCount; ++i)
+	{
+		if (builtinExceptions[i].exc_type)
+			builtinExceptions[i].exc_type->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
+	}
 }
 
 /* Does not work for Heap-Types. */
@@ -1167,17 +1245,17 @@ inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type)
 	if (&PyWrapperDescr_Type == type) return JNI_TRUE;
 	if (&PyMethodDescr_Type == type) return JNI_TRUE;
 	if (&PyClassMethodDescr_Type == type) return JNI_TRUE;
-	if (&PyDictProxy_Type == type) return JNI_TRUE;
-	if (&PyProperty_Type == type) return JNI_TRUE;
+	// if (&PyDictProxy_Type == type) return JNI_TRUE;
+	// if (&PyProperty_Type == type) return JNI_TRUE;
 	if (&EncodingMapType == type) return JNI_TRUE;
 	if (&wrappertype == type) return JNI_TRUE;
 	if (&cmpwrapper_type == type) return JNI_TRUE;
 	if (&sortwrapper_type == type) return JNI_TRUE;
 	if (&Long_InfoType == type) return JNI_TRUE;
 	if (&FloatInfoType == type) return JNI_TRUE;
-	if (&_PyWeakref_RefType == type) return JNI_TRUE;
-	if (&_PyWeakref_ProxyType == type) return JNI_TRUE;
-	if (&_PyWeakref_CallableProxyType == type) return JNI_TRUE;
+	// if (&_PyWeakref_RefType == type) return JNI_TRUE;
+	// if (&_PyWeakref_ProxyType == type) return JNI_TRUE;
+	// if (&_PyWeakref_CallableProxyType == type) return JNI_TRUE;
 	// if (&_struct_sequence_template == type) return JNI_TRUE;
 	// if (&PyDictIterKey_Type == type) return JNI_TRUE;
 	// if (&PyDictIterValue_Type == type) return JNI_TRUE;
@@ -1395,115 +1473,6 @@ inline void JyNI_SyncJy2Py(JyObject* jy, PyObject* op)
 	//todo: take care of the other flags
 	SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(jy, JyAttributeSyncFunctions);
 	if (sync != NULL && sync->jy2py != NULL) sync->jy2py(jy->jy, op);
-}
-
-/*
- * This function returns a NEW reference, i.e. caller must decref it in the end.
- *
- * Not intended for Heap-Type exceptions.
- * These don't have an associated ExceptionMapEntry anyway.
- */
-inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
-{
-	PyObject* obj = JyNI_ExceptionAlloc(eme);
-	if (obj == NULL) return PyErr_NoMemory();
-	JyObject* jy = AS_JY(obj);
-	env(NULL);
-	jy->jy = (*env)->NewWeakGlobalRef(env, src);
-	//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
-	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-	jy->flags |= JY_INITIALIZED_FLAG_MASK;
-	if (PyType_IS_GC(eme->exc_type))
-		JyNI_GC_ExploreObject(obj);
-	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
-	 * JY_INITIALIZED_FLAG_MASK has been set.
-	 */
-	return obj;
-}
-
-/*
- * This function returns a NEW reference, i.e. caller must decref it in the end.
- */
-inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
-{
-//	jputs(__FUNCTION__);
-//	jputs(tme->py_type->tp_name);
-	PyObject* dest = NULL;
-	JyObject* jy;
-	env(NULL);
-	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
-	{
-		if (tme->sync != NULL && tme->sync->pyInit != NULL)
-			dest = tme->sync->pyInit(src, NULL);
-	} else
-	{
-		//dest = tme->py_type->tp_itemsize ? JyNI_AllocVar(tme) : JyNI_Alloc(tme);
-		dest = JyNI_Alloc(tme);
-		if (tme == &builtinTypes[TME_INDEX_Type])
-			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;// | Py_TPFLAGS_TYPE_SUBCLASS;
-		jy = AS_JY(dest);
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
-		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-
-		if (dest && tme->sync && tme->sync->jy2py) {
-//			if (tme == &builtinTypes[0]) {
-//				jputs("convert type...");
-//				jstring tpname = (*env)->CallObjectMethod(env, src, pyTypeGetName);
-//				JyNI_jprintJ(tpname);
-//			}
-			tme->sync->jy2py(src, dest);
-		}
-		//else jputs("no sync needed");
-	}
-	if (dest)
-	{
-		jy = AS_JY(dest);
-		if (jy->flags & SYNC_NEEDED_MASK)
-			JyNI_AddJyAttribute(jy, JyAttributeSyncFunctions, tme->sync);//, char flags)
-		jy->jy = (*env)->NewWeakGlobalRef(env, src);
-		if (!(jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { //some sync-on-init methods might already init this
-			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
-			jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-		}
-
-		/* Take care for already existing Jython-weak references */
-		jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src);
-		if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) {
-			gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory);
-		}
-		if (gref) {
-			//jputs("native call to JyNIGlobalRef_initNativeHandle");
-			Py_INCREF(dest);
-			incWeakRefCount(jy);
-			(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest);
-		}
-
-		jy->flags |= JY_INITIALIZED_FLAG_MASK;
-		if (PyObject_IS_GC(dest)) {
-			JyNI_GC_ExploreObject(dest);
-		}
-		/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
-		 * JY_INITIALIZED_FLAG_MASK has been set.
-		 */
-	}
-	return dest;
-}
-
-inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
-{
-//	jputs(__FUNCTION__);
-	env(NULL);
-	jstring jName = (*env)->GetObjectField(env, srctype, pyTypeNameField);
-	cstr_from_jstring(cName, jName);
-//	jputs(cName);
-	PyTypeObject* dest =
-			JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);
-	JyObject* jy = AS_JY(dest);
-	// Add flag to enforce delegation to Java:
-	jy->flags |= JY_SUBTYPE_FLAG_MASK;
-
-	return dest;
 }
 
 /*
@@ -1742,81 +1711,6 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 	return srcJy->jy;
 }
 
-/*
- * Returns a JNI LocalRef.
- */
-inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
-{
-//	jputs(__FUNCTION__);
-//	if (tme) jputs("tme");//tme->py_type->tp_name);
-//	else jputs("no tme");
-//	jputs(src->ob_type->tp_name);
-//	jputsPy(src->ob_type->tp_bases); //bool_arrtype_new
-	jobject dest = NULL;
-	env(NULL);
-	if (Py_TYPE(src) != tme->py_type) {
-		if (!tme->jy_subclass || !PyType_IsSubtype(Py_TYPE(src), tme->py_type))
-		{
-			jputs("JyNI_InitJythonPyObject called with inconsistent args!");
-			jputs("Subtype:");
-			jputs(Py_TYPE(src)->tp_name);
-			jputs("Mapping-type:");
-			jputsLong((jlong) tme);
-			jputsLong((jlong) tme->py_type);
-			jputs(tme->py_type->tp_name);
-			PyErr_BadInternalCall();
-		}
-		// Native subtype-case. We handle native subtype case always with CPeer.
-		Py_INCREF(src);
-		if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
-		{
-			if (tme->sync && tme->sync->jyInit)
-				dest = tme->sync->jyInit(src, tme->jy_subclass);
-		} else
-		{
-			jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
-			jmethodID subconst = (*env)->GetMethodID(env, tme->jy_subclass, "<init>",
-					"(JLJyNI/PyCPeerType;)V");
-			dest = (*env)->NewObject(env, tme->jy_subclass, subconst, (jlong) src, jsrcType);
-		}
-		srcJy->flags |= JY_CPEER_FLAG_MASK;
-		srcJy->flags |= JY_SUBTYPE_FLAG_MASK;
-	} else if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK)
-	{
-		//jputsLong(__LINE__);
-		if (tme->sync && tme->sync->jyInit)
-			dest = tme->sync->jyInit(src, NULL);
-	} else
-	{
-		jmethodID cm = (*env)->GetMethodID(env, tme->jy_class, "<init>", "()V");
-		if (cm)
-		{
-			dest = (*env)->NewObject(env, tme->jy_class, cm);
-			if (tme->sync && tme->sync->py2jy)
-				tme->sync->py2jy(src, dest);
-		}
-	}
-	if (!dest) return NULL;
-	if (dest && (srcJy->flags & SYNC_NEEDED_MASK))
-		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);
-	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
-	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some sync-on-init methods might already init this
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);
-		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-	}
-	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
-
-	if ((tme->flags & JY_TRUNCATE_FLAG_MASK) && !(srcJy->flags & JY_CACHE_ETERNAL_FLAG_MASK)) {
-		/* we create GC-head here to secure the Java-side backend from
-		 * gc until a proper exploration of the owner takes place. */
-		if (!JyNI_GC_EnsureHeadObject(env, src, srcJy)) {
-			JyNI_GC_Track_CStub(src);
-//			JyNI_GC_ObtainJyGCHead(env, src, srcJy);
-//			JyNI_GC_ExploreObject(src);
-		}
-	}
-	return dest;
-}
 
 
 /*
@@ -1847,6 +1741,14 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		 */
 		PyType_Ready((PyTypeObject*) op); //this is the wrong place to do this... it's just a quick hack. TODO: Find better solution...
 	}
+//	jboolean dbg = strcmp("numpy.bool_", Py_TYPE(op)->tp_name) == 0;
+//	if (dbg)
+//	{
+//		jputs(__FUNCTION__);
+//		jputs(Py_TYPE(op)->tp_name);
+//		jputsLong(Is_Static_PyObject(op));
+//		jputsLong(!(Py_TYPE(op)->tp_flags & Jy_TPFLAGS_DYN_OBJECTS));
+//	}
 	/* The following block cares for statically defined type objects.
 	 * Heap-types are treated like ordinary objects.
 	 * Note: Don't confuse the following line with checking op->ob_type rather than op itself.
@@ -1865,11 +1767,18 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
 		}
 	}
-	//jputsLong(__LINE__);
+	if (Is_StaticSingleton_NotBuiltin(op) && !PyType_Check(op))
+	{
+		//jputs("Extension-created native singleton encountered of type:");
+		//jputsPy(Py_TYPE(op));
+		return JyNI_InitStaticJythonPyObject(op);
+	} else if (strcmp("numpy.dtype", Py_TYPE(op)->tp_name) == 0)
+	{
+		jputs("JyNI-Warning: numpy.dtype occurred as type of a non-static object!");
+		jputs("JyNI is currently not able to handle this, segfault expected.");
+	}
 	//if (PyType_Check(op)) puts("appears to be a HeapType");
 	JyObject* jy = AS_JY(op);
-	//jputsLong(__LINE__);
-	//if (JyNI_IsJyObject(op))
 	if (JyObject_IS_INITIALIZED(jy))
 	{
 		if (jy->flags & JY_CACHE_ETERNAL_FLAG_MASK) {
@@ -1919,27 +1828,15 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 //			jputs(op->ob_type->tp_name);
 //		}
 		//return jy->jy;
-	} //else
-	//{
-	//if (bl) jputs("converting bool2");
-	//jputsLong(__LINE__);
+	}
 	TypeMapEntry* tme;
 	if (jy->jy)
 	{
-		//if (bl)
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = (TypeMapEntry*) jy->jy;
-		//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 	} else {
-		//if (bl)
-		//jputsLong(__LINE__);
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
-		//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 		if (!tme) {
-			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(Py_TYPE(op));
-			//if (dbg && tme) {jputs("ufunc tme:"); jputsLong(__LINE__); jputsLong(op);}
 		}
 	}
 	//jputsLong(tme);

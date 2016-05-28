@@ -39,7 +39,6 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyObject;
-import org.python.core.PyException;
 import org.python.core.finalization.FinalizableBuiltin;
 
 public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBuiltin {
@@ -123,22 +122,8 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 	public long objectHandle, refHandle;
 
-//	public PyCPeerType(long objectHandle) {
-//		super(fromClass(PyType.class));
-//		System.out.println("created raw PyCPeerType");
-//		this.objectHandle = objectHandle;
-//		JyNI.CPeerHandles.put(objectHandle, this);
-//	}
-
 	public PyCPeerType(long objectHandle, String name, PyObject dict) {
 		this(objectHandle, name, dict, fromClass(PyType.class));
-//		System.out.println("handle_name_dict");
-//		super(fromClass(PyType.class));
-//		this.objectHandle = objectHandle;
-//		super.name = name;
-//		//super.setName(name);
-//		if (dict != null) super.dict = dict;
-//		JyNI.CPeerHandles.put(objectHandle, this);
 	}
 
 	public PyCPeerType(long objectHandle, String name, PyObject dict, PyType metatype) {
@@ -148,15 +133,8 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		super.name = name;
 		//super.setName(name);
 		if (dict != null) super.dict = dict;
-		//System.out.println("CPeerHandles: "+JyNI.CPeerHandles);
 		JyNI.CPeerHandles.put(objectHandle, this);
 	}
-
-//	public PyType getType() {
-//		//System.out.println("PyCPeerType.getType");
-//		//Todo: Support arbitrary metatypes.
-//		return super.getType();
-//	}
 
 //	public boolean isSubType(PyType supertype) {
 //		System.out.println("PyCPeerType.isSubType");
@@ -167,26 +145,11 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
-//		System.out.println("CPeerType called: "+this);
-//		if (this.toString().equals("<class 'ctypes.CFunctionType'>"))
-//		{
-//			System.out.println(args[0]);
-//			System.out.println(args[0].getClass());
-//		}
-		//System.out.println("args: "+args);
-//		System.out.println("arg count: "+args.length);
-		//if (keywords !=)
-		//System.out.println("PeerCall kw: "+keywords.length);
-		/*for(int i = 0; i < keywords.length; ++i)
-			System.out.println(keywords[i]);
-		System.out.println("PeerCall args: "+args.length);
-		for(int i = 0; i < args.length; ++i)
-			System.out.println(args[i]);*/
 		PyObject result;
 		if (keywords.length == 0)
 			result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
 				args.length == 0 ? Py.EmptyTuple : new PyTuple(args, false), null,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));//Py.None);
+				JyTState.prepareNativeThreadState(Py.getThreadState())));
 		else {
 			//todo: Use PyStringMap here... much work needs to be done to make the peer dictobject accept this
 			HashMap<PyObject, PyObject> back = new HashMap<PyObject, PyObject>(keywords.length);
@@ -206,27 +169,15 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 		if (result == null)
 			throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
 		else return result;
-		/*System.out.println("Call er:");
-		System.out.println(er);
-		System.out.println(er.getClass().getName());
-		System.out.println(er.getType().getName());*/
-		//return er;
 	}
 
 //	public void addMethod(PyBuiltinMethod meth) {
 //		System.out.println("PyCPeerType.addMethod: "+meth);
 //	}
 
-//	int findAttrCount = 0;
-//	WeakReference<PyObject> classCache = null;
 	@Override
 	public PyObject __findattr_ex__(String name) {
-//		if (name.equals("__class__") && classCache != null) {
-//			PyObject cc = classCache.get();
-//			if (cc != null) return cc;
-//			else classCache = null;
-//		}
-		//System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);//+" "+(findAttrCount++));
+		//System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);
 		ThreadState tstate = Py.getThreadState();
 		long ts = JyTState.prepareNativeThreadState(tstate);
 		PyObject er = JyNI.getAttrString(objectHandle, name, ts);
@@ -357,18 +308,4 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public void __del_builtin__() {
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, refHandle);
 	}
-
-	/*
-	 * Though it is discouraged, we use finalize to tidy up the
-	 * native references of this peer. We might replace this by
-	 * a better solution in the future.
-	 * (This will probably be as follows:
-	 * Track all peers in a Set using WeakReferences
-	 * and have these references registered in a ReferenceQueue.
-	 * From Time to time poll things from the queue and tidy
-	 * up or have a thread permanently waiting on the queue.)
-	 */
-//	protected void finalize() throws Throwable {
-//		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, refHandle);
-//	}
 }

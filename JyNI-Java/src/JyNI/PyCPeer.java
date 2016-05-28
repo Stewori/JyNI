@@ -41,9 +41,9 @@ import java.util.HashMap;
 
 @Untraversable
 public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuiltin {
-	
+
 	public long objectHandle;//, refHandle;
-	
+
 	public PyCPeer(long objectHandle, PyType subtype) {
 		super(subtype);
 //		if (subtype == null) System.out.println("PyCPeer with null-type");
@@ -57,26 +57,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
-//		StringBuilder  bl = new StringBuilder("(");
-//		for (PyObject arg: args) {
-//			bl.append(arg); bl.append(", ");
-//		}
-//		bl.setCharAt(bl.length()-1, ')');
-//		System.out.println("CPeer called... "+this+bl);
-//		System.out.println(objectHandle);
-//		System.out.println(getType().getName());
-		//System.out.println("args: "+args);
-		//System.out.println("arg count: "+args.length);
-//		System.out.println(args[0]);
-//		System.out.println(args[0].getType());
-//		System.out.println(args[0].getClass());
-		//if (keywords !=)
-		/*System.out.println("PeerCall kw: "+keywords.length);
-		for(int i = 0; i < keywords.length; ++i)
-			System.out.println(keywords[i]);
-		System.out.println("PeerCall args: "+args.length);
-		for(int i = 0; i < args.length; ++i)
-			System.out.println(args[i]);*/
 		PyObject result = null;
 		if (keywords.length == 0) {
 			result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,

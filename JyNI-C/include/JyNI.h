@@ -212,8 +212,24 @@
 //#define JY_GC_SPECIAL_CASE        192 /* JY_GC_SINGLE_LINK | JY_GC_FIXED_SIZE */
 //#define JY_GC_VAR_SIZE              0 /* Default if JY_GC_FLAG_MASK is active. Just intended as a marker. */
 
+/*
+ * 1L<<11 is a flag currently unused by CPython, so we can use it here.
+ * We use it to indicate that objects of this type are not likely to be
+ * statically defined singletons.
+ */
+#define Jy_TPFLAGS_DYN_OBJECTS (1L<<11)
+
+#define Is_StaticSingleton_NotBuiltin(pyObject) \
+	(!(PyType_HasFeature(Py_TYPE(pyObject), Jy_TPFLAGS_DYN_OBJECTS) || \
+	PyType_IS_GC(Py_TYPE(pyObject)) || \
+	PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE)))
+// e.g. <type '_ctypes.CThunkObject'> needs PyType_IS_GC-check
+// e.g. <class 'ctypes.CDLL'> needs heaptype-check
+
 #define Is_StaticSingleton(pyObject) \
-	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented || pyObject == Py_True || pyObject == Py_False)
+	(pyObject == Py_None || pyObject == Py_Ellipsis || pyObject == Py_NotImplemented || \
+	pyObject == Py_True || pyObject == Py_False || \
+	Is_StaticSingleton_NotBuiltin(pyObject))
 
 //#define Is_StaticTypeObject(pyObject) \
 //	(PyType_Check(pyObject) && !PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE))
