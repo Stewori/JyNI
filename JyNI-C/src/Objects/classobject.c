@@ -280,6 +280,7 @@ static PyObject *
 class_getattr(register PyClassObject *op, PyObject *name)
 {
 //	jputs(__FUNCTION__);
+//	jputsPy(name);
 	register PyObject *v;
 	register char *sname;
 	PyClassObject *klass;

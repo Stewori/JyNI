@@ -1422,16 +1422,16 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 		// existing tp_getattro slots expect a string object as name
 		// and we wouldn't want to break those.
 		if (PyUnicode_Check(name)) {
-				name = _PyUnicode_AsDefaultEncodedString(name, NULL);
-				if (name == NULL)
-					return NULL;
+			name = _PyUnicode_AsDefaultEncodedString(name, NULL);
+			if (name == NULL)
+				return NULL;
 		}
 		else
 #endif
-				PyErr_Format(PyExc_TypeError,
-								"attribute name must be string, not '%.200s'",
-								Py_TYPE(name)->tp_name);
-				return NULL;
+			PyErr_Format(PyExc_TypeError,
+					"attribute name must be string, not '%.200s'",
+					Py_TYPE(name)->tp_name);
+		return NULL;
 	}
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
@@ -1455,6 +1455,12 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 		return (*tp->tp_getattr)(v, PyString_AS_STRING(name));
 	}
 //	jputsLong(__LINE__);
+//	jputsPy(tp);
+//	jputsPy(v);
+//	PyObject *clsname = PyObject_GetAttrString(tp, "__name__");
+//	jputsPy(clsname);
+//	clsname = PyObject_GetAttrString(v, "__name__");
+//	jputsPy(clsname);
 	PyErr_Format(PyExc_AttributeError,
 					"'%.50s' object has no attribute '%.400s'",
 					tp->tp_name, PyString_AS_STRING(name));

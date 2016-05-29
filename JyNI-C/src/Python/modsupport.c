@@ -62,28 +62,8 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-	//puts("Py_InitModule4 called with name:");
-	//puts(name);
-
-	/*puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_name);
-	puts(((PyTypeObject*) PyExc_RuntimeWarning)->tp_base->tp_name);
-	JNIEnv *env;
-	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) {
-		return NULL; // JNI version not supported
-	}
-	jboolean isCopy;
-	jobject jRuntimeWarning = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, ((PyTypeObject*) PyExc_RuntimeWarning)->tp_name));
-	jobject jrwn = (*env)->CallObjectMethod(env, jRuntimeWarning, pyTypeGetName);
-	char* jnc = (*env)->GetStringUTFChars(env, jrwn, &isCopy);
-	puts("namme");
-	puts(jnc);
-	(*env)->ReleaseStringUTFChars(env, jrwn, jnc);
-	jobject tt = (*env)->GetStaticObjectField(env, pyBooleanClass, pyObjectType);
-	jobject tn = (*env)->CallObjectMethod(env, tt, pyTypeGetName);
-	char* tnc = (*env)->GetStringUTFChars(env, tn, &isCopy);
-	puts(tnc);
-	(*env)->ReleaseStringUTFChars(env, tn, tnc);*/
-
+//	jputs("Py_InitModule4 called with name:");
+//	jputs(name);
 
 	//PyObject *m, *d, *v, *n;
 	jobject m, d;
@@ -130,23 +110,6 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		jputs(name);
 		return NULL;
 	}
-//	env(NULL);
-//	//m = JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_AddModule, (*env)->NewStringUTF(env, name)));
-//	m = PyImport_AddModule(name);
-	//puts("module created");
-	//printf("dest-check for module7: %u\n", (int) PyModule_Check(m));
-	//printf("%u\n", (jlong) m2);
-	//printf("dest-type: %u\n", (int) m->ob_type);
-//	if (PyModule_Check(m)) puts("our module passes the check");
-//	if (m->ob_type)
-//	{
-//		puts("ob_type not null");
-//		puts(m->ob_type->tp_name);
-//	}
-//	puts("let's try getName:");
-//	puts(PyModule_GetName(m));
-	//char* fn = PyModule_GetFilename(m);
-	//puts(fn != NULL ? fn : "NULL");
 
 	//d = PyModule_GetDict(m);
 	d = (*env)->CallObjectMethod(env, m, pyModuleGetDict);
@@ -175,8 +138,6 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 				Py_DECREF(n);
 				return NULL;
 			}*/
-//			puts("add method:");
-//			puts(ml->ml_name);
 			ENTER_SubtypeLoop_Safe_Mode(d, __setitem__)
 			(*env)->CallVoidMethod(env, d, JMID(__setitem__),
 					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
@@ -184,7 +145,6 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			LEAVE_SubtypeLoop_Safe_Mode(d, __setitem__)
 			Py_DECREF(v);
 		}
-		//puts("methods added");
 		Py_DECREF(n);
 	}
 //	if (pyd) {
@@ -206,8 +166,9 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		//Py_DECREF(v);
 	}
 	PyObject* er = JyNI_PyObject_FromJythonPyObject(m);
-	//jputs("initModule4 done");
-	//jputsLong((jlong) er);
+//	jputs("initModule4 done");
+//	jputsLong((jlong) er);
+//	jputsPy(Py_TYPE(er));
 	//JyObject* jy = AS_JY(er);
 //	jputsLong((jlong) jy);
 	//jputsLong(jy->flags);

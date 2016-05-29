@@ -2829,9 +2829,9 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 static PyObject *
 type_getattro(PyTypeObject *type, PyObject *name)
 {
-//	puts(__FUNCTION__);
-//	puts(type->tp_name);
-//	puts(((PyStringObject*) name)->ob_sval);
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
+//	jputs(((PyStringObject*) name)->ob_sval);
 	jobject delegate = JyNI_GetJythonDelegate(type);
 	if (delegate)
 	{

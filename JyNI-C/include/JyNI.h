@@ -983,6 +983,7 @@ extern jmethodID JyNIGetPyDictionary_Next;
 extern jmethodID JyNIGetPySet_Next;
 extern jmethodID JyNIPyImport_GetModuleDict;
 extern jmethodID JyNIPyImport_AddModule;
+extern jmethodID JyNIPyImport_ImportModuleNoBlock;
 extern jmethodID JyNIJyNI_GetModule;
 extern jmethodID JyNISlice_compare;
 extern jmethodID JyNIPrintPyLong;

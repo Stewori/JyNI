@@ -2261,6 +2261,7 @@ jmethodID JyNIGetPyDictionary_Next;
 jmethodID JyNIGetPySet_Next;
 jmethodID JyNIPyImport_GetModuleDict;
 jmethodID JyNIPyImport_AddModule;
+jmethodID JyNIPyImport_ImportModuleNoBlock;
 jmethodID JyNIJyNI_GetModule;
 jmethodID JyNISlice_compare;
 jmethodID JyNIPrintPyLong;
@@ -2903,6 +2904,7 @@ inline jint initJyNI(JNIEnv *env)
 	JyNIGetPySet_Next = (*env)->GetStaticMethodID(env, JyNIClass, "getPySet_Next", "(Lorg/python/core/BaseSet;I)LJyNI/JyNISetNextResult;");
 	JyNIPyImport_GetModuleDict = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_GetModuleDict", "()Lorg/python/core/PyObject;");
 	JyNIPyImport_AddModule = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_AddModule", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+	JyNIPyImport_ImportModuleNoBlock = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_ImportModuleNoBlock", "(Ljava/lang/String;Z)Lorg/python/core/PyObject;");
 	JyNIJyNI_GetModule = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_GetModule", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	JyNISlice_compare = (*env)->GetStaticMethodID(env, JyNIClass, "slice_compare", "(Lorg/python/core/PySlice;Lorg/python/core/PySlice;)I");
 	JyNIPrintPyLong = (*env)->GetStaticMethodID(env, JyNIClass, "printPyLong", "(Lorg/python/core/PyObject;)V");

@@ -2187,37 +2187,44 @@ PyImport_ImportModule(const char *name)
 //    return result;
 }
 
-///* Import a module without blocking
-// *
-// * At first it tries to fetch the module from sys.modules. If the module was
-// * never loaded before it loads it with PyImport_ImportModule() unless another
-// * thread holds the import lock. In the latter case the function raises an
-// * ImportError instead of blocking.
-// *
-// * Returns the module object with incremented ref count.
-// */
-//PyObject *
-//PyImport_ImportModuleNoBlock(const char *name)
-//{
-//    PyObject *result;
-//    PyObject *modules;
+/* Import a module without blocking
+ *
+ * At first it tries to fetch the module from sys.modules. If the module was
+ * never loaded before it loads it with PyImport_ImportModule() unless another
+ * thread holds the import lock. In the latter case the function raises an
+ * ImportError instead of blocking.
+ *
+ * Returns the module object with incremented ref count.
+ */
+PyObject *
+PyImport_ImportModuleNoBlock(const char *name)
+{
+    PyObject *result;
+    PyObject *modules;
 //#ifdef WITH_THREAD
 //    long me;
 //#endif
-//
-//    /* Try to get the module from sys.modules[name] */
-//    modules = PyImport_GetModuleDict();
-//    if (modules == NULL)
-//        return NULL;
-//
-//    result = PyDict_GetItemString(modules, name);
-//    if (result != NULL) {
-//        Py_INCREF(result);
-//        return result;
-//    }
-//    else {
-//        PyErr_Clear();
-//    }
+
+    /* Try to get the module from sys.modules[name] */
+    modules = PyImport_GetModuleDict();
+    if (modules == NULL)
+        return NULL;
+
+    result = PyDict_GetItemString(modules, name);
+    if (result != NULL) {
+        Py_INCREF(result);
+        return result;
+    }
+    else {
+        PyErr_Clear();
+    }
+    env(NULL);
+    jobject jres = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_ImportModuleNoBlock,
+    		(*env)->NewStringUTF(env, name), JNI_FALSE);
+    if ((*env)->ExceptionCheck(env)) {
+    	return NULL;
+    }
+    return JyNI_PyObject_FromJythonPyObject(jres);
 //#ifdef WITH_THREAD
 //    /* check the import lock
 //     * me might be -1 but I ignore the error here, the lock function
@@ -2237,8 +2244,8 @@ PyImport_ImportModule(const char *name)
 //#else
 //    return PyImport_ImportModule(name);
 //#endif
-//}
-//
+}
+
 ///* Forward declarations for helper routines */
 //static PyObject *get_parent(PyObject *globals, char *buf,
 //                            Py_ssize_t *p_buflen, int level);

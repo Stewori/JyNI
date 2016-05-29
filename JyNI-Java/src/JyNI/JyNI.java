@@ -38,6 +38,7 @@ import org.python.modules._weakref.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.io.File;
 import java.nio.file.FileSystems;
 
@@ -501,19 +502,6 @@ public class JyNI {
 //			object.__delattr__(JyNIHandleAttr);
 //		}
 	}
-
-//	public static PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name, PyObject self, PyObject... args)
-//	{
-//		Long selfHandle = nativeHandles.get(self);
-//		
-//		long[] handles = new long[args.length];
-//		for (int i = 0; i < args.length; ++i)
-//		{
-//			Long handle = nativeHandles.get(args[i]);
-//			handles[i] = handle == null ? 0 : handle;
-//		}
-//		return callModuleFunctionGlobalReferenceMode(module, name, self, selfHandle == null ? 0 : selfHandle, args, handles);
-//	}
 	
 	public static PyObject _PyImport_FindExtension(String name, String filename) {
 		return null;
@@ -530,21 +518,27 @@ public class JyNI {
 		if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
 		else
 		{
-//			try {
 			er = new PyModule(nm, new PyNativeRefHoldingStringMap());
-			//pss.modules.__setattr__(nm, er);
 			pss.modules.__setitem__(name, er);
-			//System.out.println("JYNY rr: "+er);
-			//System.out.println(er.getType().getName());
-			//ERRR
-//			} catch (Exception e) {
-//				System.err.println("Errrrr: "+e);
-//				e.printStackTrace(System.err);
-//			}
 			return er;
 		}
 	}
-	
+
+	public static PyObject PyImport_ImportModuleNoBlock(String name, boolean top) {
+        PyUnicode.checkEncoding(name);
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        if (importLock.tryLock())
+        {
+	        try {
+	        	return imp.importName(name, top);
+	        } finally {
+	            importLock.unlock();
+	        }
+        } else
+        	throw Py.ImportError("Failed to import " + name +
+        			" because the import lock is held by another thread.");
+    }
+
 	public static PyObject JyNI_GetModule(String name) {
 		String nm = name.intern();
 		PySystemState pss = Py.getSystemState();
