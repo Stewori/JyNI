@@ -1279,20 +1279,38 @@ PyType_IsSubtype(PyTypeObject *a, PyTypeObject *b)
 static PyObject *
 lookup_maybe(PyObject *self, char *attrstr, PyObject **attrobj)
 {
+//	jputs(__FUNCTION__);
+
+//	jobject delegate = JyNI_GetJythonDelegate(self);
+//	if (delegate)
+//	{
+//		jputs("delegate lookup_maybe");
+//		jputsPy(self);
+//		jputs(attrstr);
+//		env(NULL);
+//		//if (*env)
+//		jstring jname = (*env)->NewStringUTF(env, attrstr);//PyString_AS_STRING(PyObject_Str(name)));
+//		return JyNI_PyObject_FromJythonPyObject(
+//				(*env)->CallObjectMethod(env, delegate, //JyNI_JythonPyObject_FromPyObject(type),
+//				pyTypeLookup, jname));
+//	}
+
 	PyObject *res;
 
 	if (*attrobj == NULL) {
 		*attrobj = PyString_InternFromString(attrstr);
-		if (*attrobj == NULL)
+		if (*attrobj == NULL) {
 			return NULL;
+		}
 	}
 	res = _PyType_Lookup(Py_TYPE(self), *attrobj);
 	if (res != NULL) {
 		descrgetfunc f;
 		if ((f = Py_TYPE(res)->tp_descr_get) == NULL)
 			Py_INCREF(res);
-		else
+		else {
 			res = f(res, self, (PyObject *)(Py_TYPE(self)));
+		}
 	}
 	return res;
 }
@@ -1300,8 +1318,9 @@ lookup_maybe(PyObject *self, char *attrstr, PyObject **attrobj)
 static PyObject *
 lookup_method(PyObject *self, char *attrstr, PyObject **attrobj)
 {
-//	puts(__FUNCTION__);
-//	puts(attrstr);
+//	jputs(__FUNCTION__);
+//	jputs(attrstr);
+//	jputsPy(self);
 //	if (self == Py_None) puts("self is None!!");
 	PyObject *res = lookup_maybe(self, attrstr, attrobj);
 	if (res == NULL && !PyErr_Occurred())
@@ -2745,9 +2764,18 @@ PyObject *
 _PyType_Lookup(PyTypeObject *type, PyObject *name)
 {
 //	jputs(__FUNCTION__);
+//	jputsLong(type);
 //	jputsPy(name);
-//	int dbg = strcmp(PyString_AS_STRING(name), "asArray") == 0;
-//	if (dbg) printf("%s: %s in %s\n", __FUNCTION__, PyString_AS_STRING(name), type->tp_name);
+
+//	jobject delegate = JyNI_GetJythonDelegate(type);
+//	if (delegate)
+//	{
+//		env(NULL);
+//		jstring jname = (*env)->NewStringUTF(env, PyString_AS_STRING(PyObject_Str(name)));
+//		return JyNI_PyObject_FromJythonPyObject(
+//				(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(type),
+//				pyTypeLookup, jname));
+//	}
 	Py_ssize_t i, n;
 	PyObject *mro, *res, *base, *dict;
 	unsigned int h;
@@ -2762,14 +2790,12 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 
 	// Look in tp_dict of types in MRO
 	mro = type->tp_mro;
-//	jputsLong(__LINE__);
-//	jputsLong(mro);
-//	jputs(type->tp_name);
-//	jputsLong(mro->ob_refcnt);
 //	   If mro is NULL, the type is either not yet initialized
 //	   by PyType_Ready(), or already cleared by type_clear().
 //	   Either way the safest thing to do is to return NULL.
-	if (mro == NULL) return NULL;
+	if (mro == NULL) {
+		return NULL;
+	}
 
 	res = NULL;
 	assert(PyTuple_Check(mro));
@@ -2777,32 +2803,17 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 	for (i = 0; i < n; i++) {
 		base = PyTuple_GET_ITEM(mro, i);
 		if (PyClass_Check(base)) {
-//			if (dbg) printf("look in class %s\n", PyString_AS_STRING(((PyClassObject *)base)->cl_name));
 			dict = ((PyClassObject *)base)->cl_dict;
-//			jputs("classdict");
-//			jputs(PyString_AS_STRING(((PyClassObject *)base)->cl_name));
 		} else {
-//			if (dbg) printf("look in type %s\n", ((PyTypeObject *)base)->tp_name);
 			assert(PyType_Check(base));
-//			jputs("tp_dict");
-//			jputs(((PyTypeObject *)base)->tp_name);
 			dict = ((PyTypeObject *)base)->tp_dict;
-			//puts(Py_TYPE(dict)->tp_name);
 		}
 		assert(dict && PyDict_Check(dict));
-//		jputsLong(__LINE__);
-//		jputsLong(dict);
-		//if (dbg) jputs(Py_TYPE(dict)->tp_name);
-		//if (dbg) jputsPy(dict);
-//		if (dbg) puts(dict ? PyString_AS_STRING(PyObject_Str(dict)) : "NULL-PyObject");
 		res = PyDict_GetItem(dict, name);
 		if (res != NULL) {
-//			if (dbg) puts("found");
 			break;
 		}
-		//else jputs("res is NULL");
 	}
-//	jputsLong(__LINE__);
 	if (MCACHE_CACHEABLE_NAME(name)) //&& assign_version_tag(type))
 	{
 		h = MCACHE_HASH_METHOD(type, name);
@@ -2817,8 +2828,6 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
 		}
 		method_cache[h].name = name;
 	}
-//	jputsLong(__LINE__);
-//	jputsLong(mro->ob_refcnt);
 	return res;
 }
 
@@ -2840,10 +2849,7 @@ type_getattro(PyTypeObject *type, PyObject *name)
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 	}
-//	jputsLong(__LINE__);
 	PyTypeObject *metatype = Py_TYPE(type);
-//	jputs("Metatype:");
-//	jputs(metatype->tp_name);
 	PyObject *meta_attribute, *attribute;
 	descrgetfunc meta_get;
 
@@ -2852,7 +2858,6 @@ type_getattro(PyTypeObject *type, PyObject *name)
 		if (PyType_Ready(type) < 0)
 			return NULL;
 	}
-//	jputsLong(__LINE__);
 	/* No readable descriptor found yet */
 	meta_get = NULL;
 
@@ -2872,7 +2877,6 @@ type_getattro(PyTypeObject *type, PyObject *name)
 		}
 		Py_INCREF(meta_attribute);
 	}
-//	jputsLong(__LINE__);
 	/* No data descriptor found on metatype. Look in tp_dict of this
 	 * type and its bases
 	 */
@@ -2894,7 +2898,6 @@ type_getattro(PyTypeObject *type, PyObject *name)
 		Py_INCREF(attribute);
 		return attribute;
 	}
-//	jputsLong(__LINE__);
 	/* No attribute found in local __dict__ (or bases): use the
 	 * descriptor from the metatype, if any
 	 */
@@ -2905,12 +2908,10 @@ type_getattro(PyTypeObject *type, PyObject *name)
 		Py_DECREF(meta_attribute);
 		return res;
 	}
-//	jputsLong(__LINE__);
 	/* If an ordinary attribute was found on the metatype, return it now */
 	if (meta_attribute != NULL) {
 		return meta_attribute;
 	}
-//	jputsLong(__LINE__);
 	/* Give up */
 	PyErr_Format(PyExc_AttributeError,
 					 "type object '%.50s' has no attribute '%.400s'",

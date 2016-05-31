@@ -481,29 +481,6 @@ PyObject_Repr(PyObject *v)
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObject__repr__));
 	}
-//	if (!PyType_Ckeck(v)) // && !PyExc_Check(v)
-//	{
-//		JyObject* jy = AS_JY(v);
-//		if (JY_DELEGATE(jy->flags))
-//		{
-//			env(NULL);
-//			return JyNI_PyObject_FromJythonPyObject(
-//				(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(v), pyObject__repr__));
-//		}
-//	} else {
-////		jobject cPeer = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) v);
-////		if (cPeer == NULL) ...
-//
-//		jclass cls = JyNI_JythonClassFromPyType((PyTypeObject*) v);
-//		if (cls != NULL) //delegate
-//		{
-//			jobject jyV = _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) v, cls);
-//			env(NULL);
-//			return JyNI_PyObject_FromJythonPyObject(
-//							(*env)->CallObjectMethod(env, jyV, pyObject__repr__));
-//		}
-//		//todo... care for exception-types
-//	}
 
 	if (Py_TYPE(v)->tp_repr == NULL)
 		return PyString_FromFormat("<%s object at %p>",
@@ -541,6 +518,7 @@ PyObject *
 _PyObject_Str(PyObject *v)
 {
 //	jputs(__FUNCTION__);
+//	jputsLong(v);
 //	jputs(v->ob_type->tp_name);
 	PyObject *res;
 	int type_ok;
@@ -553,11 +531,12 @@ _PyObject_Str(PyObject *v)
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-//		jputs("delegate...");
+//		jputs("delegate... _PyObject_Str");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 				(*env)->CallObjectMethod(env, delegate, pyObject__str__));
 	}
+//	jputs("no delegate... _PyObject_Str");
 #ifdef Py_USING_UNICODE
 	if (PyUnicode_CheckExact(v)) {
 		Py_INCREF(v);
@@ -1330,6 +1309,7 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 {
 //	jputs(__FUNCTION__);
 //	jputs(name);
+//	jputsPy(v);
 //	jputs(Py_TYPE(v)->tp_name);
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
@@ -1414,6 +1394,7 @@ PyObject *
 PyObject_GetAttr(PyObject *v, PyObject *name)
 {
 //	jputs(__FUNCTION__);
+//	jputsPy(name);
 //	jputs(((PyStringObject*) name)->ob_sval);
 //	jputs("PyObject_GetAttr, PyObject key");
 	if (!PyString_Check(name)) {
@@ -1436,7 +1417,6 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-//		jputs("delegate");
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
@@ -1462,8 +1442,8 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 //	clsname = PyObject_GetAttrString(v, "__name__");
 //	jputsPy(clsname);
 	PyErr_Format(PyExc_AttributeError,
-					"'%.50s' object has no attribute '%.400s'",
-					tp->tp_name, PyString_AS_STRING(name));
+			"'%.50s' object has no attribute '%.400s'",
+			tp->tp_name, PyString_AS_STRING(name));
 	return NULL;
 }
 

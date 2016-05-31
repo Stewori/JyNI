@@ -2199,20 +2199,22 @@ PyImport_ImportModule(const char *name)
 PyObject *
 PyImport_ImportModuleNoBlock(const char *name)
 {
+//	jputs(__FUNCTION__);
+//	jputs(name);
     PyObject *result;
     PyObject *modules;
 //#ifdef WITH_THREAD
 //    long me;
 //#endif
-
     /* Try to get the module from sys.modules[name] */
     modules = PyImport_GetModuleDict();
     if (modules == NULL)
         return NULL;
-
     result = PyDict_GetItemString(modules, name);
     if (result != NULL) {
         Py_INCREF(result);
+//        jputsPy(result);
+//        jputsPy(modules);
         return result;
     }
     else {

@@ -105,7 +105,7 @@ typedef struct {
 /* Error handling definitions */
 
 PyAPI_FUNC(void) PyErr_SetNone(PyObject *);
-//#define PyErr_SetObject(exception, value) (puts(__FUNCTION__), _PyErr_SetObject(exception, value))
+//#define PyErr_SetObject(exception, value) (jputs(__FUNCTION__), _PyErr_SetObject(exception, value))
 PyAPI_FUNC(void) PyErr_SetObject(PyObject *, PyObject *);
 PyAPI_FUNC(void) PyErr_SetString(PyObject *, const char *);
 PyAPI_FUNC(PyObject *) PyErr_Occurred(void);

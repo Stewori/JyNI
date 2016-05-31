@@ -1012,6 +1012,7 @@ extern jmethodID JyNI_getGlobalRef;
 extern jmethodID JyNI_getTypeNameForNativeConversion;
 extern jmethodID JyNI_getTypeOldStyleParent;
 extern jmethodID JyNI_getJythonGlobals;
+extern jmethodID JyNI_getPlatform;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;

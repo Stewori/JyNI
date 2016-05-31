@@ -1570,20 +1570,9 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	//todo find out what name occurs if a Jython Java-proxy is used.
 	//     Can we make sense of it in default-instance case?
 	cstr_from_jstring(cName, tpName);
-//	if (strcmp(cName, "str") == 0) {
-//		jputs("is string!");
-//		jobject str = (*env)->CallObjectMethod(env, jythonPyObject, pyObjectAsString);
-//		char* strc = (*env)->GetStringUTFChars(env, str, NULL);
-//		jputs(strc);
-//		(*env)->ReleaseStringChars(env, str, strc);
-//	}
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
 	if (tme)
 	{
-//		jputs("initialize handle:");
-//		if (tme->type_name) jputs(tme->type_name);
-//		if (tme->py_type) jputs(tme->py_type->tp_name);
-
 		//No need to incref here, since JyNI_InitPyObject returns NEW ref.
 		return JyNI_InitPyObject(tme, jythonPyObject);
 	} else
@@ -1599,47 +1588,17 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		} else
 		{
 			jobject tpe = (*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType);
-//			jputsLong(__LINE__);
-//			JyNI_jprintJ(tpe);
-//			JyNI_jprintJ(jythonPyObject);
-//			jobject old_cls0 = (*env)->CallStaticObjectMethod(env, JyNIClass,
-//									JyNI_getTypeOldStyleParent, jythonPyObject);
-//			if (old_cls0) JyNI_jprintJ(old_cls0);
 			PyTypeObject* pytpe;
 			PyObject* result;
 			if ((*env)->IsSameObject(env, jythonPyObject, tpe))
 			{
-//				jputsLong(__LINE__);
-//				jputs(cName);
-//				JyNI_jprintJ(tpe);
-//				JyNI_jprintJ(jythonPyObject);
 				pytpe = JyNI_InitPyObjectNativeTypePeer(tpe);
-				result = pytpe;//JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
-//				pytpe = NULL;
-//				jputs(pytpe->tp_name);
+				result = pytpe;
 			} else
 			{
 				pytpe = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(tpe);
-//				jputsLong(__LINE__);
 				result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
 			}
-//			if (!pytpe)
-//			{
-//				jputs("type seems to be not convertible. Try old hack...");
-//				// We finally try a hack for some special new-style classes:
-//				// todo: Remove this
-//				jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
-//						JyNI_getTypeOldStyleParent, jythonPyObject);
-//				//jputsLong(old_cls);
-//				if (!old_cls) return NULL;
-//			}
-//			if (!pytpe) jputs("pytpe is NULL");
-//			else jputs(((PyTypeObject*) pytpe)->tp_name);
-//			if ((*env)->IsInstanceOf(env, jythonPyObject, pyStringClass)) jputs("is string J");
-//			if (PyType_FastSubclass((PyTypeObject*) pytpe, Py_TPFLAGS_STRING_SUBCLASS)) jputs("is string fast");
-//			if (PyType_IsSubtype(pytpe, &PyString_Type)) jputs("is string");
-			//JyNI_printJInfo(jythonPyObject);
-			//PyObject* result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
 			if (!result)
 			{
 				jputs("JyNI-warning: Unable to handle object:");
@@ -1649,9 +1608,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return result;
 		}
 	}
-	//PyObject* result = JyNI_NewPyObject_FromJythonPyObject(jythonPyObject);
-	//Py_INCREF(result);
-	//return result;
 }
 
 /*
@@ -1672,9 +1628,7 @@ inline void JyNI_SyncPy2Jy(PyObject* op, JyObject* jy)
 	//todo: take care of the other flags
 //	jputs(__FUNCTION__);
 	SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(jy, JyAttributeSyncFunctions);
-//	jputsLong(__LINE__);
 	if (sync != NULL && sync->py2jy != NULL) sync->py2jy(op, jy->jy);
-//	jputsLong(__LINE__);
 }
 
 inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src, JyObject* srcJy)
@@ -1741,14 +1695,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		 */
 		PyType_Ready((PyTypeObject*) op); //this is the wrong place to do this... it's just a quick hack. TODO: Find better solution...
 	}
-//	jboolean dbg = strcmp("numpy.bool_", Py_TYPE(op)->tp_name) == 0;
-//	if (dbg)
-//	{
-//		jputs(__FUNCTION__);
-//		jputs(Py_TYPE(op)->tp_name);
-//		jputsLong(Is_Static_PyObject(op));
-//		jputsLong(!(Py_TYPE(op)->tp_flags & Jy_TPFLAGS_DYN_OBJECTS));
-//	}
 	/* The following block cares for statically defined type objects.
 	 * Heap-types are treated like ordinary objects.
 	 * Note: Don't confuse the following line with checking op->ob_type rather than op itself.
@@ -1768,16 +1714,12 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		}
 	}
 	if (Is_StaticSingleton_NotBuiltin(op) && !PyType_Check(op))
-	{
-		//jputs("Extension-created native singleton encountered of type:");
-		//jputsPy(Py_TYPE(op));
 		return JyNI_InitStaticJythonPyObject(op);
-	} else if (strcmp("numpy.dtype", Py_TYPE(op)->tp_name) == 0)
+	else if (strcmp("numpy.dtype", Py_TYPE(op)->tp_name) == 0)
 	{
 		jputs("JyNI-Warning: numpy.dtype occurred as type of a non-static object!");
 		jputs("JyNI is currently not able to handle this, segfault expected.");
 	}
-	//if (PyType_Check(op)) puts("appears to be a HeapType");
 	JyObject* jy = AS_JY(op);
 	if (JyObject_IS_INITIALIZED(jy))
 	{
@@ -1819,7 +1761,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 				JyNI_CleanUp_JyObject(jy);
 			}
 		}
-		//jputsLong(__LINE__);
 //		if ((*env)->IsSameObject(env, jy->jy, NULL)) {
 //			jputs("Alert!!! Initialized jy->jy became null!!");
 //			jputsLong((jlong) jy->jy);
@@ -1827,7 +1768,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 //			if (!op->ob_type->tp_name) jputs("type name is NULL");
 //			jputs(op->ob_type->tp_name);
 //		}
-		//return jy->jy;
 	}
 	TypeMapEntry* tme;
 	if (jy->jy)
@@ -1839,38 +1779,22 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(Py_TYPE(op));
 		}
 	}
-	//jputsLong(tme);
-	//tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
-	if (tme)// != NULL
-	{
-		//jputsLong(__LINE__);
-		//jputs(Py_TYPE(op)->tp_name);
-		//if (!tme->py_type) jputs("py_type is NULL");
-		//if (!tme->py_type->tp_name) jputs("py_type name is NULL");
-		//puts(tme->py_type->tp_name);
-		//puts(Py_TYPE(op)->tp_name);
-		//printf("%d_______%s\n", __LINE__, __FUNCTION__);
+	if (tme)
 		return JyNI_InitJythonPyObject(tme, op, jy);
-	}
 	else
 	{
-		//jputsLong(__LINE__);
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op));
 		if (eme) {
 			return JyNI_InitJythonPyException(eme, op, jy);
 		} else
 		{
-			//jputsLong(__LINE__);
-			//printf("%d_______%s\n", __LINE__, __FUNCTION__);
 			//setup and return PyCPeer in this case...
 			env(NULL);
 			//The following lookup is not necessary, because if there already was a PyCPeer,
 			//JyObject_IS_INITIALIZED would have evaluated true.
 			//jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) op);
 			//if (er != NULL) return er;
-			//puts("creating PyCPeer for Type:");
-			//puts(Py_TYPE(op)->tp_name);
-//			printf("op-address: %u\n", (jlong) op);
+
 			//PyCPeer has to be created...
 			Py_INCREF(op);
 			//first obtain type:
@@ -1878,21 +1802,6 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			//or natively defined metatypes:
 			//jobject opType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(op));
 			//However, the general conversion method should also work and has this support:
-
-			//Py_INCREF(Py_TYPE(op));
-//				if (!opType) jputs("create PyCPeer with opType NULL");
-//				else if (Py_TYPE(op) == &PyCFunction_Type)
-//				{
-//					jputs("PyCPeer for PyCFunction");
-//					jputs(((PyCFunctionObject*) op)->m_ml->ml_name);
-//					jputsLong((jlong) op);
-//					if (flattenID == 0) flattenID = (jlong) op;
-//					if (flattenID != 0) jputsLong((jlong) ((PyObject*) flattenID)->ob_type);
-//				}
-			//jputs("opType-address:");
-			//printf("%u\n", (jlong) opType);
-			//if (dbg) {jputs("create PyCPeer for ufunc"); jputsLong(op);}
-//			jputs(Py_TYPE(op)->tp_name);
 			if (PyType_Check(op)) {
 				return _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) op, NULL);
 			}
@@ -1901,17 +1810,14 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			jobject er = PyObject_IS_GC(op) ?
 					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType) :
 					(*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
-			//jobject er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
-			//if (dbg) {jputsLong(__LINE__); jputsLong(op);}
+
 			jy->flags |= JY_INITIALIZED_FLAG_MASK;
 			/* JyNI_GC_EnsureHeadObject not needed here because the head is the
 			 * CPeer itself and this has surely been properly initialized.
 			 */
 			jy->flags |= JY_CPEER_FLAG_MASK;
 			jy->jy = (*env)->NewWeakGlobalRef(env, er);
-			//(*env)->SetLongField(env, er, pyCPeerRefHandle, (jlong) ref);
-			return er;//jy->jy;
-			//}
+			return er;
 		}
 	}
 }
@@ -2006,7 +1912,6 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type)
 {
 	if (type == NULL) return NULL;
-	//jclass cls = JyNI_JythonClassFromPyType((PyTypeObject*) type);
 	return _JyNI_JythonPyTypeObject_FromPyTypeObject(type, JyNI_JythonClassFromPyType((PyTypeObject*) type));
 }
 
@@ -2027,15 +1932,7 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 		Py_INCREF(er);
 		return er;
 	}
-	//jstring name = (*env)->CallStaticObjectMethod(env, pyTypeClass, pyTypeGetName, jythonPyTypeObject);
 	jstring name = (*env)->CallObjectMethod(env, jythonPyTypeObject, pyTypeGetName);
-//	jboolean isCopy;
-//
-//	char* utf_string = (*env)->GetStringUTFChars(env, name, &isCopy);
-//	//"+1" for 0-termination:
-//	char mName[strlen(utf_string)+1];
-//	strcpy(mName, utf_string);
-//	(*env)->ReleaseStringUTFChars(env, name, utf_string);
 	cstr_from_jstring(mName, name);
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
@@ -2131,31 +2028,25 @@ inline int decWeakRefCount(JyObject* referent)
 /*returns local ref!*/
 inline jobject JyNI_GetJythonDelegate(PyObject* v)
 {
+//	jputs(__FUNCTION__);
 	if (!PyType_Check(v)) // && !PyExc_Check(v)
 	{
-		//jputs(Py_TYPE(v)->tp_name);
-		//jputs("is no type object");
-		//jputsLong(v);
 		JyObject* jy = AS_JY(v);
-//		jputsLong(jy->flags);
 		if (JY_DELEGATE(v, jy->flags)) {
-			//jputs("should delegate...");
 			jobject er = JyNI_JythonPyObject_FromPyObject(v);
 			return er;
 		}
 	} else {
-	//		jobject cPeer = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) v);
-	//		if (cPeer == NULL) ...
 		if (PyExceptionClass_Check(v)) return NULL; //never delegate for ExceptionType
-		//puts(((PyTypeObject*) v)->tp_name);
+		if (PyType_HasFeature(((PyTypeObject*) v), Py_TPFLAGS_HEAPTYPE))
+		{
+			JyObject* jy = AS_JY(v);
+			if (JY_DELEGATE(v, jy->flags))
+				return JyNI_JythonPyObject_FromPyObject(v);
+		}
 		jclass cls = JyNI_JythonClassFromPyType((PyTypeObject*) v);
 		if (cls != NULL) //delegate
-		{
-			jobject er = _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) v, cls);
-			return er;
-			//env(NULL);
-			//return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jyV, pyObject__repr__));
-		}
+			return _JyNI_JythonPyTypeObject_FromPyTypeObject((PyTypeObject*) v, cls);
 	}
 	return NULL;
 }
@@ -2170,10 +2061,6 @@ inline void JyNI_CleanUp_JyObject(JyObject* obj)
 {
 //	jputs(__FUNCTION__);
 //	jputs(Py_TYPE(FROM_JY(obj))->tp_name);
-//	jputsLong(FROM_JY(obj));
-	//if (FROM_JY(obj) == Py_None) return;
-	//if (obj == NULL) return;
-	//if (FROM_JY(obj) == NULL) return;
 	//Todo: Maybe clean up gc-head here (?)
 	if (obj->attr) JyNI_ClearJyAttributes(obj);
 	if (obj->jy && (obj->flags & JY_INITIALIZED_FLAG_MASK))
@@ -2191,6 +2078,23 @@ inline void JyNI_CleanUp_JyObject(JyObject* obj)
 	}
 }
 
+/*
+ * Py_GetVersion is usually hosted in getversion.c, but in JyNI we host it
+ * here for simplicity.
+ */
+const char *
+Py_GetVersion(void)
+{
+	env(NULL);
+	static char version[250];
+	jstring ver = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPlatform);
+	char* utf_string = (*env)->GetStringUTFChars(env, ver, NULL);
+	strcpy(version, utf_string);
+	(*env)->ReleaseStringUTFChars(env, ver, utf_string);
+//	PyOS_snprintf(version, sizeof(version), "%.80s (%.80s) %.80s",
+//		      PY_VERSION, Py_GetBuildInfo(), Py_GetCompiler());
+	return version;
+}
 
 /* -----------------  JNI-section  ----------------- */
 
@@ -2290,6 +2194,7 @@ jmethodID JyNI_getGlobalRef;
 jmethodID JyNI_getTypeNameForNativeConversion;
 jmethodID JyNI_getTypeOldStyleParent;
 jmethodID JyNI_getJythonGlobals;
+jmethodID JyNI_getPlatform;
 
 jclass JyTStateClass;
 jmethodID JyTState_setRecursionLimit;
@@ -2585,6 +2490,7 @@ jmethodID pyTypeGetBase;
 jmethodID pyTypeGetBases;
 jmethodID pyTypeGetMro;
 jmethodID pyTypeIsSubType;
+jmethodID pyTypeLookup;
 jfieldID pyTypeMROField;
 jfieldID pyTypeNameField;
 
@@ -2940,6 +2846,8 @@ inline jint initJyNI(JNIEnv *env)
 			"(Lorg/python/core/PyObject;)Lorg/python/core/PyClass;");
 	JyNI_getJythonGlobals = (*env)->GetStaticMethodID(env, JyNIClass, "getJythonGlobals",
 			"()Lorg/python/core/PyObject;");
+	JyNI_getPlatform = (*env)->GetStaticMethodID(env, JyNIClass, "getPlatform",
+			"()Ljava/lang/String;");
 
 	//Error stuff:
 	//JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
@@ -3402,6 +3310,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyTypeGetBases = (*env)->GetMethodID(env, pyTypeClass, "getBases", "()Lorg/python/core/PyObject;");
 	pyTypeGetMro = (*env)->GetMethodID(env, pyTypeClass, "getMro", "()Lorg/python/core/PyTuple;");
 	pyTypeIsSubType = (*env)->GetMethodID(env, pyTypeClass, "isSubType", "(Lorg/python/core/PyType;)Z");
+	pyTypeLookup = (*env)->GetMethodID(env, pyTypeClass, "lookup", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	pyTypeMROField = (*env)->GetFieldID(env, pyTypeClass, "mro", "[Lorg/python/core/PyObject;");
 	pyTypeNameField = (*env)->GetFieldID(env, pyTypeClass, "name", "Ljava/lang/String;");
 
@@ -4038,7 +3947,7 @@ PyObject *
 PyMemoryView_FromObject(PyObject *base)
 {
 	//puts(__FUNCTION__);
-	jputs("JyNI-Warning: PyMemoryView_FromObject is not implemented!");
+	//jputs("JyNI-Warning: PyMemoryView_FromObject is not implemented!");
 	return NULL;
 //    PyMemoryViewObject *mview;
 //    Py_buffer view;

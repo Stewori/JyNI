@@ -245,6 +245,7 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 {
 //	jputs(__FUNCTION__);
 //	jputs(subtype->tp_name);
+//	JyNI_jprintJ(src);
 
 	PyObject* dest = NULL;
 	JyObject* jy;
@@ -292,10 +293,32 @@ inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject
 	jy = AS_JY(dest);
 	env(NULL);
 	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);
-	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-	tme->sync->jy2py(src, dest);
+	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK | JY_SUBTYPE_FLAG_MASK;// | JY_INITIALIZED_FLAG_MASK;
+	//jy->jy = (*env)->NewWeakGlobalRef(env, src);
 
+	/*
+	 * Should sync be done before or after INIT_JY?
+	 * Pro-before: Delegation during sync feasible
+	 * Pro-after:  GC-exploration can take synced values into account
+	 * We could split INIT_JY to achieve both "benefits", but since
+	 * delegation during sync is currently not applied we simply sync before.
+	 */
+	tme->sync->jy2py(src, dest);
+	//jy->flags |= JY_SUBTYPE_FLAG_MASK;
 	INIT_JY(jy, tme, src, dest)
+//	tme->sync->jy2py(src, dest);
+
+	/*
+	 * lookup in typeobject.c causes problems due to missing delegation.
+	 * Adding delegation there causes other issues and currently breaks
+	 * more than it fixes. So for now we just clear the error here.
+	 * See out-commented delegation code in typeobject.c/lookup_maybe
+	 * and typeobject.c/_PyType_Lookup
+	 * Probable cause: During sync, bases are converted before mro and
+	 * during bases conversion something tries an mro-based lookup.
+	 * Todo: Why does lookup-delegation break stuff?
+	 */
+	PyErr_Clear();
 
 	return dest;
 }
@@ -330,15 +353,17 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 {
 //	jputs(__FUNCTION__);
+//	JyNI_jprintJ(srctype);
 	env(NULL);
 	jstring jName = (*env)->GetObjectField(env, srctype, pyTypeNameField);
 	cstr_from_jstring(cName, jName);
 //	jputs(cName);
 	PyTypeObject* dest =
 			JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);
-	JyObject* jy = AS_JY(dest);
+//	JyObject* jy = AS_JY(dest);
 	// Add flag to enforce delegation to Java:
-	jy->flags |= JY_SUBTYPE_FLAG_MASK;
+	//(is now done in JyNI_AllocPyObjectNativeTypePeer)
+//	jy->flags |= JY_SUBTYPE_FLAG_MASK;
 
 	return dest;
 }

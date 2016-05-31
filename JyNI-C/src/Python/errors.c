@@ -927,7 +927,7 @@ PyErr_WriteUnraisable(PyObject *obj)
 //	Py_XDECREF(tb);
 }
 
-extern PyObject *PyModule_GetWarningsModule(void);
+//extern PyObject *PyModule_GetWarningsModule(void);
 
 
 /* Set file and line information for the current exception.

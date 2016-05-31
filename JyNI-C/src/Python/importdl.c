@@ -98,13 +98,15 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	//jputs("dyn load func is not NULL");
 	oldcontext = _Py_PackageContext;
 	_Py_PackageContext = packagecontext;
-	//jputs("run dyn load func...");
+//	jputs("run dyn load func...");
+//	jputs(name);
 	(*p)();
-	//jputs("run dyn load func done");
+//	jputs("run dyn load func done");
+//	jputs(name);
 	_Py_PackageContext = oldcontext;
 	if (PyErr_Occurred())
 	{
-		//puts("return NULL because PyErr_Occurred");
+//		jputs("return NULL because PyErr_Occurred");
 		return NULL;
 	}
 

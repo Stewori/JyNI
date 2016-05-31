@@ -940,7 +940,7 @@ PyObject* JySync_Init_PyTuple_From_JyTupleForMRO(jobject src)
 void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 {
 //	jputs(__FUNCTION__);
-//	jputsLong(dest);
+//	JyNI_jprintJ(src);
 	PyTypeObject* tp = (PyTypeObject*) dest;
 	env();
 	//name:
@@ -988,7 +988,8 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 		//tp->tp_flags = (tp->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
 //		JyNI_GC_ExploreObject(tp);
 	}
-
+//	jputs("sync mro...");
+//	jputsLong(tp);
 	//mro:
 	if (!tp->tp_mro)
 	{

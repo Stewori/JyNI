@@ -160,6 +160,7 @@ extern jmethodID pyTypeGetBase;
 extern jmethodID pyTypeGetBases;
 extern jmethodID pyTypeGetMro;
 extern jmethodID pyTypeIsSubType;
+extern jmethodID pyTypeLookup;
 extern jfieldID pyTypeMROField;
 extern jfieldID pyTypeNameField;
 

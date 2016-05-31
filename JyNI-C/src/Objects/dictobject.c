@@ -2663,14 +2663,15 @@ PyTypeObject PyDict_Type = {
 PyObject* PyDict_GetItemStringJy(PyObject* v, jobject key)
 {
 	//if (!PyDict_Check(op)) return NULL;
-	//puts("PyDict_GetItemStringJy");
+//	jputs(__FUNCTION__);
 	env(NULL);
 	jobject jv = JyNI_JythonPyObject_FromPyObject(v);
 	ENTER_SubtypeLoop_Safe_ModePy(jv, v, __finditem__)
 	jobject result = (*env)->CallObjectMethod(env,
 			jv, JMID(__finditem__), key);
 	LEAVE_SubtypeLoop_Safe_ModePy(jv, __finditem__)
-	return JyNI_PyObject_FromJythonPyObject(result);
+	PyObject* res = JyNI_PyObject_FromJythonPyObject(result);
+	return res;
 //	return JyNI_PyObject_FromJythonPyObject(
 //			(*env)->CallObjectMethod(env,
 //				JyNI_JythonPyObject_FromPyObject(v),

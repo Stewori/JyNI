@@ -525,24 +525,32 @@ public class JyNI {
 	}
 
 	public static PyObject PyImport_ImportModuleNoBlock(String name, boolean top) {
-        PyUnicode.checkEncoding(name);
-        ReentrantLock importLock = Py.getSystemState().getImportLock();
-        if (importLock.tryLock())
-        {
-	        try {
-	        	return imp.importName(name, top);
-	        } finally {
-	            importLock.unlock();
-	        }
-        } else
-        	throw Py.ImportError("Failed to import " + name +
-        			" because the import lock is held by another thread.");
-    }
+//		System.out.println("PyImport_ImportModuleNoBlock... "+name);
+		PyUnicode.checkEncoding(name);
+		ReentrantLock importLock = Py.getSystemState().getImportLock();
+		if (importLock.tryLock())
+		{
+//			System.out.println("PyImport_ImportModuleNoBlock acquired lock. Name: "+name);
+//			PyObject result = imp.importName(name, top);
+//			System.out.println("Result: "+result);
+//			importLock.unlock();
+//			return result;
+			try {
+				return imp.importName(name, top);
+			} finally {
+				importLock.unlock();
+			}
+		} else {
+//			System.out.println("PyImport_ImportModuleNoBlock failed to lock");
+			throw Py.ImportError("Failed to import " + name +
+					" because the import lock is held by another thread.");
+		}
+	}
 
 	public static PyObject JyNI_GetModule(String name) {
 		String nm = name.intern();
 		PySystemState pss = Py.getSystemState();
-		PyObject er = pss.modules.__finditem__(name);
+		PyObject er = pss.modules.__finditem__(nm);
 		if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
 		else {
 			System.out.println("JyNI: No module found: "+name);
