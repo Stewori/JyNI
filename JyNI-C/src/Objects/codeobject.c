@@ -79,6 +79,7 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 		   PyObject *filename, PyObject *name, int firstlineno,
 		   PyObject *lnotab)
 {
+//	jputs(__FUNCTION__);
 
 //	Types:
 //	PyObject *code			something supporting buffer
@@ -108,6 +109,21 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 		return NULL;
 	}
 
+	// JyNI-note: Maybe include this interning...
+	//	intern_strings(names);
+	//	intern_strings(varnames);
+	//	intern_strings(freevars);
+	//	intern_strings(cellvars);
+		/* Intern selected string constants */
+	//	for (i = PyTuple_Size(consts); --i >= 0; ) {
+	//		PyObject *v = PyTuple_GetItem(consts, i);
+	//		if (!PyString_Check(v))
+	//			continue;
+	//		if (!all_name_chars((unsigned char *)PyString_AS_STRING(v)))
+	//			continue;
+	//		PyString_InternInPlace(&PyTuple_GET_ITEM(consts, i));
+	//	}
+
 	env(NULL);
 	//Try to get code from a buffer into a jstring...
 	char* code_cstr;
@@ -124,43 +140,15 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 		return NULL;
 	}
 
-//	jobject jConsts = NULL;
-//	if (PyTuple_GET_SIZE(consts))
-//	{
-//		(*env)->NewObjectArray(env, PyTuple_GET_SIZE(consts), pyObjectClass, NULL);
-//		for (i = 0; i < PyTuple_GET_SIZE(consts); ++i)
-//			(*env)->SetObjectArrayElement(env, jConsts, i,
-//				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(consts, i)));
-//	}
 	pyTuple2jArray(consts, pyObjectClass, jConsts);
+	pyStrTuple2jStrArray(names, jNames);
+	pyStrTuple2jStrArray(varnames, jVarnames);
+	pyStrTuple2jStrArray(freevars, jFreevars);
+	pyStrTuple2jStrArray(cellvars, jCellvars);
 
-//	jobject jNames = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(names), pyStringClass, NULL);
-//	for (i = 0; i < PyTuple_GET_SIZE(names); ++i)
-//		(*env)->SetObjectArrayElement(env, jNames, i,
-//			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(names, i)));
-	pyTuple2jArray(names, pyStringClass, jNames);
-
-//	jobject jVarnames = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(varnames), pyStringClass, NULL);
-//	for (i = 0; i < PyTuple_GET_SIZE(varnames); ++i)
-//		(*env)->SetObjectArrayElement(env, jVarnames, i,
-//			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(varnames, i)));
-	pyTuple2jArray(varnames, pyStringClass, jVarnames);
-
-//	jobject jFreevars = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(freevars), pyStringClass, NULL);
-//	for (i = 0; i < PyTuple_GET_SIZE(freevars); ++i)
-//		(*env)->SetObjectArrayElement(env, jFreevars, i,
-//			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(freevars, i)));
-	pyTuple2jArray(freevars, pyStringClass, jFreevars);
-
-//	jobject jCellvars = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(cellvars), pyStringClass, NULL);
-//	for (i = 0; i < PyTuple_GET_SIZE(cellvars); ++i)
-//		(*env)->SetObjectArrayElement(env, jCellvars, i,
-//			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(cellvars, i)));
-	pyTuple2jArray(cellvars, pyStringClass, jCellvars);
-
-	jobject jFilename = JyNI_JythonPyObject_FromPyObject(filename);
-	jobject jName = JyNI_JythonPyObject_FromPyObject(name);
-	jobject jLnotab = JyNI_JythonPyObject_FromPyObject(lnotab);
+	jstring jFilename = (*env)->NewStringUTF(env, PyString_AS_STRING(filename));
+	jstring jName = (*env)->NewStringUTF(env, PyString_AS_STRING(name));
+	jstring jLnotab = (*env)->NewStringUTF(env, PyString_AS_STRING(lnotab));
 
 	jobject result = (*env)->NewObject(env, pyBytecodeClass, pyBytecodeConstructor,
 		argcount, nlocals, stacksize, flags, code_jstr, jConsts, jNames, jVarnames,
@@ -168,19 +156,6 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 
 	return (PyCodeObject*) JyNI_PyObject_FromJythonPyObject(result);
 
-//	intern_strings(names);
-//	intern_strings(varnames);
-//	intern_strings(freevars);
-//	intern_strings(cellvars);
-	/* Intern selected string constants */
-//	for (i = PyTuple_Size(consts); --i >= 0; ) {
-//		PyObject *v = PyTuple_GetItem(consts, i);
-//		if (!PyString_Check(v))
-//			continue;
-//		if (!all_name_chars((unsigned char *)PyString_AS_STRING(v)))
-//			continue;
-//		PyString_InternInPlace(&PyTuple_GET_ITEM(consts, i));
-//	}
 //	co = PyObject_NEW(PyCodeObject, &PyCode_Type);
 //	if (co != NULL) {
 //		co->co_argcount = argcount;

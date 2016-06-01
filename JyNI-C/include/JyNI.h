@@ -138,6 +138,27 @@
 				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(pyTuple, i))); \
 	}
 
+#define pyStrTuple2jStrArray(pyTuple, javaDestName) \
+	jobject javaDestName = NULL; \
+	if (PyTuple_GET_SIZE(pyTuple)) \
+	{ \
+		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), stringClass, NULL); \
+		for (i = 0; i < PyTuple_GET_SIZE(pyTuple); ++i) \
+			(*env)->SetObjectArrayElement(env, javaDestName, i, \
+				(*env)->NewStringUTF(env, PyString_AS_STRING( \
+					((PyStringObject*) PyTuple_GET_ITEM(pyTuple, i))))); \
+	}
+
+#define pyTuple2jStrArray(pyTuple, javaDestName) \
+	jobject javaDestName = NULL; \
+	if (PyTuple_GET_SIZE(pyTuple)) \
+	{ \
+		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), stringClass, NULL); \
+		for (i = 0; i < PyTuple_GET_SIZE(pyTuple); ++i) \
+			(*env)->SetObjectArrayElement(env, javaDestName, i, \
+				(*env)->NewStringUTF(env, PyString_AS_STRING(PyObject_Str(PyTuple_GET_ITEM(pyTuple, i))))); \
+	}
+
 #define jStringArray2pyTuple(jArray, resultName) \
 	Py_ssize_t jArraySize = 0; \
 	if (jArray) jArraySize = (*env)->GetArrayLength(env, jArray); \

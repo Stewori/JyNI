@@ -1363,6 +1363,8 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 {
 //	jputs(__FUNCTION__);
 //	jputs(Py_TYPE(v)->tp_name);
+//	jputs(name);
+//	jputsPy(w);
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{

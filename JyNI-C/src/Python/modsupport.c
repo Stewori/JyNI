@@ -668,8 +668,9 @@ PyEval_CallMethod(PyObject *obj, const char *methodname, const char *format, ...
 int
 PyModule_AddObject(PyObject *m, const char *name, PyObject *o)
 {
-	//puts("PyModule_AddObject");
-	//puts(name);
+//	jputs("PyModule_AddObject");
+//	jputs(name);
+//	jputsPy(o);
 	//PyObject *dict;
 	if (!PyModule_Check(m)) {
 		PyErr_SetString(PyExc_TypeError,

@@ -514,12 +514,13 @@ public class JyNI {
 	public static PyObject PyImport_AddModule(String name) {
 		String nm = name.intern();
 		PySystemState pss = Py.getSystemState();
-		PyObject er = pss.modules.__finditem__(name);
-		if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
+		PyObject er = pss.modules.__finditem__(nm);
+		//if (er != null && er.getType().isSubType(PyModule.TYPE)) return er;
+		if (er != null) return er;
 		else
 		{
 			er = new PyModule(nm, new PyNativeRefHoldingStringMap());
-			pss.modules.__setitem__(name, er);
+			pss.modules.__setitem__(nm, er);
 			return er;
 		}
 	}
