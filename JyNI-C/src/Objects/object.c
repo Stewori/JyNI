@@ -1396,7 +1396,7 @@ PyObject *
 PyObject_GetAttr(PyObject *v, PyObject *name)
 {
 //	jputs(__FUNCTION__);
-//	jputsPy(name);
+	//jputsPy(name);
 //	jputs(((PyStringObject*) name)->ob_sval);
 //	jputs("PyObject_GetAttr, PyObject key");
 	if (!PyString_Check(name)) {
@@ -1820,8 +1820,8 @@ _PyObject_NextNotImplemented(PyObject *self)
 PyObject *
 _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 {
-//	jputs(__FUNCTION__);
-//	jputs(PyString_AS_STRING(name));
+//	puts(__FUNCTION__);
+//	puts(PyString_AS_STRING(name));
 //	jputsLong(dict);
 //	jputs(obj->ob_type->tp_name);
 	PyTypeObject *tp = Py_TYPE(obj);
@@ -1857,7 +1857,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 	jobject delegate = JyNI_GetJythonDelegate(obj);
 	if (delegate)
 	{
-//		jputs("delegate");
+//		puts("delegate");
 //		jputsLong(__LINE__);
 		env(NULL);
 		res = JyNI_PyObject_FromJythonPyObject(
@@ -1989,8 +1989,8 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 PyObject *
 PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 {
-//	jputs(__FUNCTION__);
-//	jputs(PyString_AS_STRING(name));
+//	puts(__FUNCTION__);
+//	puts(PyString_AS_STRING(name));
 	PyObject* er = _PyObject_GenericGetAttrWithDict(obj, name, NULL);
 //	puts("PyObject_GenericGetAttr done");
 	return er;

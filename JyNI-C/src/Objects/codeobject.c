@@ -190,6 +190,8 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 PyCodeObject *
 PyCode_NewEmpty(const char *filename, const char *funcname, int firstlineno)
 {
+//	jputs(__FUNCTION__);
+//	jputs(funcname);
 	static PyObject *emptystring = NULL;
 	static PyObject *nulltuple = NULL;
 	PyObject *filename_ob = NULL;

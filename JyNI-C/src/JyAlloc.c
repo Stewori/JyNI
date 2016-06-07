@@ -202,7 +202,7 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 #define INIT_OBJECT_TME(dest, subtype, alloc_cmd) \
 	if (tme->flags & SYNC_ON_JY_INIT_FLAG_MASK) \
 	{ \
-		if (tme->sync != NULL && tme->sync->pyInit != NULL) \
+		if (tme->sync && tme->sync->pyInit) \
 			dest = tme->sync->pyInit(src, subtype); \
 	} else \
 	{ \
@@ -286,10 +286,14 @@ inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject
 //	jputs(tme->py_type->tp_name);
 	PyTypeObject* dest = NULL;
 	JyObject* jy;
+
 	dest = (PyTypeObject*) JyNI_Alloc(tme);
 	dest->ob_type = dest;
 	dest->tp_flags |= Py_TPFLAGS_HEAPTYPE | Py_TPFLAGS_TYPE_SUBCLASS |
 			Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE;
+	dest->tp_free = PyBaseObject_Type.tp_free;
+	dest->tp_dealloc = PyBaseObject_Type.tp_dealloc;
+
 	jy = AS_JY(dest);
 	env(NULL);
 	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);

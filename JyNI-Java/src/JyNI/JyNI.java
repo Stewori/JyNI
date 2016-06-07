@@ -1101,18 +1101,14 @@ public class JyNI {
 		Py_XDECREF(tb);*/
 	}
 
-	/*public static void main(String[] args)
-	{
-		System.out.println(System.getProperty("user.dir"));
+	public static PyTraceback JyNI_PyTraceBack_Here(PyFrame frame, ThreadState tstate) {
+		if (tstate == null) tstate = Py.getThreadState();
+		if (tstate.exception == null) {
+			tstate.exception = new PyException();
+		}
+		tstate.exception.tracebackHere(frame);
+		return tstate.exception.traceback;
 	}
-	/*
-		Class c = PyBoolean.class;
-		try {
-			Field tp = c.getField("TYPE");
-			PyType t = (PyType) tp.get(null);
-			System.out.println(t.getName());
-		} catch (Exception e) {}
-	}*/
 
 	public static int slice_compare(PySlice v, PySlice w) {
 		int result = 0;

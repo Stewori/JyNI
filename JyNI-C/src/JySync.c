@@ -35,6 +35,7 @@
 
 #include <JyNI.h>
 #include <code_JyNI.h>
+#include <frameobject_JyNI.h>
 
 /*
 typedef void (*jy2pySync)(jobject, PyObject*);
@@ -869,6 +870,20 @@ void JySync_PyCell_From_JyCell(jobject src, PyObject* dest)
 	env();
 	PyCell_SET(dest, JyNI_PyObject_FromJythonPyObject(
 		(*env)->GetObjectField(env, src, pyCell_ob_ref)));
+}
+
+void JySync_JyFrame_From_PyFrame(PyObject* src, jobject dest)
+{
+	// we only care for lineno so far
+	env();
+	(*env)->SetIntField(env, dest, pyFrame_f_lineno, ((PyFrameObject*) src)->f_lineno);
+}
+
+void JySync_PyFrame_From_JyFrame(jobject src, PyObject* dest)
+{
+	// we only care for lineno so far
+	env();
+	((PyFrameObject*) dest)->f_lineno = (*env)->GetIntField(env, src, pyFrame_f_lineno);
 }
 
 jobject JyExc_KeyErrorFactory()

@@ -37,6 +37,7 @@
 #ifndef JYNI_DEBUG_H_
 #define JYNI_DEBUG_H_
 
+#include <execinfo.h>
 /* We define some debug macros for JyNI: */
 char mbuf[100];
 
@@ -61,5 +62,7 @@ inline void _jputs(const char* msg);
 //	jputsLong0(val)
 inline void jputsLong(jlong val);
 inline void jputsPy(PyObject* o);
+
+void jPrintCStackTrace();
 
 #endif /* JYNI_DEBUG_H_ */

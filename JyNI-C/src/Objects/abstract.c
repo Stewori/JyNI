@@ -2861,6 +2861,7 @@ PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
 PyObject *
 PyObject_CallFunctionObjArgs(PyObject *callable, ...)
 {
+//	jputs(__FUNCTION__);
 	PyObject *args, *tmp;
 	va_list vargs;
 

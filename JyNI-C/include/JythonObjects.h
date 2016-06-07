@@ -83,6 +83,10 @@ extern jmethodID pyObjectIsCallable;
 extern jmethodID pyObjectHashCode;
 
 extern jclass pyFrameClass;
+extern jmethodID pyFrameConstructor;
+extern jfieldID pyFrame_f_back;
+extern jfieldID pyFrame_f_builtins;
+extern jfieldID pyFrame_f_lineno;
 
 extern jclass pyBooleanClass;
 extern jfieldID pyBoolVal;

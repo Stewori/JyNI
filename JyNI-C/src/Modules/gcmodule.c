@@ -1909,22 +1909,18 @@ visit_updateLinks(PyObject *op, void *arg)
 
 static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 	//debugPy(op);
-	//jputs(__FUNCTION__);
-	//jputs(Py_TYPE(op)->tp_name);
+//	jboolean jdbg = (strcmp(Py_TYPE(op)->tp_name, "xxx") == 0);
+//	if (jdbg) jputs(__FUNCTION__);
 	traverseproc trav;
 	if (PyType_Check(op)) {// && !Py_TYPE((PyObject*) op)->tp_traverse)
 		//todo: use heap-types own traverse method for heap-types again.
-//		jputsLong(__LINE__);
 		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
 	} else trav = Py_TYPE((PyObject*) op)->tp_traverse;
-
 	if (!(jy->flags & JY_GC_VAR_SIZE)) {
-//		jputsLong(__LINE__);
 		jsize fixedSize = JyObject_FixedGCSize(op);
 		if (fixedSize == UNKNOWN_FIXED_GC_SIZE &&
 			Py_TYPE(op)->tp_itemsize < sizeof(PyObject*))
 		{
-//			jputsLong(__LINE__);
 //			jputsLong(Py_TYPE(op)->tp_itemsize);
 			//Is most likely fixed-size anyway, but we must
 			//obtain the size by traverse-counting.
@@ -1934,41 +1930,18 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 //			jputs("Estimated fixed size:");
 //			jputsLong(fixedSize);
 		}
-//		jputsLong(__LINE__);
 //		jputsLong(fixedSize);
 		if (fixedSize != UNKNOWN_FIXED_GC_SIZE)
 		{
-//			jputsLong(__LINE__);
 			if (fixedSize == 1) {
-//				jputsLong(__LINE__);
 				PyObject* singleLink = NULL;
 				trav(op, (visitproc)visit_exploreSingleLink, &singleLink);
-//				jputsLong(__LINE__);
-				//jputs(Py_TYPE(op)->tp_name);
-				//jputs(Py_TYPE(singleLink)->tp_name);
-//				if (!singleLink) {
-//					jputs("singleLink is NULL");
-//					jputsLong(op);//PyTuple_GET_ITEM(op, 0));
-//				}
-//				if (Is_Static_PyObject(singleLink))
-//					jputs("JyNI-Warning: Obtained non-heap single link.");
-//				else jputs("non-static");
-//				jputsLong(__LINE__);
 				if (singleLink) {// && !Is_Static_PyObject(singleLink)) {
 					JyObject* jy = AS_JY(singleLink);
 					jobject result0 = JyNI_GC_ObtainJyGCHead(env, singleLink, jy);
-					//jputsLong(__LINE__);
-					//JyNI_jprintHash(result0);
 					return result0;
 					//return JyNI_GC_ObtainJyGCHead(env, singleLink, AS_JY(singleLink));
 				} else {
-//					jputsLong(__LINE__);
-//					jputsLong(singleLink);
-//					if (singleLink) jputsLong(Is_Static_PyObject(singleLink));
-//					//Is_StaticSingleton(pyObject) || Is_StaticTypeObject(pyObject) || !Has_Dealloc(pyObject)
-//					if (singleLink) jputsLong(Is_StaticSingleton(singleLink));
-//					if (singleLink) jputsLong(Is_StaticTypeObject(singleLink));
-//					if (singleLink) jputsLong(Has_Dealloc(singleLink));
 					return NULL;
 				}
 			} else {
@@ -1979,7 +1952,6 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 			}
 		}
 	}
-//	jputs("Create var-size head...");
 	//Create var-size GC-head...
 	//obtain initial size...
 	jsize initSize;
@@ -1987,8 +1959,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 		initSize = Py_SIZE(op);
 	else {
 		initSize = 0;
-		trav((PyObject*) op,
-				(visitproc)visit_count, &initSize);
+		trav((PyObject*) op, (visitproc) visit_count, &initSize);
 	}
 	jobject result = (*env)->NewObject(env, arrayListClass, arrayListConstructor, initSize);
 	exploreJNI expl = {env, result, 0};

@@ -103,6 +103,9 @@ void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest);
 void JySync_JyCell_From_PyCell(PyObject* src, jobject dest);
 void JySync_PyCell_From_JyCell(jobject src, PyObject* dest);
 
+void JySync_JyFrame_From_PyFrame(PyObject* src, jobject dest);
+void JySync_PyFrame_From_JyFrame(jobject src, PyObject* dest);
+
 void JySync_PyType_From_JyType(jobject src, PyObject* dest);
 
 //Exception factories:

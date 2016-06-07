@@ -39,7 +39,7 @@ import os as _os, sys as _sys
 # JyNI-adjustment:
 # Usually Jython does not have lib-dynload on its path, so ensure it here
 lib_dynload = '/usr/lib/python2.7/lib-dynload'
-#lib_dynload = '/data/workspace/linux/Python-2.7.8/build/lib.linux-x86_64-2.7'
+#lib_dynload = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
 if not lib_dynload in _sys.path:
     _sys.path.append(lib_dynload)
 

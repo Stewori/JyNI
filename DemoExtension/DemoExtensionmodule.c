@@ -309,6 +309,31 @@ newstyleCheckSubtype(PyObject* self, PyObject* args)
 		Py_RETURN_NONE;
 }
 
+PyObject*
+importConversionTest(PyObject* self, PyObject* args)
+{
+	puts("#############");
+	puts(__FUNCTION__);
+	PyObject* moduleDict = PyImport_GetModuleDict();
+	PyObject* builtinModule = PyDict_GetItemString(moduleDict, "__builtin__");
+	PyObject* importFunction;
+	PyObject* attrStr = PyString_FromString("__import__");
+	PyTypeObject* tp = Py_TYPE(builtinModule);
+	puts(tp->tp_name);
+	puts(PyString_AS_STRING(PyObject_Str(builtinModule)));
+	if (tp->tp_getattro) {
+//		printf("%s %i\n", __FUNCTION__, __LINE__);
+		importFunction = tp->tp_getattro(builtinModule, attrStr);
+	}
+	puts(PyString_AS_STRING(PyObject_Str(importFunction)));
+	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(importFunction))));
+	printf("%lld\n", Py_TYPE(importFunction)->tp_dealloc);
+	puts("decref...");
+	Py_XDECREF(importFunction);
+	puts("conversion test done");
+	Py_RETURN_NONE;
+}
+
 PyMethodDef DemoExtensionMethods[] = {
 	{"hello_world", hello_world, METH_NOARGS, "Hello World method."},
 	{"longTests", longTests, METH_VARARGS, "Prints out some test-data about PyLong."},
@@ -334,6 +359,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"newstyleCheck", newstyleCheck, METH_VARARGS, "Checks integrity of new-style instance conversion."},
 	{"newstyleCheckSubtype", newstyleCheckSubtype, METH_VARARGS, "Checks subtype consistence new-style conversion."},
 	{"refcount", refcount, METH_VARARGS, "Provides the current native refcount of the given object."},
+	{"importConversionTest", importConversionTest, METH_NOARGS, "Tests some aspects of native import API."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

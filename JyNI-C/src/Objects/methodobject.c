@@ -50,6 +50,7 @@ static int numfree = 0;
 PyObject *
 PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 {
+//	puts(__FUNCTION__);
 	PyCFunctionObject *op;
 	op = free_list;
 	if (op != NULL) {
@@ -64,6 +65,8 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 		if (op == NULL)
 			return NULL;
 	}
+//	printf("Func object at %lld\n", op);
+//	puts(ml->ml_name);
 	op->m_ml = ml;
 	Py_XINCREF(self);
 	op->m_self = self;
@@ -169,6 +172,7 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 static void
 meth_dealloc(PyCFunctionObject *m)
 {
+//	puts(__FUNCTION__);
 	JyNIDebugOp(JY_NATIVE_FINALIZE, m, -1);
 	_JyNI_GC_UNTRACK(m);
 	Py_XDECREF(m->m_self);
@@ -183,6 +187,7 @@ meth_dealloc(PyCFunctionObject *m)
 	else {
 		PyObject_GC_Del(m);
 	}
+//	puts("meth_dealloc done");
 }
 
 static PyObject *

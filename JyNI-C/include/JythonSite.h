@@ -90,6 +90,7 @@ extern jmethodID pyCodecsRegisterError;
 
 extern jclass pyThreadStateClass;
 extern jfieldID pyThreadStateExceptionField;
+extern jfieldID pyThreadStateFrameField;
 //extern jfieldID pyThreadStateRecursionDepth;
 //extern jmethodID pyThreadStateEnterRecursiveCall;
 //extern jmethodID pyThreadStateLeaveRecursiveCall;

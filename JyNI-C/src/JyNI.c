@@ -39,7 +39,7 @@
 #include <JySync.h>
 #include <code_JyNI.h>
 //#include <JyNI_JyNI.h>
-//#include "frameobject.h"
+#include "frameobject_JyNI.h"
 #include "importdl.h"
 //#include <dlfcn.h>
 //#include "stringlib/string_format.h"
@@ -62,8 +62,8 @@ int (*PyOS_InputHook)(void) = NULL;
  */
 jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring modulePath, jlong tstate)
 {
-	//jputs("JyNI_loadModule...");
-	//JyNI_jprintJ(moduleName);
+//	jputs("JyNI_loadModule...");
+//	JyNI_jprintJ(moduleName);
 //	jputsLong(tstate);
 	RE_ENTER_JyNI
 	if (PyErr_Occurred()) jputs("PyErrOccured01 (beginning of JyNI_loadModule)");//this should never happen!
@@ -139,7 +139,7 @@ void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, j
  */
 jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate)
 {
-//	jputs(__FUNCTION__);
+	//jputs(__FUNCTION__);
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
@@ -169,6 +169,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 		er = NULL;
 	}
 	LEAVE_JyNI
+//	jputs("JyNI_callPyCPeer done");
 	return er;
 }
 
@@ -948,13 +949,21 @@ inline void initBuiltinTypes()
 	char* tp_nameTablecode = "tablecode";
 	builtinTypes[TME_INDEX_Code_Tablecode].type_name = malloc(strlen(tp_nameTablecode)+1);
 	strcpy(builtinTypes[TME_INDEX_Code_Tablecode].type_name, tp_nameTablecode);
+	// Todo: What about Py.JavaCode?
 
-/*	builtinTypes[TME_INDEX_Frame].py_type = &PyFrame_Type;
+	builtinTypes[TME_INDEX_Frame].py_type = &PyFrame_Type;
 	builtinTypes[TME_INDEX_Frame].jy_class = pyFrameClass;
-	builtinTypes[TME_INDEX_Frame].flags = 0;
+	builtinTypes[TME_INDEX_Frame].flags = JY_TRUNCATE_FLAG_MASK;
+	//numpy.random.mtrand accesses f_lineno directly, which is rather at the end of the struct.
+	//However for simplicity we just alloc the whole PyFrameObject struct:
+	builtinTypes[TME_INDEX_Frame].truncate_trailing = sizeof(PyFrameObject);
+	builtinTypes[TME_INDEX_Frame].sync = malloc(sizeof(SyncFunctions));
+	builtinTypes[TME_INDEX_Frame].sync->jy2py = (jy2pySync) JySync_PyFrame_From_JyFrame;
+	builtinTypes[TME_INDEX_Frame].sync->py2jy = (py2jySync) JySync_JyFrame_From_PyFrame;
+	void JySync_PyFrame_From_JyFrame(jobject src, PyObject* dest);
 	PyFrame_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
-	builtinTypes[TME_INDEX_Super].py_type = &PySuper_Type;
+/*	builtinTypes[TME_INDEX_Super].py_type = &PySuper_Type;
 	builtinTypes[TME_INDEX_Super].jy_class = pySuperClass;
 	builtinTypes[TME_INDEX_Super].flags = 0;
 	PySuper_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
@@ -984,13 +993,13 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_MemoryView].py_type = &PyMemoryView_Type;
 	builtinTypes[TME_INDEX_MemoryView].jy_class = pyMemoryViewClass;
 	builtinTypes[TME_INDEX_MemoryView].flags = 0;
-	PyMemoryView_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
+	PyMemoryView_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
 
 	builtinTypes[TME_INDEX_BaseObject].py_type = &PyBaseObject_Type;
 	builtinTypes[TME_INDEX_BaseObject].jy_class = pyObjectClass;
 	builtinTypes[TME_INDEX_BaseObject].flags = 0;
-	PyBaseObject_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
+	/*
 	builtinTypes[TME_INDEX_CallIter].py_type = &PyCallIter_Type;
 	builtinTypes[TME_INDEX_CallIter].jy_class = pyCallIterClass;
 	builtinTypes[TME_INDEX_CallIter].flags = 0;
@@ -1342,10 +1351,12 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type)
 		default:
 		{
 			int i;
-			for (i = 0; i < builtinTypeCount; ++i)
+			for (i = 0; i != TME_INDEX_BaseObject; ++i) // TME_INDEX_BaseObject is last and shouldn't be considered
 			{
-				if (PyType_IsSubtype(type, builtinTypes[i].py_type))
+				if (PyType_IsSubtype(type, builtinTypes[i].py_type)) {
+					printf("%s is subtype of %s", type->tp_name, builtinTypes[i].py_type->tp_name);
 					return &(builtinTypes[i]);
+				}
 			}
 			return NULL;
 		}
@@ -2158,6 +2169,7 @@ jmethodID JyNIPyErr_ExceptionMatches;
 //jmethodID JyNIPyErr_SetNone;
 //jmethodID JyNIPyErr_NoMemory;
 //jmethodID JyNIPyErr_Fetch;
+jmethodID JyNI_PyTraceBack_Here;
 jmethodID JyNIPyErr_WriteUnraisable;
 jmethodID JyNIGetDLVerbose;
 jmethodID JyNI_PyImport_FindExtension;
@@ -2372,6 +2384,7 @@ jmethodID pyObjectHashCode;
 
 jclass pyThreadStateClass;
 jfieldID pyThreadStateExceptionField;
+jfieldID pyThreadStateFrameField;
 //jfieldID pyThreadStateRecursionDepth;
 //jmethodID pyThreadStateEnterRecursiveCall;
 //jmethodID pyThreadStateLeaveRecursiveCall;
@@ -2386,6 +2399,10 @@ jfieldID pyInstance__dict__;
 jmethodID pyInstanceIsSequenceType;
 
 jclass pyFrameClass;
+jmethodID pyFrameConstructor;
+jfieldID pyFrame_f_back;
+jfieldID pyFrame_f_builtins;
+jfieldID pyFrame_f_lineno;
 
 jclass pyTracebackClass;
 jmethodID pyTracebackByTracebackFrameConstructor;
@@ -2867,6 +2884,9 @@ inline jint initJyNI(JNIEnv *env)
 //	JyNIPyErr_Occurred = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Occurred", "()Lorg/python/core/PyObject;");
 	JyNIPyErr_ExceptionMatches = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_ExceptionMatches",
 			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)Z");
+	JyNI_PyTraceBack_Here = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_PyTraceBack_Here",
+			"(Lorg/python/core/PyFrame;Lorg/python/core/ThreadState;)Lorg/python/core/PyTraceback;");
+	//PyTraceback JyNI_PyTraceBack_Here(PyFrame frame, ThreadState tstate)
 //	JyNIPyErr_SetObject = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetObject", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
 //	JyNIPyErr_SetString = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetString", "(Lorg/python/core/PyObject;Ljava/lang/String;)V");
 //	JyNIPyErr_SetNone = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetNone", "(Lorg/python/core/PyObject;)V");
@@ -3104,6 +3124,7 @@ inline jint initJythonSite(JNIEnv *env)
 	pyThreadStateClass = (jclass) (*env)->NewWeakGlobalRef(env, pyThreadStateClassLocal);
 	(*env)->DeleteLocalRef(env, pyThreadStateClassLocal);
 	pyThreadStateExceptionField = (*env)->GetFieldID(env, pyThreadStateClass, "exception", "Lorg/python/core/PyException;");
+	pyThreadStateFrameField = (*env)->GetFieldID(env, pyThreadStateClass, "frame", "Lorg/python/core/PyFrame;");
 	//pyThreadStateRecursionDepth = (*env)->GetFieldID(env, pyThreadStateClass, "recursion_depth", "I");
 	//pyThreadStateEnterRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "enterRecursiveCall", "(Ljava/lang/String;)V");
 	//pyThreadStateLeaveRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "leaveRecursiveCall", "()V");
@@ -3174,6 +3195,11 @@ inline jint initJythonObjects(JNIEnv *env)
 	if (pyFrameClassLocal == NULL) { return JNI_ERR;}
 	pyFrameClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFrameClassLocal);
 	(*env)->DeleteLocalRef(env, pyFrameClassLocal);
+	pyFrameConstructor = (*env)->GetMethodID(env, pyFrameClass, "<init>",
+			"(Lorg/python/core/PyBaseCode;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+	pyFrame_f_back = (*env)->GetFieldID(env, pyFrameClass, "f_back", "Lorg/python/core/PyFrame;");
+	pyFrame_f_builtins = (*env)->GetFieldID(env, pyFrameClass, "f_builtins", "Lorg/python/core/PyObject;");
+	pyFrame_f_lineno = (*env)->GetFieldID(env, pyFrameClass, "f_lineno", "I");
 
 	jclass pyBooleanClassLocal = (*env)->FindClass(env, "org/python/core/PyBoolean");
 	if (pyBooleanClassLocal == NULL) { return JNI_ERR;}
@@ -3936,6 +3962,19 @@ inline void jputsLong(jlong val)
 inline void jputsPy(PyObject* o)
 {
 	jputs(o ? PyString_AS_STRING(PyObject_Str(o)) : "NULL-PyObject");
+}
+
+void jPrintCStackTrace()
+{
+	jputs(__FUNCTION__);
+	void* buf[300];
+	int size = backtrace(buf, 300);
+	jputsLong(size);
+	char** funcs = backtrace_symbols(buf, size);
+	int i;
+	for (i = 0; i < size; ++i)
+		jputs(funcs[i]);
+	free(funcs);
 }
 
 /*

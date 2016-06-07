@@ -689,7 +689,7 @@ jobject JyNI_PyNumber_And(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Xor(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Or(jlong o1, jobject o2, jlong tstate);
 
-#define builtinTypeCount 36
+#define builtinTypeCount 38
 extern TypeMapEntry builtinTypes[builtinTypeCount];
 #define TME_INDEX_Type                   0
 #define TME_INDEX_NotImplemented         1
@@ -737,15 +737,15 @@ extern TypeMapEntry builtinTypes[builtinTypeCount];
 //#define TME_INDEX_Gen                 39
 #define TME_INDEX_Code_Bytecode         32
 #define TME_INDEX_Code_Tablecode        33
-//#define TME_INDEX_Frame               42
+#define TME_INDEX_Frame                 34
 //#define TME_INDEX_Super               43
-#define TME_INDEX_Exc_BaseException     34
-#define TME_INDEX_TraceBack             35
+#define TME_INDEX_Exc_BaseException     35
+#define TME_INDEX_TraceBack             36
 //#define TME_INDEX_ByteArray           46
 //#define TME_INDEX_Buffer              47
 //#define TME_INDEX_MemoryView          48
-//#define TME_INDEX_BaseObject          49
 //#define TME_INDEX_CallIter            50
+#define TME_INDEX_BaseObject            37 //must be last type in list
 
 /* "Hidden" PyTypes: */
 extern PyTypeObject PyNone_Type;
@@ -1061,6 +1061,7 @@ extern jmethodID JyNIJyErr_PrintEx;
 //extern jmethodID JyNIPyErr_Clear;
 //extern jmethodID JyNIPyErr_Occurred;
 extern jmethodID JyNIPyErr_ExceptionMatches;
+extern jmethodID JyNI_PyTraceBack_Here;
 //extern jmethodID JyNIPyErr_SetObject;
 //extern jmethodID JyNIPyErr_SetString;
 //extern jmethodID JyNIPyErr_SetNone;
