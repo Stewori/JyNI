@@ -310,28 +310,119 @@ newstyleCheckSubtype(PyObject* self, PyObject* args)
 }
 
 PyObject*
-importConversionTest(PyObject* self, PyObject* args)
+importAPIandMethodDescrTest(PyObject* self, PyObject* args)
 {
-	puts("#############");
-	puts(__FUNCTION__);
+//	puts(__FUNCTION__);
 	PyObject* moduleDict = PyImport_GetModuleDict();
 	PyObject* builtinModule = PyDict_GetItemString(moduleDict, "__builtin__");
+	Py_XDECREF(moduleDict);
 	PyObject* importFunction;
 	PyObject* attrStr = PyString_FromString("__import__");
-	PyTypeObject* tp = Py_TYPE(builtinModule);
-	puts(tp->tp_name);
-	puts(PyString_AS_STRING(PyObject_Str(builtinModule)));
+	PyTypeObject* tp = Py_TYPE(builtinModule);  //Borrowed ref, so don't decref!
+//	puts(tp->tp_name);
+//	puts(PyString_AS_STRING(PyObject_Str(builtinModule)));
+	if (strcmp(tp->tp_name, "module") != 0) return PyInt_FromLong(-__LINE__);
+	if (strcmp(PyString_AS_STRING(PyObject_Str(builtinModule)),
+			"<module '__builtin__' (built-in)>") != 0) return PyInt_FromLong(-__LINE__);
+//	PyObject* range = PyObject_GetAttrString(builtinModule, "range");
 	if (tp->tp_getattro) {
-//		printf("%s %i\n", __FUNCTION__, __LINE__);
 		importFunction = tp->tp_getattro(builtinModule, attrStr);
 	}
-	puts(PyString_AS_STRING(PyObject_Str(importFunction)));
-	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(importFunction))));
-	printf("%lld\n", Py_TYPE(importFunction)->tp_dealloc);
-	puts("decref...");
+	Py_XDECREF(builtinModule);
+	Py_XDECREF(attrStr);
+//	puts(PyString_AS_STRING(PyObject_Str(importFunction)));
+//	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(importFunction))));
+	if (strcmp(PyString_AS_STRING(PyObject_Str(importFunction)),
+			"<built-in function __import__>") != 0) return PyInt_FromLong(-__LINE__);
+	if (strcmp(PyString_AS_STRING(PyObject_Str(Py_TYPE(importFunction))),
+			"<type 'builtin_function_or_method'>") != 0) return PyInt_FromLong(-__LINE__);
+
+	PyObject* threadingname = PyString_FromString("threading");
+	PyObject* py_level = PyInt_FromLong(1);
+	PyObject* global_dict = PyDict_New();
+	PyObject* empty_dict = PyDict_New();
+	PyObject* list = PyList_New(0);
+	PyObject* module = PyObject_CallFunctionObjArgs(importFunction,
+			threadingname, global_dict, empty_dict, list, py_level, NULL);
+	Py_XDECREF(threadingname);
+	Py_XDECREF(py_level);
+	Py_XDECREF(global_dict);
+	Py_XDECREF(empty_dict);
+	Py_XDECREF(list);
+//	puts(PyString_AS_STRING(PyObject_Str(module)));
+	if (strncmp(PyString_AS_STRING(PyObject_Str(module)),
+			"<module 'threading'", 19) != 0) return PyInt_FromLong(-__LINE__);
+
+	PyObject *lockname = PyString_FromString("Lock");
+	PyObject* locktp = NULL;
+	PyTypeObject* tpl = Py_TYPE(module); //Borrowed ref, so don't decref!
+//	puts(PyString_AS_STRING(PyObject_Str(tpl)));
+	if (!locktp && tpl->tp_getattro) {
+//		printf("%s %i\n", __FUNCTION__, __LINE__);
+		locktp = tpl->tp_getattro(module, lockname);
+	}
+	if (!locktp && tpl->tp_getattr) {
+//		printf("%s %i\n", __FUNCTION__, __LINE__);
+		locktp = tpl->tp_getattr(module, PyString_AS_STRING(lockname));
+	}
+	if (!locktp)
+		locktp = PyObject_GetAttr(module, lockname);
+	Py_XDECREF(module);
+	Py_XDECREF(lockname);
+	PyObject* lock = PyObject_Call(locktp, PyTuple_New(0), NULL);
+//	puts("getting __enter__...");
+	PyObject* __enter__ = _PyType_Lookup(locktp, PyString_FromString("__enter__"));
+	Py_XDECREF(locktp);
+
+//	puts(PyString_AS_STRING(PyObject_Str(locktp)));
+//	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(lock))));
+//	puts(PyString_AS_STRING(PyObject_Str(lock)));
+	if (strcmp(PyString_AS_STRING(PyObject_Str(locktp)),
+				"<type '_threading.Lock'>") != 0) return PyInt_FromLong(-__LINE__);
+	if (strcmp(PyString_AS_STRING(PyObject_Str(Py_TYPE(lock))),
+				"<type '_threading.Lock'>") != 0) return PyInt_FromLong(-__LINE__);
+	if (strcmp(PyString_AS_STRING(PyObject_Str(lock)),
+				"<_threading.Lock owner=None locked=False>") != 0)
+		return PyInt_FromLong(-__LINE__);
+
+	//PyObject* __enter__ = PyObject_GetAttrString(lock, "__enter__");
+//	puts("got __enter__:");
+//	puts(PyString_AS_STRING(PyObject_Str(__enter__)));
+	if (strcmp(PyString_AS_STRING(PyObject_Str(__enter__)),
+					"<method '__enter__' of 'Lock' objects>") != 0)
+		return PyInt_FromLong(-__LINE__);
+	if (__enter__) {
+//		puts("__enter__ not NULL");
+		descrgetfunc f = Py_TYPE(__enter__)->tp_descr_get;
+		if (!f) {
+			//puts("descrget is NULL");
+			//Py_INCREF(__enter__);
+			return PyInt_FromLong(-__LINE__);
+		} //else {
+//			puts("descrget is non-NULL");
+//			//__enter__ = f(__enter__, obj, (PyObject *)tp);
+//		}
+	} else return PyInt_FromLong(-__LINE__);
+//	puts(Py_TYPE(__enter__)->tp_name);
+	if (strcmp(Py_TYPE(__enter__)->tp_name, "method_descriptor") != 0)
+		return PyInt_FromLong(-__LINE__);
+//	if (PyType_HasFeature(Py_TYPE(__enter__), Py_TPFLAGS_HEAPTYPE))
+//		puts("heaptype");
+	PyObject* argSelf = PyTuple_New(1);
+	PyTuple_SetItem(argSelf, 0, lock);
+	PyObject* p7 = PyObject_Call(__enter__, argSelf, NULL);
+//	puts(PyString_AS_STRING(PyObject_Str(p7)));
+	if (strcmp(PyString_AS_STRING(PyObject_Str(p7)),
+			"<_threading.Lock owner='MainThread' locked=True>") != 0)
+		return PyInt_FromLong(-__LINE__);
+//	puts("decref...");
 	Py_XDECREF(importFunction);
-	puts("conversion test done");
-	Py_RETURN_NONE;
+	Py_XDECREF(p7);
+	Py_XDECREF(argSelf);
+	Py_XDECREF(lock);
+	Py_XDECREF(__enter__);
+//	puts("conversion test done");
+	return PyInt_FromLong(0);
 }
 
 PyMethodDef DemoExtensionMethods[] = {
@@ -359,12 +450,13 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"newstyleCheck", newstyleCheck, METH_VARARGS, "Checks integrity of new-style instance conversion."},
 	{"newstyleCheckSubtype", newstyleCheckSubtype, METH_VARARGS, "Checks subtype consistence new-style conversion."},
 	{"refcount", refcount, METH_VARARGS, "Provides the current native refcount of the given object."},
-	{"importConversionTest", importConversionTest, METH_NOARGS, "Tests some aspects of native import API."},
+	{"importAPIandMethodDescrTest", importAPIandMethodDescrTest, METH_NOARGS, "Tests some aspects of native import API."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 
 PyMODINIT_FUNC
 initDemoExtension(void)
 {
+	//PyErr_Format(PyExc_ImportError, "test-error");
 	(void) Py_InitModule3("DemoExtension", DemoExtensionMethods, "This is a pure demo extension.");
 }

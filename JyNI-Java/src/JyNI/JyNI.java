@@ -241,6 +241,11 @@ public class JyNI {
 	//Set-Stuff:
 	public static native void JySet_putSize(long handle, int size);
 
+	//PyCFunction-Stuff:
+	public static native PyObject PyCFunction_getSelf(long handle, long tstate);
+	public static native PyObject PyCFunction_getModule(long handle, long tstate);
+	public static native PyObject JyNI_CMethodDef_bind(long handle, PyObject bindTo, long tstate);
+
 	//Number protocol:
 	//public static native int JyNI_PyNumber_Check(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Add(long o1, PyObject o2, long tstate);
@@ -920,6 +925,8 @@ public class JyNI {
 		if (obj == null && JyNI_exc != null) {
 			PyException tmp_exc = JyNI_exc;
 			JyNI_exc = null;
+//			System.out.println(tmp_exc);
+//			tmp_exc.printStackTrace();
 			throw tmp_exc;
 		} else return obj;
 	}
@@ -1216,7 +1223,8 @@ public class JyNI {
 	}
 
 	public static void jPrint(String msg) {
-		System.out.println(msg);
+		if (msg == null) System.out.println("null (actually)");
+		else System.out.println(msg);
 		//System.out.flush();
 	}
 	
@@ -1225,12 +1233,13 @@ public class JyNI {
 		//System.out.flush();
 	}
 
-	public static void jPrintHash(Object val) {
-		try {
-			System.out.println(val.hashCode()+" ("+System.identityHashCode(val)+")");
-		} catch (Exception e) {
-			System.out.println("("+System.identityHashCode(val)+")");
-		}
+	public static int jGetHash(Object val) {
+		return System.identityHashCode(val);
+//		try {
+//			System.out.println(val.hashCode()+" ("+System.identityHashCode(val)+")");
+//		} catch (Exception e) {
+//			System.out.println("("+System.identityHashCode(val)+")");
+//		}
 		//System.out.flush();
 	}
 

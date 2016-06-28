@@ -89,7 +89,9 @@ class TestJyNI(unittest.TestCase):
 	def test_DemoExtension_doc(self):
 		self.assertEqual(DemoExtension.__doc__, "This is a pure demo extension.")
 
-	def test_hello_world_info(self):
+	#def test_hello_world_info(self):
+		#DemoExtension.hello_world()
+		#print DemoExtension.hello_world
 		self.assertEqual(str(DemoExtension.hello_world), "<built-in function hello_world>")
 		self.assertEqual(DemoExtension.hello_world.__doc__, "Hello World method.")
 
@@ -242,6 +244,13 @@ class TestJyNI(unittest.TestCase):
 		self.assertEqual(str(now), "2013-11-03 20:30:45")
 		self.assertEqual(repr(now), "datetime.datetime(2013, 11, 3, 20, 30, 45)")
 		self.assertEqual(str(type(now)), "<type 'datetime.datetime'>")
+
+	@unittest.skipUnless(os.name == 'java',
+		'Shuts down CPython silently for unknown reason; \
+		the tested API is used by Cython, so should actually work.')
+	def test_native_import_API_and_methoddescr(self):
+		self.assertEqual(DemoExtension.importAPIandMethodDescrTest(), 0)
+
 
 if __name__ == '__main__':
 	unittest.main()

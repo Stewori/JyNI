@@ -47,7 +47,7 @@ else:
 	libc = CDLL('libc.so.6')
 
 buffer = c_buffer("\000", 50)
-			
+
 class TestJyNI_ctypes(unittest.TestCase):
 
 	def test_libc_sprintf(self):

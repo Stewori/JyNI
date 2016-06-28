@@ -240,6 +240,12 @@
  */
 #define Jy_TPFLAGS_DYN_OBJECTS (1L<<11)
 
+/*
+ * This augments flags in methodobject.h:
+ */
+#define METH_JYTHON       0x0080
+#define METH_JYTHON_CDEF  0x0100
+
 #define Is_StaticSingleton_NotBuiltin(pyObject) \
 	(!(PyType_HasFeature(Py_TYPE(pyObject), Jy_TPFLAGS_DYN_OBJECTS) || \
 	PyType_IS_GC(Py_TYPE(pyObject)) || \
@@ -519,7 +525,14 @@ typedef jlong (*jyChecksum)(jobject);
  * If jyInit is NULL, either a PyCPeer is created (if the PyCPeer-flag
  * is active) or an argless constructor is searched.
  */
-typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync pyInit; pyChecksum pyCheck; jyChecksum jyCheck;} SyncFunctions;
+typedef struct {
+	jy2pySync     jy2py;
+	py2jySync     py2jy;
+	jyInitSync    jyInit;
+	pyInitSync    pyInit;
+	pyChecksum    pyCheck;
+	jyChecksum    jyCheck;
+} SyncFunctions;
 //typedef struct {SyncInfo sync; jy2pyItemSync jy2pyItem; py2jyItemSync py2jyItem;} SyncVarInfo;
 
 //typedef Py_ssize_t (*lenfunc)(PyObject *);
@@ -547,6 +560,9 @@ extern const char* JyAttributeSyncFunctions;
 extern const char* JyAttributeModuleFile;
 extern const char* JyAttributeModuleName;
 extern const char* JyAttributeTypeName;
+extern const char* JyAttributeMethodName;
+extern const char* JyAttributeMethodDoc;
+extern const char* JyAttributeMethodDef;
 extern const char* JyAttributeStringInterned;
 extern const char* JyAttributeSetEntry;
 extern const char* JyAttributeJyGCHead;
@@ -562,12 +578,29 @@ typedef struct JyAttribute JyAttribute; /* Forward declaration */
 struct JyAttribute { void* value; JyAttribute* next; const char* name;  char flags;};
 typedef struct JyAttributeElement JyAttributeElement; /* Forward declaration */
 struct JyAttributeElement {void* value; JyAttributeElement* next;};
-typedef struct { jweak jy; JyAttribute* attr; unsigned short flags;} JyObject;
-typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject; /* only used for pre-allocated blocks */
-typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;  /* only used for pre-allocated blocks */
+
+typedef struct {
+	jweak             jy;
+	JyAttribute*      attr;
+	unsigned short    flags;
+} JyObject;
+
+typedef struct { JyObject jy; PyIntObject pyInt;} JyIntObject;
+/* only used for pre-allocated blocks */
+
+typedef struct { JyObject jy; PyFloatObject pyFloat;} JyFloatObject;
+/* only used for pre-allocated blocks */
+
 /* type_name is optional and defaults to py_type->tp_name */
-typedef struct { PyTypeObject* py_type; jclass jy_class; jclass jy_subclass;
-		SyncFunctions* sync; size_t truncate_trailing; unsigned short flags; char* type_name;} TypeMapEntry;
+typedef struct {
+	PyTypeObject*     py_type;
+	jclass            jy_class;
+	jclass            jy_subclass;
+	SyncFunctions*    sync;
+	size_t            truncate_trailing;
+	unsigned short    flags;
+	char*             type_name;
+} TypeMapEntry;
 typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
 
 #define JyObject_HasJyGCHead(pyObject, jyObject) \
@@ -604,7 +637,7 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 //We determine mirror-mode by lack of truncate-flag.
 //This currently fails for PyFunction, so we treat it as special case for now.
 //Todo: Find better solution.
-#define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op))
+#define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op) && !PyCFunction_Check(op))
 
 #define AS_JY(o) ((  (PyObject_IS_GC(o)) ? (JyObject *) _Py_AS_GC(o) : (JyObject *) (o)  )-1)
 #define FROM_JY(o) ((JyObject_IS_GC(o)) ? JyNI_FROM_GC((((JyObject *)(o))+1)) : ((PyObject *)(((JyObject *)(o))+1)))
@@ -668,8 +701,13 @@ jint JyNI_PyObjectLength(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 jobject JyNI_descr_get(jlong self, jobject obj, jobject type, jlong tstate);
 jint JyNI_descr_set(jlong self, jobject obj, jobject value, jlong tstate);
 
-//Number protocol call-ins:
-//(these usually don't need env and class, so we simplified the signatures a bit.)
+// PyCFunction call-ins:
+jobject JyNI_PyCFunction_getSelf(jlong handle, jlong tstate);
+jobject JyNI_PyCFunction_getModule(jlong handle, jlong tstate);
+jobject JyNI_CMethodDef_bind(jlong handle, jobject bindTo, jlong tstate);
+
+// Number protocol call-ins:
+// (these usually don't need env and class, so we simplified the signatures a bit.)
 jobject JyNI_PyNumber_Add(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Subtract(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Multiply(jlong o1, jobject o2, jlong tstate);
@@ -689,7 +727,7 @@ jobject JyNI_PyNumber_And(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Xor(jlong o1, jobject o2, jlong tstate);
 jobject JyNI_PyNumber_Or(jlong o1, jobject o2, jlong tstate);
 
-#define builtinTypeCount 38
+#define builtinTypeCount 41
 extern TypeMapEntry builtinTypes[builtinTypeCount];
 #define TME_INDEX_Type                   0
 #define TME_INDEX_NotImplemented         1
@@ -703,49 +741,51 @@ extern TypeMapEntry builtinTypes[builtinTypeCount];
 #define TME_INDEX_Function               9
 #define TME_INDEX_ClassMethod           10
 #define TME_INDEX_StaticMethod          11
-//#define TME_INDEX_MethodDescr         12
-//#define TME_INDEX_ClassMethodDescr    13
-#define TME_INDEX_DictProxy             12
-#define TME_INDEX_Property              13
-#define TME_INDEX_Bool                  14
-#define TME_INDEX_Float                 15
-#define TME_INDEX_Int                   16
-#define TME_INDEX_Long                  17
-#define TME_INDEX_Complex               18
-#define TME_INDEX_Unicode               19
-#define TME_INDEX_String                20
-#define TME_INDEX_Weakref_Ref           21
-#define TME_INDEX_Weakref_Proxy         22
-#define TME_INDEX_Weakref_CallableProxy 23
+#define TME_INDEX_CFunction             12
+//#define TME_INDEX_BuiltinCallable       13
+#define TME_INDEX_MethodDescr           13
+#define TME_INDEX_ClassMethodDescr      14
+#define TME_INDEX_DictProxy             15
+#define TME_INDEX_Property              16
+#define TME_INDEX_Bool                  17
+#define TME_INDEX_Float                 18
+#define TME_INDEX_Int                   19
+#define TME_INDEX_Long                  20
+#define TME_INDEX_Complex               21
+#define TME_INDEX_Unicode               22
+#define TME_INDEX_String                23
+#define TME_INDEX_Weakref_Ref           24
+#define TME_INDEX_Weakref_Proxy         25
+#define TME_INDEX_Weakref_CallableProxy 26
 //#define TME_INDEX_BaseString          26
 //#define TME_INDEX_SeqIter             27
 //#define TME_INDEX_Range               28
 //#define TME_INDEX_rangeiter           29
-#define TME_INDEX_Tuple                 24
+#define TME_INDEX_Tuple                 27
 //#define TME_INDEX_TupleIter           28
-#define TME_INDEX_List                  25
+#define TME_INDEX_List                  28
 //#define TME_INDEX_ListIter            30
 //#define TME_INDEX_ListRevIter         31
-#define TME_INDEX_Dict                  26
-#define TME_INDEX_StringMap             27
-#define TME_INDEX_Set                   28
+#define TME_INDEX_Dict                  29
+#define TME_INDEX_StringMap             30
+#define TME_INDEX_Set                   31
 //#define TME_INDEX_SetIter             34
-#define TME_INDEX_FrozenSet             29
+#define TME_INDEX_FrozenSet             32
 //#define TME_INDEX_Enum                36
-#define TME_INDEX_Slice                 30
-#define TME_INDEX_Ellipsis              31
+#define TME_INDEX_Slice                 33
+#define TME_INDEX_Ellipsis              34
 //#define TME_INDEX_Gen                 39
-#define TME_INDEX_Code_Bytecode         32
-#define TME_INDEX_Code_Tablecode        33
-#define TME_INDEX_Frame                 34
+#define TME_INDEX_Code_Bytecode         35
+#define TME_INDEX_Code_Tablecode        36
+#define TME_INDEX_Frame                 37
 //#define TME_INDEX_Super               43
-#define TME_INDEX_Exc_BaseException     35
-#define TME_INDEX_TraceBack             36
+#define TME_INDEX_Exc_BaseException     38
+#define TME_INDEX_TraceBack             39
 //#define TME_INDEX_ByteArray           46
 //#define TME_INDEX_Buffer              47
 //#define TME_INDEX_MemoryView          48
 //#define TME_INDEX_CallIter            50
-#define TME_INDEX_BaseObject            37 //must be last type in list
+#define TME_INDEX_BaseObject            40 //must be last type in list
 
 /* "Hidden" PyTypes: */
 extern PyTypeObject PyNone_Type;
@@ -805,6 +845,7 @@ inline PyObject* JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject);
  */
 PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean lookupNative, jboolean checkCPeer, jboolean checkForType);
 
+inline void JyNI_SyncPyCPeerTypeMRO(PyTypeObject* type, jobject jtype);
 inline jobject JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type);
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls);
 
@@ -820,11 +861,13 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 void JyErr_SetFromJNIEnv();
 
 /* JyNI-Stuff: */
+inline PyObject* JyNI_PyObject_Call(jobject func, PyObject *arg, PyObject *kw);
 inline jint JyNI_GetDLOpenFlags();
 inline void JyNI_CleanUp_JyObject(JyObject* obj);
 inline jobject JyNI_GetJythonDelegate(PyObject* v);
 inline void JyNI_printJInfo(jobject obj);
 inline void JyNI_jprintHash(jobject obj);
+inline void JyNI_printHash(jobject obj);
 inline void JyNI_jprintJ(jobject obj);
 
 /* To save lookups: */
@@ -1016,7 +1059,7 @@ extern jmethodID JyNI_pyCode_co_flags;
 extern jmethodID JyNI_pyCode_co_lnotab;
 extern jmethodID JyNI_jPrint;
 extern jmethodID JyNI_jPrintLong;
-extern jmethodID JyNI_jPrintHash;
+extern jmethodID JyNI_jGetHash;
 //extern jmethodID JyNIPySet_pop;
 extern jmethodID JyNI_makeGCHead;
 extern jmethodID JyNI_makeStaticGCHead;

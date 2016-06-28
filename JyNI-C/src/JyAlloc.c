@@ -223,8 +223,8 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
  */
 inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
 {
-//	jputs(__FUNCTION__);
-//	jputs(tme->py_type->tp_name);
+//	puts(__FUNCTION__);
+//	puts(tme->py_type->tp_name);
 	PyObject* dest = NULL;
 	JyObject* jy;
 	env(NULL);
@@ -243,6 +243,10 @@ inline PyObject* JyNI_InitPyObject(TypeMapEntry* tme, jobject src)
  */
 inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 {
+//	jboolean dbg = strcmp(subtype->tp_name, "iinfo") == 0;
+//	if (dbg) {
+//		puts(__FUNCTION__);
+//	}
 //	jputs(__FUNCTION__);
 //	jputs(subtype->tp_name);
 //	JyNI_jprintJ(src);
@@ -376,6 +380,7 @@ inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 #define SUBTYPE_ERROR(src, tme) \
 	jputs(__FUNCTION__); \
 	jputs("called with inconsistent args!"); \
+	jPrintCStackTrace(); \
 	jputs("Subtype:"); \
 	jputs(Py_TYPE(src)->tp_name); \
 	jputs("Mapping-type:"); \
@@ -451,12 +456,11 @@ inline jobject JyNI_InitStaticJythonPyObject(PyObject* src)
  */
 inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObject* srcJy)
 {
-//	jputs(__FUNCTION__);
+	//jputs(__FUNCTION__);
 	jobject dest = NULL;
 	env(NULL);
 
 	J_INIT(src, dest, tme)
-
 	if (!dest) return NULL;
 	if (Py_TYPE(src) != tme->py_type) {
 		// Set flags for subtype-case...
@@ -471,6 +475,19 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
+
+//	if (tme->flags & JY_CPEER_FLAG_MASK)
+//	{
+//		//JyNI_GC_ExploreObject(src);
+//		Py_INCREF(src);
+//	}
+//	if (srcJy->flags & JY_CPEER_FLAG_MASK)
+//	{
+//		puts("JyNI-Alert: CPeer in Alloc");
+//		puts(__FUNCTION__);
+//		puts(Py_TYPE(src)->tp_name);
+////		Py_INCREF(src);
+//	}
 
 	if ((tme->flags & JY_TRUNCATE_FLAG_MASK) && !(srcJy->flags & JY_CACHE_ETERNAL_FLAG_MASK)) {
 		/* we create GC-head here to secure the Java-side backend from

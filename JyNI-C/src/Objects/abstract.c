@@ -2577,55 +2577,15 @@ PyObject_CallObject(PyObject *o, PyObject *a)
 PyObject *
 PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 {
-//	jputs(__FUNCTION__);
 	jobject delegate = JyNI_GetJythonDelegate(func);
 	if (delegate)
 	{
-//		jputs("Delegate");
-//		puts(func->ob_type->tp_name);
-		env(NULL);
-		jobject jdict = JyNI_JythonPyObject_FromPyObject(kw);
-		//JyNI_jprintJ(jdict);
-		ENTER_SubtypeLoop_Safe_ModePy(jdict, kw, __len__)
-		jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
-		LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-		jobject args = (*env)->NewObjectArray(env,
-			PyTuple_GET_SIZE(arg)
-			+dictSize,
-			pyObjectClass, NULL);
-		int i;
-		for (i = 0; i < PyTuple_GET_SIZE(arg); ++i)
-		{
-			jobject argi = JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(arg, i));
-			//puts("arg:");
-			//JyNI_printJ(argi);
-			(*env)->SetObjectArrayElement(env, args, i, argi);
-		}
-		//jobject jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict);
-		jobject jkw;
-		if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict);
-		else jkw = length0StringArray;
-//		JyNI_printJ(jkw);
-//		puts("call delegate... args:");
-//		JyNI_printJ(args);
-//		puts("delegate:");
-//		JyNI_printJ(delegate);
-		jobject er = (*env)->CallObjectMethod(env, delegate /*JyNI_JythonPyObject_FromPyObject(func)*/,
-				pyObject__call__, args, jkw);
-//		puts("done");
-//		if (er == NULL) puts("delegate result is NULL");
-		//maybe insert some exception check here...
-		if ((*env)->ExceptionCheck(env))
-		{
-//			jputs("Exception on delegate call:");
-			jobject exc = (*env)->ExceptionOccurred(env);
-			JyNI_jprintJ(exc);
-		}
-		return JyNI_PyObject_FromJythonPyObject(er);
+//		jputs("PyObject_Call delegate");
+		return JyNI_PyObject_Call(delegate, arg, kw);
 	}
 	else
 	{
-//		jputs(func->ob_type->tp_name);
+		//jputs(func->ob_type->tp_name);
 		ternaryfunc call;
 
 		if ((call = func->ob_type->tp_call) != NULL) {
@@ -2633,27 +2593,15 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 			if (Py_EnterRecursiveCall(" while calling a Python object")) {
 				return NULL;
 			}
-			//env(NULL);
-//			Jy_EnterRecursiveCall2(" while calling a Python object", return NULL)
-//			jputs(func->ob_type->tp_name);
-//			if (func->ob_type == &PyFunction_Type)
-//				jputsPy(((PyFunctionObject*) func)->func_name);
 			result = (*call)(func, arg, kw);
-
 			Py_LeaveRecursiveCall();
-//			Jy_LeaveRecursiveCall();
-			//jboolean envExc = (*env)->ExceptionCheck(env);
-			if (result == NULL && !PyErr_Occurred())// && !envExc)
+			if (result == NULL && !PyErr_Occurred())
 			{
+//				jPrintCStackTrace();
 				PyErr_SetString(
 					PyExc_SystemError,
 					"NULL result without error in PyObject_Call");
 			}
-//			if (envExc && !PyErr_Occurred())
-//			{
-//				(*env)->ExceptionClear(env);
-//				Py_RETURN_NONE;
-//			}
 			return result;
 		}
 		PyErr_Format(PyExc_TypeError, "'%.200s' object is not callable",
@@ -2861,7 +2809,6 @@ PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
 PyObject *
 PyObject_CallFunctionObjArgs(PyObject *callable, ...)
 {
-//	jputs(__FUNCTION__);
 	PyObject *args, *tmp;
 	va_list vargs;
 

@@ -283,6 +283,30 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_JySet_1putSize
 
 /*
  * Class:     JyNI_JyNI
+ * Method:    PyCFunction_getSelf
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyCFunction_1getSelf
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    PyCFunction_getModule
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyCFunction_1getModule
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_CMethodDef_bind
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1CMethodDef_1bind
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
  * Method:    JyNI_PyNumber_Add
  * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
  */

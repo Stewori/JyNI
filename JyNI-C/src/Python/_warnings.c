@@ -740,12 +740,26 @@ warnings_warn_explicit(PyObject *self, PyObject *args, PyObject *kwds)
 int
 PyErr_WarnEx(PyObject *category, const char *text, Py_ssize_t stack_level)
 {
+//	jputs(__FUNCTION__);
+//	jPrintCStackTrace();
 	env(-1);
+//	if ((*env)->ExceptionCheck(env)) {
+//		jputs(__FUNCTION__);
+//		jputs("Exception before");
+//		(*env)->ExceptionDescribe(env);
+//	}
 	jstring message = (*env)->NewStringUTF(env, text);
 	if (message == NULL) return -1;
 	if (category == NULL) category = PyExc_RuntimeWarning;
 	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPyWarningStck,
 			JyNI_JythonExceptionType_FromPyExceptionType(category), message, stack_level);
+
+//	if ((*env)->ExceptionCheck(env)) {
+//		jputs(__FUNCTION__);
+//		jputs("Exception after");
+//		(*env)->ExceptionDescribe(env);
+//	}
+//	jputs("PyErr_WarnEx done");
 	return 0;
 	/*PyObject *res;//Py_Py3kWarningFlag
 	PyObject *message = PyString_FromString(text);

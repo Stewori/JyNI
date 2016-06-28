@@ -179,19 +179,9 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 				JyTState.prepareNativeThreadState(Py.getThreadState()));
 	}
 
-	/**
-	 * Though it is discouraged in JNI-documentation,
-	 * we use finalize to tidy up the native references
-	 * of this peer. We plan to replace this by
-	 * a better solution in the future.
-	 * (This will probably be as follows:
-	 * Track all peers in a Set using WeakReferences
-	 * and have these references registered in a ReferenceQueue.
-	 * From Time to time poll things from the queue and tidy
-	 * up or have a thread permanently waiting on the queue.)
-	 */
 	@Override
 	public void __del_builtin__() {
+		System.out.println(getClass().getSimpleName()+" finalize: "+objectHandle);
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
 
@@ -199,7 +189,4 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	public long getHandle() {
 		return objectHandle;
 	}
-//	protected void finalize() throws Throwable {
-//		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
-//	}
 }

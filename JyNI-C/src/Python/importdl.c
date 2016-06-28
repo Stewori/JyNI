@@ -83,7 +83,9 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	//jputs("got dyn load func");
 	if (PyErr_Occurred())
 	{
-		//jputs("PyErrOccured00");
+		jputs("PyErrOccured00");
+//		PyThreadState *tstate = PyThreadState_GET();
+//		jputs(((PyStringObject*) tstate->curexc_value)->ob_sval);
 		return NULL;
 	}
 	//jputs("error check done");
@@ -106,7 +108,9 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	_Py_PackageContext = oldcontext;
 	if (PyErr_Occurred())
 	{
-//		jputs("return NULL because PyErr_Occurred");
+		jputs("PyErrOccured02");
+		PyThreadState *tstate = PyThreadState_GET();
+		jputs(((PyStringObject*) tstate->curexc_value)->ob_sval);
 		return NULL;
 	}
 

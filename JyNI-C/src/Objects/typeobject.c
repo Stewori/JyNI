@@ -760,6 +760,15 @@ type_repr(PyTypeObject *type)
 static PyObject *
 type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+	jobject delegate = JyNI_GetJythonDelegate(type);
+	if (delegate) {
+//		puts(__FUNCTION__);
+//		puts("delegate");
+//		putsPy(type);
+		return JyNI_PyObject_Call(delegate, args, kwds);
+	}
+//	jboolean dbg = strcmp(type->tp_name, "iinfo") == 0;
+//	if (dbg) puts(__FUNCTION__);
 	PyObject *obj;
 	if (type->tp_new == NULL) {
 		PyErr_Format(PyExc_TypeError,
@@ -1747,8 +1756,9 @@ mro_external(PyObject *self)
 static int
 mro_internal(PyTypeObject *type)
 {
-//	puts(__FUNCTION__);
-//	puts(type->tp_name ? type->tp_name : "NULL type-name");
+//	jboolean jdbg = strcmp(type->tp_name, "_ctypes.PyCStructType") == 0;
+//	if (jdbg) jputs(__FUNCTION__);
+//	if (jdbg) jputs(type->tp_name ? type->tp_name : "NULL type-name");
 	PyObject *mro, *result, *tuple;
 	int checkit = 0;
 
@@ -1775,7 +1785,6 @@ mro_internal(PyTypeObject *type)
 		PyObject *cls;
 		PyTypeObject *solid;
 
-//		printf("%i\n", __LINE__);
 		solid = solid_base(type);
 
 		len = PyTuple_GET_SIZE(tuple);
@@ -1793,7 +1802,6 @@ mro_internal(PyTypeObject *type)
 				return -1;
 			}
 			t = (PyTypeObject*)cls;
-//			printf("%i\n", __LINE__);
 			if (!PyType_IsSubtype(solid, solid_base(t))) {
 				PyErr_Format(PyExc_TypeError,
 			 "mro() returned base with unsuitable layout ('%.500s')",
@@ -1811,6 +1819,8 @@ mro_internal(PyTypeObject *type)
 	type_mro_modified(type, type->tp_bases);
 
 	PyType_Modified(type);
+
+	JyNI_SyncPyCPeerTypeMRO(type, NULL);
 
 	return 0;
 }
@@ -2763,9 +2773,9 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 PyObject *
 _PyType_Lookup(PyTypeObject *type, PyObject *name)
 {
-//	jputs(__FUNCTION__);
+//	puts(__FUNCTION__);
 //	jputsLong(type);
-//	jputsPy(name);
+//	putsPy(name);
 
 //	jobject delegate = JyNI_GetJythonDelegate(type);
 //	if (delegate)
@@ -3147,45 +3157,45 @@ PyTypeObject PyType_Type = {
 
 
 /*
-// The base type of all types (eventually)... except itself.
+ The base type of all types (eventually)... except itself.
 
-//   You may wonder why object.__new__() only complains about arguments
-//   when object.__init__() is not overridden, and vice versa.
-//
-//   Consider the use cases:
-//
-//   1. When neither is overridden, we want to hear complaints about
-//	  excess (i.e., any) arguments, since their presence could
-//	  indicate there's a bug.
-//
-//   2. When defining an Immutable type, we are likely to override only
-//	  __new__(), since __init__() is called too late to initialize an
-//	  Immutable object.  Since __new__() defines the signature for the
-//	  type, it would be a pain to have to override __init__() just to
-//	  stop it from complaining about excess arguments.
-//
-//   3. When defining a Mutable type, we are likely to override only
-//	  __init__().  So here the converse reasoning applies: we don't
-//	  want to have to override __new__() just to stop it from
-//	  complaining.
-//
-//   4. When __init__() is overridden, and the subclass __init__() calls
-//	  object.__init__(), the latter should complain about excess
-//	  arguments; ditto for __new__().
-//
-//   Use cases 2 and 3 make it unattractive to unconditionally check for
-//   excess arguments.  The best solution that addresses all four use
-//   cases is as follows: __init__() complains about excess arguments
-//   unless __new__() is overridden and __init__() is not overridden
-//   (IOW, if __init__() is overridden or __new__() is not overridden);
-//   symmetrically, __new__() complains about excess arguments unless
-//   __init__() is overridden and __new__() is not overridden
-//   (IOW, if __new__() is overridden or __init__() is not overridden).
-//
-//   However, for backwards compatibility, this breaks too much code.
-//   Therefore, in 2.6, we'll *warn* about excess arguments when both
-//   methods are overridden; for all other cases we'll use the above
-//   rules.
+   You may wonder why object.__new__() only complains about arguments
+   when object.__init__() is not overridden, and vice versa.
+
+   Consider the use cases:
+
+   1. When neither is overridden, we want to hear complaints about
+	  excess (i.e., any) arguments, since their presence could
+	  indicate there's a bug.
+
+   2. When defining an Immutable type, we are likely to override only
+	  __new__(), since __init__() is called too late to initialize an
+	  Immutable object.  Since __new__() defines the signature for the
+	  type, it would be a pain to have to override __init__() just to
+	  stop it from complaining about excess arguments.
+
+   3. When defining a Mutable type, we are likely to override only
+	  __init__().  So here the converse reasoning applies: we don't
+	  want to have to override __new__() just to stop it from
+	  complaining.
+
+   4. When __init__() is overridden, and the subclass __init__() calls
+	  object.__init__(), the latter should complain about excess
+	  arguments; ditto for __new__().
+
+   Use cases 2 and 3 make it unattractive to unconditionally check for
+   excess arguments.  The best solution that addresses all four use
+   cases is as follows: __init__() complains about excess arguments
+   unless __new__() is overridden and __init__() is not overridden
+   (IOW, if __init__() is overridden or __new__() is not overridden);
+   symmetrically, __new__() complains about excess arguments unless
+   __init__() is overridden and __new__() is not overridden
+   (IOW, if __new__() is overridden or __init__() is not overridden).
+
+   However, for backwards compatibility, this breaks too much code.
+   Therefore, in 2.6, we'll *warn* about excess arguments when both
+   methods are overridden; for all other cases we'll use the above
+   rules.
 
 // Forward
 static PyObject *
@@ -3220,82 +3230,86 @@ object_init(PyObject *self, PyObject *args, PyObject *kwds)
 		}
 	}
 	return err;
-}
-
-static PyObject *
-object_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-	int err = 0;
-	if (excess_args(args, kwds)) {
-		if (type->tp_new != object_new &&
-			type->tp_init != object_init)
-		{
-			err = PyErr_WarnEx(PyExc_DeprecationWarning,
-					   "object.__new__() takes no parameters",
-					   1);
-		}
-		else if (type->tp_new != object_new ||
-				 type->tp_init == object_init)
-		{
-			PyErr_SetString(PyExc_TypeError,
-				"object.__new__() takes no parameters");
-			err = -1;
-		}
-	}
-	if (err < 0)
-		return NULL;
-
-	if (type->tp_flags & Py_TPFLAGS_IS_ABSTRACT) {
-		static PyObject *comma = NULL;
-		PyObject *abstract_methods = NULL;
-		PyObject *builtins;
-		PyObject *sorted;
-		PyObject *sorted_methods = NULL;
-		PyObject *joined = NULL;
-		const char *joined_str;
-
-		// Compute ", ".join(sorted(type.__abstractmethods__))
-		// into joined.
-		abstract_methods = type_abstractmethods(type, NULL);
-		if (abstract_methods == NULL)
-			goto error;
-		builtins = PyEval_GetBuiltins();
-		if (builtins == NULL)
-			goto error;
-		sorted = PyDict_GetItemString(builtins, "sorted");
-		if (sorted == NULL)
-			goto error;
-		sorted_methods = PyObject_CallFunctionObjArgs(sorted,
-													  abstract_methods,
-													  NULL);
-		if (sorted_methods == NULL)
-			goto error;
-		if (comma == NULL) {
-			comma = PyString_InternFromString(", ");
-			if (comma == NULL)
-				goto error;
-		}
-		joined = PyObject_CallMethod(comma, "join",
-									 "O",  sorted_methods);
-		if (joined == NULL)
-			goto error;
-		joined_str = PyString_AsString(joined);
-		if (joined_str == NULL)
-			goto error;
-
-		PyErr_Format(PyExc_TypeError,
-					 "Can't instantiate abstract class %s "
-					 "with abstract methods %s",
-					 type->tp_name,
-					 joined_str);
-	error:
-		Py_XDECREF(joined);
-		Py_XDECREF(sorted_methods);
-		Py_XDECREF(abstract_methods);
-		return NULL;
-	}
-	return type->tp_alloc(type, 0);
 }*/
+
+//static PyObject *
+//object_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+//{
+//	/* we try a full delegation approach for now... */
+//	env(NULL);
+
+
+//	int err = 0;
+//	if (excess_args(args, kwds)) {
+//		if (type->tp_new != object_new &&
+//			type->tp_init != object_init)
+//		{
+//			err = PyErr_WarnEx(PyExc_DeprecationWarning,
+//					   "object.__new__() takes no parameters",
+//					   1);
+//		}
+//		else if (type->tp_new != object_new ||
+//				 type->tp_init == object_init)
+//		{
+//			PyErr_SetString(PyExc_TypeError,
+//				"object.__new__() takes no parameters");
+//			err = -1;
+//		}
+//	}
+//	if (err < 0)
+//		return NULL;
+//
+//	if (type->tp_flags & Py_TPFLAGS_IS_ABSTRACT) {
+//		static PyObject *comma = NULL;
+//		PyObject *abstract_methods = NULL;
+//		PyObject *builtins;
+//		PyObject *sorted;
+//		PyObject *sorted_methods = NULL;
+//		PyObject *joined = NULL;
+//		const char *joined_str;
+//
+//		// Compute ", ".join(sorted(type.__abstractmethods__))
+//		// into joined.
+//		abstract_methods = type_abstractmethods(type, NULL);
+//		if (abstract_methods == NULL)
+//			goto error;
+//		builtins = PyEval_GetBuiltins();
+//		if (builtins == NULL)
+//			goto error;
+//		sorted = PyDict_GetItemString(builtins, "sorted");
+//		if (sorted == NULL)
+//			goto error;
+//		sorted_methods = PyObject_CallFunctionObjArgs(sorted,
+//													  abstract_methods,
+//													  NULL);
+//		if (sorted_methods == NULL)
+//			goto error;
+//		if (comma == NULL) {
+//			comma = PyString_InternFromString(", ");
+//			if (comma == NULL)
+//				goto error;
+//		}
+//		joined = PyObject_CallMethod(comma, "join",
+//									 "O",  sorted_methods);
+//		if (joined == NULL)
+//			goto error;
+//		joined_str = PyString_AsString(joined);
+//		if (joined_str == NULL)
+//			goto error;
+//
+//		PyErr_Format(PyExc_TypeError,
+//					 "Can't instantiate abstract class %s "
+//					 "with abstract methods %s",
+//					 type->tp_name,
+//					 joined_str);
+//	error:
+//		Py_XDECREF(joined);
+//		Py_XDECREF(sorted_methods);
+//		Py_XDECREF(abstract_methods);
+//		return NULL;
+//	}
+//	return type->tp_alloc(type, 0);
+//}
 
 static void
 object_dealloc(PyObject *self)
@@ -4332,10 +4346,14 @@ static int add_operators(PyTypeObject *);
 int
 PyType_Ready(PyTypeObject *type)
 {
-//	jputs(__FUNCTION__);
+//	jboolean jdbg = strcmp(type->tp_name, "_ctypes.PyCStructType") == 0;
+//	if (jdbg) {
+//		jputs(__FUNCTION__);
+//		jputs(type->tp_name);
+//		jPrintCStackTrace();
+//	}
 //	if (type == Py_None) puts("Called with None");
 	//puts(type ? PyString_AS_STRING(PyObject_Str(type)) : "NULL-PyObject");
-//	jputs(type->tp_name);
 	//if (type->tp_as_mapping) printf("has mapping, line %d\n", __LINE__);
 	//printf("Dict-offset of %s in line %d: %d\n", type->tp_name, __LINE__, type->tp_dictoffset);
 

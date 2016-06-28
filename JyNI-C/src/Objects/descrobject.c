@@ -157,6 +157,15 @@ method_get(PyMethodDescrObject *descr, PyObject *obj, PyObject *type)
 
 	if (descr_check((PyDescrObject *)descr, obj, &res))
 		return res;
+	if (descr->d_method->ml_flags & METH_JYTHON_CDEF)
+	{
+		env(NULL);
+		jobject jdescr = JyNI_JythonPyObject_FromPyObject(descr);
+		jobject jobj = JyNI_JythonPyObject_FromPyObject(obj);
+		jobject jtp = JyNI_JythonPyObject_FromPyObject(type);
+		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(
+				env, jdescr, pyObject__get__, jobj, jtp));
+	}
 	return PyCFunction_New(descr->d_method, obj);
 }
 
@@ -249,6 +258,15 @@ getset_set(PyGetSetDescrObject *descr, PyObject *obj, PyObject *value)
 static PyObject *
 methoddescr_call(PyMethodDescrObject *descr, PyObject *args, PyObject *kwds)
 {
+	if (descr->d_method->ml_flags & METH_JYTHON_CDEF)
+	{
+//		jputs(__FUNCTION__);
+//		jputsLong(PyTuple_GET_SIZE(args));
+//		if (PyTuple_GET_SIZE(args) == 0) {
+//			jPrintCStackTrace();
+//		}
+		return JyNI_PyObject_Call(JyNI_JythonPyObject_FromPyObject(descr), args, kwds);
+	}
 	Py_ssize_t argc;
 	PyObject *self, *func, *result;
 
@@ -672,7 +690,10 @@ descr_new(PyTypeObject *descrtype, PyTypeObject *type, const char *name)
 {
 	PyDescrObject *descr;
 
-	descr = (PyDescrObject *)JyNI_AllocNativeVar(descrtype, 0);
+	if (builtinTypes[TME_INDEX_MethodDescr].py_type && descrtype == &PyMethodDescr_Type)
+		descr = JyNI_Alloc(&(builtinTypes[TME_INDEX_MethodDescr]));
+	else
+		descr = (PyDescrObject *) JyNI_AllocNativeVar(descrtype, 0);
 	if (descr != NULL) {
 		Py_XINCREF(type);
 		descr->d_type = type;
@@ -689,6 +710,7 @@ descr_new(PyTypeObject *descrtype, PyTypeObject *type, const char *name)
 PyObject *
 PyDescr_NewMethod(PyTypeObject *type, PyMethodDef *method)
 {
+//	jputs(__FUNCTION__);
 	PyMethodDescrObject *descr;
 
 	descr = (PyMethodDescrObject *)descr_new(&PyMethodDescr_Type,

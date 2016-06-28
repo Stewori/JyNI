@@ -95,6 +95,10 @@ jobject (*JyList_remove)(JNIEnv*, jclass, jlong, jint);
 
 void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
 
+jobject (*JyNI_PyCFunction_getSelf)(jlong, jlong);
+jobject (*JyNI_PyCFunction_getModule)(jlong, jlong);
+jobject (*JyNI_CMethodDef_bind)(jlong, jobject, jlong);
+
 void (*JyRefMonitor_setMemDebugFlags)(JNIEnv*, jclass, jint);
 jboolean (*JyGC_clearNativeReferences)(JNIEnv*, jclass, jlongArray, jlong);
 void (*JyGC_restoreCStubBackend)(JNIEnv*, jclass, jlong, jobject, jobject);
@@ -207,6 +211,10 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyList_remove) = dlsym(JyNIHandle, "JyList_remove");
 
 	*(void **) (&JySet_putSize) = dlsym(JyNIHandle, "JySet_putSize");
+
+	*(void **) (&JyNI_PyCFunction_getSelf) = dlsym(JyNIHandle, "JyNI_PyCFunction_getSelf");
+	*(void **) (&JyNI_PyCFunction_getModule) = dlsym(JyNIHandle, "JyNI_PyCFunction_getModule");
+	*(void **) (&JyNI_CMethodDef_bind) = dlsym(JyNIHandle, "JyNI_CMethodDef_bind");
 
 	*(void **) (&JyRefMonitor_setMemDebugFlags) = dlsym(JyNIHandle, "JyRefMonitor_setMemDebugFlags");
 	*(void **) (&JyGC_clearNativeReferences) = dlsym(JyNIHandle, "JyGC_clearNativeReferences");
@@ -851,4 +859,37 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Or
   (JNIEnv *env, jclass class, jlong o1, jobject o2, jlong tstate)
 {
 	return (*JyNI_PyNumber_Or)(o1, o2, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    PyCFunction_getSelf
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyCFunction_1getSelf
+  (JNIEnv *env, jclass class, jlong handle, jlong tstate)
+{
+	return (*JyNI_PyCFunction_getSelf)(handle, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    PyCFunction_getModule
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_PyCFunction_1getModule
+  (JNIEnv *env, jclass class, jlong handle, jlong tstate)
+{
+	return (*JyNI_PyCFunction_getModule)(handle, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_CMethodDef_bind
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1CMethodDef_1bind
+  (JNIEnv *env, jclass class, jlong handle, jobject bindTo, jlong tstate)
+{
+	return (*JyNI_CMethodDef_bind)(handle, bindTo, tstate);
 }

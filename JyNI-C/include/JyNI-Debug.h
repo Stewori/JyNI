@@ -62,6 +62,7 @@ inline void _jputs(const char* msg);
 //	jputsLong0(val)
 inline void jputsLong(jlong val);
 inline void jputsPy(PyObject* o);
+inline void putsPy(PyObject* o);
 
 void jPrintCStackTrace();
 

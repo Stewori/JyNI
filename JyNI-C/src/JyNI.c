@@ -139,10 +139,11 @@ void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, j
  */
 jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate)
 {
-	//jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
+//	jputsLong(peerHandle);
 //	jputs(Py_TYPE(peer)->tp_name);
 //	int jdbg = strcmp(Py_TYPE(peer)->tp_name, "_ctypes.PyCFuncPtrType") == 0;
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
@@ -157,7 +158,14 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //			jputsLong(PyTuple_GET_SIZE(jargs));
 //			jputsLong(PyTuple_GET_ITEM(jargs, 0));
 //		}
+//		if (Py_TYPE(peer) == &PyCFunction_Type) {
+//			jputsLong(((PyCFunctionObject*) peer)->m_ml);
+//			jputsLong(((PyCFunctionObject*) peer)->m_self);
+////			jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
+//		}
 		PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
+//		jputs("before call");
+//		jputsPy(peer);
 		PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
 		Py_XDECREF(jargs);
@@ -193,7 +201,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 	//jputs("JyNI_getAttrString-Handle:");
 	//jputsLong(handle);
 	PyObject* jres = PyObject_GetAttrString((PyObject*) handle, cName);
-	//jputs("JyNI_getAttrString-Result:");
+//	jputs("JyNI_getAttrString-Result:");
 	//jputsLong(jres);
 	jobject er = JyNI_JythonPyObject_FromPyObject(jres);//PyObject_GetAttrString((PyObject*) handle, cName));
 	Py_XDECREF(jres);
@@ -364,10 +372,11 @@ JNIEXPORT jint JNICALL JyNI_descr_set
  */
 jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
-	//jputs("JyNI_PyObjectAsString");
+//	jputs("JyNI_PyObjectAsString");
 	if (!((PyObject*) handle)->ob_refcnt) return NULL;
 	RE_ENTER_JyNI
 	PyStringObject* ps = (PyStringObject*) PyObject_Str((PyObject*) handle);
+//	jputsPy(ps);
 	jstring er = JyNI_jstring_FromPyStringObject(env, ps);
 	Py_XDECREF(ps);
 	RE_LEAVE_JyNI
@@ -465,6 +474,52 @@ void JyNI_releaseWeakReferent(JNIEnv *env, jclass class, jlong handle, jlong tst
 	decWeakRefCount(AS_JY((PyObject*) handle));
 	Py_DECREF(handle);
 	LEAVE_JyNI
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    PyCFunction_getSelf
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+jobject JyNI_PyCFunction_getSelf(jlong handle, jlong tstate)
+{
+//	jputs(__FUNCTION__);
+	env(NULL);
+	RE_ENTER_JyNI
+	jobject jres = JyNI_JythonPyObject_FromPyObject(
+			((PyCFunctionObject*) handle)->m_self);
+	RE_LEAVE_JyNI
+	return jres;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    PyCFunction_getModule
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+jobject JyNI_PyCFunction_getModule(jlong handle, jlong tstate)
+{
+	RE_ENTER_JyNI
+	jobject jres = JyNI_JythonPyObject_FromPyObject(
+			((PyCFunctionObject*) handle)->m_module);
+	RE_LEAVE_JyNI
+	return jres;
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_CMethodDef_bind
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+jobject JyNI_CMethodDef_bind(jlong handle, jobject bindTo, jlong tstate)
+{
+	RE_ENTER_JyNI
+	PyObject* self = JyNI_PyObject_FromJythonPyObject(bindTo);
+	PyObject* res = PyCFunction_New((PyMethodDef*) handle, self);
+	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	Py_DECREF(res);
+	RE_LEAVE_JyNI
+	return jres;
 }
 
 //PySys_GetObject creates new object
@@ -689,12 +744,23 @@ inline void initBuiltinTypes()
 	builtinTypes[TME_INDEX_StaticMethod].sync->pyInit = (pyInitSync) JySync_Init_PyStaticMethod_From_JyStaticMethod;
 	PyStaticMethod_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
-/*	builtinTypes[TME_INDEX_MethodDescr].py_type = &PyMethodDescr_Type;
+	builtinTypes[TME_INDEX_CFunction].py_type = &PyCFunction_Type;
+	builtinTypes[TME_INDEX_CFunction].jy_class = pyBuiltinCallableClass;//pyCFunctionClass;
+	builtinTypes[TME_INDEX_CFunction].flags = JySYNC_ON_INIT_FLAGS;// | JY_CPEER_FLAG_MASK;
+	builtinTypes[TME_INDEX_CFunction].sync = malloc(sizeof(SyncFunctions));
+	builtinTypes[TME_INDEX_CFunction].sync->jyInit = (jyInitSync) JySync_Init_JyCFunction_From_PyCFunction;
+	builtinTypes[TME_INDEX_CFunction].sync->pyInit = (pyInitSync) JySync_Init_PyCFunction_From_JyBuiltinCallable;
+	PyStaticMethod_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
+
+	builtinTypes[TME_INDEX_MethodDescr].py_type = &PyMethodDescr_Type;
 	builtinTypes[TME_INDEX_MethodDescr].jy_class = pyMethodDescrClass;
-	builtinTypes[TME_INDEX_MethodDescr].flags = 0;
+	builtinTypes[TME_INDEX_MethodDescr].flags = JySYNC_ON_INIT_FLAGS;
+	builtinTypes[TME_INDEX_MethodDescr].sync = malloc(sizeof(SyncFunctions));
+	builtinTypes[TME_INDEX_MethodDescr].sync->jyInit = (jyInitSync) JySync_Init_JyMethodDescr_From_PyMethodDescr;
+	builtinTypes[TME_INDEX_MethodDescr].sync->pyInit = (pyInitSync) JySync_Init_PyMethodDescr_From_JyMethodDescr;
 	PyMethodDescr_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 
-	builtinTypes[TME_INDEX_ClassMethodDescr].py_type = &PyClassMethodDescr_Type;
+/*	builtinTypes[TME_INDEX_ClassMethodDescr].py_type = &PyClassMethodDescr_Type;
 	builtinTypes[TME_INDEX_ClassMethodDescr].jy_class = pyClassMethodDescrClass;
 	builtinTypes[TME_INDEX_ClassMethodDescr].flags = 0;
 	PyClassMethodDescr_Type.tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;*/
@@ -1303,6 +1369,9 @@ inline jboolean JyNI_IsBuiltinPyType(PyTypeObject* type)
 /* Does not work for Heap-Types. */
 inline jclass JyNI_JythonClassFromPyType(PyTypeObject* type)
 {
+	// PyCFunction_Type is a special case, where JyNI provides the Jython-equivalent.
+	// We want to force the type to be a PyCPeerType so we exclude it from class-lookup here.
+	if (type == &PyCFunction_Type) return NULL;
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
@@ -1353,7 +1422,10 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type)
 			int i;
 			for (i = 0; i != TME_INDEX_BaseObject; ++i) // TME_INDEX_BaseObject is last and shouldn't be considered
 			{
-				if (PyType_IsSubtype(type, builtinTypes[i].py_type)) {
+				if (PyType_IsSubtype(type, builtinTypes[i].py_type))
+				{
+					if (builtinTypes[i].flags & JY_CPEER_FLAG_MASK)
+						return NULL;
 					printf("%s is subtype of %s", type->tp_name, builtinTypes[i].py_type->tp_name);
 					return &(builtinTypes[i]);
 				}
@@ -1559,7 +1631,6 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return er;
 		}
 	}
-
 	if (lookupNative)
 	{
 		PyObject* handle = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNILookupNativeHandle, jythonPyObject);
@@ -1581,13 +1652,23 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	//todo find out what name occurs if a Jython Java-proxy is used.
 	//     Can we make sense of it in default-instance case?
 	cstr_from_jstring(cName, tpName);
+//	jboolean dbg = strcmp(cName, "builtin_function_or_method") == 0;
+	//puts(cName);
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
+	if (tme && (tme->flags & JY_CPEER_FLAG_MASK))
+		tme = NULL; //todo: Fix this (check class, subtype etc)
 	if (tme)
 	{
+//		if (dbg) printf("%i\n", __LINE__);
+//		if (dbg) putsPy(tme->py_type);
+//		JyNI_printHash(jythonPyObject);
+		//if (tme && tme->py_type) putsPy(tme->py_type);
 		//No need to incref here, since JyNI_InitPyObject returns NEW ref.
 		return JyNI_InitPyObject(tme, jythonPyObject);
 	} else
 	{
+		//if (dbg) jputs(__LINE__);
+		//JyNI_printHash(jythonPyObject);
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(
 			JyNI_PyExceptionType_FromJythonExceptionType(
 			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType)));
@@ -1610,6 +1691,10 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 				pytpe = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(tpe);
 				result = JyNI_InitPyObjectSubtype(jythonPyObject, pytpe);
 			}
+//			if (dbg) {
+//				jputsLong(result);
+//				JyNI_printJInfo(jythonPyObject);
+//			}
 			if (!result)
 			{
 				jputs("JyNI-warning: Unable to handle object:");
@@ -1786,9 +1871,7 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		tme = (TypeMapEntry*) jy->jy;
 	} else {
 		tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(op));
-		if (!tme) {
-			tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(Py_TYPE(op));
-		}
+		if (!tme) tme = JyNI_JythonTypeEntry_FromSubTypeWithPeer(Py_TYPE(op));
 	}
 	if (tme)
 		return JyNI_InitJythonPyObject(tme, op, jy);
@@ -1833,11 +1916,46 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	}
 }
 
+inline void JyNI_SyncPyCPeerTypeMRO(PyTypeObject* type, jobject jtype)
+{
+	if (type->tp_mro)
+	{
+		env();
+		if (!jtype)
+			jtype = (*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNILookupCPeerFromHandle, (jlong) type);
+		if (jtype && !(*env)->IsSameObject(env, jtype, NULL))
+		{
+			if (PyTuple_Check(type->tp_mro)) {
+				jobjectArray jmro = (*env)->NewObjectArray(env,
+						PyTuple_GET_SIZE(type->tp_mro), pyObjectClass, NULL);
+				jint pos;
+				for (pos = 0; pos < PyTuple_GET_SIZE(type->tp_mro); ++pos)
+					(*env)->SetObjectArrayElement(env, jmro, pos,
+							JyNI_JythonPyObject_FromPyObject(
+									PyTuple_GET_ITEM(type->tp_mro, pos)));
+				(*env)->SetObjectField(env, jtype, pyTypeMROField, jmro);
+			} else {
+				jputs("JyNI-warning: Encountered non-NULL MRO that is not a tuple:");
+				jputs(type->tp_name);
+			}
+		}
+	} //else
+	//{
+	// Happens frequently, so this warning is too annoying.
+//				jputs("JyNI-warning: Encountered NULL-MRO:");
+//				jputs(type->tp_name);
+			// Should we set mro now to empty tuple?
+			// For now we try to get away without it.
+	//}
+}
+
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls)
 {
 	//if (type == NULL) return NULL;
-//	jputs(__FUNCTION__);
-//	jputs(type->tp_name);
+//	jboolean jdbg = strcmp(type->tp_name, "_ctypes.PyCStructType") == 0;
+//	if (jdbg) jputs(__FUNCTION__);
+//	if (jdbg) jputs(type->tp_name);
 	env(NULL);
 	if (cls != NULL)
 	{
@@ -1893,27 +2011,7 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			 * mro-field directly, e.g. in computeMro. This can cause a subsequent
 			 * nullpointer exception, so we initialize it here.
 			 */
-			if (type->tp_mro) {
-				if (PyTuple_Check(type->tp_mro)) {
-					jobjectArray jmro = (*env)->NewObjectArray(env,
-							PyTuple_GET_SIZE(type->tp_mro), pyObjectClass, NULL);
-					jint pos;
-					for (pos = 0; pos < PyTuple_GET_SIZE(type->tp_mro); ++pos)
-						(*env)->SetObjectArrayElement(env, jmro, pos,
-								JyNI_JythonPyObject_FromPyObject(
-										PyTuple_GET_ITEM(type->tp_mro, pos)));
-					(*env)->SetObjectField(env, er, pyTypeMROField, jmro);
-				} else {
-					jputs("JyNI-warning: Encountered non-NULL MRO that is not a tuple:");
-					jputs(type->tp_name);
-				}
-			} //else {
-			// Happens frequently, so this warning is too annoying.
-//				jputs("JyNI-warning: Encountered NULL-MRO:");
-//				jputs(type->tp_name);
-				// Should we set mro now to empty tuple?
-				// For now we try to get away without it.
-			//}
+			JyNI_SyncPyCPeerTypeMRO(type, er);
 			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, er, (jlong) type);
 			return er;
 		}
@@ -1955,6 +2053,54 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 		}
 	}
 	return NULL;
+}
+
+inline PyObject* JyNI_PyObject_Call(jobject func, PyObject *arg, PyObject *kw)
+{
+	env(NULL);
+
+	jobject jdict;
+	jint dictSize;
+	if (kw)
+	{
+		jdict = JyNI_JythonPyObject_FromPyObject(kw);
+		ENTER_SubtypeLoop_Safe_ModePy(jdict, kw, __len__)
+		dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+		LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
+	} else dictSize = 0;
+	jobject args = (*env)->NewObjectArray(env,
+			PyTuple_GET_SIZE(arg)
+			+dictSize,
+			pyObjectClass, NULL);
+	//printf("arg-count: %i  kw: %i", PyTuple_GET_SIZE(arg), dictSize);
+//	jputs(__FUNCTION__);
+//	jputsLong(PyTuple_GET_SIZE(arg));
+//	jputsLong(dictSize);
+	int i;
+	jobject argi;
+	for (i = 0; i < PyTuple_GET_SIZE(arg); ++i)
+	{
+		argi = JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(arg, i));
+		(*env)->SetObjectArrayElement(env, args, i, argi);
+	}
+	jobject jkw = dictSize > 0 ?
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict) :
+			length0StringArray;
+	jobject er;
+	Py_BEGIN_ALLOW_THREADS
+	er = (*env)->CallObjectMethod(env, func,
+			pyObject__call__, args, jkw);
+	Py_END_ALLOW_THREADS
+	if ((*env)->ExceptionCheck(env))
+	{
+		jobject exc = (*env)->ExceptionOccurred(env);
+		jputs("Java-exception during object call");
+		jPrintCStackTrace();
+		(*env)->ExceptionDescribe(env);
+		//JyNI_jprintJ(exc);
+
+	}
+	return JyNI_PyObject_FromJythonPyObject(er);
 }
 
 /*returns local ref!*/
@@ -2022,7 +2168,10 @@ inline int decWeakRefCount(JyObject* referent)
 // native subtype indication: subtype-flag && CPeer-flag
 // Delegation criterion: !CPeerflag && (truncated-flag | subtype-flag)
 #define JY_DELEGATE(v, flags) ((flags & JY_POTENTIAL_DELEGATE) && !(flags & JY_CPEER_FLAG_MASK))
-
+#define JY_MAYBE_DELEGATE_TYPE(v, flags) \
+		( !(flags & JY_SUBTYPE_FLAG_MASK) && \
+		  !(flags & JY_CPEER_FLAG_MASK) && \
+		   (flags & JY_HAS_JHANDLE_FLAG_MASK))
 //Delegate in every case but CPeer-case:
 //(actually the preferred variant, but lets JyNITkinterTest fail for some reason)
 //For instance letting PyFunction be delegated causes Tkinter to fail. (Why?)
@@ -2052,8 +2201,61 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v)
 		if (PyType_HasFeature(((PyTypeObject*) v), Py_TPFLAGS_HEAPTYPE))
 		{
 			JyObject* jy = AS_JY(v);
+//			if (JY_DELEGATE(v, jy->flags) != JY_DELEGATE2(v, jy->flags))
+//			{
+//				printf("Delegate issue: %s %i %i\n", ((PyTypeObject*) v)->tp_name, JY_DELEGATE(v, jy->flags), JY_DELEGATE2(v, jy->flags));
+//				PyTypeObject* base = (PyTypeObject*) ((PyTypeObject*) v)->tp_base;
+//				while (base) {
+//					puts(base->tp_name);
+//					if (PyType_HasFeature(base, Py_TPFLAGS_HEAPTYPE))
+//						puts("base-heaptype");
+//					else {
+//						puts("base not heap-type");
+//						printf("Is_StaticSingleton_NotBuiltin %i\n", Is_StaticSingleton_NotBuiltin(base));
+//						printf("Is_StaticTypeObject %i\n", Is_StaticTypeObject(base));
+//						printf("JyNI_IsBuiltinPyType %i\n", JyNI_IsBuiltinPyType(base));
+////						if (PyType_HasFeature(base, Jy_TPFLAGS_DYN_OBJECTS))
+////							puts("base-dynobjects");
+////						if (PyType_HasFeature(base->ob_type, Jy_TPFLAGS_DYN_OBJECTS))
+////							puts("base-type-dynobjects");
+//					}
+//					base = base->tp_base;
+//				}
+//				putsPy(((PyTypeObject*) v)->tp_mro);
+////				putsPy(((PyTypeObject*) v)->ob_type);
+//			}
 			if (JY_DELEGATE(v, jy->flags))
 				return JyNI_JythonPyObject_FromPyObject(v);
+			else if (JY_MAYBE_DELEGATE_TYPE(v, jy->flags))
+			{
+				// Now it depends on the bases whether we must delegate.
+				// If any of the bases cannot be delegated, we don't delegate.
+				PyTypeObject* base = ((PyTypeObject*) v)->tp_base;
+				while (base)
+				{
+					if (PyType_HasFeature(base, Py_TPFLAGS_HEAPTYPE))
+					{
+						//puts("base-heaptype");
+						if (!JyNI_GetJythonDelegate(base)) {
+							//printf("Wouldn't delegate: %s\n", ((PyTypeObject*) v)->tp_name);
+							break;
+						}
+					} else
+					{
+						if (!JyNI_IsBuiltinPyType(base))
+						{
+							//printf("Wouldn't delegate: %s\n", ((PyTypeObject*) v)->tp_name);
+							break;
+						}
+					}
+					base = base->tp_base;
+				}
+				if (!base)
+				{
+					//printf("Would delegate: %s\n", ((PyTypeObject*) v)->tp_name);
+					return JyNI_JythonPyObject_FromPyObject(v);
+				}
+			}
 		}
 		jclass cls = JyNI_JythonClassFromPyType((PyTypeObject*) v);
 		if (cls != NULL) //delegate
@@ -2189,7 +2391,7 @@ jmethodID JyNI_pyCode_co_flags;
 jmethodID JyNI_pyCode_co_lnotab;
 jmethodID JyNI_jPrint;
 jmethodID JyNI_jPrintLong;
-jmethodID JyNI_jPrintHash;
+jmethodID JyNI_jGetHash;
 //jmethodID JyNIPySet_pop;
 jmethodID JyNI_makeGCHead;
 jmethodID JyNI_makeStaticGCHead;
@@ -2371,6 +2573,7 @@ jmethodID pyObject__finditem__;
 //jmethodID pyObject__getitem__;
 jmethodID pyObject__setitem__;
 jmethodID pyObject__delitem__;
+jmethodID pyObject__get__;
 jmethodID pyObject__contains__;
 jmethodID pyObject__len__;
 jmethodID pyObject__getslice__;
@@ -2575,8 +2778,31 @@ jclass pyStaticMethodClass;
 jmethodID pyStaticMethodConstructor;
 jfieldID pyStaticMethod_callable;
 
-//jclass pyMethodDescrClass;
-//jclass pyClassMethodDescrClass;
+jclass pyBuiltinCallableInfoClass;
+jmethodID pyBuiltinCallableInfoMin;
+jmethodID pyBuiltinCallableInfoMax;
+jmethodID pyBuiltinCallableInfoName;
+
+jclass pyBuiltinCallableClass;
+jmethodID pyBuiltinCallable_getSelf;
+jmethodID pyBuiltinCallable_getModule;
+jmethodID pyBuiltinCallable_getDoc;
+//jmethodID pyBuiltinCallable_fastGetName;
+jfieldID pyBuiltinCallable_info;
+
+jclass pyCMethodDefClass;
+jmethodID pyCMethodDefConstructor;
+
+jclass pyCFunctionClass;
+jmethodID pyCFunctionConstructor;
+
+jclass pyDescrClass;
+jfieldID pyDescr_dtype;
+
+jclass pyMethodDescrClass;
+jmethodID pyMethodDescrConstructor;
+
+jclass pyClassMethodDescrClass;
 
 jclass pyDictProxyClass;
 jmethodID pyDictProxyConstructor;
@@ -2839,7 +3065,7 @@ inline jint initJyNI(JNIEnv *env)
 	JyNI_pyCode_co_lnotab = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_pyCode_co_lnotab", "(Lorg/python/core/PyBytecode;)Ljava/lang/String;");
 	JyNI_jPrint = (*env)->GetStaticMethodID(env, JyNIClass, "jPrint", "(Ljava/lang/String;)V");
 	JyNI_jPrintLong = (*env)->GetStaticMethodID(env, JyNIClass, "jPrint", "(J)V");
-	JyNI_jPrintHash = (*env)->GetStaticMethodID(env, JyNIClass, "jPrintHash", "(Ljava/lang/Object;)V");
+	JyNI_jGetHash = (*env)->GetStaticMethodID(env, JyNIClass, "jGetHash", "(Ljava/lang/Object;)I");
 	//JyNIPySet_pop = (*env)->GetStaticMethodID(env, JyNIClass, "PySet_pop", "(Lorg/python/core/BaseSet;)Lorg/python/core/PyObject;");
 	JyNI_makeGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeGCHead", "(JZZ)LJyNI/gc/PyObjectGCHead;");
 	JyNI_makeStaticGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeStaticGCHead", "(JZ)LJyNI/gc/JyGCHead;");
@@ -3170,6 +3396,8 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyObject__finditem__ = (*env)->GetMethodID(env, pyObjectClass, "__finditem__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyObject__setitem__ = (*env)->GetMethodID(env, pyObjectClass, "__setitem__", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
 	pyObject__delitem__ = (*env)->GetMethodID(env, pyObjectClass, "__delitem__", "(Lorg/python/core/PyObject;)V");
+	pyObject__get__ = (*env)->GetMethodID(env, pyObjectClass, "__get__",
+			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyObject__contains__ = (*env)->GetMethodID(env, pyObjectClass, "__contains__", "(Lorg/python/core/PyObject;)Z");
 	pyObject__len__ = (*env)->GetMethodID(env, pyObjectClass, "__len__", "()I");
 	pyObject__getslice__ = (*env)->GetMethodID(env, pyObjectClass, "__getslice__",
@@ -3431,15 +3659,62 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyStaticMethodConstructor = (*env)->GetMethodID(env, pyStaticMethodClass, "<init>", "(Lorg/python/core/PyObject;)V");
 	pyStaticMethod_callable = (*env)->GetFieldID(env, pyStaticMethodClass, "callable", "Lorg/python/core/PyObject;");
 
-//	jclass pyMethodDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyMethodDescr");
-//	if (pyMethodDescrClassLocal == NULL) { return JNI_ERR;}
-//	pyMethodDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyMethodDescrClassLocal);
-//	(*env)->DeleteLocalRef(env, pyMethodDescrClassLocal);
-//
-//	jclass pyClassMethodDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyClassMethodDescr");
-//	if (pyClassMethodDescrClassLocal == NULL) { return JNI_ERR;}
-//	pyClassMethodDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyClassMethodDescrClassLocal);
-//	(*env)->DeleteLocalRef(env, pyClassMethodDescrClassLocal);
+	jclass pyBuiltinCallableInfoClassLocal = (*env)->FindClass(env, "org/python/core/PyBuiltinCallable$Info");
+	if (pyBuiltinCallableInfoClassLocal == NULL) { return JNI_ERR;}
+	pyBuiltinCallableInfoClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBuiltinCallableInfoClassLocal);
+	(*env)->DeleteLocalRef(env, pyBuiltinCallableInfoClassLocal);
+	pyBuiltinCallableInfoMin = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass, "getMinargs", "()I");
+	pyBuiltinCallableInfoMax = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass, "getMaxargs", "()I");
+	pyBuiltinCallableInfoName = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass, "getName",
+			"()Ljava/lang/String;");
+
+	jclass pyBuiltinCallableClassLocal = (*env)->FindClass(env, "org/python/core/PyBuiltinCallable");
+	if (pyBuiltinCallableClassLocal == NULL) { return JNI_ERR;}
+	pyBuiltinCallableClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBuiltinCallableClassLocal);
+	(*env)->DeleteLocalRef(env, pyBuiltinCallableClassLocal);
+	pyBuiltinCallable_getSelf = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getSelf",
+			"()Lorg/python/core/PyObject;");
+	pyBuiltinCallable_getModule = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getModule",
+			"()Lorg/python/core/PyObject;");
+	pyBuiltinCallable_getDoc = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getDoc",
+			"()Ljava/lang/String;");
+//	pyBuiltinCallable_fastGetName = (*env)->GetMethodID(env, pyBuiltinCallableClass, "fastGetName",
+//			"()Lorg/python/core/PyObject;");
+	pyBuiltinCallable_info = (*env)->GetFieldID(env, pyBuiltinCallableClass, "info",
+			"Lorg/python/core/PyBuiltinCallable$Info;");
+
+	jclass pyCMethodDefClassLocal = (*env)->FindClass(env, "JyNI/CMethodDef");
+	if (pyCMethodDefClassLocal == NULL) { return JNI_ERR;}
+	pyCMethodDefClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCMethodDefClassLocal);
+	(*env)->DeleteLocalRef(env, pyCMethodDefClassLocal);
+	pyCMethodDefConstructor = (*env)->GetMethodID(env, pyCMethodDefClass, "<init>",
+			"(JLjava/lang/String;ZLjava/lang/String;)V");
+
+	jclass pyCFunctionClassLocal = (*env)->FindClass(env, "JyNI/PyCFunction");
+	if (pyStaticMethodClassLocal == NULL) { return JNI_ERR;}
+	pyCFunctionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCFunctionClassLocal);
+	(*env)->DeleteLocalRef(env, pyCFunctionClassLocal);
+	pyCFunctionConstructor = (*env)->GetMethodID(env, pyCFunctionClass, "<init>",
+			"(JLorg/python/core/PyType;Ljava/lang/String;ZLjava/lang/String;)V");
+
+	jclass pyDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyDescriptor");
+	if (pyDescrClassLocal == NULL) { return JNI_ERR;}
+	pyDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDescrClassLocal);
+	(*env)->DeleteLocalRef(env, pyDescrClassLocal);
+	pyDescr_dtype = (*env)->GetFieldID(env, pyDescrClass, "dtype",
+			"Lorg/python/core/PyType;");
+
+	jclass pyMethodDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyMethodDescr");
+	if (pyMethodDescrClassLocal == NULL) { return JNI_ERR;}
+	pyMethodDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyMethodDescrClassLocal);
+	(*env)->DeleteLocalRef(env, pyMethodDescrClassLocal);
+	pyMethodDescrConstructor = (*env)->GetMethodID(env, pyMethodDescrClass, "<init>",
+			"(Lorg/python/core/PyType;Lorg/python/core/PyBuiltinCallable;)V");
+
+	jclass pyClassMethodDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyClassMethodDescr");
+	if (pyClassMethodDescrClassLocal == NULL) { return JNI_ERR;}
+	pyClassMethodDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyClassMethodDescrClassLocal);
+	(*env)->DeleteLocalRef(env, pyClassMethodDescrClassLocal);
 
 	jclass pyDictProxyClassLocal = (*env)->FindClass(env, "org/python/core/PyDictProxy");
 	if (pyDictProxyClassLocal == NULL) { return JNI_ERR;}
@@ -3908,7 +4183,12 @@ void JyNI_unload(JavaVM *jvm)
 
 inline void JyNI_jprintHash(jobject obj) {
 	env();
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrintHash, obj);
+	jputsLong((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_jGetHash, obj));
+}
+
+inline void JyNI_printHash(jobject obj) {
+	env();
+	printf("%li\n", ((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_jGetHash, obj)));
 }
 
 inline void JyNI_jprintJ(jobject obj)
@@ -3922,7 +4202,6 @@ inline void JyNI_jprintJ(jobject obj)
 			if (!(*env)->IsSameObject(env, obj, NULL)) {
 				//jputsLong(__LINE__);
 				jstring msg = (*env)->CallObjectMethod(env, obj, objectToString);
-				//jputsLong(__LINE__);
 				(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrint, msg);
 				//jputsLong(__LINE__);
 			} else jputs("NULL (equal)");
@@ -3947,6 +4226,7 @@ inline void JyNI_printJInfo(jobject obj)
 
 inline void _jputs(const char* msg)
 {
+	//puts(__FUNCTION__);
 	env();
 	jstring str = (*env)->NewStringUTF(env, msg);
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrint, str);
@@ -3962,6 +4242,11 @@ inline void jputsLong(jlong val)
 inline void jputsPy(PyObject* o)
 {
 	jputs(o ? PyString_AS_STRING(PyObject_Str(o)) : "NULL-PyObject");
+}
+
+inline void putsPy(PyObject* o)
+{
+	puts(o ? PyString_AS_STRING(PyObject_Str(o)) : "NULL-PyObject");
 }
 
 void jPrintCStackTrace()

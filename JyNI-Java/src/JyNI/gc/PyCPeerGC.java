@@ -95,11 +95,6 @@ public class PyCPeerGC extends PyCPeer implements TraversableGCHead {//, Finaliz
 		links = DefaultTraversableGCHead.ensureSize(links, size);
 	}
 
-//	@Override
-//	public void __del_builtin__() {
-//		System.out.println("PyCPeerGC __del__builtin "+System.identityHashCode(this)+" / "+objectHandle);
-//	}
-
 	@Override
 	public void printLinks(java.io.PrintStream out) {
 		DefaultTraversableGCHead.printLinksAsHashes(links, out);

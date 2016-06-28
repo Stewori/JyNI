@@ -1601,12 +1601,13 @@ _PyGC_Dump(PyGC_Head *g)
 
 static inline jsize JyObject_FixedGCSize(PyObject* pyObject)
 {
-	if (Py_TYPE(pyObject) == &PyTuple_Type)    return Py_SIZE(pyObject);
-	if (Py_TYPE(pyObject) == &PyFunction_Type) return 5; //6
-	if (Py_TYPE(pyObject) == &PyInstance_Type) return 2;
-	if (Py_TYPE(pyObject) == &PyMethod_Type)   return 3;
-	if (Py_TYPE(pyObject) == &PyClass_Type)    return 6;
-	if (Py_TYPE(pyObject) == &PyCell_Type)     return 1;
+	if (Py_TYPE(pyObject) == &PyTuple_Type)     return Py_SIZE(pyObject);
+	if (Py_TYPE(pyObject) == &PyCFunction_Type) return 2;
+	if (Py_TYPE(pyObject) == &PyFunction_Type)  return 5; //6
+	if (Py_TYPE(pyObject) == &PyInstance_Type)  return 2;
+	if (Py_TYPE(pyObject) == &PyMethod_Type)    return 3;
+	if (Py_TYPE(pyObject) == &PyClass_Type)     return 6;
+	if (Py_TYPE(pyObject) == &PyCell_Type)      return 1;
 	if (Is_StaticTypeObject(pyObject))         return 7;
 	return UNKNOWN_FIXED_GC_SIZE;
 }
@@ -1648,6 +1649,7 @@ void JyNI_GC_Explore()
 //	jputs(__FUNCTION__);
 //	jputs("stack-size:");
 //	jputsLong(exStackSize());
+	env();
 	while (!isExStackEmpty()) {
 		PyObject* toExplore = popExStack();
 		if (!Is_Static_PyObject(toExplore)) {
@@ -1655,7 +1657,15 @@ void JyNI_GC_Explore()
 //			jputs(Py_TYPE(toExplore)->tp_name);
 //		} else {
 			if (IS_UNEXPLORED(toExplore)) {
+//				jputs("Explore object:");
+//				jputs(Py_TYPE(toExplore)->tp_name);
+//				jputsPy(toExplore);
 				JyNI_GC_ExploreObject(toExplore);
+//				if ((*env)->ExceptionCheck(env)) {
+//					jputs("exception occurred during exploration:");
+//					(*env)->ExceptionDescribe(env);
+//					(*env)->ExceptionClear(env);
+//				}
 			}
 		}
 	}
@@ -1705,7 +1715,6 @@ jboolean JyNI_GC_EnsureHeadObject(JNIEnv* env, PyObject* op, JyObject* jy)
 
 		jobject jjy = (*env)->NewLocalRef(env, jy->jy);
 		if (!(*env)->IsSameObject(env, jjy, NULL)) {
-//			jputsLong(__LINE__);
 			(*env)->CallVoidMethod(env, result, pyObjectGCHeadSetObject, jjy);
 		}
 		else return JNI_FALSE;
@@ -1734,10 +1743,12 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 	}
 	if (jy->flags & JY_CPEER_FLAG_MASK)
 	{
-//		if (!(jy->flags & JY_INITIALIZED_FLAG_MASK))
+//		if (!(jy->flags & JY_INITIALIZED_FLAG_MASK)) {
 //			jputs("JyNI-Warning: uninitialized CPeer at explore!");
+//			jputsLong(op);
+//			jputs(Py_TYPE(op)->tp_name);
+//		}
 		jobject er = JyNI_JythonPyObject_FromPyObject(op);
-
 		//Todo: This warning is not completely silent when commented-in.
 		//Investigate!
 //		if (!(*env)->IsInstanceOf(env, er, jyGCHeadClass))
@@ -1748,7 +1759,6 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 //			if ((*env)->IsInstanceOf(env, er, pyCPeerGCClass))
 //				jputs("Created pyCPeerGC instead");
 //		}
-		//jputsLong(__LINE__);
 		return er;
 	} else
 	{
@@ -2104,7 +2114,7 @@ void JyNI_GC_ExploreObject(PyObject* op)
 	/*
 	 * Note that not only GC-objects (in terms of PyObject_IS_GC) must be explored,
 	 * but every traversable object. Non-heap types are an example of this. They
-	 * are traversable, but don't have a gc-head. Neverteless JyNI needs to explore
+	 * are traversable, but don't have a gc-head. Nevertheless JyNI needs to explore
 	 * them to obtain a full reference graph.
 	 * Such objects are a special case though, because without a GC-head we cannot
 	 * set the GC_EXPLORED flag.
@@ -2114,7 +2124,7 @@ void JyNI_GC_ExploreObject(PyObject* op)
 	 * types have also been explored by this method.
 	 * For other traversable, but non-gc (in terms of PyObject_IS_GC) obects we
 	 * assume unexplored state all the time, even if the object was explored. So we
-	 * redo exploration whenever we encouter such an object
+	 * redo exploration whenever we encounter such an object
 	 * (actually no cases of this are currently known).
 	 */
 //	if (Is_Static_PyObject(op)) {
@@ -2783,7 +2793,22 @@ PyObject_GC_UnTrack(void *op)
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_removeJyNICriticalObject, (jlong) op);
 		}
 		JyNIDebugOp(JY_NATIVE_GC_UNTRACK, (PyObject*) op, -1);
-		_PyObject_GC_UNTRACK(op);
+		//jputsPy(op);
+//		if (!op) jputs("untracking NULL");
+//		else {
+//			jputs(Py_TYPE((PyObject*) op)->tp_name);
+//			jputsLong(op);
+//		}
+		//_PyObject_GC_UNTRACK(op);
+		PyGC_Head *g = _Py_AS_GC(op);
+		assert(g->gc.gc_refs != _PyGC_REFS_UNTRACKED);
+		g->gc.gc_refs = _PyGC_REFS_UNTRACKED;
+//		jputsLong(g->gc.gc_next);
+//		jputsLong(g->gc.gc_prev);
+//		jputsLong(g->gc.gc_prev->gc.gc_next);
+		g->gc.gc_prev->gc.gc_next = g->gc.gc_next;
+		g->gc.gc_next->gc.gc_prev = g->gc.gc_prev;
+		g->gc.gc_next = NULL;
 	}
 }
 
@@ -2876,7 +2901,10 @@ inline void _PyObject_GC_InitJy(PyObject *op, TypeMapEntry* tme)
 		jy->jy = (jweak) tme;
 		jy->flags = JY_GC_FLAG_MASK | tme->flags;
 	} else
+	{
+		jy->jy = NULL;
 		jy->flags = JY_GC_FLAG_MASK;
+	}
 	//jy->attr = NULL;
 	//JyNI_SetUpJyObject((JyObject*) op);
 }

@@ -581,22 +581,24 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src, PyTypeObject* nonN
 	return er;
 }
 
-/*
- * This function returns a NEW reference, i.e. caller must decref it in the end.
- */
-PyObject* JySync_Init_Special_PyInstance(jobject src, PyTypeObject* nonNativeSubtype)
-{
-	env(NULL);
-	//todo: Care for finalizer also in this case.
-	//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
-	jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
-						JyNI_getTypeOldStyleParent, src);
+///*
+// * This function returns a NEW reference, i.e. caller must decref it in the end.
+// */
+//PyObject* JySync_Init_Special_PyInstance(jobject src, PyTypeObject* nonNativeSubtype)
+//{
+//	env(NULL);
+//	//todo: Care for finalizer also in this case.
+//	//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
+//	jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
+//						JyNI_getTypeOldStyleParent, src);
+//
+//	PyObject* er = PyInstance_NewRaw(
+//		JyNI_PyObject_FromJythonPyObject(old_cls),
+//		JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyObjectGetDict)));
+//	return er;
+//}
 
-	PyObject* er = PyInstance_NewRaw(
-		JyNI_PyObject_FromJythonPyObject(old_cls),
-		JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyObjectGetDict)));
-	return er;
-}
+
 
 
 jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src, jclass subtype)
@@ -707,8 +709,8 @@ PyObject* JySync_Init_PyProperty_From_JyProperty(jobject src, PyTypeObject* nonN
 jobject JySync_Init_JyWeakReference_From_PyWeakReference(PyObject* src, jclass subtype)
 {
 	PyObject* referent = PyWeakref_GET_OBJECT0(src);
-	jputs("Sync PyWeakRef* -> jython");
-	jputsLong((jlong) referent);
+//	jputs("Sync PyWeakRef* -> jython");
+//	jputsLong((jlong) referent);
 	jobject jReferent = NULL;
 	if (referent) jReferent = JyNI_JythonPyObject_FromPyObject(referent);
 	env(NULL);
@@ -727,8 +729,8 @@ PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src, PyTypeOb
 	env(NULL);
 	jobject jReferent = (*env)->CallObjectMethod(env, src, AbstractReference_get);
 	PyObject* referent = JyNI_PyObject_FromJythonPyObject(jReferent);
-	jputs("Sync jython -> PyWeakRef*");
-	jputsLong((jlong) referent);
+//	jputs("Sync jython -> PyWeakRef*");
+//	jputsLong((jlong) referent);
 	/* Note that an extra Py_INCREF is not necessary since the conversion method
 	 * returns a new reference.
 	 * JyNI-note: It is okay to hold a refcount for the weakly referenced object.
@@ -803,6 +805,196 @@ PyObject* JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy(jobject src, 
 	// Todo: Support callback.
 	return result;
 }
+
+
+//jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subtype)
+//{
+//	PyMethodDescrObject* inst = (PyMethodDescrObject*) src;
+//	env(NULL);
+//	return NULL;
+//}
+//
+///*
+// * This function returns a NEW reference, i.e. caller must decref it in the end.
+// */
+//PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject* nonNativeSubtype)
+//{
+//	env(NULL);
+//	return NULL;
+//}
+
+
+jobject JySync_Init_JyCFunction_From_PyCFunction(PyObject* src, jclass subtype)
+{
+//	jputs(__FUNCTION__);
+	if (JyNI_HasJyAttribute(AS_JY(src), JyAttributeMethodDef))
+	{
+		jputs("JyNI-warning: JySync_Init_JyCFunction_From_PyCFunction shouldn't be called with non-native PyCFunction.");
+	}
+	JyObject* srcJy = AS_JY_WITH_GC(src);
+	// Note that JyNI.PyCFunction implements CPeerInterface, so we must set the CPeer-flag:
+	srcJy->flags |= JY_CPEER_FLAG_MASK;
+	Py_INCREF(src);
+
+	//JyNI_GC_ExploreObject(src);
+//	jboolean dbg = strcmp(((PyCFunctionObject*) src)->m_ml->ml_name, "in_dll") == 0;
+//	jputs(Py_TYPE(src)->tp_name);
+	//if (_PyThreadState_Current) jputsPy(PyObject_GetAttrString(src, "__class__"));
+	PyCFunctionObject* func = (PyCFunctionObject*) src;
+//	jputs(func->m_ml->ml_name);
+//	jputsLong(func->m_self);
+	//putsPy(func->m_self);
+//	jputsLong(func->m_module);
+	env(NULL);
+	jstring name = (*env)->NewStringUTF(env, func->m_ml->ml_name);
+	jstring doc = (*env)->NewStringUTF(env, func->m_ml->ml_doc);
+	jobject jtype = JyNI_JythonPyObject_FromPyObject(Py_TYPE(src));
+	//JyNI_jprintJ(jtype); //builtinTypes[TME_INDEX_CFunction].jy_class
+	//jobject test = _JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src), NULL);
+
+	jobject result = (*env)->NewObject(env, pyCFunctionClass, pyCFunctionConstructor,
+			(jlong) src, jtype,
+			name, func->m_ml->ml_flags & METH_NOARGS, doc);
+//	if (dbg) {
+//		jputs(__FUNCTION__);
+//		jputs(((PyCFunctionObject*) src)->m_ml->ml_name);
+//		jputsPy(((PyCFunctionObject*) src)->m_self);
+//		jputsLong(((PyCFunctionObject*) src));
+//		jputsLong(((PyCFunctionObject*) src)->m_ml);
+//		jputsLong(((PyCFunctionObject*) src)->m_self);
+//		jPrintCStackTrace();
+//	}
+//	jputs("result:");
+//	JyNI_jprintJ(result);
+//	if ((*env)->IsSameObject(env, result, NULL)) jputs("result is null");
+//	JyNI_printJInfo(result);
+//	JyNI_jprintHash(result);
+	return result;
+}
+
+
+//static PyObject* jyBuiltinCall(PyObject* self, PyObject* args)
+//{
+//	jobject jself = JyNI_JythonPyObject_FromPyObject(self);
+//	return JyNI_PyObject_Call(jself, args, NULL);
+//}
+
+static PyObject* jyBuiltinCallWithKeywords(PyObject* self, PyObject* args, PyObject* kw)
+{
+	//jputs(__FUNCTION__);
+	jputs("JyNI-warning: Native caller ignored Jython-flag.");
+//	jobject jself = self ? JyNI_JythonPyObject_FromPyObject(self) : JyNone;
+	jobject jself = JyNI_JythonPyObject_FromPyObject(self);
+	return JyNI_PyObject_Call(jself, args, kw);
+}
+
+//static PyObject* jyBuiltinCallNoArgs(PyObject* self)
+//{
+//	jobject jself = JyNI_JythonPyObject_FromPyObject(self);
+//	return JyNI_PyObject_Call(jself, PyTuple_New(0), NULL);
+//}
+
+PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObject* nonNativeSubtype)
+{
+//	jputs(__FUNCTION__);
+	env(NULL);
+	if ((*env)->IsInstanceOf(env, src, pyCFunctionClass))
+	{
+		jputs("JyNI-warning: JySync_Init_PyCFunction_From_JyBuiltinCallable shouldn't be called with PyCFunction.");
+	}
+	PyMethodDef* mdef = malloc(sizeof(PyMethodDef));
+	jobject info = (*env)->GetObjectField(env, src, pyBuiltinCallable_info);
+	jint max = (*env)->CallIntMethod(env, info, pyBuiltinCallableInfoMax);
+	mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS) | METH_JYTHON;
+
+	jstring jtmp = (*env)->CallObjectMethod(env, info, pyBuiltinCallableInfoName);
+	global_cstr_from_jstring(cName, jtmp);
+	mdef->ml_name = cName;
+//	puts(cName);
+
+	jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallable_getDoc);
+	if (jtmp)
+	{
+		global_cstr_from_jstring2(cDoc, jtmp);
+		mdef->ml_doc = cDoc;
+	} else mdef->ml_doc = NULL;
+
+	mdef->ml_meth = (PyCFunctionWithKeywords) jyBuiltinCallWithKeywords;
+
+	jobject jmodule = (*env)->CallObjectMethod(env, src, pyBuiltinCallable_getModule);
+	jobject jself = (*env)->CallObjectMethod(env, src, pyBuiltinCallable_getSelf);
+	// Account for incompatible behavior:
+	// In Jython an unbound method has self = None while in CPython self = NULL
+	PyObject* mself = (*env)->IsSameObject(env, jself, JyNone) ? NULL :
+			JyNI_PyObject_FromJythonPyObject(jself);
+//	putsPy(mself);
+	PyCFunctionObject* res = PyCFunction_NewEx(mdef, mself,
+			JyNI_PyObject_FromJythonPyObject(jmodule));
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY(res), JyAttributeMethodName,
+			cName, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	if (mdef->ml_doc)
+		JyNI_AddOrSetJyAttributeWithFlags(AS_JY(res), JyAttributeMethodDoc,
+				mdef->ml_doc, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY(res), JyAttributeMethodDef,
+			mdef, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	return (PyObject*) res;
+}
+
+jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subtype)
+{
+//	jputs(__FUNCTION__);
+//	jputs(((PyMethodDescrObject*) src)->d_method->ml_name);
+	env(NULL);
+	jobject mdef = (*env)->NewObject(env, pyCMethodDefClass, pyCMethodDefConstructor,
+			(jlong) ((PyMethodDescrObject*) src)->d_method,
+			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_name),
+			((PyMethodDescrObject*) src)->d_method->ml_flags & METH_NOARGS,
+			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_doc));
+	// Something here causes PyType_Ready(_ctypes.PyCStructType) to call subsequently
+	// _JyNI_JythonPyTypeObject_FromPyTypeObject again.
+	jobject res = (*env)->NewObject(env, pyMethodDescrClass, pyMethodDescrConstructor,
+			JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type),
+			mdef);
+	return res;
+}
+
+PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject* nonNativeSubtype)
+{
+//	jputs(__FUNCTION__);
+	env(NULL);
+	jint max = (*env)->CallIntMethod(env, src, pyBuiltinCallableInfoMax);
+	//mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS) | METH_JYTHON;
+
+	jstring jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallableInfoName);
+	global_cstr_from_jstring(cName, jtmp);
+	//mdef->ml_name = cName;
+
+	jobject dtype = (*env)->GetObjectField(env, src, pyDescr_dtype);
+
+	PyMethodDef* mdef = malloc(sizeof(PyMethodDef));
+	mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS)
+			| METH_JYTHON | METH_JYTHON_CDEF;
+	mdef->ml_name = cName;
+
+	jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallable_getDoc);
+	if (jtmp)
+	{
+		global_cstr_from_jstring2(cDoc, jtmp);
+		mdef->ml_doc = cDoc;
+	} else mdef->ml_doc = NULL;
+	mdef->ml_meth = (PyCFunctionWithKeywords) jyBuiltinCallWithKeywords;
+
+	PyObject* result = PyDescr_NewMethod(JyNI_PyObject_FromJythonPyObject(dtype), mdef);
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(result), JyAttributeMethodName,
+			cName, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	if (mdef->ml_doc)
+		JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(result), JyAttributeMethodDoc,
+				mdef->ml_doc, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(result), JyAttributeMethodDef,
+			mdef, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	return result;
+}
+
 
 //jobject JySync_Init_JyCode_From_PyCode(PyObject* src) not needed because of truncation
 //PyObject* JySync_Init_PyCode_From_JyCode(jobject src)
@@ -967,7 +1159,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	char* cname = malloc(strlen(utf_string)+1);
 	strcpy(cname, utf_string);
 	(*env)->ReleaseStringUTFChars(env, jtmp, utf_string);
-//	jputs(cname);
+//	puts(cname);
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY(dest), JyAttributeTypeName, cname, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 	tp->tp_name = cname;
 
@@ -1002,7 +1194,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 		PyType_Ready(tp);
 		//tp->tp_flags = (tp->tp_flags & ~Py_TPFLAGS_READYING) | Py_TPFLAGS_READY;
 //		JyNI_GC_ExploreObject(tp);
-	}
+	} //else puts("already ready");
 //	jputs("sync mro...");
 //	jputsLong(tp);
 	//mro:
@@ -1029,4 +1221,5 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 //			updateJyGCHeadLink(tp, AS_JY_WITH_GC(tp), 2 /* mro-index */,
 //					tp->tp_mro, AS_JY_WITH_GC(tp->tp_mro));
 	}
+//	jputs("type-sync done");
 }

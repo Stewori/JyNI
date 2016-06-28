@@ -54,6 +54,8 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 	PyCFunctionObject *op;
 	op = free_list;
 	if (op != NULL) {
+//		jputs("PyCFunction_NewEx: from free_list:");
+//		jputsLong(op);
 		free_list = (PyCFunctionObject *)(op->m_self);
 		PyObject_INIT(op, &PyCFunction_Type);
 		_PyObject_GC_InitJy(op, NULL);
@@ -62,6 +64,8 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
 	}
 	else {
 		op = PyObject_GC_New(PyCFunctionObject, &PyCFunction_Type);
+//		jputs("PyCFunction_NewEx: free_list exhausted:");
+//		jputsLong(op);
 		if (op == NULL)
 			return NULL;
 	}
@@ -88,7 +92,7 @@ PyCFunction_GetFunction(PyObject *op)
 
 PyObject *
 PyCFunction_GetSelf(PyObject *op)
-{
+{ //todo: Maybe update self from Jython if METH_JYTHON flag is set
 	if (!PyCFunction_Check(op)) {
 		PyErr_BadInternalCall();
 		return NULL;
@@ -110,14 +114,22 @@ PyObject *
 PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 {
 //	jputs(__FUNCTION__);
+//	jputsLong(func);
 	PyCFunctionObject* f = (PyCFunctionObject*)func;
 //	jputs(f->m_ml->ml_name);
 	PyCFunction meth = PyCFunction_GET_FUNCTION(func);
 	PyObject *self = PyCFunction_GET_SELF(func);
+//	if (!self) jputs("self is NULL");
+//	jputsPy(self);
 	//jputs(Py_TYPE(self)->tp_name);
 	Py_ssize_t size;
-
-	switch (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST)) {
+	if (PyCFunction_GET_FLAGS(func) & METH_JYTHON)
+	{ // todo: Somehow include this into switch below
+		env(NULL);
+		jobject builtinCallable = JyNI_JythonPyObject_FromPyObject(func);
+		return JyNI_PyObject_Call(builtinCallable, arg, kw);
+	}
+	switch (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_JYTHON)) {
 	case METH_VARARGS:
 		if (kw == NULL || PyDict_Size(kw) == 0)
 			return (*meth)(self, arg);
@@ -172,9 +184,15 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 static void
 meth_dealloc(PyCFunctionObject *m)
 {
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
+//	jputsLong(m);
+//	if (m->m_ml->ml_flags & METH_JYTHON)
+//		jputs("Jython-meth");
 	JyNIDebugOp(JY_NATIVE_FINALIZE, m, -1);
 	_JyNI_GC_UNTRACK(m);
+//	jputs("Decref:");
+//	jputsLong(m->m_self);
+//	jputsLong(m->m_module);
 	Py_XDECREF(m->m_self);
 	Py_XDECREF(m->m_module);
 	if (numfree < PyCFunction_MAXFREELIST) {
@@ -307,6 +325,11 @@ meth_richcompare(PyObject *self, PyObject *other, int op)
 static long
 meth_hash(PyCFunctionObject *a)
 {
+	if (a->m_ml->ml_flags & METH_JYTHON)
+	{
+		env(-1);
+		return (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(a), pyObjectHashCode);
+	}
 	long x,y;
 	if (a->m_self == NULL)
 		x = 0;

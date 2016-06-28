@@ -71,6 +71,7 @@ extern jmethodID pyObject__finditem__;
 //extern jmethodID pyObject__getitem__;
 extern jmethodID pyObject__setitem__;
 extern jmethodID pyObject__delitem__;
+extern jmethodID pyObject__get__;
 extern jmethodID pyObject__contains__;
 extern jmethodID pyObject__len__;
 extern jmethodID pyObject__getslice__;
@@ -230,8 +231,31 @@ extern jclass pyStaticMethodClass;
 extern jmethodID pyStaticMethodConstructor;
 extern jfieldID pyStaticMethod_callable;
 
-//extern jclass pyMethodDescrClass;
-//extern jclass pyClassMethodDescrClass;
+extern jclass pyBuiltinCallableInfoClass;
+extern jmethodID pyBuiltinCallableInfoMin;
+extern jmethodID pyBuiltinCallableInfoMax;
+jmethodID pyBuiltinCallableInfoName;
+
+extern jclass pyBuiltinCallableClass;
+extern jmethodID pyBuiltinCallable_getSelf;
+extern jmethodID pyBuiltinCallable_getModule;
+extern jmethodID pyBuiltinCallable_getDoc;
+//extern jmethodID pyBuiltinCallable_fastGetName;
+extern jfieldID pyBuiltinCallable_info;
+
+extern jclass pyCMethodDefClass;
+extern jmethodID pyCMethodDefConstructor;
+
+extern jclass pyCFunctionClass;
+extern jmethodID pyCFunctionConstructor;
+
+extern jclass pyDescrClass;
+extern jfieldID pyDescr_dtype;
+
+extern jclass pyMethodDescrClass;
+extern jmethodID pyMethodDescrConstructor;
+
+extern jclass pyClassMethodDescrClass;
 
 extern jclass pyDictProxyClass;
 extern jmethodID pyDictProxyConstructor;

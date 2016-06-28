@@ -70,6 +70,8 @@ void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
 //	jputs(__FUNCTION__);
+//	jputsPy(value);
+//	jPrintCStackTrace();
 //	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
 //		/* XXX Should never happen -- fatal error instead? */
 //		/* Well, it could be None. */

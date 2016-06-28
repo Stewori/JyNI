@@ -56,12 +56,13 @@ sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you
 sys.path.append('../../DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from base dir
 
+
 import DemoExtension
 
 
-print "--------Access Docstring----------"
-#print DemoExtension
-print DemoExtension.__doc__
+# print "--------Access Docstring----------"
+# #print DemoExtension
+# print DemoExtension.__doc__
 
 # If you run this via Jython, you can uncomment the following lines to prove that Jython is running.
 # With these lines this demo becomes a program that neither Jython without JyNI,
@@ -150,5 +151,5 @@ print "Check custom class is string-subtype: "+str(DemoExtension.newstyleCheckSu
 print "Check custom class is int-subtype (shouldn't be): "+str(DemoExtension.newstyleCheckSubtype(nobj2, type(6)))
 
 print ""
-print "======in JyNI-case expect native output after these lines on some consoles====="
-print "=====(it is a JNI issue that native output is displayed after java output)====="
+print "======in JyNI-case expect native output after these lines on some consoles======"
+print "=====(it is JNI-behavior that native output is displayed after Java output)====="

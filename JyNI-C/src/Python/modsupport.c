@@ -120,6 +120,8 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 		if (n == NULL)
 			return NULL;
 		for (ml = methods; ml->ml_name != NULL; ml++) {
+//			jputs("adding method...");
+//			jputs(ml->ml_name);
 			if ((ml->ml_flags & METH_CLASS) ||
 				(ml->ml_flags & METH_STATIC)) {
 				PyErr_SetString(PyExc_ValueError,
@@ -129,10 +131,17 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 				return NULL;
 			}
 			v = PyCFunction_NewEx(ml, passthrough, n);
+//			jputsLong(v);
 			if (v == NULL) {
 				Py_DECREF(n);
 				return NULL;
 			}
+//			jputsPy(v);
+			jobject jv = JyNI_JythonPyObject_FromPyObject(v);
+//			if ((*env)->IsSameObject(env, jv, NULL)) jputs("jv is null");
+//			JyNI_jprintHash(jv);
+//			JyNI_jprintJ(jv);
+//			JyNI_jprintJ(jv);
 			/*if (PyDict_SetItemString(d, ml->ml_name, v) != 0) {
 				Py_DECREF(v);
 				Py_DECREF(n);
@@ -141,7 +150,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			ENTER_SubtypeLoop_Safe_Mode(d, __setitem__)
 			(*env)->CallVoidMethod(env, d, JMID(__setitem__),
 					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
-					JyNI_JythonPyObject_FromPyObject(v));
+					jv);
 			LEAVE_SubtypeLoop_Safe_Mode(d, __setitem__)
 			Py_DECREF(v);
 		}

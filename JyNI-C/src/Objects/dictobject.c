@@ -739,9 +739,15 @@ PyDict_New(void)
 PyObject *
 PyDict_GetItem(PyObject *op, PyObject *key)
 {
-//	int dbg = strcmp(PyString_AS_STRING(key), "asArray") == 0;
-//	if (dbg) puts(__FUNCTION__);
-	if (!PyDict_Check(op)) return NULL;
+//	int dbg = strcmp(PyString_AS_STRING(key), "range") == 0;
+//	if (dbg) jputs(__FUNCTION__);
+//	if (dbg) jputsPy(key);
+//	if (dbg) jputsLong(op);
+//	if (dbg) jputsPy(op);
+	if (!PyDict_Check(op)) {
+//		if (dbg) jputsLong(__LINE__);
+		return NULL;
+	}
 	env(NULL);
 //	if ((*env)->ExceptionCheck(env)) {
 //		jputs("PyDict_GetItem - previous exception");
@@ -753,15 +759,15 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 			JyNI_JythonPyObject_FromPyObject(key));
 	PyObject* result = JyNI_PyObject_FromJythonPyObject(jres);
 	LEAVE_SubtypeLoop_Safe_ModePy(jop, __finditem__)
-//	if (dbg) printf("%i\n", __LINE__);
-//	if (dbg) printf("%i\n", result);
-//	if (dbg) printf("%i\n", jres == JyNone);
-//	if (dbg) printf("%i\n", (*env)->IsSameObject(env, jres, NULL));
-	if((*env)->ExceptionCheck(env)) {
-//		if (dbg) printf("%i\n", __LINE__);
-		(*env)->ExceptionClear(env);
-		return NULL;
-	}
+//	if((*env)->ExceptionCheck(env)) {
+//		if (dbg) jputsLong(__LINE__);
+//		if (dbg) JyNI_jprintJ((*env)->ExceptionOccurred(env));
+//		if (dbg) (*env)->ExceptionDescribe(env);
+//		(*env)->ExceptionClear(env);
+//		return NULL;
+//	}
+//	if (dbg) jputsLong(__LINE__);
+//	if (dbg) jputsLong(result);
 	return result;
 //	return JyNI_PyObject_FromJythonPyObject(
 //			(*env)->CallObjectMethod(env,
@@ -824,15 +830,16 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 int
 PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 {
+//	int dbg = strcmp(PyString_AS_STRING(key), "range") == 0;
+//	if (dbg) jputs(__FUNCTION__);
+//	if (dbg) jputsPy(key);
+//	if (dbg) jputsLong(op);
+//	if (dbg) jputsPy(op);
 //	register PyDictObject *mp;
 //	register long hash;
 //	register Py_ssize_t n_used;
-//	if (!op) {
-//		jputs("dict is NULL!! 0");
-//	}
 	if (!PyDict_Check(op)) {
 //		PyErr_BadInternalCall();
-		//jputs("return -1...");
 		return -1;
 	}
 //	assert(key);
@@ -855,21 +862,8 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 	Py_INCREF(value);
 	Py_INCREF(key);
 
-//	if (!op) {
-//		jputs("dict is NULL!! 1");
-//	}
 	env(-1);
 	jobject jop = JyNI_JythonPyObject_FromPyObject(op);
-//	if (!jop) {
-//		jputs("jdict is NULL!! 2");
-//	} else {
-//		JyNI_jprintJ(jop);
-//		jputsLong((jlong) jop);
-//		JyNI_jprintHash(jop);
-//	}
-//	if ((*env)->IsSameObject(env, jop, NULL)) {
-//		jputs("pseudo null");
-//	}
 	ENTER_SubtypeLoop_Safe_Mode(jop, __setitem__)
 	(*env)->CallVoidMethod(env,
 			jop, JMID(__setitem__),

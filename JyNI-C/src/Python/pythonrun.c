@@ -1721,6 +1721,7 @@ PyErr_PrintEx(int set_sys_last_vars)
 void
 Py_FatalError(const char *msg)
 {
+	jPrintCStackTrace();
 	fprintf(stderr, "Fatal Python error: %s\n", msg);
 	fflush(stderr); /* it helps in Windows debug build */
 
