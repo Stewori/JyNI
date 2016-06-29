@@ -101,9 +101,6 @@ PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject
 jobject JySync_Init_JyCFunction_From_PyCFunction(PyObject* src, jclass subtype);
 PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObject* nonNativeSubtype);
 
-jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subtype);
-PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject* nonNativeSubtype);
-
 void JySync_PyCode_From_JyCode(jobject src, PyObject* dest);
 
 //PyObject* JySync_Init_PyFunction_From_JyFunction(jobject src);

@@ -177,7 +177,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 	@Override
 	public PyObject __findattr_ex__(String name) {
-//		System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);
+		//System.out.println("Look for attribute "+name+" in PyCPeerType "+this.name);
 		ThreadState tstate = Py.getThreadState();
 		long ts = JyTState.prepareNativeThreadState(tstate);
 		PyObject er = JyNI.getAttrString(objectHandle, name, ts);
@@ -186,6 +186,7 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 			//PyException tmp = tstate.exception;
 			// We clear exception to see whether super inserts its own exception.
 			tstate.exception = null;
+			JyNI.JyNI_exc = null;
 			// super call is now responsible to do exception stuff
 			return super.__findattr_ex__(name);
 

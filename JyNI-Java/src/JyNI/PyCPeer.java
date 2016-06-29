@@ -181,7 +181,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public void __del_builtin__() {
-		System.out.println(getClass().getSimpleName()+" finalize: "+objectHandle);
+		//System.out.println(getClass().getSimpleName()+" finalize: "+objectHandle);
 		if (objectHandle != 0) JyNI.clearPyCPeer(objectHandle, 0);
 	}
 

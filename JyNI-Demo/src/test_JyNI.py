@@ -89,9 +89,7 @@ class TestJyNI(unittest.TestCase):
 	def test_DemoExtension_doc(self):
 		self.assertEqual(DemoExtension.__doc__, "This is a pure demo extension.")
 
-	#def test_hello_world_info(self):
-		#DemoExtension.hello_world()
-		#print DemoExtension.hello_world
+	def test_hello_world_info(self):
 		self.assertEqual(str(DemoExtension.hello_world), "<built-in function hello_world>")
 		self.assertEqual(DemoExtension.hello_world.__doc__, "Hello World method.")
 

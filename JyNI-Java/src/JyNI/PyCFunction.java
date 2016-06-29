@@ -94,18 +94,6 @@ public class PyCFunction extends PyBuiltinCallable implements CPeerInterface,
 		return er != null ? er : Py.None;
 	}
 
-//	@Override
-//	public String toString() {
-////		String res = super.toString();
-//		System.out.println("PyCFunction-toString...");
-//		System.out.println("self:");
-//		Object slf = getSelf();
-//		System.out.println();
-//		System.out.println("name:");
-//		System.out.println(info.getName());
-//		return "blah";//res;
-//	}
-
 	@Override
 	public PyString __repr__() {
 		return (PyString) JyNI.maybeExc(JyNI.repr(objectHandle,

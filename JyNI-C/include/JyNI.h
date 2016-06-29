@@ -742,7 +742,6 @@ extern TypeMapEntry builtinTypes[builtinTypeCount];
 #define TME_INDEX_ClassMethod           10
 #define TME_INDEX_StaticMethod          11
 #define TME_INDEX_CFunction             12
-//#define TME_INDEX_BuiltinCallable       13
 #define TME_INDEX_MethodDescr           13
 #define TME_INDEX_ClassMethodDescr      14
 #define TME_INDEX_DictProxy             15

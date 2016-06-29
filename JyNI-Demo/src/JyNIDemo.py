@@ -60,9 +60,9 @@ sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you
 import DemoExtension
 
 
-# print "--------Access Docstring----------"
-# #print DemoExtension
-# print DemoExtension.__doc__
+print "--------Access Docstring----------"
+print DemoExtension
+print DemoExtension.__doc__
 
 # If you run this via Jython, you can uncomment the following lines to prove that Jython is running.
 # With these lines this demo becomes a program that neither Jython without JyNI,

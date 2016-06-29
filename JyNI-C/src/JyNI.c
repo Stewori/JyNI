@@ -194,6 +194,9 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 	if (handle == 0) return NULL;
 	cstr_from_jstring(cName, name);
 //	jputs(cName);
+//	jboolean jdbg = strcmp(cName, "__array_interface__") == 0;
+//	if (jdbg) jputs(__FUNCTION__);
+//	if (jdbg) jputs(Py_TYPE((PyObject*) handle)->tp_name);
 	ENTER_JyNI
 	//jint ensresult = (*env)->EnsureLocalCapacity(env, 100);
 	//jputs("ensresult:");
@@ -1426,7 +1429,7 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromSubType(PyTypeObject* type)
 				{
 					if (builtinTypes[i].flags & JY_CPEER_FLAG_MASK)
 						return NULL;
-					printf("%s is subtype of %s", type->tp_name, builtinTypes[i].py_type->tp_name);
+					//printf("%s is subtype of %s", type->tp_name, builtinTypes[i].py_type->tp_name);
 					return &(builtinTypes[i]);
 				}
 			}
@@ -1655,8 +1658,8 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 //	jboolean dbg = strcmp(cName, "builtin_function_or_method") == 0;
 	//puts(cName);
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
-	if (tme && (tme->flags & JY_CPEER_FLAG_MASK))
-		tme = NULL; //todo: Fix this (check class, subtype etc)
+//	if (tme && (tme->flags & JY_CPEER_FLAG_MASK))
+//		tme = NULL; //todo: Fix this (check class, subtype etc)
 	if (tme)
 	{
 //		if (dbg) printf("%i\n", __LINE__);
@@ -2201,29 +2204,6 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v)
 		if (PyType_HasFeature(((PyTypeObject*) v), Py_TPFLAGS_HEAPTYPE))
 		{
 			JyObject* jy = AS_JY(v);
-//			if (JY_DELEGATE(v, jy->flags) != JY_DELEGATE2(v, jy->flags))
-//			{
-//				printf("Delegate issue: %s %i %i\n", ((PyTypeObject*) v)->tp_name, JY_DELEGATE(v, jy->flags), JY_DELEGATE2(v, jy->flags));
-//				PyTypeObject* base = (PyTypeObject*) ((PyTypeObject*) v)->tp_base;
-//				while (base) {
-//					puts(base->tp_name);
-//					if (PyType_HasFeature(base, Py_TPFLAGS_HEAPTYPE))
-//						puts("base-heaptype");
-//					else {
-//						puts("base not heap-type");
-//						printf("Is_StaticSingleton_NotBuiltin %i\n", Is_StaticSingleton_NotBuiltin(base));
-//						printf("Is_StaticTypeObject %i\n", Is_StaticTypeObject(base));
-//						printf("JyNI_IsBuiltinPyType %i\n", JyNI_IsBuiltinPyType(base));
-////						if (PyType_HasFeature(base, Jy_TPFLAGS_DYN_OBJECTS))
-////							puts("base-dynobjects");
-////						if (PyType_HasFeature(base->ob_type, Jy_TPFLAGS_DYN_OBJECTS))
-////							puts("base-type-dynobjects");
-//					}
-//					base = base->tp_base;
-//				}
-//				putsPy(((PyTypeObject*) v)->tp_mro);
-////				putsPy(((PyTypeObject*) v)->ob_type);
-//			}
 			if (JY_DELEGATE(v, jy->flags))
 				return JyNI_JythonPyObject_FromPyObject(v);
 			else if (JY_MAYBE_DELEGATE_TYPE(v, jy->flags))

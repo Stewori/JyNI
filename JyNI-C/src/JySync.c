@@ -950,8 +950,6 @@ jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subty
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_name),
 			((PyMethodDescrObject*) src)->d_method->ml_flags & METH_NOARGS,
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_doc));
-	// Something here causes PyType_Ready(_ctypes.PyCStructType) to call subsequently
-	// _JyNI_JythonPyTypeObject_FromPyTypeObject again.
 	jobject res = (*env)->NewObject(env, pyMethodDescrClass, pyMethodDescrConstructor,
 			JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type),
 			mdef);

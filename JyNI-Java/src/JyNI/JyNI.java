@@ -876,7 +876,7 @@ public class JyNI {
 	}
 
 	//--------------errors-section-----------------
-	private static PyException JyNI_exc;
+	protected static PyException JyNI_exc;
 
 	public static PyObject exceptionByName(String name) {
 		//System.out.println("look for exception: "+name);

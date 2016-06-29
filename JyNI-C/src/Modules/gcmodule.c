@@ -1608,7 +1608,7 @@ static inline jsize JyObject_FixedGCSize(PyObject* pyObject)
 	if (Py_TYPE(pyObject) == &PyMethod_Type)    return 3;
 	if (Py_TYPE(pyObject) == &PyClass_Type)     return 6;
 	if (Py_TYPE(pyObject) == &PyCell_Type)      return 1;
-	if (Is_StaticTypeObject(pyObject))         return 7;
+	if (Is_StaticTypeObject(pyObject))          return 7;
 	return UNKNOWN_FIXED_GC_SIZE;
 }
 
@@ -2793,22 +2793,13 @@ PyObject_GC_UnTrack(void *op)
 			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_removeJyNICriticalObject, (jlong) op);
 		}
 		JyNIDebugOp(JY_NATIVE_GC_UNTRACK, (PyObject*) op, -1);
-		//jputsPy(op);
-//		if (!op) jputs("untracking NULL");
-//		else {
-//			jputs(Py_TYPE((PyObject*) op)->tp_name);
-//			jputsLong(op);
-//		}
-		//_PyObject_GC_UNTRACK(op);
-		PyGC_Head *g = _Py_AS_GC(op);
-		assert(g->gc.gc_refs != _PyGC_REFS_UNTRACKED);
-		g->gc.gc_refs = _PyGC_REFS_UNTRACKED;
-//		jputsLong(g->gc.gc_next);
-//		jputsLong(g->gc.gc_prev);
-//		jputsLong(g->gc.gc_prev->gc.gc_next);
-		g->gc.gc_prev->gc.gc_next = g->gc.gc_next;
-		g->gc.gc_next->gc.gc_prev = g->gc.gc_prev;
-		g->gc.gc_next = NULL;
+		_PyObject_GC_UNTRACK(op);
+//		PyGC_Head *g = _Py_AS_GC(op);
+//		assert(g->gc.gc_refs != _PyGC_REFS_UNTRACKED);
+//		g->gc.gc_refs = _PyGC_REFS_UNTRACKED;
+//		g->gc.gc_prev->gc.gc_next = g->gc.gc_next;
+//		g->gc.gc_next->gc.gc_prev = g->gc.gc_prev;
+//		g->gc.gc_next = NULL;
 	}
 }
 
