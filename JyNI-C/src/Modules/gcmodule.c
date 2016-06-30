@@ -56,12 +56,6 @@
 //#include "frameobject.h"		// for PyFrame_ClearFreeList
 
 
-// Get an object's GC head
-#define AS_GC(o) ((PyGC_Head *)(o)-1)
-
-// Get the object given the GC head
-#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
-
 // *** Global GC state ***
 
 //struct gc_generation {
@@ -351,13 +345,6 @@ static jint exStackBlockCount() {
 #define GC_UNTRACKED					_PyGC_REFS_UNTRACKED
 #define GC_REACHABLE					_PyGC_REFS_REACHABLE
 #define GC_TENTATIVELY_UNREACHABLE	  _PyGC_REFS_TENTATIVELY_UNREACHABLE
-
-#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
-#define GC_EXPLORING _PyGC_REFS_EXPLORING
-#define GC_EXPLORED _PyGC_REFS_EXPLORED
-
-#define IS_UNEXPLORED(op) \
-	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
 
 //not used
 //#define IS_EXPLORED(op) \
@@ -2559,29 +2546,45 @@ static jboolean longArrayContains(jlong* array, jsize size, jlong value)
  */
 jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray oldLinks)
 {
-	//jputs(__FUNCTION__);
+
+	PyTypeObject* ptp = Py_TYPE((PyObject*) handle);
 	assert(handle);
+//	jboolean dbg = strcmp(ptp->tp_name, "Class") == 0;
+//	if (dbg) {
+//		jputs(__FUNCTION__);
+//		jputsLong(ptp);
+//		jputsLong(handle);
+//		jputs(ptp->tp_name);
+//		jputsLong(PyType_HasFeature(ptp, Py_TPFLAGS_HEAPTYPE));
+//		JyObject* jy = AS_JY((PyObject*) handle);
+//		if (JyObject_IS_INITIALIZED(jy)) jputs("initialized!");
+//		jputsLong(jy->jy);
+//		JyNI_printJInfo(jy->jy);
+//		JyNI_jprintJ(jy->jy);
+//	}
 
 	traverseproc trav;
 	if (PyType_CheckExact((PyObject*) handle))// && !Py_TYPE((PyObject*) op)->tp_traverse)
 		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
 	else trav = Py_TYPE((PyObject*) handle)->tp_traverse;
-
 	countChanges changeCount = {NULL, 0, 0, 0};
 	if (oldLinks) {
 		changeCount.size = (*env)->GetArrayLength(env, oldLinks);
 		if (changeCount.size)
 			changeCount.oldLinks = (*env)->GetLongArrayElements(env, oldLinks, NULL);
 	}
+//	if (dbg)
+//	{
+//		jputsLong(__LINE__);
+//		jputsLong(ptp->tp_traverse);
+//	}
 	trav((PyObject*) handle, visit_countChanges, &changeCount);
 	if (!changeCount.changes) {
 		//nothing to do...
 		if (changeCount.size)
 			(*env)->ReleaseLongArrayElements(env, oldLinks, changeCount.oldLinks, JNI_ABORT);
-		//jputs("nothing to do");
 		return JNI_FALSE;
 	}
-	//jputsLong(__LINE__);
 	//jputsLong(changeCount.changes);
 	jlong* potentialChanges[changeCount.changes];
 	findChanges changes = {changeCount.oldLinks, potentialChanges, changeCount.size, 0, 0};
@@ -2604,7 +2607,7 @@ jboolean JyGC_validateGCHead(JNIEnv *env, jclass class, jlong handle, jlongArray
 	/* We do this update as soon as possible, but not while the JVM is exposing an array
 	   (i.e. might not be at full power): */
 	updateJyGCHeadLinks((PyObject*) handle, AS_JY((PyObject*) handle));
-	//jputs("validateGCHead done");
+//	if (dbg) jputs("validateGCHead done");
 	return result;
 }
 

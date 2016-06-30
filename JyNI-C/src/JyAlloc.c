@@ -283,6 +283,16 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 	return dest;
 }
 
+static int
+jythontype_traverse(PyTypeObject *type, visitproc visit, void *arg)
+{
+	Py_VISIT(type->tp_dict);
+//	Py_VISIT(type->tp_cache);
+	Py_VISIT(type->tp_mro);
+	Py_VISIT(type->tp_bases);
+	Py_VISIT(type->tp_base);
+	return 0;
+}
 
 inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject src)
 {
@@ -297,6 +307,7 @@ inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject
 			Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE;
 	dest->tp_free = PyBaseObject_Type.tp_free;
 	dest->tp_dealloc = PyBaseObject_Type.tp_dealloc;
+	dest->tp_traverse = jythontype_traverse;
 
 	jy = AS_JY(dest);
 	env(NULL);

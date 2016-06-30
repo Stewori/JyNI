@@ -620,6 +620,19 @@ typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} Exception
 #define JyObject_DelJyGCHead(pyObject, jyObject) \
 	JyNI_ClearJyAttribute(jyObject, JyAttributeJyGCHead)
 
+#define GC_UNEXPLORED _PyGC_REFS_UNEXPLORED
+#define GC_EXPLORING _PyGC_REFS_EXPLORING
+#define GC_EXPLORED _PyGC_REFS_EXPLORED
+
+// Get an object's GC head
+#define AS_GC(o) ((PyGC_Head *)(o)-1)
+
+// Get the object given the GC head
+#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
+
+#define IS_UNEXPLORED(op) \
+	(!IsReadyType(op) && (!PyObject_IS_GC(op) || (AS_GC(op)->gc.gc_refs < 0 && AS_GC(op)->gc.gc_refs > GC_EXPLORING)))
+
 #define UNKNOWN_FIXED_GC_SIZE -2
 
 #include "JyRefMonitor.h"

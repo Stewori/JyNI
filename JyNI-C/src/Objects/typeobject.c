@@ -2267,8 +2267,8 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 									 &PyDict_Type, &dict))
 		return NULL;
 	//puts(metatype->tp_name);
-//	jboolean dbg = (strcmp( ((PyStringObject*)name)->ob_sval, "c_float_Array_4") == 0);
-//	if (dbg) jputs("type_new c_float_Array_4");
+	jboolean dbg = (strcmp( ((PyStringObject*)name)->ob_sval, "Class") == 0);
+	if (dbg) jputs("type_new Class");
 
 //	if (strcmp(metatype->tp_name, "_ctypes.PyCSimpleType") == 0) {
 //		jputs("type_new");

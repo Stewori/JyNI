@@ -1157,7 +1157,13 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	char* cname = malloc(strlen(utf_string)+1);
 	strcpy(cname, utf_string);
 	(*env)->ReleaseStringUTFChars(env, jtmp, utf_string);
-//	puts(cname);
+//	jboolean dbg = strcmp(cname, "Class") == 0;
+//	if (dbg) {
+//		jputs(__FUNCTION__);
+//		jputs(cname);
+//		jputsLong(dest);
+//		jPrintCStackTrace();
+//	}
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY(dest), JyAttributeTypeName, cname, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 	tp->tp_name = cname;
 
@@ -1215,9 +1221,9 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 		 *	Py_VISIT(type->tp_base);
 		 * so mro-index is 2.
 		 */
-//		if (!IS_UNEXPLORED(tp))
-//			updateJyGCHeadLink(tp, AS_JY_WITH_GC(tp), 2 /* mro-index */,
-//					tp->tp_mro, AS_JY_WITH_GC(tp->tp_mro));
+		if (!IS_UNEXPLORED(tp))
+			updateJyGCHeadLink(tp, AS_JY_WITH_GC(tp), 2 /* mro-index */,
+					tp->tp_mro, AS_JY_WITH_GC(tp->tp_mro));
 	}
 //	jputs("type-sync done");
 }

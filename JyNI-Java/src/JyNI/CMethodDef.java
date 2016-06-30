@@ -28,7 +28,11 @@
 
 package JyNI;
 
-import org.python.core.*;
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.PyBuiltinCallable;
+import org.python.core.Untraversable;
+
 
 
 /**
@@ -43,6 +47,7 @@ import org.python.core.*;
  *
  * @author Stefan Richthofer
  */
+@Untraversable
 public class CMethodDef extends PyBuiltinCallable {
 
 	public long handle;
@@ -55,8 +60,8 @@ public class CMethodDef extends PyBuiltinCallable {
 
 	@Override
 	public PyBuiltinCallable bind(PyObject bindTo) {
-		System.out.println("CmethodDef.bind: "+this.info.getName());
-		System.out.println(bindTo);
+//		System.out.println("CmethodDef.bind: "+this.info.getName());
+//		System.out.println(bindTo);
 		PyObject er = JyNI.maybeExc(JyNI.JyNI_CMethodDef_bind(handle, bindTo,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
 		return (PyBuiltinCallable) er;
