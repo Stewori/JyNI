@@ -125,6 +125,7 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 	Py_ssize_t size;
 	if (PyCFunction_GET_FLAGS(func) & METH_JYTHON)
 	{ // todo: Somehow include this into switch below
+//		jputs("Jython-flag!");
 		env(NULL);
 		jobject builtinCallable = JyNI_JythonPyObject_FromPyObject(func);
 		return JyNI_PyObject_Call(builtinCallable, arg, kw);

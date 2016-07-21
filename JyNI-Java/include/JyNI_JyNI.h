@@ -339,22 +339,6 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Divide
 
 /*
  * Class:     JyNI_JyNI
- * Method:    JyNI_PyNumber_FloorDivide
- * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1FloorDivide
-  (JNIEnv *, jclass, jlong, jobject, jlong);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    JyNI_PyNumber_TrueDivide
- * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1TrueDivide
-  (JNIEnv *, jclass, jlong, jobject, jlong);
-
-/*
- * Class:     JyNI_JyNI
  * Method:    JyNI_PyNumber_Remainder
  * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
  */
@@ -399,6 +383,14 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Positive
  * Signature: (JJ)Lorg/python/core/PyObject;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Absolute
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_NonZero
+ * Signature: (JJ)Z
+ */
+JNIEXPORT jboolean JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1NonZero
   (JNIEnv *, jclass, jlong, jlong);
 
 /*
@@ -448,6 +440,270 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Xor
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Or
   (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Coerce
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Coerce
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Int
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Int
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Long
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Long
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Float
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Float
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Oct
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Oct
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Hex
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Hex
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceAdd
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceAdd
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceSubtract
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceSubtract
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceMultiply
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceMultiply
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceRemainder
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceRemainder
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlacePower
+ * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlacePower
+  (JNIEnv *, jclass, jlong, jobject, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceLshift
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceLshift
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceRshift
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceRshift
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceAnd
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceAnd
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceXor
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceXor
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceOr
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceOr
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_FloorDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1FloorDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_TrueDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1TrueDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceFloorDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceFloorDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_InPlaceTrueDivide
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1InPlaceTrueDivide
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyNumber_Index
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Index
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_Length
+ * Signature: (JJ)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1Length
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_Concat
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1Concat
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_Repeat
+ * Signature: (JIJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1Repeat
+  (JNIEnv *, jclass, jlong, jint, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_GetItem
+ * Signature: (JIJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1GetItem
+  (JNIEnv *, jclass, jlong, jint, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_GetSlice
+ * Signature: (JIIJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1GetSlice
+  (JNIEnv *, jclass, jlong, jint, jint, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_SetItem
+ * Signature: (JILorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1SetItem
+  (JNIEnv *, jclass, jlong, jint, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_SetSlice
+ * Signature: (JIILorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1SetSlice
+  (JNIEnv *, jclass, jlong, jint, jint, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_Contains
+ * Signature: (JLorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1Contains
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_InPlaceConcat
+ * Signature: (JLorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1InPlaceConcat
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PySequence_InPlaceRepeat
+ * Signature: (JIJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PySequence_1InPlaceRepeat
+  (JNIEnv *, jclass, jlong, jint, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyMapping_Length
+ * Signature: (JJ)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PyMapping_1Length
+  (JNIEnv *, jclass, jlong, jlong);
 
 /*
  * Class:     JyNI_JyNI

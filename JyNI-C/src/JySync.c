@@ -942,16 +942,21 @@ PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObje
 
 jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subtype)
 {
-//	jputs(__FUNCTION__);
-//	jputs(((PyMethodDescrObject*) src)->d_method->ml_name);
+//	jboolean jdbg = strcmp(((PyMethodDescrObject*) src)->d_method->ml_name, "__array__") == 0 &&
+//			strcmp(((PyMethodDescrObject*) src)->d_type->tp_name, "numpy.ndarray") == 0;
+//	if (jdbg) jputs(__FUNCTION__);
+//	if (jdbg) jputs(((PyMethodDescrObject*) src)->d_method->ml_name);
+//	if (jdbg) jputs(((PyMethodDescrObject*) src)->d_type->tp_name);
+//	if (jdbg) jputsLong(((PyMethodDescrObject*) src)->d_type->tp_as_number->nb_add);
 	env(NULL);
 	jobject mdef = (*env)->NewObject(env, pyCMethodDefClass, pyCMethodDefConstructor,
 			(jlong) ((PyMethodDescrObject*) src)->d_method,
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_name),
 			((PyMethodDescrObject*) src)->d_method->ml_flags & METH_NOARGS,
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_doc));
+	jobject jdt = JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type);
 	jobject res = (*env)->NewObject(env, pyMethodDescrClass, pyMethodDescrConstructor,
-			JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type),
+			jdt,
 			mdef);
 	return res;
 }

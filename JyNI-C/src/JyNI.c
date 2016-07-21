@@ -1977,18 +1977,52 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			Py_INCREF(type);
 			jobject er;// = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeConstructor, (jlong) type);
 			//if (Py_TYPE(type) == NULL) jputs("JyNI-warning: Attempt to convert PyTypeObject with NULL-type.");
+			jlong methFlags = 0;
+			if (type->tp_as_number || type->tp_as_sequence || type->tp_as_mapping || type->tp_as_buffer)
+			{
+				int pos = 0, posOff;
+				jlong onel = 1;
+				//	sizeof(PyNumberMethods)/sizeof(binaryfunc));
+				//	sizeof(PySequenceMethods)/sizeof(binaryfunc));
+				//	sizeof(PyMappingMethods)/sizeof(binaryfunc));
+				//	sizeof(PyBufferProcs)/sizeof(binaryfunc));
+				if (type->tp_as_number)
+				{
+					binaryfunc* nb = (binaryfunc*) type->tp_as_number;
+					for (posOff = 0; posOff < sizeof(PyNumberMethods)/sizeof(binaryfunc); ++posOff)
+						if (nb++) methFlags += onel << pos++;
+				} else pos += sizeof(PyNumberMethods)/sizeof(binaryfunc);
+				if (type->tp_as_sequence)
+				{
+					binaryfunc* nb = (binaryfunc*) type->tp_as_sequence;
+					for (posOff = 0; posOff < sizeof(PySequenceMethods)/sizeof(binaryfunc); ++posOff)
+						if (nb++) methFlags += onel << pos++;
+				} else pos += sizeof(PySequenceMethods)/sizeof(binaryfunc);
+				if (type->tp_as_mapping)
+				{
+					binaryfunc* nb = (binaryfunc*) type->tp_as_mapping;
+					for (posOff = 0; posOff < sizeof(PyMappingMethods)/sizeof(binaryfunc); ++posOff)
+						if (nb++) methFlags += onel << pos++;
+				} else pos += sizeof(PyMappingMethods)/sizeof(binaryfunc);
+				if (type->tp_as_buffer)
+				{
+					binaryfunc* nb = (binaryfunc*) type->tp_as_buffer;
+					for (posOff = 0; posOff < sizeof(PyBufferProcs)/sizeof(binaryfunc); ++posOff)
+						if (nb++) methFlags += onel << pos++;
+				} //else pos += sizeof(PyBufferProcs)/sizeof(binaryfunc);
+			}
 			if (!PyObject_IS_GC((PyObject*) type))
 			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
 				{
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameAndDictConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
-							JyNI_JythonPyObject_FromPyObject(type->tp_dict));
+							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags);
 				} else
 				{
 					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameDictTypeConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
-							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
+							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags,
 							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
 				}
 			} else
@@ -1997,12 +2031,12 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 				{
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
-							JyNI_JythonPyObject_FromPyObject(type->tp_dict));
+							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags);
 				} else
 				{
 					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructorSubtype,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
-							JyNI_JythonPyObject_FromPyObject(type->tp_dict),
+							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags,
 							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
 				}
 			}
@@ -2192,9 +2226,10 @@ inline int decWeakRefCount(JyObject* referent)
 inline jobject JyNI_GetJythonDelegate(PyObject* v)
 {
 //	jputs(__FUNCTION__);
-	if (!PyType_Check(v)) // && !PyExc_Check(v)
+	if (!PyType_Check(v)) // && !PyExc_Check(v)PyStructSequence_InitType
 	{
 		JyObject* jy = AS_JY(v);
+//		jputsLong(jy->flags);
 		if (JY_DELEGATE(v, jy->flags)) {
 			jobject er = JyNI_JythonPyObject_FromPyObject(v);
 			return er;
@@ -3189,9 +3224,9 @@ inline jint initJyNI(JNIEnv *env)
 	pyCPeerTypeGCClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerTypeGCClassLocal);
 	(*env)->DeleteLocalRef(env, pyCPeerTypeGCClassLocal);
 	pyCPeerTypeGCConstructor = (*env)->GetMethodID(env, pyCPeerTypeGCClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;)V");
+			"(JLjava/lang/String;Lorg/python/core/PyObject;J)V");
 	pyCPeerTypeGCConstructorSubtype = (*env)->GetMethodID(env, pyCPeerTypeGCClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyType;)V");
+			"(JLjava/lang/String;Lorg/python/core/PyObject;JLorg/python/core/PyType;)V");
 
 	jclass pyDictCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyDictionaryCPeer");
 	pyDictCPeerClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDictCPeerClassLocal);
@@ -3208,9 +3243,9 @@ inline jint initJyNI(JNIEnv *env)
 	(*env)->DeleteLocalRef(env, pyCPeerTypeClassLocal);
 	//pyCPeerTypeConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>", "(J)V");
 	pyCPeerTypeWithNameAndDictConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;)V");
+			"(JLjava/lang/String;Lorg/python/core/PyObject;J)V");
 	pyCPeerTypeWithNameDictTypeConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyType;)V");
+			"(JLjava/lang/String;Lorg/python/core/PyObject;JLorg/python/core/PyType;)V");
 	pyCPeerTypeObjectHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "objectHandle", "J");
 	pyCPeerTypeRefHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "refHandle", "J");
 
@@ -4100,6 +4135,32 @@ jint JyNI_init(JavaVM *jvm)
 	if (initSingletons(env) == JNI_ERR) return JNI_ERR;
 	//puts("initSingletons done");
 
+//	jputs("method pointer sizes:");
+//	jputsLong(sizeof(unaryfunc));
+//	jputsLong(sizeof(binaryfunc));
+//	jputsLong(sizeof(ternaryfunc));
+//	jputsLong(sizeof(inquiry));
+//	jputsLong(sizeof(lenfunc));
+//	jputsLong(sizeof(coercion));
+//	jputsLong(sizeof(intargfunc));
+//	jputsLong(sizeof(intintargfunc));
+//	jputsLong(sizeof(ssizeargfunc));
+//	jputsLong(sizeof(ssizessizeargfunc));
+//	jputsLong(sizeof(intobjargproc));
+//	jputsLong(sizeof(intintobjargproc));
+//	jputsLong(sizeof(ssizeobjargproc));
+//	jputsLong(sizeof(ssizessizeobjargproc));
+//	jputsLong(sizeof(objobjargproc));
+//
+//	jputsLong(sizeof(PyNumberMethods));
+//	jputsLong(sizeof(PySequenceMethods));
+//	jputsLong(sizeof(PyMappingMethods));
+//	jputsLong(sizeof(PyBufferProcs));
+//	jputsLong(sizeof(PyNumberMethods)/sizeof(binaryfunc));
+//	jputsLong(sizeof(PySequenceMethods)/sizeof(binaryfunc));
+//	jputsLong(sizeof(PyMappingMethods)/sizeof(binaryfunc));
+//	jputsLong(sizeof(PyBufferProcs)/sizeof(binaryfunc));
+
 	patchJythonStructModule(env);
 
 	//puts("characters-info:");
@@ -4194,7 +4255,7 @@ inline void JyNI_printJInfo(jobject obj)
 	if (obj)
 	{
 		env();
-		//jclass cls = (*env)->GetObjectClass(env, obj);
+		//jclass cls = (*env)->GetObjectClass(env, obj);got multiple
 		jobject cls = (*env)->CallObjectMethod(env, obj, objectGetClass);
 		//jputs("got cls");
 		JyNI_jprintJ(cls);

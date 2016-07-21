@@ -2267,8 +2267,8 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 									 &PyDict_Type, &dict))
 		return NULL;
 	//puts(metatype->tp_name);
-	jboolean dbg = (strcmp( ((PyStringObject*)name)->ob_sval, "Class") == 0);
-	if (dbg) jputs("type_new Class");
+//	jboolean dbg = (strcmp( ((PyStringObject*)name)->ob_sval, "Class") == 0);
+//	if (dbg) jputs("type_new Class");
 
 //	if (strcmp(metatype->tp_name, "_ctypes.PyCSimpleType") == 0) {
 //		jputs("type_new");
@@ -3939,6 +3939,9 @@ PyTypeObject PyBaseObject_Type = {
 static int
 add_methods(PyTypeObject *type, PyMethodDef *meth)
 {
+//	jboolean jdbg = strcmp(type->tp_name, "numpy.ndarray") == 0;
+//	if (jdbg) jputs(__FUNCTION__);
+//	if (jdbg) { jputsLong(__LINE__); jputsLong(type->tp_as_number->nb_add);}
 	PyObject *dict = type->tp_dict;
 
 	for (; meth->ml_name != NULL; meth++) {
@@ -4346,7 +4349,7 @@ static int add_operators(PyTypeObject *);
 int
 PyType_Ready(PyTypeObject *type)
 {
-//	jboolean jdbg = strcmp(type->tp_name, "_ctypes.PyCStructType") == 0;
+//	jboolean jdbg = strcmp(type->tp_name, "numpy.ndarray") == 0;
 //	if (jdbg) {
 //		jputs(__FUNCTION__);
 //		jputs(type->tp_name);
@@ -4394,7 +4397,6 @@ PyType_Ready(PyTypeObject *type)
 		if (PyType_Ready(base) < 0)
 			goto error;
 	}
-
 //	   Initialize ob_type if NULL.	  This means extensions that want to be
 //	   compilable separately on Windows can call PyType_Ready() instead of
 //	   initializing the ob_type field of their type objects.
@@ -4465,26 +4467,21 @@ PyType_Ready(PyTypeObject *type)
 	if (!type->tp_mro && mro_internal(type) < 0) {
 		goto error;
 	}
-//	jputsLong(__LINE__);
-//	jputs("MRO:");
-//	jputsLong(type->tp_mro);
 
 	/* Inherit special flags from dominant base */
 	if (type->tp_base != NULL)
 		inherit_special(type, type->tp_base);
+
 //	if (type->tp_as_mapping)
 //		printf("mp_subscript after inherit special: %d\n", type->tp_as_mapping->mp_subscript);
 	/* Initialize tp_dict properly */
 	bases = type->tp_mro;
-//	jputsLong(__LINE__);
 	assert(bases != NULL);
 	assert(PyTuple_Check(bases));
 	n = PyTuple_GET_SIZE(bases);
-//	jputsLong(__LINE__);
 //	if (type->tp_as_mapping)
 //		printf("mp_subscript before inherit slots: %d\n", type->tp_as_mapping->mp_subscript);
 	for (i = 1; i < n; i++) {
-//		jputsLong(i);
 		PyObject *b = PyTuple_GET_ITEM(bases, i);
 		if (PyType_Check(b))
 		{

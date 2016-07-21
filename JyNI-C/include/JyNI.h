@@ -719,26 +719,64 @@ jobject JyNI_PyCFunction_getSelf(jlong handle, jlong tstate);
 jobject JyNI_PyCFunction_getModule(jlong handle, jlong tstate);
 jobject JyNI_CMethodDef_bind(jlong handle, jobject bindTo, jlong tstate);
 
-// Number protocol call-ins:
-// (these usually don't need env and class, so we simplified the signatures a bit.)
-jobject JyNI_PyNumber_Add(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Subtract(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Multiply(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Divide(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_FloorDivide(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_TrueDivide(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Remainder(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Divmod(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Power(jlong o1, jobject o2, jobject o3, jlong tstate);
-jobject JyNI_PyNumber_Negative(jlong o, jlong tstate);
-jobject JyNI_PyNumber_Positive(jlong o, jlong tstate);
-jobject JyNI_PyNumber_Absolute(jlong o, jlong tstate);
-jobject JyNI_PyNumber_Invert(jlong o, jlong tstate);
-jobject JyNI_PyNumber_Lshift(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Rshift(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_And(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Xor(jlong o1, jobject o2, jlong tstate);
-jobject JyNI_PyNumber_Or(jlong o1, jobject o2, jlong tstate);
+// PyNumber call-ins:
+jobject  JyNI_PyNumber_Add(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Subtract(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Multiply(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Divide(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Remainder(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Divmod(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Power(jlong o1, jobject o2, jobject o3, jlong tstate);
+jobject  JyNI_PyNumber_Negative(jlong o, jlong tstate);
+jobject  JyNI_PyNumber_Positive(jlong o, jlong tstate);
+jobject  JyNI_PyNumber_Absolute(jlong o, jlong tstate);
+jboolean JyNI_PyNumber_NonZero(jlong o, jlong tstate);
+jobject  JyNI_PyNumber_Invert(jlong o, jlong tstate);
+jobject  JyNI_PyNumber_Lshift(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Rshift(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_And(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Xor(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Or(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Coerce(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Int(jlong o1, jlong tstate);
+jobject  JyNI_PyNumber_Long(jlong o1, jlong tstate);
+jobject  JyNI_PyNumber_Float(jlong o1, jlong tstate);
+jobject  JyNI_PyNumber_Oct(jlong o1, jlong tstate);
+jobject  JyNI_PyNumber_Hex(jlong o1, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceAdd(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceSubtract(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceMultiply(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceDivide(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceRemainder(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlacePower(jlong o1, jobject o2, jobject o3, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceLshift(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceRshift(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceAnd(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceXor(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceOr(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_FloorDivide(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_TrueDivide(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceFloorDivide(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_InPlaceTrueDivide(jlong o1, jobject o2, jlong tstate);
+jobject  JyNI_PyNumber_Index(jlong o, jlong tstate);
+
+// PySequence call-ins:
+jint    JyNI_PySequence_Length(jlong o, jlong tstate);
+jobject JyNI_PySequence_Concat(jlong o1, jobject o2, jlong tstate);
+jobject JyNI_PySequence_Repeat(jlong o, jint l, jlong tstate);
+jobject JyNI_PySequence_GetItem(jlong o, jint l, jlong tstate);
+jobject JyNI_PySequence_GetSlice(jlong o, jint l1, jint l2, jlong tstate);
+jint    JyNI_PySequence_SetItem(jlong o1, jint l, jobject o2, jlong tstate);
+jint    JyNI_PySequence_SetSlice(jlong o1, jint l1, jint l2, jobject o2, jlong tstate);
+jint    JyNI_PySequence_Contains(jlong o1, jobject o2, jlong tstate);
+jobject JyNI_PySequence_InPlaceConcat(jlong o1, jobject o2, jlong tstate);
+jobject JyNI_PySequence_InPlaceRepeat(jlong o, jint l, jlong tstate);
+
+// PyMapping call-ins:
+jint    JyNI_PyMapping_Length(jlong o, jlong tstate);
+//jobject JyNI_PyMapping_Subscript(jlong o1, jobject o2, jlong tstate);
+//jint    JyNI_PyMapping_AssSubscript(jlong o1, jobject o2, jobject o3, jlong tstate);
+
 
 #define builtinTypeCount 41
 extern TypeMapEntry builtinTypes[builtinTypeCount];

@@ -252,20 +252,66 @@ public class JyNI {
 	public static native PyObject JyNI_PyNumber_Subtract(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Multiply(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Divide(long o1, PyObject o2, long tstate);
-	public static native PyObject JyNI_PyNumber_FloorDivide(long o1, PyObject o2, long tstate);
-	public static native PyObject JyNI_PyNumber_TrueDivide(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Remainder(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Divmod(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Power(long o1, PyObject o2, PyObject o3, long tstate);
 	public static native PyObject JyNI_PyNumber_Negative(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Positive(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Absolute(long o, long tstate);
+	public static native boolean  JyNI_PyNumber_NonZero(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Invert(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Lshift(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Rshift(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_And(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Xor(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_Or(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Coerce(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Int(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Long(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Float(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Oct(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_Hex(long o, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceAdd(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceSubtract(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceMultiply(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceRemainder(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlacePower(long o1, PyObject o2, PyObject o3, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceLshift(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceRshift(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceAnd(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceXor(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceOr(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_FloorDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_TrueDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceFloorDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_InPlaceTrueDivide(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PyNumber_Index(long o, long tstate);
+
+	public static native int      JyNI_PySequence_Length(long o, long tstate);
+	public static native PyObject JyNI_PySequence_Concat(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PySequence_Repeat(long o, int l, long tstate);
+	public static native PyObject JyNI_PySequence_GetItem(long o, int l, long tstate); //PySequence_Item
+	public static native PyObject JyNI_PySequence_GetSlice(long o, int l1, int l2, long tstate); //PySequence_Slice
+	public static native int      JyNI_PySequence_SetItem(long o1, int l, PyObject o2, long tstate); //PySequence_AssItem
+	public static native int      JyNI_PySequence_SetSlice(long o, int l1, int l2, PyObject o2, long tstate); //PySequence_AssSlice
+	public static native int      JyNI_PySequence_Contains(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PySequence_InPlaceConcat(long o1, PyObject o2, long tstate);
+	public static native PyObject JyNI_PySequence_InPlaceRepeat(long o, int l, long tstate);
+
+	public static native int      JyNI_PyMapping_Length(long o, long tstate);
+	// use getItem instead of:
+	//public static native PyObject JyNI_PyMapping_Subscript(long o1, PyObject o2, long tstate);
+	// use setItem instead of:
+	//public static native int JyNI_PyMapping_AssSubscript(long o1, PyObject o2, PyObject o3, long tstate);
+
+	// Postpone these until buffer protocol support is focused
+//	public static native int      JyNI_PyBuffer_Getreadbuffer(long o, long tstate);
+//	public static native int      JyNI_PyBuffer_Getwritebuffer(long o, long tstate);
+//	public static native int      JyNI_PyBuffer_Getsegcount(long o, long tstate);
+//	public static native int      JyNI_PyBuffer_Getcharbuffer(long o, long tstate);
+//	public static native int      JyNI_PyBuffer_Getbuffer(long o, long tstate);
+//	public static native void     JyNI_PyBuffer_Releasebuffer(long o, long tstate);
 
 	//ReferenceMonitor- and GC-Stuff:
 	public static native void JyRefMonitor_setMemDebugFlags(int flags);
@@ -289,29 +335,6 @@ public class JyNI {
 	//protected static native void pinWeakReferent(long handle, long tstate);
 	protected static native void releaseWeakReferent(long handle, long tstate);
 	//public static native JyGCHead JyGC_lookupGCHead(long handle);
-
-	//use PySet.set_pop() instead. There are also hidden direct correspondents to other set methods.
-	/*public static PyObject PySet_pop(BaseSet set)
-	{
-		if (set.isEmpty()) return null;
-		Iterator it = set.iterator();
-		Object obj = it.next();
-		
-		PyObject er = (PyObject) obj;//it.next();
-		System.out.println("PySet_pop retrieves "+er.__repr__());
-//		while (!set.remove(er))
-//		{
-//			try {er = (PyObject) it.next();}
-//			catch (Exception e) {it = set.iterator();}
-//		}
-//		System.out.println("PySet_pop returns "+er.__repr__());
-		return er;
-	}*/
-
-//	public static PyObject callModuleFunction(JyNIModule module, String name, PyObject self, long selfNativeHandle, PyObject... args)
-//	{
-//		return callModuleFunctionLocalReferenceMode(module, name, self, selfNativeHandle, args);
-//	}
 
 	public static PyObject getPyObjectByName(String name)
 	{
@@ -386,13 +409,6 @@ public class JyNI {
 			}
 		}
 	}
-
-//	public static void registerNativeStaticTypeDict(String type, PyDictionary dict) {
-//		//System.out.println("JyNI Registered type-dict: "+type+" - "+lookupNativeHandle(dict));
-//		if (nativeStaticTypeDicts.get(type) != null)
-//			System.out.println("Warning: Registered type-dict twice: "+type);
-//		nativeStaticTypeDicts.put(type,  dict);
-//	}
 
 	public static void registerNativeStaticJyGCHead(long handle, JyGCHead head) {
 		nativeStaticPyObjectHeads.put(handle, head);
@@ -639,12 +655,10 @@ public class JyNI {
 	 */
 	public static String[] prepareKeywordArgs(PyObject[] argsDest, PyDictionary keywords) {
 		String[] er = new String[keywords.size()];
-		int offset = argsDest.length-er.length;
-		Iterator<Map.Entry<PyObject, PyObject>> kw = keywords.getMap().entrySet().iterator();
-		Map.Entry<PyObject, PyObject> entry = kw.next();
-		for (int i = 0; i < er.length; ++i) {
-			er[i] = ((PyString) entry.getKey()).asString();
-			argsDest[offset+i] = entry.getValue();
+		int offset = argsDest.length-er.length, i = 0;
+		for (Map.Entry<PyObject, PyObject> entry: keywords.getMap().entrySet()) {
+			er[i++] = ((PyString) entry.getKey()).asString();
+			argsDest[offset++] = entry.getValue();
 		}
 		return er;
 	}
@@ -749,103 +763,6 @@ public class JyNI {
 		//System.out.println("printPyLong");
 		System.out.println(((PyLong) pl).getValue());
 	}
-	
-	/*public static JyNIDictNextResult getPyDictionary_Next(PyDictionary dict, int index)
-	{
-		if (index >= dict.size()) return null;
-		Object[] ar = dict.entrySet().toArray();
-		int nxt = index;
-		Map.Entry me = (Map.Entry) ar[nxt++];
-		while(me.getValue() == null)
-		{
-			if (nxt >= ar.length) return null;
-			me = (Map.Entry) ar[nxt++];
-		}
-		if (nxt == ar.length) nxt = -1;
-		return new JyNIDictNextResult(nxt, (PyObject) me.getKey(), (PyObject) me.getValue());
-	}*/
-	
-	/*
-	public static PyObject constructDefaultObject(Class pyObjectClass) throws IllegalArgumentException
-	{
-		if (pyObjectClass.equals(PyType.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyNotImplemented.class)) return Py.NotImplemented;
-		else if (pyObjectClass.equals(PyNone.class)) return Py.None;
-		else if (pyObjectClass.equals(PyFile.class)) return new PyFile();
-		else if (pyObjectClass.equals(PyModule.class)) return new PyModule();
-		else if (pyObjectClass.equals(PyCell.class)) return new PyCell();
-		else if (pyObjectClass.equals(PyClass.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyInstance.class)) return new PyInstance();
-		else if (pyObjectClass.equals(PyMethod.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyFunction.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyClassMethod.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyStaticMethod.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyMethodDescr.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyClassMethodDescr.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyDictProxy.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyProperty.class)) return new PyProperty();
-		else if (pyObjectClass.equals(PyBoolean.class)) return new PyBoolean(false);
-		else if (pyObjectClass.equals(PyFloat.class)) return new PyFloat(0.0f);
-		else if (pyObjectClass.equals(PyInteger.class)) return new PyInteger(0);
-		else if (pyObjectClass.equals(PyLong.class)) return new PyLong(0);
-		else if (pyObjectClass.equals(PyComplex.class)) return new PyComplex(0, 0);
-		else if (pyObjectClass.equals(PyUnicode.class)) return new PyUnicode();
-		else if (pyObjectClass.equals(PyString.class)) return new PyString();
-		else if (pyObjectClass.equals(PyBaseString.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" is considered an abstract class.");
-		else if (pyObjectClass.equals(PySequenceIter.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyXRange.class)) return new PyXRange(0);
-		else if (pyObjectClass.equals(PyTuple.class)) return new PyTuple();
-		else if (pyObjectClass.equals(PyFastSequenceIter.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyList.class)) return new PyList();
-		else if (pyObjectClass.equals(PyReversedIterator.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyDictionary.class)) return new PyDictionary();
-		else if (pyObjectClass.equals(PySet.class)) return new PySet();
-		else if (pyObjectClass.equals(PyFrozenSet.class)) return new PyFrozenSet();
-		else if (pyObjectClass.equals(PyEnumerate.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PySlice.class)) return new PySlice();
-		else if (pyObjectClass.equals(PyEllipsis.class)) return Py.Ellipsis;
-		else if (pyObjectClass.equals(PyGenerator.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyCode.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyCallIter.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyFrame.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PySuper.class)) return new PySuper();
-		else if (pyObjectClass.equals(PyBaseException.class)) return new PyBaseException();
-		else if (pyObjectClass.equals(PyTraceback.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" cannot be constructed this way.");
-		else if (pyObjectClass.equals(PyByteArray.class)) return new PyByteArray();
-		else if (pyObjectClass.equals(PyObject.class)) throw new IllegalArgumentException(pyObjectClass.getName()+" is considered an abstract class.");
-		else throw new IllegalArgumentException("Given class refers to no PyObject known by JNI");
-	}*/
-	
-	/*public static PyObject callModuleFunction(CPythonModule module, String name, PyObject self, PyObject... args)
-	{
-		JyObject[] jyArgs = new JyObject[args.length];
-		for (int i = 0; i < jyArgs.length; ++i)
-		{
-			jyArgs[i] = jyObjects.get(args[i]);
-			if (jyArgs[i] == null)
-			{
-				jyArgs[i] = new JyObject(args[i]);
-				jyObjects.put(args[i], jyArgs[i]);
-			}
-		}
-		if (self != null)
-		{
-			JyObject self2 = jyObjects.get(self);
-			if (self2 == null)
-			{
-				self2 = new JyObject(self);
-				jyObjects.put(self, self2);
-			}
-			JyObject er = callModuleFunction(module, name, self2, jyArgs);
-			jyObjects.put(er.object, er);
-			return er.object;
-		} else
-		{
-			JyObject er = callModuleFunction(module, name, null, jyArgs);
-			jyObjects.put(er.object, er);
-			return er.object;
-		}
-	}*/
 
 	public static long[] lookupNativeHandles(PyList lst) {
 		PyObject[] obj = lst.getArray();
@@ -931,12 +848,28 @@ public class JyNI {
 		} else return obj;
 	}
 
-	protected static void maybeExc(int res) throws PyException {
+	protected static boolean maybeExc(boolean bl) throws PyException {
+		if (JyNI_exc != null) {
+			PyException tmp_exc = JyNI_exc;
+			JyNI_exc = null;
+			throw tmp_exc;
+		} else return bl;
+	}
+
+	protected static int maybeExc(int res) throws PyException {
 		if (res != 0 && JyNI_exc != null) {
 			PyException tmp_exc = JyNI_exc;
 			JyNI_exc = null;
 			throw tmp_exc;
-		}
+		} else return res;
+	}
+
+	protected static int maybeExc(int res, int err) throws PyException {
+		if (res == err && JyNI_exc != null) {
+			PyException tmp_exc = JyNI_exc;
+			JyNI_exc = null;
+			throw tmp_exc;
+		} else return res;
 	}
 
 	protected static void maybeExc() throws PyException {
@@ -1172,16 +1105,16 @@ public class JyNI {
 		/* Works according to this table:
 
 		.---------------------.--------.
-		| System              | Value  |
+		| System  | Value  |
 		|---------------------|--------|
 		| Linux (2.x and 3.x) | linux2 |
-		| Windows             | win32  |
-		| Windows/Cygwin      | cygwin |
-		| Mac OS X            | darwin |
-		| OS/2                | os2    |
-		| OS/2 EMX            | os2emx |
-		| RiscOS              | riscos |
-		| AtheOS              | atheos |
+		| Windows | win32  |
+		| Windows/Cygwin  | cygwin |
+		| Mac OS X| darwin |
+		| OS/2| os2|
+		| OS/2 EMX| os2emx |
+		| RiscOS  | riscos |
+		| AtheOS  | atheos |
 		'---------------------'--------'
 		*/
 		String osname = System.getProperty("os.name");
@@ -1254,7 +1187,7 @@ public class JyNI {
 	 * Stuff here is actually no public API, but partly
 	 * declared public for interaction with JyNI.gc-package.
 	 * Todo: Maybe move it to JyNI.-package and make it
-	 *       protected or package-scoped.
+	 *   protected or package-scoped.
 	 */
 	public static final int JYNI_GC_CONFIRMED_FLAG = 1;
 	public static final int JYNI_GC_RESURRECTION_FLAG = 2;
@@ -1466,9 +1399,8 @@ public class JyNI {
 			 */
 			criticalHandles = new long[JyNICriticalObjectSet.size()];
 			int i = 0;
-			for (long handle: JyNICriticalObjectSet) {
+			for (long handle: JyNICriticalObjectSet)
 				criticalHandles[i++] = handle;
-			}
 		}
 		for (long handle: criticalHandles) {
 			headRef = JyWeakReferenceGC.lookupJyGCHead(handle);
@@ -1498,13 +1430,13 @@ public class JyNI {
 
 	protected static void suspendPyInstanceFinalizer(PyInstance inst) {
 		FinalizeTrigger ft =
-				   (FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
+				(FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
 		if (ft != null) ft.clear();
 	}
 
 	protected static void restorePyInstanceFinalizer(PyInstance inst) {
 		FinalizeTrigger ft =
-				   (FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
+				(FinalizeTrigger) JyAttribute.getAttr(inst, JyAttribute.FINALIZE_TRIGGER_ATTR);
 		if (ft != null && (ft.flags & FinalizeTrigger.FINALIZED_FLAG) == 0) ft.trigger(inst);
 		else gc.restoreFinalizer(inst);
 	}

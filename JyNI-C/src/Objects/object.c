@@ -1273,21 +1273,24 @@ PyObject_Hash(PyObject *v)
 PyObject *
 PyObject_GetAttrString(PyObject *v, const char *name)
 {
+	// _PyStructSequence_InitType
 //	jputs(__FUNCTION__);
 //	jputs(name);
 //	jputsPy(v);
 //	jputs(Py_TYPE(v)->tp_name);
+//	jboolean dbg = strcmp(Py_TYPE(v)->tp_name, "numpy.dtype") == 0 && strcmp(name, "str") == 0;
+//	if (dbg) jputs("PyObject_GetAttrString with dtype");
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{
-//		jputs("delegate GetAttrString");
+//		if (dbg) jputs("delegate GetAttrString");
 		env(NULL);
 		jobject jres = (*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
 				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern));
 //		JyNI_jprintJ(jres);
 		return JyNI_PyObject_FromJythonPyObject(jres);
 	}
-//	jputs("no delegate GetAttrString");
+//	if (dbg) jputs("no delegate GetAttrString");
 
 	PyObject *w, *res;
 
@@ -1325,10 +1328,17 @@ PyObject_HasAttrString(PyObject *v, const char *name)
 int
 PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 {
-//	jputs(__FUNCTION__);
+	//puts(__FUNCTION__);
+	//jputs(__FUNCTION__);
 //	jputs(Py_TYPE(v)->tp_name);
 //	jputs(name);
 //	jputsPy(w);
+	if (v == Py_NotImplemented) {
+		//Debug-hack for external extensions
+		if (name) jputs(name);
+		if (w) jputsPy(w);
+		return 0;
+	}
 	jobject delegate = JyNI_GetJythonDelegate(v);
 	if (delegate)
 	{

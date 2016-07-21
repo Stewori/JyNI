@@ -55,6 +55,9 @@ public class PyCFunction extends PyBuiltinCallable implements CPeerInterface,
 	@Override
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 //		System.out.println("PyCFunction.__call__ "+info.getName()+" "+System.identityHashCode(this));
+//		System.out.println("args: "+args.length+" kws: "+keywords.length);
+//    	System.out.println("kws:");
+//    	for (String kw: keywords) System.out.println(kw);
 		PyObject result = null;
 		if (keywords.length == 0) {
 			result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle,
@@ -70,11 +73,18 @@ public class PyCFunction extends PyBuiltinCallable implements CPeerInterface,
 			if (args.length > keywords.length) {
 				PyObject[] args2 = new PyObject[args.length - keywords.length];
 				System.arraycopy(args, 0, args2, 0, args2.length);
+//				System.out.println("call PyCPeer... kw "+back.size());
+//				for (PyObject ky: back.keySet()) System.out.println(ky);
+//				System.out.println("--------------");
 				result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, new PyTuple(args2, false),
 					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
-			} else
+			} else {
+//				System.out.println("call PyCPeer2... kw "+back.size());
+//				for (PyObject ky: back.keySet()) System.out.println(ky);
+//				System.out.println("--------------");
 				result = JyNI.maybeExc(JyNI.callPyCPeer(objectHandle, Py.EmptyTuple,
 					new PyDictionary(back), JyTState.prepareNativeThreadState(Py.getThreadState())));
+			}
 		}
 		if (result == null) {
 			// This is equivalent to

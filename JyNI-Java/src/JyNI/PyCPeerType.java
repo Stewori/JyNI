@@ -42,6 +42,128 @@ import org.python.core.PyObject;
 import org.python.core.finalization.FinalizableBuiltin;
 
 public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBuiltin {
+
+	public static final long NB_ADD                  = 0x1l;
+	public static final long NB_SUBTRACT             = 0x2l;
+	public static final long NB_MULTIPLY             = 0x4l;
+	public static final long NB_DIVIDE               = 0x8l;
+	public static final long NB_REMAINDER            = 0x10l;
+	public static final long NB_DIVMOD               = 0x20l;
+	public static final long NB_POWER                = 0x40l;
+	public static final long NB_NEGATIVE             = 0x80l;
+	public static final long NB_POSITIVE             = 0x100l;
+	public static final long NB_ABSOLUTE             = 0x200l;
+	public static final long NB_NONZERO              = 0x400l;
+	public static final long NB_INVERT               = 0x800l;
+	public static final long NB_LSHIFT               = 0x1000l;
+	public static final long NB_RSHIFT               = 0x2000l;
+	public static final long NB_AND                  = 0x4000l;
+	public static final long NB_XOR                  = 0x8000l;
+	public static final long NB_OR                   = 0x10000l;
+	public static final long NB_COERCE               = 0x20000l;
+	public static final long NB_INT                  = 0x40000l;
+	public static final long NB_LONG                 = 0x80000l;
+	public static final long NB_FLOAT                = 0x100000l;
+	public static final long NB_OCT                  = 0x200000l;
+	public static final long NB_HEX                  = 0x400000l;
+	public static final long NB_INPLACE_ADD          = 0x800000l;
+	public static final long NB_INPLACE_SUBTRACT     = 0x1000000l;
+	public static final long NB_INPLACE_MULTIPLY     = 0x2000000l;
+	public static final long NB_INPLACE_DIVIDE       = 0x4000000l;
+	public static final long NB_INPLACE_REMAINDER    = 0x8000000l;
+	public static final long NB_INPLACE_POWER        = 0x10000000l;
+	public static final long NB_INPLACE_LSHIFT       = 0x20000000l;
+	public static final long NB_INPLACE_RSHIFT       = 0x40000000l;
+	public static final long NB_INPLACE_AND          = 0x80000000l;
+	public static final long NB_INPLACE_XOR          = 0x100000000l;
+	public static final long NB_INPLACE_OR           = 0x200000000l;
+	public static final long NB_FLOOR_DIVIDE         = 0x400000000l;
+	public static final long NB_TRUE_DIVIDE          = 0x800000000l;
+	public static final long NB_INPLACE_FLOOR_DIVIDE = 0x1000000000l;
+	public static final long NB_INPLACE_TRUE_DIVIDE  = 0x2000000000l;
+	public static final long NB_INDEX                = 0x4000000000l;
+	public static final long SQ_LENGTH               = 0x8000000000l;
+	public static final long SQ_CONCAT               = 0x10000000000l;
+	public static final long SQ_REPEAT               = 0x20000000000l;
+	public static final long SQ_ITEM                 = 0x40000000000l;
+	public static final long SQ_SLICE                = 0x80000000000l;
+	public static final long SQ_ASS_ITEM             = 0x100000000000l;
+	public static final long SQ_ASS_SLICE            = 0x200000000000l;
+	public static final long SQ_CONTAINS             = 0x400000000000l;
+	public static final long SQ_INPLACE_CONCAT       = 0x800000000000l;
+	public static final long SQ_INPLACE_REPEAT       = 0x1000000000000l;
+	public static final long MP_LENGTH               = 0x2000000000000l;
+	public static final long MP_SUBSCRIPT            = 0x4000000000000l;
+	public static final long MP_ASS_SUBSCRIPT        = 0x8000000000000l;
+	public static final long BF_GETREADBUFFER        = 0x10000000000000l;
+	public static final long BF_GETWRITEBUFFER       = 0x20000000000000l;
+	public static final long BF_GETSEGCOUNT          = 0x40000000000000l;
+	public static final long BF_GETCHARBUFFER        = 0x80000000000000l;
+	public static final long BF_GETBUFFER            = 0x100000000000000l;
+	public static final long BF_RELEASEBUFFER        = 0x200000000000000l;
+
+	public long nativeMethodFlags = 0;
+
+	public static void printNativeMethodFlags(long flags) {
+		if ((flags & NB_ADD) != 0) System.out.println("NB_ADD");
+		if ((flags & NB_SUBTRACT) != 0) System.out.println("NB_SUBTRACT");
+		if ((flags & NB_MULTIPLY) != 0) System.out.println("NB_MULTIPLY");
+		if ((flags & NB_DIVIDE) != 0) System.out.println("NB_DIVIDE");
+		if ((flags & NB_REMAINDER) != 0) System.out.println("NB_REMAINDER");
+		if ((flags & NB_DIVMOD) != 0) System.out.println("NB_DIVMOD");
+		if ((flags & NB_POWER) != 0) System.out.println("NB_POWER");
+		if ((flags & NB_NEGATIVE) != 0) System.out.println("NB_NEGATIVE");
+		if ((flags & NB_POSITIVE) != 0) System.out.println("NB_POSITIVE");
+		if ((flags & NB_ABSOLUTE) != 0) System.out.println("NB_ABSOLUTE");
+		if ((flags & NB_NONZERO) != 0) System.out.println("NB_NONZERO");
+		if ((flags & NB_INVERT) != 0) System.out.println("NB_INVERT");
+		if ((flags & NB_LSHIFT) != 0) System.out.println("NB_LSHIFT");
+		if ((flags & NB_RSHIFT) != 0) System.out.println("NB_RSHIFT");
+		if ((flags & NB_AND) != 0) System.out.println("NB_AND");
+		if ((flags & NB_XOR) != 0) System.out.println("NB_XOR");
+		if ((flags & NB_OR) != 0) System.out.println("NB_OR");
+		if ((flags & NB_COERCE) != 0) System.out.println("NB_COERCE");
+		if ((flags & NB_INT) != 0) System.out.println("NB_INT");
+		if ((flags & NB_LONG) != 0) System.out.println("NB_LONG");
+		if ((flags & NB_FLOAT) != 0) System.out.println("NB_FLOAT");
+		if ((flags & NB_OCT) != 0) System.out.println("NB_OCT");
+		if ((flags & NB_HEX) != 0) System.out.println("NB_HEX");
+		if ((flags & NB_INPLACE_ADD) != 0) System.out.println("NB_INPLACE_ADD");
+		if ((flags & NB_INPLACE_SUBTRACT) != 0) System.out.println("NB_INPLACE_SUBTRACT");
+		if ((flags & NB_INPLACE_MULTIPLY) != 0) System.out.println("NB_INPLACE_MULTIPLY");
+		if ((flags & NB_INPLACE_DIVIDE) != 0) System.out.println("NB_INPLACE_DIVIDE");
+		if ((flags & NB_INPLACE_REMAINDER) != 0) System.out.println("NB_INPLACE_REMAINDER");
+		if ((flags & NB_INPLACE_POWER) != 0) System.out.println("NB_INPLACE_POWER");
+		if ((flags & NB_INPLACE_LSHIFT) != 0) System.out.println("NB_INPLACE_LSHIFT");
+		if ((flags & NB_INPLACE_RSHIFT) != 0) System.out.println("NB_INPLACE_RSHIFT");
+		if ((flags & NB_INPLACE_AND) != 0) System.out.println("NB_INPLACE_AND");
+		if ((flags & NB_INPLACE_XOR) != 0) System.out.println("NB_INPLACE_XOR");
+		if ((flags & NB_INPLACE_OR) != 0) System.out.println("NB_INPLACE_OR");
+		if ((flags & NB_FLOOR_DIVIDE) != 0) System.out.println("NB_FLOOR_DIVIDE");
+		if ((flags & NB_TRUE_DIVIDE) != 0) System.out.println("NB_TRUE_DIVIDE");
+		if ((flags & NB_INPLACE_FLOOR_DIVIDE) != 0) System.out.println("NB_INPLACE_FLOOR_DIVIDE");
+		if ((flags & NB_INPLACE_TRUE_DIVIDE) != 0) System.out.println("NB_INPLACE_TRUE_DIVIDE");
+		if ((flags & NB_INDEX) != 0) System.out.println("NB_INDEX");
+		if ((flags & SQ_LENGTH) != 0) System.out.println("SQ_LENGTH");
+		if ((flags & SQ_CONCAT) != 0) System.out.println("SQ_CONCAT");
+		if ((flags & SQ_REPEAT) != 0) System.out.println("SQ_REPEAT");
+		if ((flags & SQ_ITEM) != 0) System.out.println("SQ_ITEM");
+		if ((flags & SQ_SLICE) != 0) System.out.println("SQ_SLICE");
+		if ((flags & SQ_ASS_ITEM) != 0) System.out.println("SQ_ASS_ITEM");
+		if ((flags & SQ_ASS_SLICE) != 0) System.out.println("SQ_ASS_SLICE");
+		if ((flags & SQ_CONTAINS) != 0) System.out.println("SQ_CONTAINS");
+		if ((flags & SQ_INPLACE_CONCAT) != 0) System.out.println("SQ_INPLACE_CONCAT");
+		if ((flags & SQ_INPLACE_REPEAT) != 0) System.out.println("SQ_INPLACE_REPEAT");
+		if ((flags & MP_LENGTH) != 0) System.out.println("MP_LENGTH");
+		if ((flags & MP_SUBSCRIPT) != 0) System.out.println("MP_SUBSCRIPT");
+		if ((flags & MP_ASS_SUBSCRIPT) != 0) System.out.println("MP_ASS_SUBSCRIPT");
+		if ((flags & BF_GETREADBUFFER) != 0) System.out.println("BF_GETREADBUFFER");
+		if ((flags & BF_GETWRITEBUFFER) != 0) System.out.println("BF_GETWRITEBUFFER");
+		if ((flags & BF_GETSEGCOUNT) != 0) System.out.println("BF_GETSEGCOUNT");
+		if ((flags & BF_GETCHARBUFFER) != 0) System.out.println("BF_GETCHARBUFFER");
+		if ((flags & BF_GETBUFFER) != 0) System.out.println("BF_GETBUFFER");
+		if ((flags & BF_RELEASEBUFFER) != 0) System.out.println("BF_RELEASEBUFFER");
+	}
 	/*
 	public static long tp_name; // For printing, in format "<module>.<name>"
 	public static long tp_basicsize, tp_itemsize; // For allocation
@@ -122,18 +244,22 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 
 	public long objectHandle, refHandle;
 
-	public PyCPeerType(long objectHandle, String name, PyObject dict) {
-		this(objectHandle, name, dict, fromClass(PyType.class));
+	public PyCPeerType(long objectHandle, String name, PyObject dict, long natMethFlags) {
+		this(objectHandle, name, dict, natMethFlags, fromClass(PyType.class));
 	}
 
-	public PyCPeerType(long objectHandle, String name, PyObject dict, PyType metatype) {
+	public PyCPeerType(long objectHandle, String name, PyObject dict, long natMethFlags, PyType metatype) {
 		super(metatype);
 //		System.out.println("created PyCPeerType "+name+" withe metatype "+metatype.getName());
 		this.objectHandle = objectHandle;
 		super.name = name;
+		this.nativeMethodFlags = natMethFlags;
 		//super.setName(name);
 		if (dict != null) super.dict = dict;
 		JyNI.CPeerHandles.put(objectHandle, this);
+//		System.out.println("created PyCPeerType "+name);
+//		if (nativeMethodFlags == 0) System.out.println("no flags set");
+//		else printNativeMethodFlags(nativeMethodFlags);
 	}
 
 //	public boolean isSubType(PyType supertype) {

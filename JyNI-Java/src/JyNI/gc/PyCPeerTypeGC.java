@@ -42,12 +42,12 @@ public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 //		super(objectHandle);
 //	}
 
-	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict) {
-		super(objectHandle, name, dict);
+	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict, long natMethFlags) {
+		super(objectHandle, name, dict, natMethFlags);
 	}
 
-	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict, PyType metatype) {
-		super(objectHandle, name, dict, metatype);
+	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict, long natMethFlags, PyType metatype) {
+		super(objectHandle, name, dict, natMethFlags, metatype);
 	}
 
 	@Override
