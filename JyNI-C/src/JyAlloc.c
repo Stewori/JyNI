@@ -428,6 +428,8 @@ inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 			dest = tme->sync->jyInit(src, NULL); \
 	} else \
 	{ \
+		/*jputs("init with new const-lookup:");*/ \
+		/*jputs(Py_TYPE(src)->tp_name);*/ \
 		jmethodID cm = (*env)->GetMethodID(env, tme->jy_class, "<init>", "()V"); \
 		if (cm) \
 		{ \

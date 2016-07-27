@@ -69,19 +69,6 @@ jobject JyNI_ ## pref ## _ ## name (jlong o1, jobject o2, jlong tstate) \
 
 #define PyNumberMethod2(name) PyMethod2(PyNumber, name)
 
-//#define PyNumberMethod2(name) \
-//jobject JyNI_PyNumber_ ## name (jlong o1, jobject o2, jlong tstate) \
-//{ \
-//	ENTER_JyNI \
-//	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2); \
-//	PyObject* res = PyNumber_ ## name ((PyObject*) o1, arg); \
-//	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
-//	Py_XDECREF(arg); \
-//	Py_XDECREF(res); \
-//	LEAVE_JyNI \
-//	return jres; \
-//}
-
 #define PyNumberMethod3(name) \
 jobject JyNI_PyNumber_ ## name (jlong o1, jobject o2, jobject o3, jlong tstate) \
 { \
@@ -115,6 +102,58 @@ jobject JyNI_PySequence_ ## name (jlong o, jint l, jlong tstate) \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
 	return jres; \
+}
+
+
+jint JyNI_PyObject_Compare(jlong handle, jobject o, jlong tstate)
+{
+//	jputs(__FUNCTION__);
+	RE_ENTER_JyNI
+	PyObject* obj = JyNI_PyObject_FromJythonPyObject(o);
+	//Maybe use _PyObject_Compare?
+	//jint res = _PyObject_Compare((PyObject*) handle, obj);
+//	PyTypeObject* tp = Py_TYPE((PyObject*) handle);
+	jint res = Py_TYPE((PyObject*) handle)->tp_compare((PyObject*) handle, obj);
+	Py_XDECREF(obj);
+	RE_LEAVE_JyNI
+//	jputs("JyNI_PyObject_Compare done");
+	return res;
+}
+
+jobject JyNI_PyObject_RichCompare(jlong handle, jobject o, jint op, jlong tstate)
+{
+//	jputs(__FUNCTION__);
+	RE_ENTER_JyNI
+	PyObject* obj = JyNI_PyObject_FromJythonPyObject(o);
+	//Maybe use PyObject_RichCompare?
+	//PyObject* res = PyObject_RichCompare((PyObject*) handle, obj);
+	PyObject* res = Py_TYPE((PyObject*) handle)->tp_richcompare((PyObject*) handle, obj, op);
+	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	Py_XDECREF(obj);
+	Py_XDECREF(res);
+	RE_LEAVE_JyNI
+//	jputs("JyNI_PyObject_RichCompare done");
+	return jres;
+}
+
+jobject JyNI_PyObject_GetIter(jlong handle, jlong tstate)
+{
+	RE_ENTER_JyNI
+	PyObject* res = PyObject_GetIter((PyObject*) handle);
+	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	Py_XDECREF(res);
+	RE_LEAVE_JyNI
+	return jres;
+}
+
+jobject JyNI_PyIter_Next(jlong handle, jlong tstate)
+{
+	RE_ENTER_JyNI
+	PyObject* res = PyIter_Next((PyObject*) handle);
+	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	Py_XDECREF(res);
+	RE_LEAVE_JyNI
+	return jres;
 }
 
 

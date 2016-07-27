@@ -76,6 +76,8 @@ extern jmethodID pyObject__contains__;
 extern jmethodID pyObject__len__;
 extern jmethodID pyObject__getslice__;
 extern jmethodID pyObject__nonzero__;
+extern jmethodID pyObject__iter__;
+extern jmethodID pyObject__iternext__;
 extern jmethodID pyObject_cmp;
 extern jmethodID pyObjectGetDict;
 extern jmethodID pyObjectFastGetDict;
@@ -121,7 +123,7 @@ extern jmethodID pyAbstractDictMergeFromSeq;
 
 extern jclass pyDictClass;
 extern jmethodID pyDictConstructor;
-extern jmethodID pyDictByPyObjectArrayConstructor;
+//extern jmethodID pyDictByPyObjectArrayConstructor;
 
 extern jclass pyStringMapClass;
 
@@ -271,7 +273,12 @@ extern jfieldID pyProperty_docFromGetter;
 
 extern jclass pyBaseStringClass;
 extern jclass pyXRangeClass;
+
 extern jclass pySequenceIterClass;
+extern jmethodID pySequenceIterConstructor;
+extern jfieldID pySequenceIter_seq;
+extern jfieldID pySequenceIter_index;
+
 extern jclass pyFastSequenceIterClass;
 extern jclass pyReversedIteratorClass;
 

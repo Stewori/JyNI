@@ -3147,6 +3147,7 @@ _PyObject_RealIsSubclass(PyObject *derived, PyObject *cls)
 PyObject *
 PyObject_GetIter(PyObject *o)
 {
+//	jputs(__FUNCTION__);
 	PyTypeObject *t = o->ob_type;
 	getiterfunc f = NULL;
 	if (PyType_HasFeature(t, Py_TPFLAGS_HAVE_ITER))

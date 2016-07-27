@@ -316,10 +316,20 @@ PyDict_New(void)
 		//puts("GC_New");
 		//JyNI-todo: Check this:
 		//mp = PyObject_GC_New(PyDictObject, &PyDict_Type);
-		mp = PyObject_New(PyDictObject, &PyDict_Type);
+		//mp = PyObject_New(PyDictObject, &PyDict_Type);
+		//It seems like the Java-part is never initialized.
+		//This might not matter for conversion, but for native-side creation it would.
+		mp = _JyObject_New(&PyDict_Type, &builtinTypes[TME_INDEX_Dict]);
 		if (mp == NULL)
 			return NULL;
 	}
+// This would safe some constructor lookups, but currently breaks
+// something concerning interned strings:
+//	JyObject* jy = AS_JY_NO_GC(mp);
+//	env(NULL);
+//	jy->jy = (*env)->NewObject(env, pyDictClass, pyDictConstructor);
+//	jy->flags |= JY_INITIALIZED_FLAG_MASK;
+
 		/*EMPTY_TO_MINSIZE(mp);
 #ifdef SHOW_ALLOC_COUNT
 		count_alloc++;
@@ -1877,7 +1887,6 @@ PyDict_Copy(PyObject *o)
 Py_ssize_t
 PyDict_Size(PyObject *mp)
 {
-	//puts("pyDictSize");
 	//return -1;
 	if (mp == NULL || !PyDict_Check(mp)) {
 
@@ -1886,6 +1895,8 @@ PyDict_Size(PyObject *mp)
 	}
 	env(-1);
 	jobject jmp = JyNI_JythonPyObject_FromPyObject(mp);
+	if (!jmp) jputs("true NULL");
+	else if ((*env)->IsSameObject(env, jmp, NULL)) jputs("NUll-like");
 	ENTER_SubtypeLoop_Safe_ModePy(jmp, mp, __len__)
 	Py_ssize_t result = (Py_ssize_t) (*env)->CallIntMethod(env, jmp, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jmp, __len__)
@@ -2612,7 +2623,7 @@ PyDoc_STRVAR(dictionary_doc,
 PyTypeObject PyDict_Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"dict",
-	sizeof(PyDictObject),
+	sizeof(PyObject),//sizeof(PyDictObject),
 	0,
 	(destructor)dict_dealloc,                   /* tp_dealloc */
 	0,//(printfunc)dict_print,                  /* tp_print */

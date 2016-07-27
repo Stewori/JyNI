@@ -286,6 +286,14 @@ nativeDictGet(PyObject* self, PyObject* args)
 }
 
 PyObject*
+nativeDictCreate(PyObject* self, PyObject* args)
+{
+	PyObject* dct = PyDict_New();
+	Py_ssize_t ds = PyDict_Size(dct);
+	return PyInt_FromLong(ds);
+}
+
+PyObject*
 newstyleCheck(PyObject* self, PyObject* args)
 {
 	PyObject* nobj = PyTuple_GET_ITEM(args, 0);
@@ -447,6 +455,7 @@ PyMethodDef DemoExtensionMethods[] = {
 	{"booleanToInt", booleanToInt, METH_O, "Converts True to one, False to zero, everything else to None."},
 	{"intToBoolean", intToBoolean, METH_O, "Converts one to True, zero to False, everything else to None."},
 	{"nativeDictGet", nativeDictGet, METH_VARARGS, "Looks up a key in a dict."},
+	{"nativeDictCreate", nativeDictCreate, METH_NOARGS, "Creates a dict on native site."},
 	{"newstyleCheck", newstyleCheck, METH_VARARGS, "Checks integrity of new-style instance conversion."},
 	{"newstyleCheckSubtype", newstyleCheckSubtype, METH_VARARGS, "Checks subtype consistence new-style conversion."},
 	{"refcount", refcount, METH_VARARGS, "Provides the current native refcount of the given object."},

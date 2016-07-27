@@ -152,7 +152,7 @@
 #include "traceback_JyNI.h"
 #include "sliceobject_JyNI.h"
 #include "cellobject_JyNI.h"
-//#include "iterobject_JyNI.h"
+#include "iterobject_JyNI.h"
 //#include "genobject_JyNI.h"
 #include "descrobject_JyNI.h"
 #include "warnings_JyNI.h"

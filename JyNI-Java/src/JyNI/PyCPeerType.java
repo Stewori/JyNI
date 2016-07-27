@@ -102,6 +102,10 @@ public class PyCPeerType extends PyType implements CPeerInterface, FinalizableBu
 	public static final long BF_GETBUFFER            = 0x100000000000000l;
 	public static final long BF_RELEASEBUFFER        = 0x200000000000000l;
 
+	public static final long OB_COMPARE              = 0x400000000000000l;
+	public static final long OB_RICHCOMPARE          = 0x800000000000000l;
+	public static final long OB_ITER                 = 0x1000000000000000l;
+
 	public long nativeMethodFlags = 0;
 
 	public static void printNativeMethodFlags(long flags) {

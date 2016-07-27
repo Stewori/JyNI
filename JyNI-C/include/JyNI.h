@@ -479,6 +479,10 @@
 #define _PyGC_REFS_EXPLORING                       (-6)
 #define _PyGC_REFS_EXPLORED                        (-7)
 
+/* Macro to get the tp_richcompare field of a type if defined */
+#define RICHCOMPARE(t) (PyType_HasFeature((t), Py_TPFLAGS_HAVE_RICHCOMPARE) \
+				? (t)->tp_richcompare : NULL)
+
 /* define some method-signatures for sync purposes: */
 
 /* jobject is src, PyObject* is dest. Src must not be modified. */
@@ -601,7 +605,11 @@ typedef struct {
 	unsigned short    flags;
 	char*             type_name;
 } TypeMapEntry;
-typedef struct { PyTypeObject* exc_type; jyFactoryMethod exc_factory;} ExceptionMapEntry;
+
+typedef struct {
+	PyTypeObject*     exc_type;
+	jyFactoryMethod   exc_factory;
+} ExceptionMapEntry;
 
 #define JyObject_HasJyGCHead(pyObject, jyObject) \
 	JyNI_HasJyAttribute(jyObject, JyAttributeJyGCHead)
@@ -713,6 +721,10 @@ jint JyNI_delItem(JNIEnv *env, jclass class, jlong handle, jobject key, jlong ts
 jint JyNI_PyObjectLength(JNIEnv *env, jclass class, jlong handle, jlong tstate);
 jobject JyNI_descr_get(jlong self, jobject obj, jobject type, jlong tstate);
 jint JyNI_descr_set(jlong self, jobject obj, jobject value, jlong tstate);
+jint JyNI_PyObject_Compare(jlong handle, jobject o, jlong tstate);
+jobject JyNI_PyObject_RichCompare(jlong handle, jobject o, jint op, jlong tstate);
+jobject JyNI_PyObject_GetIter(jlong handle, jlong tstate);
+jobject JyNI_PyIter_Next(jlong handle, jlong tstate);
 
 // PyCFunction call-ins:
 jobject JyNI_PyCFunction_getSelf(jlong handle, jlong tstate);
@@ -778,7 +790,7 @@ jint    JyNI_PyMapping_Length(jlong o, jlong tstate);
 //jint    JyNI_PyMapping_AssSubscript(jlong o1, jobject o2, jobject o3, jlong tstate);
 
 
-#define builtinTypeCount 41
+#define builtinTypeCount 42
 extern TypeMapEntry builtinTypes[builtinTypeCount];
 #define TME_INDEX_Type                   0
 #define TME_INDEX_NotImplemented         1
@@ -808,34 +820,34 @@ extern TypeMapEntry builtinTypes[builtinTypeCount];
 #define TME_INDEX_Weakref_Proxy         25
 #define TME_INDEX_Weakref_CallableProxy 26
 //#define TME_INDEX_BaseString          26
-//#define TME_INDEX_SeqIter             27
+#define TME_INDEX_SeqIter               27
 //#define TME_INDEX_Range               28
 //#define TME_INDEX_rangeiter           29
-#define TME_INDEX_Tuple                 27
+#define TME_INDEX_Tuple                 28
 //#define TME_INDEX_TupleIter           28
-#define TME_INDEX_List                  28
+#define TME_INDEX_List                  29
 //#define TME_INDEX_ListIter            30
 //#define TME_INDEX_ListRevIter         31
-#define TME_INDEX_Dict                  29
-#define TME_INDEX_StringMap             30
-#define TME_INDEX_Set                   31
+#define TME_INDEX_Dict                  30
+#define TME_INDEX_StringMap             31
+#define TME_INDEX_Set                   32
 //#define TME_INDEX_SetIter             34
-#define TME_INDEX_FrozenSet             32
+#define TME_INDEX_FrozenSet             33
 //#define TME_INDEX_Enum                36
-#define TME_INDEX_Slice                 33
-#define TME_INDEX_Ellipsis              34
+#define TME_INDEX_Slice                 34
+#define TME_INDEX_Ellipsis              35
 //#define TME_INDEX_Gen                 39
-#define TME_INDEX_Code_Bytecode         35
-#define TME_INDEX_Code_Tablecode        36
-#define TME_INDEX_Frame                 37
+#define TME_INDEX_Code_Bytecode         36
+#define TME_INDEX_Code_Tablecode        37
+#define TME_INDEX_Frame                 38
 //#define TME_INDEX_Super               43
-#define TME_INDEX_Exc_BaseException     38
-#define TME_INDEX_TraceBack             39
+#define TME_INDEX_Exc_BaseException     39
+#define TME_INDEX_TraceBack             40
 //#define TME_INDEX_ByteArray           46
 //#define TME_INDEX_Buffer              47
 //#define TME_INDEX_MemoryView          48
 //#define TME_INDEX_CallIter            50
-#define TME_INDEX_BaseObject            40 //must be last type in list
+#define TME_INDEX_BaseObject            41 //must be last type in list
 
 /* "Hidden" PyTypes: */
 extern PyTypeObject PyNone_Type;
@@ -929,6 +941,7 @@ inline PyObject * _JyObject_New(PyTypeObject *tp, TypeMapEntry* tme);
 jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp);
 inline int PyModule_AddStringConstantJy(jobject m, const char *name, const char *value);
 inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o);
+inline int _PyObject_Compare(PyObject *v, PyObject *w);
 
 /* JyNI specific:
  * Backdoor to reach original alloc-functions, which were renamed with "Raw"-prefix: */

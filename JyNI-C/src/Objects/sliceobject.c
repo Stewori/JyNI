@@ -96,7 +96,7 @@ PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 	if (stop == NULL) stop = Py_None;
 	Py_INCREF(stop);
 	env(NULL);
-	PySliceObject *obj = (PySliceObject*) _JyObject_New(&PySlice_Type, &builtinTypes[37]);
+	PySliceObject *obj = (PySliceObject*) _JyObject_New(&PySlice_Type, &builtinTypes[TME_INDEX_Slice]);
 	JyObject* jy = AS_JY_NO_GC(obj);
 	jy->jy = (*env)->NewObject(env, pySliceClass, pySliceFromStartStopStepConstructor,
 			JyNI_JythonPyObject_FromPyObject(start),

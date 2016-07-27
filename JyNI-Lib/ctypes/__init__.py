@@ -43,6 +43,7 @@ lib_dynload = '/usr/lib/python2.7/lib-dynload'
 if not lib_dynload in _sys.path:
     _sys.path.append(lib_dynload)
 
+
 __version__ = "1.1.0"
 
 from _ctypes import Union, Structure, Array

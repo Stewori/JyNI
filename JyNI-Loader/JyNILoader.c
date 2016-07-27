@@ -98,6 +98,10 @@ void (*JySet_putSize)(JNIEnv*, jclass, jlong, jint);
 jobject (*JyNI_PyCFunction_getSelf)(jlong, jlong);
 jobject (*JyNI_PyCFunction_getModule)(jlong, jlong);
 jobject (*JyNI_CMethodDef_bind)(jlong, jobject, jlong);
+jint (*JyNI_PyObject_Compare)(jlong, jobject, jlong);
+jobject (*JyNI_PyObject_RichCompare)(jlong, jobject, jint, jlong);
+jobject (*JyNI_PyObject_GetIter)(jlong, jlong);
+jobject (*JyNI_PyIter_Next)(jlong, jlong);
 
 void (*JyRefMonitor_setMemDebugFlags)(JNIEnv*, jclass, jint);
 jboolean (*JyGC_clearNativeReferences)(JNIEnv*, jclass, jlongArray, jlong);
@@ -266,6 +270,10 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyNI_PyObjectLength) = dlsym(JyNIHandle, "JyNI_PyObjectLength");
 	*(void **) (&JyNI_descr_get) = dlsym(JyNIHandle, "JyNI_descr_get");
 	*(void **) (&JyNI_descr_set) = dlsym(JyNIHandle, "JyNI_descr_set");
+	*(void **) (&JyNI_PyObject_Compare) = dlsym(JyNIHandle, "JyNI_PyObject_Compare");
+	*(void **) (&JyNI_PyObject_RichCompare) = dlsym(JyNIHandle, "JyNI_PyObject_RichCompare");
+	*(void **) (&JyNI_PyObject_GetIter) = dlsym(JyNIHandle, "JyNI_PyObject_GetIter");
+	*(void **) (&JyNI_PyIter_Next) = dlsym(JyNIHandle, "JyNI_PyIter_Next");
 
 
 	// PyNumber-methods:
@@ -766,6 +774,50 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1CMethodDef_1bind
   (JNIEnv *env, jclass class, jlong handle, jobject bindTo, jlong tstate)
 {
 	return (*JyNI_CMethodDef_bind)(handle, bindTo, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyObject_Compare
+ * Signature: (JLorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PyObject_1Compare
+  (JNIEnv *env, jclass class, jlong handle, jobject o, jlong tstate)
+{
+	return (*JyNI_PyObject_Compare)(handle, o, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyObject_RichCompare
+ * Signature: (JLorg/python/core/PyObject;IJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyObject_1RichCompare
+  (JNIEnv *env, jclass class, jlong handle, jobject o, jint op, jlong tstate)
+{
+	return (*JyNI_PyObject_RichCompare)(handle, o, op, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyObject_GetIter
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyObject_1GetIter
+  (JNIEnv *env, jclass class, jlong handle, jlong tstate)
+{
+	return (*JyNI_PyObject_GetIter)(handle, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyIter_Next
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyIter_1Next
+  (JNIEnv *env, jclass class, jlong handle, jlong tstate)
+{
+	return (*JyNI_PyIter_Next)(handle, tstate);
 }
 
 

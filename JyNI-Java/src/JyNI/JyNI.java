@@ -71,6 +71,13 @@ public class JyNI {
 
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
 
+	public static final int Py_LT = 0;
+	public static final int Py_LE = 1;
+	public static final int Py_EQ = 2;
+	public static final int Py_NE = 3;
+	public static final int Py_GT = 4;
+	public static final int Py_GE = 5;
+
 	//Note: nativeHandles keeps (exclusively) natively needed objects save from beeing gc'ed.
 	//protected static IdentityHashMap<PyObject, PyObject> nativeHandlesKeepAlive = new IdentityHashMap<>();
 
@@ -199,12 +206,6 @@ public class JyNI {
 	public static native void initJyNI(String JyNILibPath);
 	public static native void clearPyCPeer(long objectHandle, long refHandle);
 	public static native PyModule loadModule(String moduleName, String modulePath, long tstate);
-	//public static native JyObject callModuleFunctionGlobalReferenceMode(CPythonModule module, String name,
-			//JyObject self, JyObject... args);
-	//public static native PyObject callModuleFunctionGlobalReferenceMode(JyNIModule module, String name,
-			//PyObject self, long selfNativeHandle, PyObject[] args, long[] handles);
-	//public static native PyObject callModuleFunctionLocalReferenceMode(JyNIModule module, String name,
-			//PyObject self, long selfNativeHandle, PyObject... args);
 	public static native PyObject callPyCPeer(long peerHandle, PyObject args, PyObject kw, long tstate);
 	public static native PyObject getAttrString(long peerHandle, String name, long tstate);
 	public static native int setAttrString(long peerHandle, String name, PyObject value, long tstate);
@@ -222,6 +223,10 @@ public class JyNI {
 	public static native int PyObjectLength(long peerHandle, long tstate);
 	public static native PyObject descr_get(long self, PyObject obj, PyObject type, long tstate);
 	public static native int descr_set(long self, PyObject obj, PyObject value, long tstate);
+	public static native int JyNI_PyObject_Compare(long self, PyObject o, long tstate);
+	public static native PyObject JyNI_PyObject_RichCompare(long self, PyObject o, int op, long tstate);
+	public static native PyObject JyNI_PyObject_GetIter(long self, long tstate);
+	public static native PyObject JyNI_PyIter_Next(long self, long tstate);
 
 	//ThreadState-stuff:
 	public static native void setNativeRecursionLimit(int nativeRecursionLimit);
@@ -1105,16 +1110,16 @@ public class JyNI {
 		/* Works according to this table:
 
 		.---------------------.--------.
-		| System  | Value  |
+		| System              | Value  |
 		|---------------------|--------|
 		| Linux (2.x and 3.x) | linux2 |
-		| Windows | win32  |
-		| Windows/Cygwin  | cygwin |
-		| Mac OS X| darwin |
-		| OS/2| os2|
-		| OS/2 EMX| os2emx |
-		| RiscOS  | riscos |
-		| AtheOS  | atheos |
+		| Windows             | win32  |
+		| Windows/Cygwin      | cygwin |
+		| Mac OS X            | darwin |
+		| OS/2                | os2    |
+		| OS/2 EMX            | os2emx |
+		| RiscOS              | riscos |
+		| AtheOS              | atheos |
 		'---------------------'--------'
 		*/
 		String osname = System.getProperty("os.name");

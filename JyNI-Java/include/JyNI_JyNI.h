@@ -27,6 +27,18 @@ extern "C" {
 #define JyNI_JyNI_RTLD_NODELETE 4096L
 #undef JyNI_JyNI_RTLD_JyNI_DEFAULT
 #define JyNI_JyNI_RTLD_JyNI_DEFAULT 257L
+#undef JyNI_JyNI_Py_LT
+#define JyNI_JyNI_Py_LT 0L
+#undef JyNI_JyNI_Py_LE
+#define JyNI_JyNI_Py_LE 1L
+#undef JyNI_JyNI_Py_EQ
+#define JyNI_JyNI_Py_EQ 2L
+#undef JyNI_JyNI_Py_NE
+#define JyNI_JyNI_Py_NE 3L
+#undef JyNI_JyNI_Py_GT
+#define JyNI_JyNI_Py_GT 4L
+#undef JyNI_JyNI_Py_GE
+#define JyNI_JyNI_Py_GE 5L
 #undef JyNI_JyNI_JYNI_GC_CONFIRMED_FLAG
 #define JyNI_JyNI_JYNI_GC_CONFIRMED_FLAG 1L
 #undef JyNI_JyNI_JYNI_GC_RESURRECTION_FLAG
@@ -192,6 +204,38 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_descr_1get
  */
 JNIEXPORT jint JNICALL Java_JyNI_JyNI_descr_1set
   (JNIEnv *, jclass, jlong, jobject, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyObject_Compare
+ * Signature: (JLorg/python/core/PyObject;J)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PyObject_1Compare
+  (JNIEnv *, jclass, jlong, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyObject_RichCompare
+ * Signature: (JLorg/python/core/PyObject;IJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyObject_1RichCompare
+  (JNIEnv *, jclass, jlong, jobject, jint, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyObject_GetIter
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyObject_1GetIter
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_PyIter_Next
+ * Signature: (JJ)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyIter_1Next
+  (JNIEnv *, jclass, jlong, jlong);
 
 /*
  * Class:     JyNI_JyNI

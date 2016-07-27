@@ -34,6 +34,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyDictionary;
+import org.python.core.PyException;
 import org.python.core.PyFloat;
 import org.python.core.Py;
 import org.python.core.finalization.FinalizableBuiltin;
@@ -107,8 +108,26 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __finditem__(PyObject key) {
-		return JyNI.maybeExc(JyNI.getItem(objectHandle, key,
-				JyTState.prepareNativeThreadState(Py.getThreadState())));
+		PyObject res = JyNI.getItem(objectHandle, key,
+				JyTState.prepareNativeThreadState(Py.getThreadState()));
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_ITER) != 0)
+		{
+			try {
+				JyNI.maybeExc(res);
+			} catch (PyException exc) {
+				if (exc.match(Py.IndexError)) {
+					/* We compensate an incompatibility between behaviors of
+					 * Jython's and CPythons PySequenceIter objects.
+					 * While CPython's implementation aborts sanely on
+					 * StopIteration or IndexError, Jython's implementation
+					 * strictly requires StopIteration. So we replace IndexError
+					 * by StopIteration, if we're an iterable.
+					 */
+					throw new PyException(Py.StopIteration, exc.value);
+				} else throw exc;
+			}
+			return res;
+		} else return JyNI.maybeExc(res);
 	}
 
 	@Override
@@ -190,7 +209,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	}
 
 	/**
-	 * Allow a fast-succeed based on flags.
+	 * Allow fast-succeed based on flags.
 	 */
 	@Override
 	public boolean isNumberType() {
@@ -201,7 +220,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	}
 
 	/**
-	 * Allow a fast-succeed based on flags.
+	 * Allow fast-succeed based on flags.
 	 */
 	@Override
 	public boolean isMappingType() {
@@ -212,7 +231,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	}
 
 	/**
-	 * Allow a fast-succeed based on flags.
+	 * Allow fast-succeed based on flags.
 	 */
 	@Override
 	public boolean isSequenceType() {
@@ -224,7 +243,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 /*
  * Writing the methods below makes me actually wish there was a (well established)
- * C-style preprocessor for Java. Yes, sometimes macros are evil, but sometimes theyare
+ * C-style preprocessor for Java. Yes, sometimes macros are evil, but sometimes they are
  * also really helpful, like in JyAbstract.c, where they prevented a lot of copy/paste-craft.
  */
 // ------ implementation of PyNumber-methods ------
@@ -378,13 +397,15 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 	}
 
 // This implementation would currently crash numpy for some reason, so we leave it out for now.
-//	@Override
-//	public Object __coerce_ex__(PyObject other) {
-//		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_COERCE) != 0)
-//			return JyNI.maybeExc(JyNI.JyNI_PyNumber_Coerce(objectHandle, other,
-//					JyTState.prepareNativeThreadState(Py.getThreadState())));
-//		return super.__coerce_ex__(other);
-//	}
+	@Override
+	public Object __coerce_ex__(PyObject other) {
+		System.out.println("__coerce_ex__ "+this.getType().getName()+"  vs  "+other.getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_COERCE) != 0)
+			return JyNI.maybeExc(JyNI.JyNI_PyNumber_Coerce(objectHandle, other,
+					JyTState.prepareNativeThreadState(Py.getThreadState())));
+		else System.out.println("no native coerce");
+		return super.__coerce_ex__(other);
+	}
 
 	@Override
 	public PyObject __int__() {
@@ -637,4 +658,95 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 					JyTState.prepareNativeThreadState(Py.getThreadState())));
 		return super.__getitem__(other);
 	}
+
+
+// ------ implementation of iterator-related-methods ------
+	@Override
+	public PyObject __iter__() {
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_ITER) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_GetIter(objectHandle,
+				JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__iter__();
+	}
+
+	@Override
+	public PyObject __iternext__() {
+		return JyNI.maybeExc(JyNI.JyNI_PyIter_Next(objectHandle,
+				JyTState.prepareNativeThreadState(Py.getThreadState())));
+	}
+
+
+// ------ implementation of comparison-methods ------
+	@Override
+	public int __cmp__(PyObject other) {
+//		System.out.println("cmp "+this.getType().getName()+"  vs  "+other.getType().getName());
+		//if (!getType().getName().equals("numpy.ndarray") && (((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_COMPARE) != 0)
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_COMPARE) != 0)
+		{
+			int res = JyNI.maybeExc(JyNI.JyNI_PyObject_Compare(objectHandle, other,
+					JyTState.prepareNativeThreadState(Py.getThreadState())));
+			return res;
+		} else return super.__cmp__(other);
+	}
+
+	@Override
+	public PyObject __eq__(PyObject other) {
+//		System.out.println("eq "+getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
+					JyNI.Py_EQ, JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__eq__(other);
+    }
+
+	@Override
+	public PyObject __ne__(PyObject other) {
+//		System.out.println("ne "+getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
+					JyNI.Py_NE, JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__ne__(other);
+    }
+
+	@Override
+	public PyObject __ge__(PyObject other) {
+//		System.out.println("ge "+getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
+					JyNI.Py_GE, JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__ge__(other);
+    }
+
+	@Override
+    public PyObject __gt__(PyObject other) {
+//		System.out.println("gt "+getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
+					JyNI.Py_GT, JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__gt__(other);
+    }
+
+	@Override
+	public PyObject __le__(PyObject other) {
+//		System.out.println("le "+getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
+					JyNI.Py_LE, JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__le__(other);
+    }
+
+	@Override
+    public PyObject __lt__(PyObject other) {
+//		System.out.println("lt "+getType().getName());
+		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
+		{
+			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
+					JyNI.Py_LT, JyTState.prepareNativeThreadState(Py.getThreadState())));
+		} else return super.__lt__(other);
+    }
 }

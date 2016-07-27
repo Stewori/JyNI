@@ -954,9 +954,8 @@ jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subty
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_name),
 			((PyMethodDescrObject*) src)->d_method->ml_flags & METH_NOARGS,
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_doc));
-	jobject jdt = JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type);
 	jobject res = (*env)->NewObject(env, pyMethodDescrClass, pyMethodDescrConstructor,
-			jdt,
+			JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type),
 			mdef);
 	return res;
 }
