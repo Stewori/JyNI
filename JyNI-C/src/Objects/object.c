@@ -718,10 +718,6 @@ adjust_tp_compare(int c)
 	}
 }
 
-///* Macro to get the tp_richcompare field of a type if defined */
-//#define RICHCOMPARE(t) (PyType_HasFeature((t), Py_TPFLAGS_HAVE_RICHCOMPARE) \
-//				? (t)->tp_richcompare : NULL)
-
 /* Map rich comparison operators to their swapped version, e.g. LT --> GT */
 int _Py_SwappedOp[] = {Py_GT, Py_GE, Py_EQ, Py_NE, Py_LT, Py_LE};
 
@@ -783,9 +779,7 @@ try_rich_compare_bool(PyObject *v, PyObject *w, int op)
 		Py_DECREF(res);
 		return 2;
 	}
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	ok = PyObject_IsTrue(res);
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	Py_DECREF(res);
 	return ok;
 }
@@ -810,7 +804,6 @@ try_rich_to_3way_compare(PyObject *v, PyObject *w)
 
 	if (RICHCOMPARE(v->ob_type) == NULL && RICHCOMPARE(w->ob_type) == NULL)
 		return 2; // Shortcut
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	for (i = 0; i < 3; i++) {
 		switch (try_rich_compare_bool(v, w, tries[i].op)) {
 		case -1:
@@ -819,7 +812,6 @@ try_rich_to_3way_compare(PyObject *v, PyObject *w)
 				return tries[i].outcome;
 		}
 	}
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 
 	return 2;
 }
@@ -944,7 +936,6 @@ default_3way_compare(PyObject *v, PyObject *w)
 static int
 do_cmp(PyObject *v, PyObject *w)
 {
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	int c;
 	cmpfunc f;
 
@@ -961,7 +952,6 @@ do_cmp(PyObject *v, PyObject *w)
 		else
 				return adjust_tp_compare(c);
 	}
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	// We only get here if one of the following is true:
 	// a) v and w have different types
 	// b) v and w have the same type, which doesn't have tp_compare
@@ -969,14 +959,11 @@ do_cmp(PyObject *v, PyObject *w)
 	//	__cmp__ returns NotImplemented
 
 	c = try_rich_to_3way_compare(v, w);
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	if (c < 2)
 		return c;
 	c = try_3way_compare(v, w);
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	if (c < 2)
 		return c;
-	printf("%s %i\n", __FUNCTION__, __LINE__);
 	return default_3way_compare(v, w);
 }
 

@@ -107,22 +107,18 @@ jobject JyNI_PySequence_ ## name (jlong o, jint l, jlong tstate) \
 
 jint JyNI_PyObject_Compare(jlong handle, jobject o, jlong tstate)
 {
-//	jputs(__FUNCTION__);
 	RE_ENTER_JyNI
 	PyObject* obj = JyNI_PyObject_FromJythonPyObject(o);
 	//Maybe use _PyObject_Compare?
 	//jint res = _PyObject_Compare((PyObject*) handle, obj);
-//	PyTypeObject* tp = Py_TYPE((PyObject*) handle);
 	jint res = Py_TYPE((PyObject*) handle)->tp_compare((PyObject*) handle, obj);
 	Py_XDECREF(obj);
 	RE_LEAVE_JyNI
-//	jputs("JyNI_PyObject_Compare done");
 	return res;
 }
 
 jobject JyNI_PyObject_RichCompare(jlong handle, jobject o, jint op, jlong tstate)
 {
-//	jputs(__FUNCTION__);
 	RE_ENTER_JyNI
 	PyObject* obj = JyNI_PyObject_FromJythonPyObject(o);
 	//Maybe use PyObject_RichCompare?
@@ -132,7 +128,6 @@ jobject JyNI_PyObject_RichCompare(jlong handle, jobject o, jint op, jlong tstate
 	Py_XDECREF(obj);
 	Py_XDECREF(res);
 	RE_LEAVE_JyNI
-//	jputs("JyNI_PyObject_RichCompare done");
 	return jres;
 }
 

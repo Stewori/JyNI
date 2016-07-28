@@ -1947,8 +1947,10 @@ inline void JyNI_SyncPyCPeerTypeMRO(PyTypeObject* type, jobject jtype)
 
 inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jclass cls)
 {
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
 	//if (type == NULL) return NULL;
-//	jboolean jdbg = strcmp(type->tp_name, "_ctypes.PyCStructType") == 0;
+//	jboolean jdbg = strcmp(type->tp_name, "sqlite3.Cursor") == 0;
 //	if (jdbg) jputs(__FUNCTION__);
 //	if (jdbg) jputs(type->tp_name);
 	env(NULL);
@@ -1969,11 +1971,12 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			Py_INCREF(type);
 			jobject er;// = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeConstructor, (jlong) type);
 			//if (Py_TYPE(type) == NULL) jputs("JyNI-warning: Attempt to convert PyTypeObject with NULL-type.");
-			jlong methFlags = 0;
+			jlong methFlags = 0, onel = 1;
+			int pos;
 			if (type->tp_as_number || type->tp_as_sequence || type->tp_as_mapping || type->tp_as_buffer)
 			{
-				int pos = 0, posOff;
-				jlong onel = 1;
+				pos = 0;
+				int posOff;
 				if (type->tp_as_number)
 				{
 					binaryfunc* nb = (binaryfunc*) type->tp_as_number;
@@ -2011,16 +2014,19 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 						else pos++;
 					}
 				} else pos += sizeof(PyBufferProcs)/sizeof(binaryfunc);
-				if (type->tp_compare) {//type->tp_richcompare)
-					methFlags += onel << pos++;
-				} else pos++;
-				if (RICHCOMPARE(type))
-					methFlags += onel << pos++;
-				else pos++;
-				if (type->tp_iter)
-					methFlags += onel << pos++;
-				else pos++;
-			}
+			} else
+				pos = sizeof(PyNumberMethods)/sizeof(binaryfunc) +
+						sizeof(PySequenceMethods)/sizeof(binaryfunc) +
+						sizeof(PyMappingMethods)/sizeof(binaryfunc) +
+						sizeof(PyBufferProcs)/sizeof(binaryfunc);
+			if (type->tp_compare) methFlags += onel << pos++;
+			else pos++;
+			if (RICHCOMPARE(type)) methFlags += onel << pos++;
+			else pos++;
+			if (type->tp_iter) methFlags += onel << pos++;
+			else pos++;
+
+
 			if (!PyObject_IS_GC((PyObject*) type))
 			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)

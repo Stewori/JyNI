@@ -396,14 +396,11 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 		return super.__or__(other);
 	}
 
-// This implementation would currently crash numpy for some reason, so we leave it out for now.
 	@Override
 	public Object __coerce_ex__(PyObject other) {
-		System.out.println("__coerce_ex__ "+this.getType().getName()+"  vs  "+other.getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_COERCE) != 0)
 			return JyNI.maybeExc(JyNI.JyNI_PyNumber_Coerce(objectHandle, other,
 					JyTState.prepareNativeThreadState(Py.getThreadState())));
-		else System.out.println("no native coerce");
 		return super.__coerce_ex__(other);
 	}
 
@@ -663,11 +660,11 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 // ------ implementation of iterator-related-methods ------
 	@Override
 	public PyObject __iter__() {
+//		System.out.println("PyCPeer __iter__ "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_ITER) != 0)
-		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_GetIter(objectHandle,
 				JyTState.prepareNativeThreadState(Py.getThreadState())));
-		} else return super.__iter__();
+		return super.__iter__();
 	}
 
 	@Override
@@ -680,8 +677,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 // ------ implementation of comparison-methods ------
 	@Override
 	public int __cmp__(PyObject other) {
-//		System.out.println("cmp "+this.getType().getName()+"  vs  "+other.getType().getName());
-		//if (!getType().getName().equals("numpy.ndarray") && (((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_COMPARE) != 0)
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_COMPARE) != 0)
 		{
 			int res = JyNI.maybeExc(JyNI.JyNI_PyObject_Compare(objectHandle, other,
@@ -692,7 +687,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __eq__(PyObject other) {
-//		System.out.println("eq "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
 		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
@@ -702,7 +696,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __ne__(PyObject other) {
-//		System.out.println("ne "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
 		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
@@ -712,7 +705,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __ge__(PyObject other) {
-//		System.out.println("ge "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
 		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
@@ -722,7 +714,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
     public PyObject __gt__(PyObject other) {
-//		System.out.println("gt "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
 		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
@@ -732,7 +723,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyObject __le__(PyObject other) {
-//		System.out.println("le "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
 		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,
@@ -742,7 +732,6 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
     public PyObject __lt__(PyObject other) {
-//		System.out.println("lt "+getType().getName());
 		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.OB_RICHCOMPARE) != 0)
 		{
 			return JyNI.maybeExc(JyNI.JyNI_PyObject_RichCompare(objectHandle, other,

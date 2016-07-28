@@ -317,13 +317,15 @@ PyDict_New(void)
 		//JyNI-todo: Check this:
 		//mp = PyObject_GC_New(PyDictObject, &PyDict_Type);
 		//mp = PyObject_New(PyDictObject, &PyDict_Type);
-		//It seems like the Java-part is never initialized.
-		//This might not matter for conversion, but for native-side creation it would.
+		/* The Java-part is initialized lazily in JyAlloc.c using a
+		 * constructor inline-lookup. This could be more efficient by
+		 * initializing explicitly, but that currently breaks stuff (see below).
+		 */
 		mp = _JyObject_New(&PyDict_Type, &builtinTypes[TME_INDEX_Dict]);
 		if (mp == NULL)
 			return NULL;
 	}
-// This would safe some constructor lookups, but currently breaks
+// This would save some constructor lookups, but currently breaks
 // something concerning interned strings:
 //	JyObject* jy = AS_JY_NO_GC(mp);
 //	env(NULL);
@@ -1887,7 +1889,6 @@ PyDict_Copy(PyObject *o)
 Py_ssize_t
 PyDict_Size(PyObject *mp)
 {
-	//return -1;
 	if (mp == NULL || !PyDict_Check(mp)) {
 
 		PyErr_BadInternalCall();
@@ -1895,8 +1896,6 @@ PyDict_Size(PyObject *mp)
 	}
 	env(-1);
 	jobject jmp = JyNI_JythonPyObject_FromPyObject(mp);
-	if (!jmp) jputs("true NULL");
-	else if ((*env)->IsSameObject(env, jmp, NULL)) jputs("NUll-like");
 	ENTER_SubtypeLoop_Safe_ModePy(jmp, mp, __len__)
 	Py_ssize_t result = (Py_ssize_t) (*env)->CallIntMethod(env, jmp, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jmp, __len__)
