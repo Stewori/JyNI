@@ -139,12 +139,13 @@ void JyNI_JyNIDebugMessage(JNIEnv *env, jclass class, jlong mode, jlong value, j
  */
 jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject args, jobject kw, jlong tstate)
 {
-//	jputs(__FUNCTION__);
+//	puts(__FUNCTION__);
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 	PyObject* peer = (PyObject*) peerHandle;
 //	jputsLong(peerHandle);
-//	jputs(Py_TYPE(peer)->tp_name);
+	//jputs(Py_TYPE(peer)->tp_name);
+//	jputs(((PyTypeObject*) peer)->tp_name);
 //	int jdbg = strcmp(Py_TYPE(peer)->tp_name, "_ctypes.PyCFuncPtrType") == 0;
 //	if (!peer->ob_type) jputs("ob_type of peer is NULL");
 	ENTER_JyNI
@@ -170,6 +171,8 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 		er = JyNI_JythonPyObject_FromPyObject(jres);
 		Py_XDECREF(jargs);
 		Py_XDECREF(jkw);
+//		puts("decref result....");
+//		printf("%lld\n", jres);
 		Py_XDECREF(jres);
 	} else {
 //		PyErr_Format(PyExc_TypeError, "'%.200s' object is not callable",
@@ -393,12 +396,13 @@ jstring JyNI_PyObjectAsString(JNIEnv *env, jclass class, jlong handle, jlong tst
  */
 jobject JyNI_PyObjectAsPyString(JNIEnv *env, jclass class, jlong handle, jlong tstate)
 {
-	//jputs("JyNI_PyObjectAsPyString");
+//	jputs("JyNI_PyObjectAsPyString");
 	ENTER_JyNI
 	PyObject* res = PyObject_Str((PyObject*) handle);
 	jobject er = JyNI_JythonPyObject_FromPyObject(res);
 	Py_XDECREF(res);
 	LEAVE_JyNI
+//	jputs("JyNI_PyObjectAsPyString done");
 	return er;
 }
 
@@ -1805,11 +1809,18 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 		}
 	}
 	if (Is_StaticSingleton_NotBuiltin(op) && !PyType_Check(op))
+	//if (strcmp("numpy.dtype", Py_TYPE(op)->tp_name) == 0 || Is_StaticSingleton_NotBuiltin(op) && !PyType_Check(op))
 		return JyNI_InitStaticJythonPyObject(op);
-	else if (strcmp("numpy.dtype", Py_TYPE(op)->tp_name) == 0)
+	else if (strcmp("numpy.dtype", Py_TYPE(op)->tp_name) == 0 || strcmp("numpy.bool_", Py_TYPE(op)->tp_name) == 0)
 	{
+//		jputsLong(ptrCount);
 		jputs("JyNI-Warning: numpy.dtype occurred as type of a non-static object!");
-		jputs("JyNI is currently not able to handle this, segfault expected.");
+		//puts("JyNI-Warning: numpy.dtype occurred as type of a non-static object!");
+		//return JyNI_InitStaticJythonPyObject(op);
+//		jputs("JyNI is currently not able to handle this, segfault expected.");
+//		if (Is_DynPtrPy(op)) jputs("Is_DynPtrPy");
+//		if (PyType_IS_GC(Py_TYPE(op))) jputs("Is_GC");
+//		if(PyType_Check(op)) jputs(((PyTypeObject*) op)->tp_name);
 	}
 	JyObject* jy = AS_JY(op);
 	if (JyObject_IS_INITIALIZED(jy))
@@ -1885,6 +1896,8 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			//if (er != NULL) return er;
 
 			//PyCPeer has to be created...
+//			puts("create CPeer:");
+//			puts(Py_TYPE(op)->tp_name);
 			Py_INCREF(op);
 			//first obtain type:
 			//Earlier we used this line, but it would not support HeapTypes
@@ -4289,6 +4302,7 @@ jint JyNI_init(JavaVM *jvm)
 	if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_2)) {
 		return JNI_ERR; // JNI version not supported
 	}
+	JyHash_init();
 	//Py_Py3kWarningFlag
 	if (initJNI(env) == JNI_ERR) return JNI_ERR;
 	if (initJyNI(env) == JNI_ERR) return JNI_ERR;

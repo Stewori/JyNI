@@ -47,6 +47,24 @@
 #include <JyTState.h>
 #include <JyNI-Debug.h>
 
+//#define _PyTZINFO_HEAD2         \
+//    PyObject_HEAD               \
+//    long hashcode;              \
+//    char hastzinfo;             /* boolean flag */
+//
+//typedef struct
+//{
+//    _PyTZINFO_HEAD2
+//} _PyDateTime_BaseTZInfo2;
+//
+//#define HASTZINFO2(p) (((_PyDateTime_BaseTZInfo2 *)(p))->hastzinfo)
+//
+//#define isdt(p) (strcmp(Py_TYPE(p)->tp_name, "datetime.datetime") == 0)
+//
+//#define checkdt(p) jputs(isdt(p) ? (HASTZINFO2(p) ? "bad dt" : "good dt") : "No dt");
+//
+//extern PyObject* datetimeObserve;
+
 // We could alternatively include JyNI-Java/include/JyNI_JyNI.h,
 // but for now it feels more lightweight to simply redefine the
 // value we actually need here:
@@ -246,9 +264,28 @@
 #define METH_JYTHON       0x0080
 #define METH_JYTHON_CDEF  0x0100
 
+extern void* minDynPtr;
+extern void* maxDynPtr;
+extern jlong ptrCount;
+
+//#define Is_DynPtr(p) (minDynPtr && (((jlong) p) >= ((jlong) minDynPtr)) && (((jlong) p) <= ((jlong) maxDynPtr)))
+#define Is_DynPtr(ptr) JyHash_contains(ptr)
+
+#define Is_DynPtrPy(p) Is_DynPtr(AS_JY_NO_GC(p))
+
+//#define Update_DynPtr(p) \
+//	if (!minDynPtr) minDynPtr = maxDynPtr = p; \
+//	else { \
+//		if (p < minDynPtr) minDynPtr = p; \
+//		if (p > maxDynPtr) maxDynPtr = p; \
+//	}
+
+#define notifyAlloc(ptr) JyHash_insert(ptr);
+#define notifyFree(ptr) JyHash_delete(ptr);
+
 #define Is_StaticSingleton_NotBuiltin(pyObject) \
 	(!(PyType_HasFeature(Py_TYPE(pyObject), Jy_TPFLAGS_DYN_OBJECTS) || \
-	PyType_IS_GC(Py_TYPE(pyObject)) || \
+	PyType_IS_GC(Py_TYPE(pyObject)) || Is_DynPtrPy(pyObject) || \
 	PyType_HasFeature(Py_TYPE(pyObject), Py_TPFLAGS_HEAPTYPE)))
 // e.g. <type '_ctypes.CThunkObject'> needs PyType_IS_GC-check
 // e.g. <class 'ctypes.CDLL'> needs heaptype-check
@@ -942,6 +979,13 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp);
 inline int PyModule_AddStringConstantJy(jobject m, const char *name, const char *value);
 inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o);
 inline int _PyObject_Compare(PyObject *v, PyObject *w);
+
+/* Hashmap stuff */
+inline void JyHash_init();
+inline void JyHash_printTable();
+inline int JyHash_insert(void* ptr);
+inline int JyHash_contains(void* ptr);
+inline int JyHash_delete(void* ptr);
 
 /* JyNI specific:
  * Backdoor to reach original alloc-functions, which were renamed with "Raw"-prefix: */

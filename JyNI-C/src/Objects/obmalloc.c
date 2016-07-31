@@ -34,6 +34,10 @@
 
 #include "JyNI.h"
 
+void* minDynPtr = NULL;
+void* maxDynPtr = NULL;
+jlong ptrCount = 0;
+
 #if defined(__has_feature)  /* Clang */
  #if __has_feature(address_sanitizer)  /* is ASAN enabled? */
   #define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS \
@@ -821,8 +825,8 @@ int Py_ADDRESS_IN_RANGE(void *P, poolp pool) Py_NO_INLINE;
 
 #undef PyObject_Malloc
 
-void *
-PyObject_RawMalloc(size_t nbytes)
+static inline void *
+_PyObject_RawMalloc(size_t nbytes)
 {
 	block *bp;
 	poolp pool;
@@ -1026,8 +1030,9 @@ redirect:
 #undef PyObject_Free
 ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 void
-PyObject_RawFree(void *p)
+_PyObject_RawFree(void *p)
 {
+//	printf("PyObject_RawFree: %lld\n", p);
 	poolp pool;
 	block *lastfree;
 	poolp next, prev;
@@ -1256,8 +1261,8 @@ redirect:
 
 #undef PyObject_Realloc
 ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
-void *
-PyObject_RawRealloc(void *p, size_t nbytes)
+static inline void *
+_PyObject_RawRealloc(void *p, size_t nbytes)
 {
 	void *bp;
 	poolp pool;
@@ -1342,24 +1347,56 @@ PyObject_RawRealloc(void *p, size_t nbytes)
 /* pymalloc not enabled:  Redirect the entry points to malloc.  These will
  * only be used by extensions that are compiled with pymalloc enabled. */
 
-void *
-PyObject_RawMalloc(size_t n)
+static inline void *
+_PyObject_RawMalloc(size_t n)
 {
 	return PyMem_MALLOC(n);
 }
 
-void *
-PyObject_RawRealloc(void *p, size_t n)
+static inline void *
+_PyObject_RawRealloc(void *p, size_t n)
 {
 	return PyMem_REALLOC(p, n);
 }
 
 void
-PyObject_RawFree(void *p)
+_PyObject_RawFree(void *p)
 {
+	//printf("PyObject_RawFree2: %lld\n", p);
 	PyMem_FREE(p);
 }
 #endif /* WITH_PYMALLOC */
+
+void *
+PyObject_RawMalloc(size_t nbytes)
+{
+	void* res = _PyObject_RawMalloc(nbytes);
+	ptrCount++;
+	notifyAlloc(res);
+	return res;
+}
+
+void *
+PyObject_RawRealloc(void *p, size_t n)
+{
+	void* res = _PyObject_RawRealloc(p, n);
+	if (res != p) {
+		notifyFree(p);
+		notifyAlloc(res);
+	}
+	return res;
+}
+
+void
+PyObject_RawFree(void *p)
+{
+	if (p)
+	{
+		_PyObject_RawFree(p);
+		ptrCount--;
+		notifyFree(p);
+	}
+}
 
 /* JyNI-note: Though this method might not only be used for PyObject-
  * allocation, we always prepend a JyObject. We regard this slight
@@ -1371,6 +1408,7 @@ void *
 PyObject_Malloc(size_t n)
 {
 	JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + n);
+//	printf("RawMalloc gave: %lld\n", er);
 	er->attr = NULL;
 	er->flags = 0;
 	er->jy = NULL;

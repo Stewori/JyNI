@@ -443,7 +443,7 @@ inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 inline jobject JyNI_InitStaticJythonPyObject(PyObject* src)
 {
 //	jputs(__FUNCTION__);
-//	jputs(type->tp_name);
+//	jputs(Py_TYPE(src)->tp_name);
 	env(NULL);
 	//setup and return PyCPeer in this case...
 	jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) src);

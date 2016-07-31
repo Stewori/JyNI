@@ -175,7 +175,7 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 
 	@Override
 	public PyString __str__() {
-		//System.out.println("PyCPeer__str__");
+//		System.out.println("PyCPeer__str__ "+getType().getName());
 		//Object er = JyNI.PyObjectAsPyString(objectHandle);
 		//return (PyString) JyNI.repr(objectHandle);
 		PyString er = (PyString) JyNI.maybeExc(JyNI.PyObjectAsPyString(objectHandle,

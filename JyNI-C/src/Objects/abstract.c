@@ -2674,9 +2674,15 @@ _PyObject_CallFunction_SizeT(PyObject *callable, char *format, ...)
 	return call_function_tail(callable, args);
 }
 
+/*
+ * JyNI-Note: This method is often not used at all, because a macro
+ * with the same name redirects it to _PyObject_CallMethod_SizeT
+ * depending on build-config. At least on linux this is the case.
+ */
 PyObject *
 PyObject_CallMethod(PyObject *o, char *name, char *format, ...)
 {
+//	jputs(__FUNCTION__);
 	va_list va;
 	PyObject *args;
 	PyObject *func = NULL;
@@ -2715,6 +2721,8 @@ PyObject_CallMethod(PyObject *o, char *name, char *format, ...)
 PyObject *
 _PyObject_CallMethod_SizeT(PyObject *o, char *name, char *format, ...)
 {
+//	jputs(__FUNCTION__);
+//	jputs(format);
 	va_list va;
 	PyObject *args;
 	PyObject *func = NULL;
@@ -2733,7 +2741,6 @@ _PyObject_CallMethod_SizeT(PyObject *o, char *name, char *format, ...)
 		type_error("attribute of type '%.200s' is not callable", func);
 		goto exit;
 	}
-
 	if (format && *format) {
 		va_start(va, format);
 		args = _Py_VaBuildValue_SizeT(format, va);
@@ -2741,7 +2748,6 @@ _PyObject_CallMethod_SizeT(PyObject *o, char *name, char *format, ...)
 	}
 	else
 		args = PyTuple_New(0);
-
 	retval = call_function_tail(func, args);
 
   exit:

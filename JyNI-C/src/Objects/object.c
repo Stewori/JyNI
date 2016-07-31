@@ -581,6 +581,7 @@ _PyObject_Str(PyObject *v)
 PyObject *
 PyObject_Str(PyObject *v)
 {
+//	jputs(__FUNCTION__);
 	PyObject *res = _PyObject_Str(v);
 	if (res == NULL)
 		return NULL;
@@ -596,6 +597,7 @@ PyObject_Str(PyObject *v)
 	}
 #endif
 	assert(PyString_Check(res));
+//	jputs("PyObject_Str done");
 	return res;
 }
 
@@ -2644,6 +2646,8 @@ void *
 PyMem_Malloc(size_t nbytes)
 {
 	JyObject* er = (JyObject*) PyMem_MALLOC(nbytes+sizeof(JyObject));
+	ptrCount++;
+	notifyAlloc(er)
 	er->attr = NULL;
 	er->flags = 0;
 	er->jy = NULL;
@@ -2653,7 +2657,13 @@ PyMem_Malloc(size_t nbytes)
 void *
 PyMem_Realloc(void *p, size_t nbytes)
 {
-	JyObject* er = (JyObject*) PyMem_REALLOC(AS_JY_NO_GC(p), nbytes+sizeof(JyObject));
+	void* ptr = AS_JY_NO_GC(p);
+	JyObject* er = (JyObject*) PyMem_REALLOC(ptr, nbytes+sizeof(JyObject));
+	//Update_DynPtr(er)
+	if (er != ptr) {
+		notifyFree(ptr);
+		notifyAlloc(er);
+	}
 	er->attr = NULL;
 	er->flags = 0;
 	er->jy = NULL;
@@ -2665,7 +2675,10 @@ PyMem_Free(void *p)
 {
 	if (p)
 	{
-		PyMem_FREE(AS_JY_NO_GC(p));
+		ptrCount--;
+		void* ptr = AS_JY_NO_GC(p);
+		PyMem_FREE(ptr);
+		notifyFree(ptr);
 	}
 }
 
