@@ -47,23 +47,6 @@
 #include <JyTState.h>
 #include <JyNI-Debug.h>
 
-//#define _PyTZINFO_HEAD2         \
-//    PyObject_HEAD               \
-//    long hashcode;              \
-//    char hastzinfo;             /* boolean flag */
-//
-//typedef struct
-//{
-//    _PyTZINFO_HEAD2
-//} _PyDateTime_BaseTZInfo2;
-//
-//#define HASTZINFO2(p) (((_PyDateTime_BaseTZInfo2 *)(p))->hastzinfo)
-//
-//#define isdt(p) (strcmp(Py_TYPE(p)->tp_name, "datetime.datetime") == 0)
-//
-//#define checkdt(p) jputs(isdt(p) ? (HASTZINFO2(p) ? "bad dt" : "good dt") : "No dt");
-//
-//extern PyObject* datetimeObserve;
 
 // We could alternatively include JyNI-Java/include/JyNI_JyNI.h,
 // but for now it feels more lightweight to simply redefine the
@@ -264,8 +247,7 @@
 #define METH_JYTHON       0x0080
 #define METH_JYTHON_CDEF  0x0100
 
-extern void* minDynPtr;
-extern void* maxDynPtr;
+// Temporarily add pointer-counting to check for leaks.
 extern jlong ptrCount;
 
 //#define Is_DynPtr(p) (minDynPtr && (((jlong) p) >= ((jlong) minDynPtr)) && (((jlong) p) <= ((jlong) maxDynPtr)))

@@ -617,12 +617,9 @@ va_build_value(const char *format, va_list va, int flags)
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
-	if (n == 1) {
-		PyObject* res = do_mkvalue(&f, &lva, flags);
-		return res;
-	}
-	PyObject* res = do_mktuple(&f, &lva, '\0', n, flags);
-	return res;
+	if (n == 1)
+		return do_mkvalue(&f, &lva, flags);
+	return do_mktuple(&f, &lva, '\0', n, flags);
 }
 
 

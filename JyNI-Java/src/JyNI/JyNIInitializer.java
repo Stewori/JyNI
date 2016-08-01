@@ -88,7 +88,7 @@ public class JyNIInitializer implements JythonInitializer {
 //		PyModule osModule = (PyModule) imp.importName("os", true);
 //		osModule.__setattr__("name".intern(), new PyOSNameString());
 
-// Currently hosted in JyNIImporter until sysconfig.py is adjusted in Jython 2.7.2.:
+// Currently hosted in JyNIImporter until sysconfig.py is adjusted in Jython 2.7.1:
 //		initState.setPlatform(new PyShadowString(initState.getPlatform(),
 //				JyNI.getNativePlatform()));
 //		PyModule osModule = (PyModule) imp.importName("os", true);

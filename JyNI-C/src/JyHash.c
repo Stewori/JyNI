@@ -113,8 +113,8 @@ TableEntry* ptrTable;
 //#define hash_func(i) ((jlong) i)*2654435761 % tableCapacity
 #define hash_func(i) ((jlong) i) % tableCapacity
 
-// For now we just hash the position repeatedly
 //#define rehash_func(i, k, prev) hash_func(prev)
+
 #define rehash_func(i, k, prev) hash_func((((jlong) i) << k))
 //#define rehash_func(i, k, prev) hash_func((((jlong) i) << k)*((jlong) prev))
 //#define rehash_func(i, k, prev) hash_func(i >> k)

@@ -37,9 +37,9 @@ import org.python.core.Untraversable;
 import org.python.core.imp;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Vector;
 import java.util.List;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -48,6 +48,31 @@ import java.util.HashMap;
 @Untraversable
 public class JyNIImporter extends PyObject {
 	public static HashMap<String, JyNIModuleInfo> dynModules = new HashMap<String, JyNIModuleInfo>();
+
+	/* Note that e.g. datetime is not on the blacklist because native version works well with JyNI
+	 * and is sometimes required (e.g. by numpy) because it features a C-API.
+	 * It appears that Java-implemented modules are always preferred. However collisions can occur
+	 * if Jython features a C-extension replacement that is implemented as a .py file, at least on
+	 * top-level. So for now we include only these into the blacklist, but keep the other potential
+	 * collisions prepared as comments.
+	 */
+	public static List<String> blacklist = Arrays.asList(
+			"crypt",           // JyNI can also import native variant
+			"future_builtins", // also works with JyNI to some extend (numpy)
+			"grp",             // fails with JyNI
+			"_io",             // fails with JyNI
+			"pyexpat",         // JyNI can also import native variant
+			"select",          // JyNI can also import native variant
+			"_socket",         // JyNI can also import native variant
+			"unicodedata",     // JyNI can also import native variant
+			"zlib",            // JyNI can also import native variant
+			"readline"
+
+// Java-implemented modules:
+//			"array", "binascii", "cmath", "_collections", "cPickle",
+//			"cStringIO", "_csv", "_functools", "itertools", "_json",
+//			"math", "operator", "_random", "time", "bz2",
+			);
 	
 	List<String> knownPaths = null;
 	Vector<String> libPaths = new Vector<String>();
@@ -73,7 +98,7 @@ public class JyNIImporter extends PyObject {
 	
 	public PyObject __call__(PyObject args[], String keywords[]) {
 		String s = args[0].toString();
-//		System.out.println("call... "+s);
+//		System.out.print("JyNI call... "+s);
 		
 		/*
 		 * In order to be recognized by Jython we must return 'this' at
@@ -121,8 +146,8 @@ public class JyNIImporter extends PyObject {
 	 *		 otherwise
 	 */
 	public PyObject find_module(String name, PyObject path) {
-//		System.out.println("JyNI find... "+name);
-		if (dynModules.containsKey(name)) return this;
+//		System.out.print("JyNI find... "+name);
+		if (dynModules.containsKey(name)) {/*System.out.println(" JyNI cache");*/ return this;}
 		/*Py.writeDebug("import", "trying " + name
 				+ " in packagemanager for path " + path);
 		PyObject ret = PySystemState.packageManager.lookupName(name.intern());
@@ -141,6 +166,7 @@ public class JyNIImporter extends PyObject {
 			modname = name.substring(lastDot+1);
 			subPath = subPath.replace('.', File.separatorChar);
 		}
+		if (blacklist.contains(modname)) return Py.None;
 		String suf = "."+getSystemDependendDynamicLibraryExtension();
 		for (String s : libPaths)
 		{
@@ -160,6 +186,7 @@ public class JyNIImporter extends PyObject {
 						//System.out.println("CPythonExtensionImporter found extension "+name);
 						//System.out.println("Extension-Path: "+s+File.separatorChar+m);
 						dynModules.put(name, new JyNIModuleInfo(name, s+File.separatorChar+m, null));
+//						System.out.println(" JyNI ok");
 						return this;
 					}
 				}	
@@ -168,13 +195,14 @@ public class JyNIImporter extends PyObject {
 		//System.out.println("CPythonExtensionImporter8: "+name);
 		//System.out.println("Path: "+path);
 		//System.out.println("look in "+libPath);
+//		System.out.println(" can't handle");
 		return Py.None;
 	}
 
 	public PyObject load_module(String name) {
 //		System.out.println("JyNI load... "+name);
 		// This stuff should move to JyNIInitializer, but there it currently
-		// breaks sysconfig.py. Will be fixed for Jython 2.7.2.
+		// breaks sysconfig.py. Is fixed in Jython 2.7.1 final.
 		PySystemState sysState = Py.getSystemState();
 		if (!(sysState.getPlatform() instanceof PyShadowString)) {
 			sysState.setPlatform(new PyShadowString(sysState.getPlatform(),

@@ -34,8 +34,6 @@
 
 #include "JyNI.h"
 
-void* minDynPtr = NULL;
-void* maxDynPtr = NULL;
 jlong ptrCount = 0;
 
 #if defined(__has_feature)  /* Clang */
