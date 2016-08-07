@@ -16,7 +16,7 @@ JYTHON = ./jython.jar
 
 # Adjust the two paths below to match your system, if not yet appropriate
 PY_INCLUDE = /usr/include/python2.7
-JAVA_HOME = /usr/lib/jvm/default-java
+JAVA_HOME ?= /usr/lib/jvm/default-java
 #The symlink "default-java" does not exist on every system. If gnumake tells you that the header
 #jni.h is missing, please adjust JAVA_HOME appropriately. Example for Java 7, 64 bit:
 #JAVA_HOME = /usr/lib/jvm/java-7-openjdk-amd64
@@ -46,22 +46,6 @@ $(OUTPUTDIR):
 .o:
 	$(CC) $(CFLAGS) $< -o $@
 
-libJyNI: $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $(OUTPUTDIR)/libJyNI.so
-
-libJyNI-Loader: ./JyNI-Loader/JyNILoader.o
-	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
-
-$(JYNIBIN):
-	mkdir $(JYNIBIN)
-
-$(JYNIBIN)/JyNI: $(JYNIBIN)
-	$(JC) $(JFLAGS) $(JSOURCES)
-
-$(JYNIBIN)/Lib: $(JYNIBIN)
-	cp -r JyNI-Lib/* $(JYNIBIN)
-	$(JAVA) -cp $(JYTHON) org.python.util.jython -c "import compileall; compileall.compile_dir('$(JYNIBIN)')"
-
 $(JYTHON):
 	@echo ''
 	@echo '------------------------------------------------'
@@ -73,6 +57,39 @@ $(JYTHON):
 	@echo '------------------------------------------------'
 	@echo ''
 	@false
+
+JAVA_HOME_hint:
+ifeq "$(wildcard $(JAVA_HOME) )" ""
+	@echo 'Getting JAVA_HOME from java...'
+	@echo 'To avoid this extra startup-time, set JAVA_HOME explicitly, e.g.'
+	@echo 'export JAVA_HOME='"'"'/usr/lib/jvm/java-7-openjdk-amd64'"'"
+endif
+
+# We could inline JAVA_HOME_hint into this recipe, but then it wouldn't be flushed before the user waits during the startup-time.
+# But the text is actually intended to be read by the user during this time. So we make it a separate recipe to force flushing.
+$(JAVA_HOME): JAVA_HOME_hint $(JYTHON)
+# For some reason make doesn't recognize $(JAVA_HOME) as existing, even if it exists (maybe because it's a symlink?, but we
+# frequently tested with jython.jar being a symlink too and it worked. Maybe because it's no subpath of workdir?)
+# However this additional check ensures it is only executed if needed.
+ifeq "$(wildcard $(JAVA_HOME) )" ""
+	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
+endif
+
+libJyNI: $(JAVA_HOME) $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $(OUTPUTDIR)/libJyNI.so
+
+libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.o
+	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
+
+$(JYNIBIN):
+	mkdir $(JYNIBIN)
+
+$(JYNIBIN)/JyNI: $(JYNIBIN)
+	$(JC) $(JFLAGS) $(JSOURCES)
+
+$(JYNIBIN)/Lib: $(JYNIBIN)
+	cp -r JyNI-Lib/* $(JYNIBIN)
+	$(JAVA) -cp $(JYTHON) org.python.util.jython -c "import compileall; compileall.compile_dir('$(JYNIBIN)')"
 
 JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 	cp -r JyNI-Java/META-INF $(JYNIBIN)
@@ -89,5 +106,5 @@ clean:
 	rm -f ./JyNI-C/src/Modules/*.o
 	rm -f ./JyNI-Loader/JyNILoader.o
 
-.PHONY: JyNI libJyNI libJyNI-Loader clean all
+.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
 
