@@ -200,7 +200,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 //	jboolean jdbg = strcmp(cName, "__array_interface__") == 0;
 //	if (jdbg) jputs(__FUNCTION__);
 //	if (jdbg) jputs(Py_TYPE((PyObject*) handle)->tp_name);
-	ENTER_JyNI
+	RE_ENTER_JyNI
 	//jint ensresult = (*env)->EnsureLocalCapacity(env, 100);
 	//jputs("ensresult:");
 	//jputsLong(ensresult);
@@ -211,7 +211,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 	//jputsLong(jres);
 	jobject er = JyNI_JythonPyObject_FromPyObject(jres);//PyObject_GetAttrString((PyObject*) handle, cName));
 	Py_XDECREF(jres);
-	LEAVE_JyNI
+	RE_LEAVE_JyNI
 	return er;
 }
 
@@ -2255,6 +2255,8 @@ inline int decWeakRefCount(JyObject* referent)
 inline jobject JyNI_GetJythonDelegate(PyObject* v)
 {
 //	jputs(__FUNCTION__);
+	//if (!Is_DynPtrPy(v)) return NULL;
+	if (Is_StaticSingleton_NotBuiltin(v)) return NULL;
 	if (!PyType_Check(v)) // && !PyExc_Check(v)PyStructSequence_InitType
 	{
 		JyObject* jy = AS_JY(v);

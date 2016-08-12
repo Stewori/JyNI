@@ -66,16 +66,21 @@ The following built-in types are already supported:
 * Number types PyInt, PyLong, PyFloat, PyComplex
 * Sequence types PyTuple, PyList, PySlice, PyString, PyUnicode
 * Data structure types PyDict, PySet, PyFrozenSet
-* Operational types PyModule, PyFunction, PyCode, PyProperty, PyDictProxy, PyCell
+* Operational types PyModule, PyFunction, PyCode, PyProperty, PyDictProxy, PyCell (partly)
 * OOP types PyClass, PyInstance, PyMethod, PyClassMethod, PyStaticMethod
-* Singleton types PyBool, PyNone, PyNotImplemented, PyEllipsis
+* Singleton types PyNone, PyNotImplemented, PyEllipsis, PyBool
 * Native types PyCFunction, PyCapsule, PyCObject
-* Natively defined custom-types
+* Iterator types PySeqIter (as of alpha.4)
+* Natively defined custom types
 * Exception types
 * PyType as static type or heap type
-* weak reference types
+* Weak reference types
+* New-style classes/instances (as of alpha.4)
 
-Passing instances of new-style classes to an extension does not work yet.
+Planned:
+
+* Support for remaining iterator types, e.g. TupleIter, ListIter
+* Buffer protocol
 
 
 JyNI has been tested on
