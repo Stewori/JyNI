@@ -34,6 +34,33 @@ Created on 02.09.2014
 import sys
 import os
 from os import name
+import sys
+import platform
+
+# This will vastly simplify once Jython 2.7.1 is out and we have
+# uname and mac_ver available in Jython:
+if os.name == 'java':
+	machine = platform.java_ver()[-1][-1]
+	if machine == 'amd64':
+		machine = 'x86_64'
+	elif machine == 'x86':
+		machine = 'i686'
+	systm = platform.java_ver()[-1][0].lower().replace(' ', '')
+	if systm == 'macosx':
+		ver = platform.java_ver()[-1][1]
+		ver = ver[:ver.rfind('.')]
+		buildf = '-'.join((systm, ver, 'intel'))
+	else:
+		buildf = '-'.join((systm, machine))
+else:
+	systm = os.uname()[0].lower()
+	if systm == 'darwin':
+		ver = platform.mac_ver()[0]
+		ver = ver[:ver.rfind('.')]
+		buildf = '-'.join(('macosx', ver, 'intel'))
+	else:
+		buildf = '-'.join((systm, os.uname()[-1]))
+
 
 #Since invalid paths do no harm, we add several possible paths here, where
 #DemoExtension.so could be located in various build scenarios. If you use different
@@ -45,18 +72,10 @@ sys.path.append('./DemoExtension/Debug') #in case you run it from base dir
 #built with an IDE in release mode:
 sys.path.append('../../DemoExtension/Release') #in case you run it from src dir
 sys.path.append('./DemoExtension/Release') #in case you run it from base dir
-#built with setup.py on 64 bit machine:
-sys.path.append('../../DemoExtension/build/lib.linux-x86_64-2.7') #in case you run it from src dir
-sys.path.append('./DemoExtension/build/lib.linux-x86_64-2.7') #in case you run it from base dir
-#built with setup.py on 32 bit machine:
-sys.path.append('../../DemoExtension/build/lib.linux-i686-2.7') #in case you run it from src dir
-sys.path.append('./DemoExtension/build/lib.linux-i686-2.7') #in case you run it from base dir
-#built with setup.py on macosx 10.10:
-sys.path.append('../../DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from src dir
-sys.path.append('./DemoExtension/build/lib.macosx-10.10-intel-2.7') #in case you run it from base dir
-#built with setup.py on macosx 10.11:
-sys.path.append('../../DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from src dir
-sys.path.append('./DemoExtension/build/lib.macosx-10.11-intel-2.7') #in case you run it from base dir
+#built with setup.py:
+sys.path.append('../../DemoExtension/build/lib.'+buildf+'-2.7') #in case you run it from src dir
+sys.path.append('./DemoExtension/build/lib.'+buildf+'-2.7') #in case you run it from base dir
+
 
 # datetime_path is expected to be folder containing datetime.so
 
