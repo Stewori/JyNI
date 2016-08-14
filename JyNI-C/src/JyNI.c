@@ -2674,8 +2674,8 @@ jclass pyBooleanClass;
 //jmethodID pyBooleanConstructor;
 jfieldID pyBoolVal;
 
-jclass pyArrayClass;
-jmethodID pyArrayGetTypecode;
+//jclass pyArrayClass;
+//jmethodID pyArrayGetTypecode;
 
 jclass pyTupleClass;
 jmethodID pyTupleConstructor;
@@ -2864,18 +2864,18 @@ jfieldID pyProperty_fdel;
 jfieldID pyProperty_doc;
 jfieldID pyProperty_docFromGetter;
 
-jclass pyBaseStringClass;
-jclass pyXRangeClass;
+//jclass pyBaseStringClass;
+//jclass pyXRangeClass;
 
 jclass pySequenceIterClass;
 jmethodID pySequenceIterConstructor;
 jfieldID pySequenceIter_seq;
 jfieldID pySequenceIter_index;
 
-jclass pyFastSequenceIterClass;
-jclass pyReversedIteratorClass;
+//jclass pyFastSequenceIterClass;
+//jclass pyReversedIteratorClass;
 
-jclass pyBaseSetClass;
+//jclass pyBaseSetClass;
 jfieldID pyBaseSet_set;
 jmethodID pyBaseSetSize;
 //jmethodID pyBaseSetClear;
@@ -2915,7 +2915,7 @@ jclass pyFrozenSetClass;
 jmethodID pyFrozenSetFromIterableConstructor;
 //jmethodID pyFrozenSetSize;
 
-jclass pyEnumerationClass;
+//jclass pyEnumerationClass;
 
 jclass pySliceClass;
 jmethodID pySliceFromStartStopStepConstructor;
@@ -2926,7 +2926,7 @@ jmethodID pySliceGetStep;
 jmethodID pySliceIndicesEx;
 
 jclass pyEllipsisClass;
-jclass pyGeneratorClass;
+//jclass pyGeneratorClass;
 
 jclass pyWeakReferenceClass;
 jclass pyWeakProxyClass;
@@ -2956,8 +2956,8 @@ jfieldID pyBytecode_co_stacksize;
 jclass pyTableCodeClass;
 //jfieldID pyTableCode_co_code;
 
-jclass pyCallIterClass;
-jclass pySuperClass;
+//jclass pyCallIterClass;
+//jclass pySuperClass;
 
 jclass GlobalRefClass;
 jmethodID GlobalRef_retryFactory;
@@ -2980,9 +2980,9 @@ jmethodID pyBaseExceptionSetArgs;
 jmethodID pyBaseExceptionGetMessage;
 jmethodID pyBaseExceptionSetMessage;
 
-jclass pyByteArrayClass;
-jclass pyBufferClass;
-jclass pyMemoryViewClass;
+//jclass pyByteArrayClass;
+//jclass pyBufferClass;
+//jclass pyMemoryViewClass;
 
 jclass __builtin__Class;
 //jmethodID __builtin__Import;
@@ -3023,40 +3023,31 @@ jmethodID exceptionsUnicodeTranslateError__init__;
 jmethodID exceptionsUnicodeTranslateError__str__;
 #endif
 
+#define JNI_CLS(cPrefix, cls, jPath) \
+	jclass cPrefix ## cls ## Local = (*env)->FindClass(env, jPath); \
+	if (cPrefix ## cls ## Local == NULL) { puts(jPath); return JNI_ERR;} \
+	cPrefix ## cls = (jclass) (*env)->NewWeakGlobalRef(env, cPrefix ## cls ## Local); \
+	(*env)->DeleteLocalRef(env, cPrefix ## cls ## Local);
+
+#define JNI_CLASS(cPrefix, jPath) JNI_CLS(cPrefix, Class, jPath)
+#define JNI_INTERFACE(cPrefix, jPath) JNI_CLS(cPrefix, Interface, jPath)
+
 inline jint initJNI(JNIEnv *env)
 {
-	jclass objectClassLocal = (*env)->FindClass(env, "java/lang/Object");
-	if (objectClassLocal == NULL) { return JNI_ERR;}
-	objectClass = (jclass) (*env)->NewWeakGlobalRef(env, objectClassLocal);
-	(*env)->DeleteLocalRef(env, objectClassLocal);
+	JNI_CLASS(object, "java/lang/Object")
 	objectToString = (*env)->GetMethodID(env, objectClass, "toString", "()Ljava/lang/String;");
 	objectGetClass = (*env)->GetMethodID(env, objectClass, "getClass", "()Ljava/lang/Class;");
 
-	jclass classClassLocal = (*env)->FindClass(env, "java/lang/Class");
-	if (classClassLocal == NULL) { return JNI_ERR;}
-	classClass = (jclass) (*env)->NewWeakGlobalRef(env, classClassLocal);
-	(*env)->DeleteLocalRef(env, classClassLocal);
+	JNI_CLASS(class, "java/lang/Class")
 	classEquals = (*env)->GetMethodID(env, classClass, "equals", "(Ljava/lang/Object;)Z");
 
-//	jclass systemClassLocal = (*env)->FindClass(env, "java/lang/System");
-//	if (systemClassLocal == NULL) { return JNI_ERR;}
-//	systemClass = (jclass) (*env)->NewWeakGlobalRef(env, systemClassLocal);
-//	(*env)->DeleteLocalRef(env, systemClassLocal);
-//	arraycopy = (*env)->GetStaticMethodID(env, systemClass, "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
-
-	jclass stringClassLocal = (*env)->FindClass(env, "java/lang/String");
-	if (stringClassLocal == NULL) { return JNI_ERR;}
-	stringClass = (jclass) (*env)->NewWeakGlobalRef(env, stringClassLocal);
-	(*env)->DeleteLocalRef(env, stringClassLocal);
+	JNI_CLASS(string, "java/lang/String")
 	stringFromBytesAndCharsetNameConstructor = (*env)->GetMethodID(env, stringClass, "<init>", "([BLjava/lang/String;)V");
 	stringToUpperCase = (*env)->GetMethodID(env, stringClass, "toUpperCase", "()Ljava/lang/String;");
 	stringGetBytesUsingCharset = (*env)->GetMethodID(env, stringClass, "getBytes", "(Ljava/lang/String;)[B");
 	stringIntern = (*env)->GetMethodID(env, stringClass, "intern", "()Ljava/lang/String;");
 
-	jclass bigIntClassLocal = (*env)->FindClass(env, "java/math/BigInteger");
-	if (bigIntClassLocal == NULL) { return JNI_ERR;}
-	bigIntClass = (jclass) (*env)->NewWeakGlobalRef(env, bigIntClassLocal);
-	(*env)->DeleteLocalRef(env, bigIntClassLocal);
+	JNI_CLASS(bigInt, "java/math/BigInteger")
 	bigIntegerFromByteArrayConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "([B)V");
 	bigIntegerFromSignByteArrayConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "(I[B)V");
 	bigIntFromStringConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "(Ljava/lang/String;)V");
@@ -3065,9 +3056,7 @@ inline jint initJNI(JNIEnv *env)
 	bigIntSignum = (*env)->GetMethodID(env, bigIntClass, "signum", "()I");
 	bigIntToStringRadix = (*env)->GetMethodID(env, bigIntClass, "toString", "(I)Ljava/lang/String;");
 
-	jclass arrayListClassLocal = (*env)->FindClass(env, "java/util/ArrayList");
-	arrayListClass = (*env)->NewWeakGlobalRef(env, arrayListClassLocal);
-	(*env)->DeleteLocalRef(env, arrayListClassLocal);
+	JNI_CLASS(arrayList, "java/util/ArrayList")
 	arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "(I)V");
 	jclass listClassLocal = (*env)->FindClass(env, "java/util/List");
 	listAdd = (*env)->GetMethodID(env, listClassLocal, "add", "(Ljava/lang/Object;)Z");
@@ -3078,16 +3067,7 @@ inline jint initJNI(JNIEnv *env)
 
 inline jint initJyNI(JNIEnv *env)
 {
-	/*jclass jyObjectClassLocal = (*env)->FindClass(env, "JyNI/JyObject");
-	if (jyObjectClassLocal == NULL) { return JNI_ERR;}
-	jyObjectClass = (jclass) (*env)->NewWeakGlobalRef(env, jyObjectClassLocal);
-	(*env)->DeleteLocalRef(env, jyObjectClassLocal);
-	jyObjectNativeHandleField = (*env)->GetFieldID(env, jyObjectClass, "nativeHandle", "I");
-	jyObjectObjectField = (*env)->GetFieldID(env, jyObjectClass, "object", "Lorg/python/core/PyObject;");*/
-
-	jclass JyNIClassLocal = (*env)->FindClass(env, "JyNI/JyNI");
-	JyNIClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNIClassLocal);
-	(*env)->DeleteLocalRef(env, JyNIClassLocal);
+	JNI_CLASS(JyNI, "JyNI/JyNI")
 	JyNISetNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "setNativeHandle", "(Lorg/python/core/PyObject;J)V");
 	//JyNIRegisterNativeStaticTypeDict = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticTypeDict", "(Ljava/lang/String;Lorg/python/core/PyDictionary;)V");
 	JyNI_registerNativeStaticJyGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticJyGCHead", "(JLJyNI/gc/JyGCHead;)V");
@@ -3146,9 +3126,6 @@ inline jint initJyNI(JNIEnv *env)
 			"()Ljava/lang/String;");
 
 	//Error stuff:
-	//JyErr_SetCurExc(ThreadState tstate, PyObject type, PyObject value, PyTraceback traceback)
-	//PyException JyErr_GetCurExc(ThreadState tstate)
-	//JyErr_InsertCurExc(ThreadState tstate)
 //	JyErr_SetCurExc = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_SetCurExc",
 //	        "(Lorg/python/core/ThreadState;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
 //	JyErr_GetCurExc = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_GetCurExc",
@@ -3165,7 +3142,6 @@ inline jint initJyNI(JNIEnv *env)
 			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)Z");
 	JyNI_PyTraceBack_Here = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_PyTraceBack_Here",
 			"(Lorg/python/core/PyFrame;Lorg/python/core/ThreadState;)Lorg/python/core/PyTraceback;");
-	//PyTraceback JyNI_PyTraceBack_Here(PyFrame frame, ThreadState tstate)
 //	JyNIPyErr_SetObject = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetObject", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
 //	JyNIPyErr_SetString = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetString", "(Lorg/python/core/PyObject;Ljava/lang/String;)V");
 //	JyNIPyErr_SetNone = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetNone", "(Lorg/python/core/PyObject;)V");
@@ -3174,56 +3150,39 @@ inline jint initJyNI(JNIEnv *env)
 	JyNIPyErr_WriteUnraisable = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_WriteUnraisable", "(Lorg/python/core/PyObject;)V");
 	JyNIExceptionByName = (*env)->GetStaticMethodID(env, JyNIClass, "exceptionByName", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	JyNIGetPyType = (*env)->GetStaticMethodID(env, JyNIClass, "getPyType", "(Ljava/lang/Class;)Lorg/python/core/PyType;");
-	//puts("  initJyNIClass error section done");
+
 
 	//ThreadState stuff:
-	jclass JyTStateClassLocal = (*env)->FindClass(env, "JyNI/JyTState");
-	JyTStateClass = (jclass) (*env)->NewWeakGlobalRef(env, JyTStateClassLocal);
-	(*env)->DeleteLocalRef(env, JyTStateClassLocal);
+	JNI_CLASS(JyTState, "JyNI/JyTState")
 	JyTState_setRecursionLimit = (*env)->GetStaticMethodID(env, JyTStateClass, "setRecursionLimit", "(I)V");
 	JyTState_prepareNativeThreadState = (*env)->GetStaticMethodID(env, JyTStateClass,
 			"prepareNativeThreadState", "()J");
 	JyTState_nativeRecursionLimitField = (*env)->GetStaticFieldID(env, JyTStateClass, "nativeRecursionLimit", "I");
 
-	jclass JyNIDictNextResultClassLocal = (*env)->FindClass(env, "JyNI/JyNIDictNextResult");
-	JyNIDictNextResultClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNIDictNextResultClassLocal);
-	(*env)->DeleteLocalRef(env, JyNIDictNextResultClassLocal);
+	JNI_CLASS(JyNIDictNextResult, "JyNI/JyNIDictNextResult")
 	JyNIDictNextResultKeyField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "key", "Lorg/python/core/PyObject;");
 	JyNIDictNextResultValueField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "value", "Lorg/python/core/PyObject;");
 	JyNIDictNextResultNewIndexField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "newIndex", "I");
 	JyNIDictNextResultKeyHandleField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "keyHandle", "J");
 	JyNIDictNextResultValueHandleField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "valueHandle", "J");
-	//puts("  initJyNIDict done");
 
-	jclass JyNISetNextResultClassLocal = (*env)->FindClass(env, "JyNI/JyNISetNextResult");
-	JyNISetNextResultClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNISetNextResultClassLocal);
-	(*env)->DeleteLocalRef(env, JyNISetNextResultClassLocal);
+	JNI_CLASS(JyNISetNextResult, "JyNI/JyNISetNextResult")
 	JyNISetNextResultKeyField = (*env)->GetFieldID(env, JyNISetNextResultClass, "key", "Lorg/python/core/PyObject;");
 	JyNISetNextResultNewIndexField = (*env)->GetFieldID(env, JyNISetNextResultClass, "newIndex", "I");
 	JyNISetNextResultKeyHandleField = (*env)->GetFieldID(env, JyNISetNextResultClass, "keyHandle", "J");
 
-	jclass JyListClassLocal = (*env)->FindClass(env, "JyNI/JyList");
-	JyListClass = (jclass) (*env)->NewWeakGlobalRef(env, JyListClassLocal);
-	(*env)->DeleteLocalRef(env, JyListClassLocal);
+	JNI_CLASS(JyList, "JyNI/JyList")
 	JyListFromBackendHandleConstructor = (*env)->GetMethodID(env, JyListClass, "<init>", "(J)V");
-	//JyListInstallToPyList = (*env)->GetMethodID(env, JyListClass, "installToPyList", "(Lorg/python/core/PyList;)V");
 
-	jclass JySetClassLocal = (*env)->FindClass(env, "JyNI/JySet");
-	JySetClass = (jclass) (*env)->NewWeakGlobalRef(env, JySetClassLocal);
-	(*env)->DeleteLocalRef(env, JySetClassLocal);
+	JNI_CLASS(JySet, "JyNI/JySet")
 	JySetFromBackendHandleConstructor = (*env)->GetMethodID(env, JySetClass, "<init>", "(Ljava/util/Set;J)V");
-	//JySetInstallToPySet = (*env)->GetMethodID(env, JySetClass, "installToPySet", "(Lorg/python/core/BaseSet;)V");
 
-	jclass JyLockClassLocal = (*env)->FindClass(env, "JyNI/JyLock");
-	JyLockClass = (jclass) (*env)->NewWeakGlobalRef(env, JyLockClassLocal);
-	(*env)->DeleteLocalRef(env, JySetClassLocal);
+	JNI_CLASS(JyLock, "JyNI/JyLock")
 	JyLockConstructor = (*env)->GetMethodID(env, JyLockClass, "<init>", "()V");
 	JyLockAcquire = (*env)->GetMethodID(env, JyLockClass, "acquire", "(Z)Z");
 	JyLockRelease = (*env)->GetMethodID(env, JyLockClass, "release", "()V");
 
-	jclass NativeActionClassLocal = (*env)->FindClass(env, "JyNI/JyReferenceMonitor$NativeAction");
-	NativeActionClass = (jclass) (*env)->NewWeakGlobalRef(env, NativeActionClassLocal);
-	(*env)->DeleteLocalRef(env, NativeActionClassLocal);
+	JNI_CLASS(NativeAction, "JyNI/JyReferenceMonitor$NativeAction")
 	NativeAction_constructor = (*env)->GetMethodID(env, NativeActionClass, "<init>", "()V");
 	NativeAction_action = (*env)->GetFieldID(env, NativeActionClass, "action", "S");
 	NativeAction_obj = (*env)->GetFieldID(env, NativeActionClass, "obj", "Lorg/python/core/PyObject;");
@@ -3234,52 +3193,31 @@ inline jint initJyNI(JNIEnv *env)
 	NativeAction_cLine = (*env)->GetFieldID(env, NativeActionClass, "cLine", "I");
 	NativeAction_cFile = (*env)->GetFieldID(env, NativeActionClass, "cFile", "Ljava/lang/String;");
 
-	jclass JyReferenceMonitorClassLocal = (*env)->FindClass(env, "JyNI/JyReferenceMonitor");
-	JyReferenceMonitorClass = (jclass) (*env)->NewWeakGlobalRef(env, JyReferenceMonitorClassLocal);
-	(*env)->DeleteLocalRef(env, JyReferenceMonitorClassLocal);
-//	JyRefMonitorMakeDebugInfo = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "makeDebugInfo",
-//			"(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)LJyNI/JyReferenceMonitor$ObjectLogDebugInfo;");
+	JNI_CLASS(JyReferenceMonitor, "JyNI/JyReferenceMonitor")
 	JyRefMonitorAddAction = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "addNativeAction",
-			//"(SLorg/python/core/PyObject;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V");
-			//"(SLorg/python/core/PyObject;JJLJyNI/JyReferenceMonitor$ObjectLogDebugInfo;)V");
 			"(LJyNI/JyReferenceMonitor$NativeAction;)V");
 
 	//Peer stuff:
-	jclass pyCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyCPeer");
-	pyCPeerClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerClassLocal);
-	(*env)->DeleteLocalRef(env, pyCPeerClassLocal);
+	JNI_CLASS(pyCPeer, "JyNI/PyCPeer")
 	pyCPeerConstructor = (*env)->GetMethodID(env, pyCPeerClass, "<init>", "(JLorg/python/core/PyType;)V");
 	pyCPeerObjectHandle = (*env)->GetFieldID(env, pyCPeerClass, "objectHandle", "J");
-	//pyCPeerRefHandle = (*env)->GetFieldID(env, pyCPeerClass, "refHandle", "J");
 
-	jclass pyCPeerGCClassLocal = (*env)->FindClass(env, "JyNI/gc/PyCPeerGC");
-	pyCPeerGCClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerGCClassLocal);
-	(*env)->DeleteLocalRef(env, pyCPeerGCClassLocal);
+	JNI_CLASS(pyCPeerGC, "JyNI/gc/PyCPeerGC")
 	pyCPeerGCConstructor = (*env)->GetMethodID(env, pyCPeerGCClass, "<init>", "(JLorg/python/core/PyType;)V");
-	//pyCPeerLinksHandle = (*env)->GetFieldID(env, pyCPeerGCClass, "links", "Ljava/lang/Object;");
 
-	jclass pyCPeerTypeGCClassLocal = (*env)->FindClass(env, "JyNI/gc/PyCPeerTypeGC");
-	pyCPeerTypeGCClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerTypeGCClassLocal);
-	(*env)->DeleteLocalRef(env, pyCPeerTypeGCClassLocal);
+	JNI_CLASS(pyCPeerTypeGC, "JyNI/gc/PyCPeerTypeGC")
 	pyCPeerTypeGCConstructor = (*env)->GetMethodID(env, pyCPeerTypeGCClass, "<init>",
 			"(JLjava/lang/String;Lorg/python/core/PyObject;J)V");
 	pyCPeerTypeGCConstructorSubtype = (*env)->GetMethodID(env, pyCPeerTypeGCClass, "<init>",
 			"(JLjava/lang/String;Lorg/python/core/PyObject;JLorg/python/core/PyType;)V");
 
-	jclass pyDictCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyDictionaryCPeer");
-	pyDictCPeerClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDictCPeerClassLocal);
-	(*env)->DeleteLocalRef(env, pyDictCPeerClassLocal);
+	JNI_CLASS(pyDictCPeer, "JyNI/PyDictionaryCPeer")
 
-	jclass pyTupleCPeerClassLocal = (*env)->FindClass(env, "JyNI/PyTupleCPeer");
-	pyTupleCPeerClass = (jclass) (*env)->NewWeakGlobalRef(env, pyTupleCPeerClassLocal);
-	(*env)->DeleteLocalRef(env, pyTupleCPeerClassLocal);
+	JNI_CLASS(pyTupleCPeer, "JyNI/PyTupleCPeer")
 	pyTupleCPeerConstructor = (*env)->GetMethodID(env, pyTupleCPeerClass,
 			"<init>", "(JLJyNI/PyCPeerType;[Lorg/python/core/PyObject;)V");
 
-	jclass pyCPeerTypeClassLocal = (*env)->FindClass(env, "JyNI/PyCPeerType");
-	pyCPeerTypeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCPeerTypeClassLocal);
-	(*env)->DeleteLocalRef(env, pyCPeerTypeClassLocal);
-	//pyCPeerTypeConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>", "(J)V");
+	JNI_CLASS(pyCPeerType, "JyNI/PyCPeerType")
 	pyCPeerTypeWithNameAndDictConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>",
 			"(JLjava/lang/String;Lorg/python/core/PyObject;J)V");
 	pyCPeerTypeWithNameDictTypeConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>",
@@ -3296,22 +3234,16 @@ inline jint initJyNI(JNIEnv *env)
 	traversableGCHeadEnsureSize = (*env)->GetMethodID(env, traversableGCHeadInterface, "ensureSize", "(I)V");
 	(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
 
-	jclass jyGCHeadClassLocal = (*env)->FindClass(env, "JyNI/gc/JyGCHead");
-	jyGCHeadClass = (*env)->NewWeakGlobalRef(env, jyGCHeadClassLocal);
-	(*env)->DeleteLocalRef(env, jyGCHeadClassLocal);
+	JNI_CLASS(jyGCHead, "JyNI/gc/JyGCHead")
 	jyGCHeadGetHandle = (*env)->GetMethodID(env, jyGCHeadClass, "getHandle", "()J");
 
 	jclass pyObjectGCHeadInterface = (*env)->FindClass(env, "JyNI/gc/PyObjectGCHead");
 	pyObjectGCHeadSetObject = (*env)->GetMethodID(env, pyObjectGCHeadInterface, "setPyObject", "(Lorg/python/core/PyObject;)V");
 	(*env)->DeleteLocalRef(env, pyObjectGCHeadInterface);
 
-	jclass cPeerInterfaceLocal = (*env)->FindClass(env, "JyNI/CPeerInterface");
-	cPeerInterface = (*env)->NewWeakGlobalRef(env, cPeerInterfaceLocal);
-	(*env)->DeleteLocalRef(env, cPeerInterfaceLocal);
+	JNI_INTERFACE(cPeer, "JyNI/CPeerInterface")
 
-	jclass cPeerNativeDelegateInterfaceLocal = (*env)->FindClass(env, "JyNI/CPeerNativeDelegateSubtype");
-	cPeerNativeDelegateInterface = (*env)->NewWeakGlobalRef(env, cPeerNativeDelegateInterfaceLocal);
-	(*env)->DeleteLocalRef(env, cPeerNativeDelegateInterfaceLocal);
+	JNI_INTERFACE(cPeerNativeDelegate, "JyNI/CPeerNativeDelegateSubtype")
 	super__call__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__call__",
 			"([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
 	super__findattr_ex__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__findattr_ex__",
@@ -3337,10 +3269,7 @@ inline jint initJyNI(JNIEnv *env)
 
 inline jint initJythonSite(JNIEnv *env)
 {
-	jclass pyPyClassLocal = (*env)->FindClass(env, "org/python/core/Py");
-	if (pyPyClassLocal == NULL) { return JNI_ERR;}
-	pyPyClass = (jclass) (*env)->NewWeakGlobalRef(env, pyPyClassLocal);
-	(*env)->DeleteLocalRef(env, pyPyClassLocal);
+	JNI_CLASS(pyPy, "org/python/core/Py")
 	pyPyGetThreadState = (*env)->GetStaticMethodID(env, pyPyClass, "getThreadState", "()Lorg/python/core/ThreadState;");
 	pyPyGetFrame = (*env)->GetStaticMethodID(env, pyPyClass, "getFrame", "()Lorg/python/core/PyFrame;");
 	pyPyIsSubClass = (*env)->GetStaticMethodID(env, pyPyClass, "isSubClass", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Z");
@@ -3377,16 +3306,10 @@ inline jint initJythonSite(JNIEnv *env)
 	pyPyIntegerCache = (*env)->GetStaticFieldID(env, pyPyClass, "integerCache", "[Lorg/python/core/PyInteger;");
 	pyPyLetters = (*env)->GetStaticFieldID(env, pyPyClass, "letters", "[Lorg/python/core/PyString;");
 
-	jclass pyTracebackClassLocal = (*env)->FindClass(env, "org/python/core/PyTraceback");
-	if (pyTracebackClassLocal == NULL) { return JNI_ERR;}
-	pyTracebackClass = (jclass) (*env)->NewWeakGlobalRef(env, pyTracebackClassLocal);
-	(*env)->DeleteLocalRef(env, pyTracebackClassLocal);
+	JNI_CLASS(pyTraceback, "org/python/core/PyTraceback")
 	pyTracebackByTracebackFrameConstructor = (*env)->GetMethodID(env, pyTracebackClass, "<init>", "(Lorg/python/core/PyTraceback;Lorg/python/core/PyFrame;)V");
 
-	jclass pyExceptionClassLocal = (*env)->FindClass(env, "org/python/core/PyException");
-	if (pyExceptionClassLocal == NULL) { return JNI_ERR;}
-	pyExceptionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyExceptionClassLocal);
-	(*env)->DeleteLocalRef(env, pyExceptionClassLocal);
+	JNI_CLASS(pyException, "org/python/core/PyException")
 	pyExceptionTypeField = (*env)->GetFieldID(env, pyExceptionClass, "type", "Lorg/python/core/PyObject;");
 	pyExceptionValueField = (*env)->GetFieldID(env, pyExceptionClass, "value", "Lorg/python/core/PyObject;");
 	pyExceptionTracebackField = (*env)->GetFieldID(env, pyExceptionClass, "traceback", "Lorg/python/core/PyTraceback;");
@@ -3398,10 +3321,7 @@ inline jint initJythonSite(JNIEnv *env)
 	pyExceptionIsExceptionClass = (*env)->GetStaticMethodID(env, pyExceptionClass, "isExceptionClass", "(Lorg/python/core/PyObject;)Z");
 	pyExceptionIsExceptionInstance = (*env)->GetStaticMethodID(env, pyExceptionClass, "isExceptionInstance", "(Lorg/python/core/PyObject;)Z");
 
-	jclass pyThreadStateClassLocal = (*env)->FindClass(env, "org/python/core/ThreadState");
-	if (pyThreadStateClassLocal == NULL) { return JNI_ERR;}
-	pyThreadStateClass = (jclass) (*env)->NewWeakGlobalRef(env, pyThreadStateClassLocal);
-	(*env)->DeleteLocalRef(env, pyThreadStateClassLocal);
+	JNI_CLASS(pyThreadState, "org/python/core/ThreadState")
 	pyThreadStateExceptionField = (*env)->GetFieldID(env, pyThreadStateClass, "exception", "Lorg/python/core/PyException;");
 	pyThreadStateFrameField = (*env)->GetFieldID(env, pyThreadStateClass, "frame", "Lorg/python/core/PyFrame;");
 	//pyThreadStateRecursionDepth = (*env)->GetFieldID(env, pyThreadStateClass, "recursion_depth", "I");
@@ -3416,18 +3336,9 @@ inline jint initJythonSite(JNIEnv *env)
 
 inline jint initJythonObjects(JNIEnv *env)
 {
-	jclass pyNoneClassLocal = (*env)->FindClass(env, "org/python/core/PyNone");
-	if (pyNoneClassLocal == NULL) { return JNI_ERR;}
-	pyNoneClass = (jclass) (*env)->NewWeakGlobalRef(env, pyNoneClassLocal);
-	//jclass pyNoneClass = (*env)->FindClass(env, "org/python/core/PyNone");
-	if (pyNoneClass == NULL) { return JNI_ERR;}
-	(*env)->DeleteLocalRef(env, pyNoneClassLocal);
-	//(*env)->DeleteLocalRef(env, pyNoneConstructor);
+	JNI_CLASS(pyNone, "org/python/core/PyNone")
 
-	jclass pyObjectClassLocal = (*env)->FindClass(env, "org/python/core/PyObject");
-	if (pyObjectClassLocal == NULL) { return JNI_ERR;}
-	pyObjectClass = (jclass) (*env)->NewWeakGlobalRef(env, pyObjectClassLocal);
-	(*env)->DeleteLocalRef(env, pyObjectClassLocal);
+	JNI_CLASS(pyObject, "org/python/core/PyObject")
 	pyObjectGetType = (*env)->GetMethodID(env, pyObjectClass, "getType",
 			"()Lorg/python/core/PyType;");
 	pyObjectAsString = (*env)->GetMethodID(env, pyObjectClass, "asString",
@@ -3491,10 +3402,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyObjectIsCallable = (*env)->GetMethodID(env, pyObjectClass, "isCallable", "()Z");
 	pyObjectHashCode = (*env)->GetMethodID(env, pyObjectClass, "hashCode", "()I");
 
-	jclass pyInstanceClassLocal = (*env)->FindClass(env, "org/python/core/PyInstance");
-	if (pyInstanceClassLocal == NULL) { return JNI_ERR;}
-	pyInstanceClass = (jclass) (*env)->NewWeakGlobalRef(env, pyInstanceClassLocal);
-	(*env)->DeleteLocalRef(env, pyInstanceClassLocal);
+	JNI_CLASS(pyInstance, "org/python/core/PyInstance")
 	pyInstanceConstructor = (*env)->GetMethodID(env, pyInstanceClass, "<init>",
 			"(Lorg/python/core/PyClass;Lorg/python/core/PyObject;)V");
 	pyInstanceInstclassField = (*env)->GetFieldID(env, pyInstanceClass, "instclass",
@@ -3503,10 +3411,7 @@ inline jint initJythonObjects(JNIEnv *env)
 			"Lorg/python/core/PyObject;");
 	pyInstanceIsSequenceType = (*env)->GetMethodID(env, pyInstanceClass, "isSequenceType", "()Z");
 
-	jclass pyFrameClassLocal = (*env)->FindClass(env, "org/python/core/PyFrame");
-	if (pyFrameClassLocal == NULL) { return JNI_ERR;}
-	pyFrameClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFrameClassLocal);
-	(*env)->DeleteLocalRef(env, pyFrameClassLocal);
+	JNI_CLASS(pyFrame, "org/python/core/PyFrame")
 	pyFrameConstructor = (*env)->GetMethodID(env, pyFrameClass, "<init>",
 			"(Lorg/python/core/PyBaseCode;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
 	pyFrame_f_back = (*env)->GetFieldID(env, pyFrameClass, "f_back",
@@ -3515,26 +3420,14 @@ inline jint initJythonObjects(JNIEnv *env)
 			"Lorg/python/core/PyObject;");
 	pyFrame_f_lineno = (*env)->GetFieldID(env, pyFrameClass, "f_lineno", "I");
 
-	jclass pyBooleanClassLocal = (*env)->FindClass(env, "org/python/core/PyBoolean");
-	if (pyBooleanClassLocal == NULL) { return JNI_ERR;}
-	pyBooleanClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBooleanClassLocal);
-	(*env)->DeleteLocalRef(env, pyBooleanClassLocal);
-	//pyBooleanConstructor = (*env)->GetMethodID(env, pyBooleanClass, "<init>", "(Z)V");
+	JNI_CLASS(pyBoolean, "org/python/core/PyBoolean")
 	pyBoolVal = (*env)->GetFieldID(env, pyBooleanClass, "value", "Z");
 
-	jclass pyIntClassLocal = (*env)->FindClass(env, "org/python/core/PyInteger");
-	if (pyIntClassLocal == NULL) { return JNI_ERR;}
-	pyIntClass = (jclass) (*env)->NewWeakGlobalRef(env, pyIntClassLocal);
-	(*env)->DeleteLocalRef(env, pyIntClassLocal);
+	JNI_CLASS(pyInt, "org/python/core/PyInteger")
 	pyIntConstructor = (*env)->GetMethodID(env, pyIntClass, "<init>", "(I)V");
 	pyIntGetValue = (*env)->GetMethodID(env, pyIntClass, "getValue", "()I");
-	//pyIntAsInt = (*env)->GetMethodID(env, pyIntClass, "asInt", "()I");
-	//pyIntAsLong = (*env)->GetMethodID(env, pyIntClass, "asLong", "()J");
 
-	jclass pyLongClassLocal = (*env)->FindClass(env, "org/python/core/PyLong");
-	if (pyLongClassLocal == NULL) { return JNI_ERR;}
-	pyLongClass = (jclass) (*env)->NewWeakGlobalRef(env, pyLongClassLocal);
-	(*env)->DeleteLocalRef(env, pyLongClassLocal);
+	JNI_CLASS(pyLong, "org/python/core/PyLong")
 	pyLongByLongConstructor = (*env)->GetMethodID(env, pyLongClass, "<init>", "(J)V");
 	pyLongByBigIntConstructor = (*env)->GetMethodID(env, pyLongClass, "<init>",
 			"(Ljava/math/BigInteger;)V");
@@ -3543,66 +3436,40 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyLongGetValue = (*env)->GetMethodID(env, pyLongClass, "getValue",
 			"()Ljava/math/BigInteger;");
 	pyLongBit_length = (*env)->GetMethodID(env, pyLongClass, "bit_length", "()I");
-	//pyLongToString = (*env)->GetMethodID(env, pyLongClass, "toString", "()Ljava/lang/String;");
 
-	jclass pyUnicodeClassLocal = (*env)->FindClass(env, "org/python/core/PyUnicode");
-	if (pyUnicodeClassLocal == NULL) { return JNI_ERR;}
-	pyUnicodeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyUnicodeClassLocal);
-	(*env)->DeleteLocalRef(env, pyUnicodeClassLocal);
+	JNI_CLASS(pyUnicode, "org/python/core/PyUnicode")
 	pyUnicodeByJStringConstructor = (*env)->GetMethodID(env, pyUnicodeClass, "<init>",
 			"(Ljava/lang/String;)V");
 	pyUnicodeAsString = (*env)->GetMethodID(env, pyUnicodeClass, "asString",
 			"()Ljava/lang/String;");
 
-	jclass pyStringClassLocal = (*env)->FindClass(env, "org/python/core/PyString");
-	if (pyStringClassLocal == NULL) { return JNI_ERR;}
-	pyStringClass = (jclass) (*env)->NewWeakGlobalRef(env, pyStringClassLocal);
-	(*env)->DeleteLocalRef(env, pyStringClassLocal);
+	JNI_CLASS(pyString, "org/python/core/PyString")
 	pyStringByJStringConstructor = (*env)->GetMethodID(env, pyStringClass, "<init>",
 			"(Ljava/lang/String;)V");
 	pyStringAsString = (*env)->GetMethodID(env, pyStringClass, "asString",
 			"()Ljava/lang/String;");
 
-	jclass pyFloatClassLocal = (*env)->FindClass(env, "org/python/core/PyFloat");
-	if (pyFloatClassLocal == NULL) { return JNI_ERR;}
-	pyFloatClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFloatClassLocal);
-	(*env)->DeleteLocalRef(env, pyFloatClassLocal);
+	JNI_CLASS(pyFloat, "org/python/core/PyFloat")
 	pyFloatByDoubleConstructor = (*env)->GetMethodID(env, pyFloatClass, "<init>", "(D)V");
 	pyFloatAsDouble = (*env)->GetMethodID(env, pyFloatClass, "asDouble", "()D");
 	pyFloatTypeField = (*env)->GetStaticFieldID(env, pyFloatClass, "TYPE",
 			"Lorg/python/core/PyType;");
 
-	jclass pyComplexClassLocal = (*env)->FindClass(env, "org/python/core/PyComplex");
-	if (pyComplexClassLocal == NULL) { return JNI_ERR;}
-	pyComplexClass = (jclass) (*env)->NewWeakGlobalRef(env, pyComplexClassLocal);
-	(*env)->DeleteLocalRef(env, pyComplexClassLocal);
+	JNI_CLASS(pyComplex, "org/python/core/PyComplex")
 	pyComplexBy2DoubleConstructor = (*env)->GetMethodID(env, pyComplexClass, "<init>", "(DD)V");
-	//jfieldID pyComplexRealField = (*env)->GetFieldID(env, pyComplexClass, "real", "D");
-	//jfieldID pyComplexImagField = (*env)->GetFieldID(env, pyComplexClass, "imag", "D");
 
-	jclass pyArrayClassLocal = (*env)->FindClass(env, "org/python/core/PyArray");
-	if (pyArrayClassLocal == NULL) { return JNI_ERR;}
-	pyArrayClass = (jclass) (*env)->NewWeakGlobalRef(env, pyArrayClassLocal);
-	(*env)->DeleteLocalRef(env, pyArrayClassLocal);
-	pyArrayGetTypecode = (*env)->GetMethodID(env, pyArrayClass, "getTypecode", "()Ljava/lang/String;");
+//	JNI_CLASS(pyArray, "org/python/core/PyArray")
+//	pyArrayGetTypecode = (*env)->GetMethodID(env, pyArrayClass, "getTypecode", "()Ljava/lang/String;");
 
-	jclass pyTupleClassLocal = (*env)->FindClass(env, "org/python/core/PyTuple");
-	if (pyTupleClassLocal == NULL) { return JNI_ERR;}
-	pyTupleClass = (jclass) (*env)->NewWeakGlobalRef(env, pyTupleClassLocal);
-	(*env)->DeleteLocalRef(env, pyTupleClassLocal);
+	JNI_CLASS(pyTuple, "org/python/core/PyTuple")
 	pyTupleConstructor = (*env)->GetMethodID(env, pyTupleClass, "<init>", "()V");
 	pyTupleByPyObjectArrayBooleanConstructor = (*env)->GetMethodID(env, pyTupleClass, "<init>",
 			"([Lorg/python/core/PyObject;Z)V");
 	pyTupleSize = (*env)->GetMethodID(env, pyTupleClass, "size", "()I");
 	pyTuplePyGet = (*env)->GetMethodID(env, pyTupleClass, "pyget",
 			"(I)Lorg/python/core/PyObject;");
-	//pyTupleGetArray = (*env)->GetMethodID(env, pyTupleClass, "getArray",
-	//		"()[Lorg/python/core/PyObject;");
 
-	jclass pyListClassLocal = (*env)->FindClass(env, "org/python/core/PyList");
-	if (pyListClassLocal == NULL) { return JNI_ERR;}
-	pyListClass = (jclass) (*env)->NewWeakGlobalRef(env, pyListClassLocal);
-	(*env)->DeleteLocalRef(env, pyListClassLocal);
+	JNI_CLASS(pyList, "org/python/core/PyList")
 	pyListConstructor = (*env)->GetMethodID(env, pyListClass, "<init>", "()V");
 	pyListByPyObjectArrayConstructor = (*env)->GetMethodID(env, pyListClass, "<init>",
 			"([Lorg/python/core/PyObject;)V");
@@ -3623,10 +3490,7 @@ inline jint initJythonObjects(JNIEnv *env)
 			"()[Lorg/python/core/PyObject;");
 	pyListBackend = (*env)->GetFieldID(env, pyListClass, "list", "Ljava/util/List;");
 
-	jclass pyAbstractDictClassLocal = (*env)->FindClass(env, "org/python/core/AbstractDict");
-	if (pyAbstractDictClassLocal == NULL) { return JNI_ERR;}
-	pyAbstractDictClass = (jclass) (*env)->NewWeakGlobalRef(env, pyAbstractDictClassLocal);
-	(*env)->DeleteLocalRef(env, pyAbstractDictClassLocal);
+	JNI_CLASS(pyAbstractDict, "org/python/core/AbstractDict")
 	pyAbstractDictCopy = (*env)->GetMethodID(env, pyAbstractDictClass, "copy",
 			"()Lorg/python/core/AbstractDict;");
 	pyAbstractDictMerge = (*env)->GetMethodID(env, pyAbstractDictClass, "merge",
@@ -3634,39 +3498,22 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyAbstractDictMergeFromSeq = (*env)->GetMethodID(env, pyAbstractDictClass, "mergeFromSeq",
 			"(Lorg/python/core/PyObject;Z)V");
 
-	jclass pyDictClassLocal = (*env)->FindClass(env, "org/python/core/PyDictionary");
-	if (pyDictClassLocal == NULL) { return JNI_ERR;}
-	pyDictClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDictClassLocal);
-	(*env)->DeleteLocalRef(env, pyDictClassLocal);
+	JNI_CLASS(pyDict, "org/python/core/PyDictionary")
 	pyDictConstructor = (*env)->GetMethodID(env, pyDictClass, "<init>", "()V");
-//	pyDictByPyObjectArrayConstructor = (*env)->GetMethodID(env, pyDictClass, "<init>",
-//			"([Lorg/python/core/PyObject;)V");
 
-	jclass pyStringMapClassLocal = (*env)->FindClass(env, "org/python/core/PyStringMap");
-	if (pyStringMapClassLocal == NULL) { return JNI_ERR;}
-	pyStringMapClass = (jclass) (*env)->NewWeakGlobalRef(env, pyStringMapClassLocal);
-	(*env)->DeleteLocalRef(env, pyStringMapClassLocal);
+	JNI_CLASS(pyStringMap, "org/python/core/PyStringMap")
 
-	jclass pySequenceClassLocal = (*env)->FindClass(env, "org/python/core/PySequence");
-	if (pySequenceClassLocal == NULL) { return JNI_ERR;}
-	pySequenceClass = (jclass) (*env)->NewWeakGlobalRef(env, pySequenceClassLocal);
-	(*env)->DeleteLocalRef(env, pySequenceClassLocal);
+	JNI_CLASS(pySequence, "org/python/core/PySequence")
 	pySequenceLen = (*env)->GetMethodID(env, pySequenceClass, "__len__", "()I");
 	pySequenceGetItem = (*env)->GetMethodID(env, pySequenceClass, "__finditem__",
 			"(I)Lorg/python/core/PyObject;");
 
-	jclass pySequenceListClassLocal = (*env)->FindClass(env, "org/python/core/PySequenceList");
-	if (pySequenceListClassLocal == NULL) { return JNI_ERR;}
-	pySequenceListClass = (jclass) (*env)->NewWeakGlobalRef(env, pySequenceListClassLocal);
-	(*env)->DeleteLocalRef(env, pySequenceListClassLocal);
+	JNI_CLASS(pySequenceList, "org/python/core/PySequenceList")
 	pySequenceListSize = (*env)->GetMethodID(env, pySequenceListClass, "size", "()I");
 	pySequenceListPyGet = (*env)->GetMethodID(env, pySequenceListClass, "pyget",
 			"(I)Lorg/python/core/PyObject;");
 
-	jclass pyTypeClassLocal = (*env)->FindClass(env, "org/python/core/PyType");
-	if (pyTypeClassLocal == NULL) { return JNI_ERR;}
-	pyTypeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyTypeClassLocal);
-	(*env)->DeleteLocalRef(env, pyTypeClassLocal);
+	JNI_CLASS(pyType, "org/python/core/PyType")
 	pyTypeGetName = (*env)->GetMethodID(env, pyTypeClass, "getName",
 			"()Ljava/lang/String;");
 	pyTypeSetName = (*env)->GetMethodID(env, pyTypeClass, "setName",
@@ -3686,10 +3533,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyTypeNameField = (*env)->GetFieldID(env, pyTypeClass, "name",
 			"Ljava/lang/String;");
 
-	jclass pyCodecsClassLocal = (*env)->FindClass(env, "org/python/core/codecs");
-	if (pyCodecsClassLocal == NULL) { return JNI_ERR;}
-	pyCodecsClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCodecsClassLocal);
-	(*env)->DeleteLocalRef(env, pyCodecsClassLocal);
+	JNI_CLASS(pyCodecs, "org/python/core/codecs")
 	pyCodecsDecode = (*env)->GetStaticMethodID(env, pyCodecsClass, "decode",
 			"(Lorg/python/core/PyString;Ljava/lang/String;Ljava/lang/String;)Lorg/python/core/PyObject;");
 	pyCodecsEncode = (*env)->GetStaticMethodID(env, pyCodecsClass, "encode",
@@ -3705,21 +3549,12 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyCodecsRegisterError = (*env)->GetStaticMethodID(env, pyCodecsClass, "register_error",
 			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
 
-	jclass pyNotImplementedClassLocal = (*env)->FindClass(env, "org/python/core/PyNotImplemented");
-	if (pyNotImplementedClassLocal == NULL) { return JNI_ERR;}
-	pyNotImplementedClass = (jclass) (*env)->NewWeakGlobalRef(env, pyNotImplementedClassLocal);
-	(*env)->DeleteLocalRef(env, pyNotImplementedClassLocal);
+	JNI_CLASS(pyNotImplemented, "org/python/core/PyNotImplemented")
 
-	jclass pyFileClassLocal = (*env)->FindClass(env, "org/python/core/PyFile");
-	if (pyFileClassLocal == NULL) { return JNI_ERR;}
-	pyFileClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFileClassLocal);
-	(*env)->DeleteLocalRef(env, pyFileClassLocal);
+	JNI_CLASS(pyFile, "org/python/core/PyFile")
 	pyFileWrite = (*env)->GetMethodID(env, pyFileClass, "write", "(Ljava/lang/String;)V");
 
-	jclass pyModuleClassLocal = (*env)->FindClass(env, "org/python/core/PyModule");
-	if (pyModuleClassLocal == NULL) { return JNI_ERR;}
-	pyModuleClass = (jclass) (*env)->NewWeakGlobalRef(env, pyModuleClassLocal);
-	(*env)->DeleteLocalRef(env, pyModuleClassLocal);
+	JNI_CLASS(pyModule, "org/python/core/PyModule")
 	pyModuleByStringConstructor = (*env)->GetMethodID(env, pyModuleClass, "<init>",
 			"(Ljava/lang/String;)V");
 	pyModuleGetDict = (*env)->GetMethodID(env, pyModuleClass, "getDict",
@@ -3729,37 +3564,25 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyModule__delattr__ = (*env)->GetMethodID(env, pyModuleClass, "__delattr__",
 			"(Ljava/lang/String;)V");
 
-	jclass pyCellClassLocal = (*env)->FindClass(env, "org/python/core/PyCell");
-	if (pyCellClassLocal == NULL) { return JNI_ERR;}
-	pyCellClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCellClassLocal);
-	(*env)->DeleteLocalRef(env, pyCellClassLocal);
+	JNI_CLASS(pyCell, "org/python/core/PyCell")
 	pyCellConstructor = (*env)->GetMethodID(env, pyCellClass, "<init>", "()V");
 	pyCell_ob_ref = (*env)->GetFieldID(env, pyCellClass, "ob_ref", "Lorg/python/core/PyObject;");
 
-	jclass pyClassClassLocal = (*env)->FindClass(env, "org/python/core/PyClass");
-	if (pyClassClassLocal == NULL) { return JNI_ERR;}
-	pyClassClass = (jclass) (*env)->NewWeakGlobalRef(env, pyClassClassLocal);
-	(*env)->DeleteLocalRef(env, pyClassClassLocal);
+	JNI_CLASS(pyClass, "org/python/core/PyClass")
 	pyClassClassobj___new__ = (*env)->GetStaticMethodID(env, pyClassClass, "classobj___new__",
 			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyClass__bases__ = (*env)->GetFieldID(env, pyClassClass, "__bases__", "Lorg/python/core/PyTuple;");
 	pyClass__dict__ = (*env)->GetFieldID(env, pyClassClass, "__dict__", "Lorg/python/core/PyObject;");
 	pyClass__name__ = (*env)->GetFieldID(env, pyClassClass, "__name__", "Ljava/lang/String;");
 
-	jclass pyMethodClassLocal = (*env)->FindClass(env, "org/python/core/PyMethod");
-	if (pyMethodClassLocal == NULL) { return JNI_ERR;}
-	pyMethodClass = (jclass) (*env)->NewWeakGlobalRef(env, pyMethodClassLocal);
-	(*env)->DeleteLocalRef(env, pyMethodClassLocal);
+	JNI_CLASS(pyMethod, "org/python/core/PyMethod")
 	pyMethodConstructor = (*env)->GetMethodID(env, pyMethodClass, "<init>",
 			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
 	pyMethod__func__ = (*env)->GetFieldID(env, pyMethodClass, "__func__", "Lorg/python/core/PyObject;");
 	pyMethod__self__ = (*env)->GetFieldID(env, pyMethodClass, "__self__", "Lorg/python/core/PyObject;");
 	pyMethodImClass = (*env)->GetFieldID(env, pyMethodClass, "im_class", "Lorg/python/core/PyObject;");
 
-	jclass pyFunctionClassLocal = (*env)->FindClass(env, "org/python/core/PyFunction");
-	if (pyFunctionClassLocal == NULL) { return JNI_ERR;}
-	pyFunctionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFunctionClassLocal);
-	(*env)->DeleteLocalRef(env, pyFunctionClassLocal);
+	JNI_CLASS(pyFunction, "org/python/core/PyFunction")
 	pyFunctionConstructor = (*env)->GetMethodID(env, pyFunctionClass, "<init>",
 			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;)V");
 	pyFunction__code__ = (*env)->GetFieldID(env, pyFunctionClass, "__code__",
@@ -3781,28 +3604,19 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyFunction__name__ = (*env)->GetFieldID(env, pyFunctionClass, "__name__",
 			"Ljava/lang/String;");
 
-	jclass pyClassMethodClassLocal = (*env)->FindClass(env, "org/python/core/PyClassMethod");
-	if (pyClassMethodClassLocal == NULL) { return JNI_ERR;}
-	pyClassMethodClass = (jclass) (*env)->NewWeakGlobalRef(env, pyClassMethodClassLocal);
-	(*env)->DeleteLocalRef(env, pyClassMethodClassLocal);
+	JNI_CLASS(pyClassMethod, "org/python/core/PyClassMethod")
 	pyClassMethodConstructor = (*env)->GetMethodID(env, pyClassMethodClass, "<init>",
 			"(Lorg/python/core/PyObject;)V");
 	pyClassMethod_callable = (*env)->GetFieldID(env, pyClassMethodClass, "callable",
 			"Lorg/python/core/PyObject;");
 
-	jclass pyStaticMethodClassLocal = (*env)->FindClass(env, "org/python/core/PyStaticMethod");
-	if (pyStaticMethodClassLocal == NULL) { return JNI_ERR;}
-	pyStaticMethodClass = (jclass) (*env)->NewWeakGlobalRef(env, pyStaticMethodClassLocal);
-	(*env)->DeleteLocalRef(env, pyStaticMethodClassLocal);
+	JNI_CLASS(pyStaticMethod, "org/python/core/PyStaticMethod")
 	pyStaticMethodConstructor = (*env)->GetMethodID(env, pyStaticMethodClass, "<init>",
 			"(Lorg/python/core/PyObject;)V");
 	pyStaticMethod_callable = (*env)->GetFieldID(env, pyStaticMethodClass, "callable",
 			"Lorg/python/core/PyObject;");
 
-	jclass pyBuiltinCallableInfoClassLocal = (*env)->FindClass(env, "org/python/core/PyBuiltinCallable$Info");
-	if (pyBuiltinCallableInfoClassLocal == NULL) { return JNI_ERR;}
-	pyBuiltinCallableInfoClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBuiltinCallableInfoClassLocal);
-	(*env)->DeleteLocalRef(env, pyBuiltinCallableInfoClassLocal);
+	JNI_CLASS(pyBuiltinCallableInfo, "org/python/core/PyBuiltinCallable$Info")
 	pyBuiltinCallableInfoMin = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass,
 			"getMinargs", "()I");
 	pyBuiltinCallableInfoMax = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass,
@@ -3810,10 +3624,7 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyBuiltinCallableInfoName = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass, "getName",
 			"()Ljava/lang/String;");
 
-	jclass pyBuiltinCallableClassLocal = (*env)->FindClass(env, "org/python/core/PyBuiltinCallable");
-	if (pyBuiltinCallableClassLocal == NULL) { return JNI_ERR;}
-	pyBuiltinCallableClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBuiltinCallableClassLocal);
-	(*env)->DeleteLocalRef(env, pyBuiltinCallableClassLocal);
+	JNI_CLASS(pyBuiltinCallable, "org/python/core/PyBuiltinCallable")
 	pyBuiltinCallable_getSelf = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getSelf",
 			"()Lorg/python/core/PyObject;");
 	pyBuiltinCallable_getModule = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getModule",
@@ -3825,52 +3636,31 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyBuiltinCallable_info = (*env)->GetFieldID(env, pyBuiltinCallableClass, "info",
 			"Lorg/python/core/PyBuiltinCallable$Info;");
 
-	jclass pyCMethodDefClassLocal = (*env)->FindClass(env, "JyNI/CMethodDef");
-	if (pyCMethodDefClassLocal == NULL) { return JNI_ERR;}
-	pyCMethodDefClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCMethodDefClassLocal);
-	(*env)->DeleteLocalRef(env, pyCMethodDefClassLocal);
+	JNI_CLASS(pyCMethodDef, "JyNI/CMethodDef")
 	pyCMethodDefConstructor = (*env)->GetMethodID(env, pyCMethodDefClass, "<init>",
 			"(JLjava/lang/String;ZLjava/lang/String;)V");
 
-	jclass pyCFunctionClassLocal = (*env)->FindClass(env, "JyNI/PyCFunction");
-	if (pyStaticMethodClassLocal == NULL) { return JNI_ERR;}
-	pyCFunctionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCFunctionClassLocal);
-	(*env)->DeleteLocalRef(env, pyCFunctionClassLocal);
+	JNI_CLASS(pyCFunction, "JyNI/PyCFunction")
 	pyCFunctionConstructor = (*env)->GetMethodID(env, pyCFunctionClass, "<init>",
 			"(JLorg/python/core/PyType;Ljava/lang/String;ZLjava/lang/String;)V");
 
-	jclass pyDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyDescriptor");
-	if (pyDescrClassLocal == NULL) { return JNI_ERR;}
-	pyDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDescrClassLocal);
-	(*env)->DeleteLocalRef(env, pyDescrClassLocal);
+	JNI_CLASS(pyDescr, "org/python/core/PyDescriptor")
 	pyDescr_dtype = (*env)->GetFieldID(env, pyDescrClass, "dtype",
 			"Lorg/python/core/PyType;");
 
-	jclass pyMethodDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyMethodDescr");
-	if (pyMethodDescrClassLocal == NULL) { return JNI_ERR;}
-	pyMethodDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyMethodDescrClassLocal);
-	(*env)->DeleteLocalRef(env, pyMethodDescrClassLocal);
+	JNI_CLASS(pyMethodDescr, "org/python/core/PyMethodDescr")
 	pyMethodDescrConstructor = (*env)->GetMethodID(env, pyMethodDescrClass, "<init>",
 			"(Lorg/python/core/PyType;Lorg/python/core/PyBuiltinCallable;)V");
 
-	jclass pyClassMethodDescrClassLocal = (*env)->FindClass(env, "org/python/core/PyClassMethodDescr");
-	if (pyClassMethodDescrClassLocal == NULL) { return JNI_ERR;}
-	pyClassMethodDescrClass = (jclass) (*env)->NewWeakGlobalRef(env, pyClassMethodDescrClassLocal);
-	(*env)->DeleteLocalRef(env, pyClassMethodDescrClassLocal);
+	JNI_CLASS(pyClassMethodDescr, "org/python/core/PyClassMethodDescr")
 
-	jclass pyDictProxyClassLocal = (*env)->FindClass(env, "org/python/core/PyDictProxy");
-	if (pyDictProxyClassLocal == NULL) { return JNI_ERR;}
-	pyDictProxyClass = (jclass) (*env)->NewWeakGlobalRef(env, pyDictProxyClassLocal);
-	(*env)->DeleteLocalRef(env, pyDictProxyClassLocal);
+	JNI_CLASS(pyDictProxy, "org/python/core/PyDictProxy")
 	pyDictProxyConstructor = (*env)->GetMethodID(env, pyDictProxyClass, "<init>",
 			"(Lorg/python/core/PyObject;)V");
 	pyDictProxy_dict = (*env)->GetFieldID(env, pyDictProxyClass, "dict",
 			"Lorg/python/core/PyObject;");
 
-	jclass pyPropertyClassLocal = (*env)->FindClass(env, "org/python/core/PyProperty");
-	if (pyPropertyClassLocal == NULL) { return JNI_ERR;}
-	pyPropertyClass = (jclass) (*env)->NewWeakGlobalRef(env, pyPropertyClassLocal);
-	(*env)->DeleteLocalRef(env, pyPropertyClassLocal);
+	JNI_CLASS(pyProperty, "org/python/core/PyProperty")
 	pyPropertyConstructor = (*env)->GetMethodID(env, pyPropertyClass, "<init>", "()V");
 	pyProperty_fget = (*env)->GetFieldID(env, pyPropertyClass, "fget", "Lorg/python/core/PyObject;");
 	pyProperty_fset = (*env)->GetFieldID(env, pyPropertyClass, "fset", "Lorg/python/core/PyObject;");
@@ -3878,50 +3668,27 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyProperty_doc = (*env)->GetFieldID(env, pyPropertyClass, "doc", "Lorg/python/core/PyObject;");
 	pyProperty_docFromGetter = (*env)->GetFieldID(env, pyPropertyClass, "docFromGetter", "Z");
 
-	jclass pyBaseStringClassLocal = (*env)->FindClass(env, "org/python/core/PyBaseString");
-	if (pyBaseStringClassLocal == NULL) { return JNI_ERR;}
-	pyBaseStringClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseStringClassLocal);
-	(*env)->DeleteLocalRef(env, pyBaseStringClassLocal);
+//	JNI_CLASS(pyBaseString, "org/python/core/PyBaseString")
+//	JNI_CLASS(pyXRange, "org/python/core/PyXRange")
 
-	jclass pyXRangeClassLocal = (*env)->FindClass(env, "org/python/core/PyXRange");
-	if (pyXRangeClassLocal == NULL) { return JNI_ERR;}
-	pyXRangeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyXRangeClassLocal);
-	(*env)->DeleteLocalRef(env, pyXRangeClassLocal);
-
-	jclass pySequenceIterClassLocal = (*env)->FindClass(env, "org/python/core/PySequenceIter");
-	if (pySequenceIterClassLocal == NULL) { return JNI_ERR;}
-	pySequenceIterClass = (jclass) (*env)->NewWeakGlobalRef(env, pySequenceIterClassLocal);
-	(*env)->DeleteLocalRef(env, pySequenceIterClassLocal);
+	JNI_CLASS(pySequenceIter, "org/python/core/PySequenceIter")
 	pySequenceIterConstructor = (*env)->GetMethodID(env, pySequenceIterClass, "<init>",
 			"(Lorg/python/core/PyObject;)V");
 	pySequenceIter_seq = (*env)->GetFieldID(env, pySequenceIterClass, "seq",
 			"Lorg/python/core/PyObject;");
 	jfieldID pySequenceIter_index = (*env)->GetFieldID(env, pySequenceIterClass, "index", "I");
 
-	jclass pyFastSequenceIterClassLocal = (*env)->FindClass(env, "org/python/core/PyFastSequenceIter");
-	if (pyFastSequenceIterClassLocal == NULL) { return JNI_ERR;}
-	pyFastSequenceIterClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFastSequenceIterClassLocal);
-	(*env)->DeleteLocalRef(env, pyFastSequenceIterClassLocal);
+//	JNI_CLASS(pyFastSequenceIter, "org/python/core/PyFastSequenceIter")
+//	JNI_CLASS(pyReversedIterator, "org/python/core/PyReversedIterator")
 
-	jclass pyReversedIteratorClassLocal = (*env)->FindClass(env, "org/python/core/PyReversedIterator");
-	if (pyReversedIteratorClassLocal == NULL) { return JNI_ERR;}
-	pyReversedIteratorClass = (jclass) (*env)->NewWeakGlobalRef(env, pyReversedIteratorClassLocal);
-	(*env)->DeleteLocalRef(env, pyReversedIteratorClassLocal);
-
-	jclass pyBaseSetClassLocal = (*env)->FindClass(env, "org/python/core/BaseSet");
-	if (pyBaseSetClassLocal == NULL) { return JNI_ERR;}
-	pyBaseSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseSetClassLocal);
-	(*env)->DeleteLocalRef(env, pyBaseSetClassLocal);
+	jclass pyBaseSetClass = (*env)->FindClass(env, "org/python/core/BaseSet");
+//	if (pyBaseSetClassLocal == NULL) { return JNI_ERR;}
+//	pyBaseSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseSetClassLocal);
+//	(*env)->DeleteLocalRef(env, pyBaseSetClassLocal);
 	pyBaseSet_set = (*env)->GetFieldID(env, pyBaseSetClass, "_set", "Ljava/util/Set;");
 	pyBaseSetSize = (*env)->GetMethodID(env, pyBaseSetClass, "size", "()I");
-//	pyBaseSetClear = (*env)->GetMethodID(env, pyBaseSetClass, "clear", "()V");
-//	pyBaseSetContains = (*env)->GetMethodID(env, pyBaseSetClass, "contains", "(Ljava/lang/Object;)Z");
-//	pyBaseSetRemove = (*env)->GetMethodID(env, pyBaseSetClass, "remove", "(Ljava/lang/Object;)Z");
-//	pyBaseSetAdd = (*env)->GetMethodID(env, pyBaseSetClass, "add", "(Ljava/lang/Object;)Z");
 	pyBaseSet_update = (*env)->GetMethodID(env, pyBaseSetClass, "_update",
 			"(Lorg/python/core/PyObject;)V");
-	//pyBaseSetbaseset_union = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_union",
-//	        "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyBaseSetbaseset_issubset = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_issubset",
 			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyBaseSetbaseset_issuperset = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_issuperset",
@@ -3936,14 +3703,11 @@ inline jint initJythonObjects(JNIEnv *env)
 			"baseset_symmetric_difference", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
 	pyBaseSetbaseset_intersection = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_intersection",
 			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	//pyBaseSetbaseset_copy = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_copy", "()Lorg/python/core/PyObject;");
 	pyBaseSetbaseset___contains__ = (*env)->GetMethodID(env, pyBaseSetClass, "baseset___contains__",
 			"(Lorg/python/core/PyObject;)Z");
+	(*env)->DeleteLocalRef(env, pyBaseSetClass);
 
-	jclass pySetClassLocal = (*env)->FindClass(env, "org/python/core/PySet");
-	if (pySetClassLocal == NULL) { return JNI_ERR;}
-	pySetClass = (jclass) (*env)->NewWeakGlobalRef(env, pySetClassLocal);
-	(*env)->DeleteLocalRef(env, pySetClassLocal);
+	JNI_CLASS(pySet, "org/python/core/PySet")
 	pySetFromIterableConstructor = (*env)->GetMethodID(env, pySetClass, "<init>",
 			"(Lorg/python/core/PyObject;)V");
 	pySetset_pop = (*env)->GetMethodID(env, pySetClass, "set_pop",
@@ -3960,23 +3724,13 @@ inline jint initJythonObjects(JNIEnv *env)
 	pySetset_symmetric_difference_update = (*env)->GetMethodID(env, pySetClass,
 			"set_symmetric_difference_update", "(Lorg/python/core/PyObject;)V");
 
-	jclass pyFrozenSetClassLocal = (*env)->FindClass(env, "org/python/core/PyFrozenSet");
-	if (pyFrozenSetClassLocal == NULL) { return JNI_ERR;}
-	pyFrozenSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyFrozenSetClassLocal);
-	(*env)->DeleteLocalRef(env, pyFrozenSetClassLocal);
+	JNI_CLASS(pyFrozenSet, "org/python/core/PyFrozenSet")
 	pyFrozenSetFromIterableConstructor = (*env)->GetMethodID(env, pyFrozenSetClass, "<init>",
 			"(Lorg/python/core/PyObject;)V");
-	//pyFrozenSetSize = (*env)->GetMethodID(env, pyFrozenSetClass, "size", "()I");
 
-	jclass pyEnumerationClassLocal = (*env)->FindClass(env, "org/python/core/PyEnumerate");
-	if (pyEnumerationClassLocal == NULL) { return JNI_ERR;}
-	pyEnumerationClass = (jclass) (*env)->NewWeakGlobalRef(env, pyEnumerationClassLocal);
-	(*env)->DeleteLocalRef(env, pyEnumerationClassLocal);
+//	JNI_CLASS(pyEnumeration, "org/python/core/PyEnumerate")
 
-	jclass pySliceClassLocal = (*env)->FindClass(env, "org/python/core/PySlice");
-	if (pySliceClassLocal == NULL) { return JNI_ERR;}
-	pySliceClass = (jclass) (*env)->NewWeakGlobalRef(env, pySliceClassLocal);
-	(*env)->DeleteLocalRef(env, pySliceClassLocal);
+	JNI_CLASS(pySlice, "org/python/core/PySlice")
 	pySliceFromStartStopStepConstructor = (*env)->GetMethodID(env, pySliceClass, "<init>",
 			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
 	pySliceToString = (*env)->GetMethodID(env, pySliceClass, "toString",
@@ -3989,34 +3743,14 @@ inline jint initJythonObjects(JNIEnv *env)
 			"()Lorg/python/core/PyObject;");
 	pySliceIndicesEx = (*env)->GetMethodID(env, pySliceClass, "indicesEx", "(I)[I");
 
-	jclass pyEllipsisClassLocal = (*env)->FindClass(env, "org/python/core/PyEllipsis");
-	if (pyEllipsisClassLocal == NULL) { return JNI_ERR;}
-	pyEllipsisClass = (jclass) (*env)->NewWeakGlobalRef(env, pyEllipsisClassLocal);
-	(*env)->DeleteLocalRef(env, pyEllipsisClassLocal);
-
-	jclass pyGeneratorClassLocal = (*env)->FindClass(env, "org/python/core/PyGenerator");
-	if (pyGeneratorClassLocal == NULL) { return JNI_ERR;}
-	pyGeneratorClass = (jclass) (*env)->NewWeakGlobalRef(env, pyGeneratorClassLocal);
-	(*env)->DeleteLocalRef(env, pyGeneratorClassLocal);
-
-	jclass pyWeakReferenceClassLocal = (*env)->FindClass(env, "org/python/modules/_weakref/ReferenceType");
-	if (pyWeakReferenceClassLocal == NULL) { return JNI_ERR;}
-	pyWeakReferenceClass = (jclass) (*env)->NewWeakGlobalRef(env, pyWeakReferenceClassLocal);
-	(*env)->DeleteLocalRef(env, pyWeakReferenceClassLocal);
-
-	jclass pyWeakProxyClassLocal = (*env)->FindClass(env, "org/python/modules/_weakref/ProxyType");
-	if (pyWeakProxyClassLocal == NULL) { return JNI_ERR;}
-	pyWeakProxyClass = (jclass) (*env)->NewWeakGlobalRef(env, pyWeakProxyClassLocal);
-	(*env)->DeleteLocalRef(env, pyWeakProxyClassLocal);
-
-	jclass pyWeakCallableProxyClassLocal = (*env)->FindClass(env, "org/python/modules/_weakref/CallableProxyType");
-	if (pyWeakCallableProxyClassLocal == NULL) { return JNI_ERR;}
-	pyWeakCallableProxyClass = (jclass) (*env)->NewWeakGlobalRef(env, pyWeakCallableProxyClassLocal);
-	(*env)->DeleteLocalRef(env, pyWeakCallableProxyClassLocal);
+	JNI_CLASS(pyEllipsis, "org/python/core/PyEllipsis")
+//	JNI_CLASS(pyGenerator, "org/python/core/PyGenerator")
+	JNI_CLASS(pyWeakReference, "org/python/modules/_weakref/ReferenceType")
+	JNI_CLASS(pyWeakProxy, "org/python/modules/_weakref/ProxyType")
+	JNI_CLASS(pyWeakCallableProxy, "org/python/modules/_weakref/CallableProxyType")
 
 	jclass pyCodeClassLocal = (*env)->FindClass(env, "org/python/core/PyCode");
-	if (pyCodeClassLocal == NULL) { return JNI_ERR;}
-	//pyCodeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCodeClassLocal);
+//	if (pyCodeClassLocal == NULL) { return JNI_ERR;}
 	pyCode_co_name = (*env)->GetFieldID(env, pyCodeClassLocal, "co_name", "Ljava/lang/String;");
 	(*env)->DeleteLocalRef(env, pyCodeClassLocal);
 
@@ -4028,7 +3762,6 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyBaseCode_co_filename = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_filename",
 			"Ljava/lang/String;");
 	pyBaseCode_co_firstlineno = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_firstlineno", "I");
-	//pyBaseCode_co_flags = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_flags", "I");
 	pyBaseCode_co_freevars = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_freevars",
 			"[Ljava/lang/String;");
 	pyBaseCode_co_nlocals = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_nlocals", "I");
@@ -4036,66 +3769,33 @@ inline jint initJythonObjects(JNIEnv *env)
 			"[Ljava/lang/String;");
 	(*env)->DeleteLocalRef(env, pyBaseCodeClassLocal);
 
-	jclass pyBytecodeClassLocal = (*env)->FindClass(env, "org/python/core/PyBytecode");
-	if (pyBytecodeClassLocal == NULL) { return JNI_ERR;}
-	pyBytecodeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBytecodeClassLocal);
-	(*env)->DeleteLocalRef(env, pyBytecodeClassLocal);
+	JNI_CLASS(pyBytecode, "org/python/core/PyBytecode")
 	pyBytecodeConstructor = (*env)->GetMethodID(env, pyBytecodeClass, "<init>",
 			"(IIIILjava/lang/String;[Lorg/python/core/PyObject;[Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)V");
-//	int argcount, int nlocals, int stacksize, int flags, java.lang.String codestring,
-//	PyObject[] constants, java.lang.String[] names, java.lang.String[] varnames,
-//	java.lang.String filename, java.lang.String name, int firstlineno,
-//	java.lang.String lnotab, java.lang.String[] cellvars, java.lang.String[] freevars
-//	pyBytecode_co_code = (*env)->GetFieldID(env, pyBytecodeClass, "co_code", "[B");
 	pyBytecode_co_consts = (*env)->GetFieldID(env, pyBytecodeClass, "co_consts",
 			"[Lorg/python/core/PyObject;");
-//	pyBytecode_co_lnotab = (*env)->GetFieldID(env, pyBytecodeClass, "co_lnotab", "[B");
 	pyBytecode_co_names = (*env)->GetFieldID(env, pyBytecodeClass, "co_names",
 			"[Ljava/lang/String;");
 	pyBytecode_co_stacksize = (*env)->GetFieldID(env, pyBytecodeClass, "co_stacksize", "I");
 
-	jclass pyTableCodeClassLocal = (*env)->FindClass(env, "org/python/core/PyTableCode");
-	if (pyTableCodeClassLocal == NULL) { return JNI_ERR;}
-	pyTableCodeClass = (jclass) (*env)->NewWeakGlobalRef(env, pyTableCodeClassLocal);
-	(*env)->DeleteLocalRef(env, pyTableCodeClassLocal);
-	//pyTableCode_co_code;
+	JNI_CLASS(pyTableCode, "org/python/core/PyTableCode")
 
+//	JNI_CLASS(pyCallIter, "org/python/core/PyCallIter")
+//	JNI_CLASS(pySuper, "org/python/core/PySuper")
 
-	jclass pyCallIterClassLocal = (*env)->FindClass(env, "org/python/core/PyCallIter");
-	if (pyCallIterClassLocal == NULL) { return JNI_ERR;}
-	pyCallIterClass = (jclass) (*env)->NewWeakGlobalRef(env, pyCallIterClassLocal);
-	(*env)->DeleteLocalRef(env, pyCallIterClassLocal);
-
-	jclass pySuperClassLocal = (*env)->FindClass(env, "org/python/core/PySuper");
-	if (pySuperClassLocal == NULL) { return JNI_ERR;}
-	pySuperClass = (jclass) (*env)->NewWeakGlobalRef(env, pySuperClassLocal);
-	(*env)->DeleteLocalRef(env, pySuperClassLocal);
-
-	jclass GlobalRefClassLocal = (*env)->FindClass(env, "org/python/modules/_weakref/GlobalRef");
-	if (GlobalRefClassLocal == NULL) { return JNI_ERR;}
-	GlobalRefClass = (jclass) (*env)->NewWeakGlobalRef(env, GlobalRefClassLocal);
-	(*env)->DeleteLocalRef(env, GlobalRefClassLocal);
+	JNI_CLASS(GlobalRef, "org/python/modules/_weakref/GlobalRef")
 	GlobalRef_retryFactory = (*env)->GetMethodID(env, GlobalRefClass, "retryFactory",
 			"()Lorg/python/modules/_weakref/ReferenceBackend;");
 
-	jclass AbstractReferenceClassLocal = (*env)->FindClass(env, "org/python/modules/_weakref/AbstractReference");
-	if (AbstractReferenceClassLocal == NULL) { return JNI_ERR;}
-	AbstractReferenceClass = (jclass) (*env)->NewWeakGlobalRef(env, AbstractReferenceClassLocal);
-	(*env)->DeleteLocalRef(env, AbstractReferenceClassLocal);
+	JNI_CLASS(AbstractReference, "org/python/modules/_weakref/AbstractReference")
 	AbstractReference_get = (*env)->GetMethodID(env, AbstractReferenceClass, "get",
 			"()Lorg/python/core/PyObject;");
 
-	jclass JyNIGlobalRefClassLocal = (*env)->FindClass(env, "JyNI/JyNIGlobalRef");
-	if (JyNIGlobalRefClassLocal == NULL) { return JNI_ERR;}
-	JyNIGlobalRefClass = (jclass) (*env)->NewWeakGlobalRef(env, JyNIGlobalRefClassLocal);
-	(*env)->DeleteLocalRef(env, JyNIGlobalRefClassLocal);
+	JNI_CLASS(JyNIGlobalRef, "JyNI/JyNIGlobalRef")
 	JyNIGlobalRef_initNativeHandle = (*env)->GetMethodID(env, JyNIGlobalRefClass,
 			"initNativeHandle", "(J)V");
 
-	jclass pyBaseExceptionClassLocal = (*env)->FindClass(env, "org/python/core/PyBaseException");
-	if (pyBaseExceptionClassLocal == NULL) { return JNI_ERR;}
-	pyBaseExceptionClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseExceptionClassLocal);
-	(*env)->DeleteLocalRef(env, pyBaseExceptionClassLocal);
+	JNI_CLASS(pyBaseException, "org/python/core/PyBaseException")
 	pyBaseExceptionEmptyConstructor = (*env)->GetMethodID(env, pyBaseExceptionClass,
 			"<init>", "()V");
 	pyBaseExceptionSubTypeConstructor = (*env)->GetMethodID(env, pyBaseExceptionClass,
@@ -4115,43 +3815,22 @@ inline jint initJythonObjects(JNIEnv *env)
 	pyBaseExceptionSetMessage = (*env)->GetMethodID(env, pyBaseExceptionClass,
 			"setMessage", "(Lorg/python/core/PyObject;)V");
 
-	jclass pyByteArrayClassLocal = (*env)->FindClass(env, "org/python/core/PyByteArray");
-	if (pyByteArrayClassLocal == NULL) { return JNI_ERR;}
-	pyByteArrayClass = (jclass) (*env)->NewWeakGlobalRef(env, pyByteArrayClassLocal);
-	(*env)->DeleteLocalRef(env, pyByteArrayClassLocal);
+//	JNI_CLASS(pyByteArray, "org/python/core/PyByteArray")
+//	JNI_CLASS(pyBuffer, "org/python/core/PyBuffer")
+//	JNI_CLASS(pyMemoryView, "org/python/core/PyMemoryView")
 
-	jclass pyBufferClassLocal = (*env)->FindClass(env, "org/python/core/PyBuffer");
-	if (pyBufferClassLocal == NULL) { return JNI_ERR;}
-	pyBufferClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBufferClassLocal);
-	(*env)->DeleteLocalRef(env, pyBufferClassLocal);
-
-	jclass pyMemoryViewClassLocal = (*env)->FindClass(env, "org/python/core/PyMemoryView");
-	if (pyMemoryViewClassLocal == NULL) { return JNI_ERR;}
-	pyMemoryViewClass = (jclass) (*env)->NewWeakGlobalRef(env, pyMemoryViewClassLocal);
-	(*env)->DeleteLocalRef(env, pyMemoryViewClassLocal);
-
-	jclass __builtin__ClassLocal = (*env)->FindClass(env, "org/python/core/__builtin__");
-	if (__builtin__ClassLocal == NULL) { return JNI_ERR;}
-	__builtin__Class = (jclass) (*env)->NewWeakGlobalRef(env, __builtin__ClassLocal);
-	(*env)->DeleteLocalRef(env, __builtin__ClassLocal);
+	JNI_CLASS(__builtin__, "org/python/core/__builtin__")
 	//__builtin__Import = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
 	__builtin__ImportLevel = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__",
 			"(Ljava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;I)Lorg/python/core/PyObject;");
 
-	jclass impClassLocal = (*env)->FindClass(env, "org/python/core/imp");
-	if (!impClassLocal) return JNI_ERR;
-	impClass = (jclass) (*env)->NewWeakGlobalRef(env, impClassLocal);
-	(*env)->DeleteLocalRef(env, impClassLocal);
+	JNI_CLASS(imp, "org/python/core/imp")
 	imp_importName = (*env)->GetStaticMethodID(env, impClass, "importName",
 			"(Ljava/lang/String;Z)Lorg/python/core/PyObject;");
 	imp_reload = (*env)->GetStaticMethodID(env, impClass, "reload",
 			"(Lorg/python/core/PyModule;)Lorg/python/core/PyObject;");
 
-	jclass exceptionsClassLocal = (*env)->FindClass(env, "org/python/core/exceptions");
-	if (exceptionsClassLocal == NULL) { return JNI_ERR;}
-	exceptionsClass = (jclass) (*env)->NewWeakGlobalRef(env, exceptionsClassLocal);
-	(*env)->DeleteLocalRef(env, exceptionsClassLocal);
-
+	JNI_CLASS(exceptions, "org/python/core/exceptions")
 	exceptionsKeyError = (*env)->GetStaticMethodID(env, exceptionsClass, "KeyError",
 			"()Lorg/python/core/PyObject;");
 	exceptionsKeyError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "KeyError__str__",
@@ -4174,7 +3853,6 @@ inline jint initJythonObjects(JNIEnv *env)
 			"()Lorg/python/core/PyObject;");
 	exceptionsSystemExit__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "SystemExit__init__",
 			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-
 	exceptionsUnicodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeError",
 			"()Lorg/python/core/PyObject;");
 	#ifdef Py_USING_UNICODE

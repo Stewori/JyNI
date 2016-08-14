@@ -72,8 +72,8 @@ extern jmethodID pyPyMakeClass;
 extern jfieldID pyPyIntegerCache;
 extern jfieldID pyPyLetters;
 
-extern jclass pyArrayClass;
-extern jmethodID pyArrayGetTypecode;
+//extern jclass pyArrayClass;
+//extern jmethodID pyArrayGetTypecode;
 
 extern jclass pySequenceListClass;
 extern jmethodID pySequenceListSize;

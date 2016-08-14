@@ -271,18 +271,18 @@ extern jfieldID pyProperty_fdel;
 extern jfieldID pyProperty_doc;
 extern jfieldID pyProperty_docFromGetter;
 
-extern jclass pyBaseStringClass;
-extern jclass pyXRangeClass;
+//extern jclass pyBaseStringClass;
+//extern jclass pyXRangeClass;
 
 extern jclass pySequenceIterClass;
 extern jmethodID pySequenceIterConstructor;
 extern jfieldID pySequenceIter_seq;
 extern jfieldID pySequenceIter_index;
 
-extern jclass pyFastSequenceIterClass;
-extern jclass pyReversedIteratorClass;
+//extern jclass pyFastSequenceIterClass;
+//extern jclass pyReversedIteratorClass;
 
-extern jclass pyBaseSetClass;
+//extern jclass pyBaseSetClass;
 extern jfieldID pyBaseSet_set;
 extern jmethodID pyBaseSetSize;
 extern jmethodID pyBaseSet_update;
@@ -310,7 +310,7 @@ extern jmethodID pySetset_symmetric_difference_update;
 extern jclass pyFrozenSetClass;
 extern jmethodID pyFrozenSetFromIterableConstructor;
 
-extern jclass pyEnumerationClass;
+//extern jclass pyEnumerationClass;
 
 extern jclass pySliceClass;
 extern jmethodID pySliceFromStartStopStepConstructor;
@@ -321,7 +321,7 @@ extern jmethodID pySliceGetStep;
 extern jmethodID pySliceIndicesEx;
 
 extern jclass pyEllipsisClass;
-extern jclass pyGeneratorClass;
+//extern jclass pyGeneratorClass;
 
 extern jclass pyWeakReferenceClass;
 extern jclass pyWeakProxyClass;
@@ -351,8 +351,8 @@ extern jfieldID pyBytecode_co_stacksize;
 extern jclass pyTableCodeClass;
 //extern jfieldID pyTableCode_co_code;
 
-extern jclass pyCallIterClass;
-extern jclass pySuperClass;
+//extern jclass pyCallIterClass;
+//extern jclass pySuperClass;
 
 extern jclass GlobalRefClass;
 extern jmethodID GlobalRef_retryFactory;
@@ -374,9 +374,9 @@ extern jmethodID pyBaseExceptionSetArgs;
 extern jmethodID pyBaseExceptionGetMessage;
 extern jmethodID pyBaseExceptionSetMessage;
 
-extern jclass pyByteArrayClass;
-extern jclass pyBufferClass;
-extern jclass pyMemoryViewClass;
+//extern jclass pyByteArrayClass;
+//extern jclass pyBufferClass;
+//extern jclass pyMemoryViewClass;
 
 extern jclass __builtin__Class;
 //extern jmethodID __builtin__Import;
