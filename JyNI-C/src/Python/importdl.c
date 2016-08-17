@@ -125,7 +125,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 			mName
 		);*/
 	env(NULL);
-	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIJyNI_GetModule, (*env)->NewStringUTF(env, name));
+	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_GetModule, (*env)->NewStringUTF(env, name));
 	//puts("retrieved module");
 	if (m == NULL) {
 		//puts("m = NULL");
@@ -147,7 +147,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	//if (_PyImport_FixupExtension(name, pathname) == NULL)
 	//	return NULL;
 	//if (Py_VerboseFlag)
-	if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNIGetDLVerbose))
+	if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_getDLVerbose))
 		PySys_WriteStderr(
 			"import %s # dynamically loaded from %s\n",
 			name, pathname);

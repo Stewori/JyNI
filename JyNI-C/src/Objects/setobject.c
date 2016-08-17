@@ -415,9 +415,9 @@ set_add_key(register PySetObject *so, PyObject *key)
 	env(-1);
 	jobject set = JyNI_JythonPyObject_FromPyObject((PyObject*) so);
 	jobject jkey = JyNI_JythonPyObject_FromPyObject(key);
-	if ((*env)->CallBooleanMethod(env, set, pyBaseSetbaseset___contains__, jkey))
+	if ((*env)->CallBooleanMethod(env, set, pyBaseSet_baseset___contains__, jkey))
 		return 0;
-	(*env)->CallVoidMethod(env, set, pySetset_add, jkey);
+	(*env)->CallVoidMethod(env, set, pySet_set_add, jkey);
 	//++so->used; //should be done by JySet
 	return 1;
 }
@@ -469,9 +469,9 @@ set_discard_key(PySetObject *so, PyObject *key)
 	env(-1);
 	jobject set = JyNI_JythonPyObject_FromPyObject((PyObject*) so);
 	jobject jkey = JyNI_JythonPyObject_FromPyObject(key);
-	if (!(*env)->CallBooleanMethod(env, set, pyBaseSetbaseset___contains__, jkey))
+	if (!(*env)->CallBooleanMethod(env, set, pyBaseSet_baseset___contains__, jkey))
 		return DISCARD_NOTFOUND;
-	(*env)->CallVoidMethod(env, set, pySetset_discard, jkey);
+	(*env)->CallVoidMethod(env, set, pySet_set_discard, jkey);
 	//--so->used; //Should be done by JySet.
 	return DISCARD_FOUND;
 }
@@ -503,7 +503,7 @@ static int
 set_clear_internal(PySetObject *so)
 {
 	env(-1);
-	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so), pySetset_clear);
+	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so), pySet_set_clear);
 	so->fill = 0;
 	//so->used = 0; //should be done by JySet
 	return 0;
@@ -708,10 +708,10 @@ set_tp_print(PySetObject *so, FILE *fp, int flags)
 	char *separator = ", ";
 
 	env(-1);
-	jobject threadState = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyGetThreadState);
+	jobject threadState = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_getThreadState);
 	jobject set = JyNI_JythonPyObject_FromPyObject((PyObject*) so);
 	//int status = Py_ReprEnter((PyObject*)so);
-	jboolean status = (*env)->CallBooleanMethod(env, threadState, pyThreadStateEnterRepr, set);
+	jboolean status = (*env)->CallBooleanMethod(env, threadState, pyThreadState_enterRepr, set);
 
 	if ((*env)->ExceptionCheck(env)) {
 		(*env)->ExceptionClear(env);
@@ -738,7 +738,7 @@ set_tp_print(PySetObject *so, FILE *fp, int flags)
 		//todo implement PyObject_Print
 		if (PyObject_Print(key, fp, 0) != 0) {
 			//Py_ReprLeave((PyObject*)so);
-			(*env)->CallVoidMethod(env, threadState, pyThreadStateExitRepr, set);
+			(*env)->CallVoidMethod(env, threadState, pyThreadState_exitRepr, set);
 			return -1;
 		}
 	}
@@ -746,7 +746,7 @@ set_tp_print(PySetObject *so, FILE *fp, int flags)
 	fputs("])", fp);
 	//Py_END_ALLOW_THREADS
 	//Py_ReprLeave((PyObject*)so);
-	(*env)->CallVoidMethod(env, threadState, pyThreadStateExitRepr, set);
+	(*env)->CallVoidMethod(env, threadState, pyThreadState_exitRepr, set);
 	return 0;
 }
 
@@ -756,7 +756,7 @@ set_repr(PySetObject *so)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyObject__repr__));
+			pyObject___repr__));
 }
 //	PyObject *keys, *result=NULL, *listrepr;
 //	int status = Py_ReprEnter((PyObject*)so);
@@ -835,7 +835,7 @@ set_contains_key(PySetObject *so, PyObject *key)
 {
 	env(-1);
 	return (*env)->CallBooleanMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-		pyBaseSetbaseset___contains__, JyNI_JythonPyObject_FromPyObject(key));
+		pyBaseSet_baseset___contains__, JyNI_JythonPyObject_FromPyObject(key));
 //	jboolean er = (*env)->CallBooleanMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
 //		pyBaseSetbaseset___contains__, JyNI_JythonPyObject_FromPyObject(key));
 //	if ((*env)->ExceptionCheck(env))
@@ -884,7 +884,7 @@ set_pop(PySetObject *so)
 	env(NULL);
 	//jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPySet_pop, JyNI_JythonPyObject_FromPyObject((PyObject*) so));
 	jobject er = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pySetset_pop);
+			pySet_set_pop);
 	if (er == NULL) {
 		//PyErr_SetString(PyExc_KeyError, "pop from an empty set (corrupted set or bug, since size > 0)");
 		return NULL;
@@ -949,7 +949,7 @@ static long
 frozenset_hash(PyObject *self)
 {
 	env(0);
-	return (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(self), pyObjectHashCode);
+	return (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(self), object_hashCode);
 }
 //	PySetObject *so = (PySetObject *)self;
 //	long h, hash = 1927868237L;
@@ -1108,7 +1108,7 @@ set_update_internal(PySetObject *so, PyObject *other)
 	env(-1);
 	jobject jset = JyNI_JythonPyObject_FromPyObject((PyObject*) so);
 	(*env)->CallVoidMethod(env, jset,
-		pyBaseSet_update, JyNI_JythonPyObject_FromPyObject(other));
+		pyBaseSet__update, JyNI_JythonPyObject_FromPyObject(other));
 	//so->used = (*env)->CallIntMethod(env, jset, pyBaseSetSize); //should be done by JySet
 	return 0;
 }
@@ -1220,18 +1220,18 @@ make_new_set(PyTypeObject *type, PyObject *iterable)
 		jobject jobj;
 		if (type == &PySet_Type)
 		{
-			jobj = (*env)->NewObject(env, pySetClass, pySetFromIterableConstructor,
+			jobj = (*env)->NewObject(env, pySetClass, pySet_fromIterableConstructor,
 				JyNI_JythonPyObject_FromPyObject(iterable));
 			//so->used = (*env)->CallIntMethod(env, jobj, pySetSize);
 		}
 		else if (type == &PyFrozenSet_Type)
 		{
-			jobj = (*env)->NewObject(env, pyFrozenSetClass, pyFrozenSetFromIterableConstructor,
+			jobj = (*env)->NewObject(env, pyFrozenSetClass, pyFrozenSet_fromIterableConstructor,
 				JyNI_JythonPyObject_FromPyObject(iterable));
 			//so->used = (*env)->CallIntMethod(env, jobj, pyFrozenSetSize);
 		}
 		else return (PyObject *)so; //don't know how to deal with unknown set type
-		so->used = (*env)->CallIntMethod(env, jobj, pyBaseSetSize);
+		so->used = (*env)->CallIntMethod(env, jobj, collection_size);
 		JyObject* srcJy = AS_JY((PyObject*) so);
 		srcJy->jy = (*env)->NewWeakGlobalRef(env, jobj);
 		srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
@@ -1469,7 +1469,7 @@ set_intersection(PySetObject *so, PyObject *other)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyBaseSetbaseset_intersection, JyNI_JythonPyObject_FromPyObject(other)));
+			pyBaseSet_baseset_intersection, JyNI_JythonPyObject_FromPyObject(other)));
 }
 //	PySetObject *result;
 //	PyObject *key, *it, *tmp;
@@ -1585,7 +1585,7 @@ set_intersection_update(PySetObject *so, PyObject *other)
 	env(NULL);
 	jobject args = (*env)->NewObjectArray(env, 1, pyObjectClass, JyNI_JythonPyObject_FromPyObject(other));
 	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-				pySetset_intersection_update, args, length0StringArray);
+				pySet_set_intersection_update, args, JyEmptyStringArray);
 	Py_RETURN_NONE;
 }
 //	PyObject *tmp;
@@ -1610,7 +1610,7 @@ set_intersection_update_multi(PySetObject *so, PyObject *args)
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
 
 	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-				pySetset_intersection_update, jargs, length0StringArray);
+				pySet_set_intersection_update, jargs, JyEmptyStringArray);
 	Py_RETURN_NONE;
 }
 //	PyObject *tmp;
@@ -1664,7 +1664,7 @@ set_isdisjoint(PySetObject *so, PyObject *other)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyBaseSetbaseset_isdisjoint, JyNI_JythonPyObject_FromPyObject(other)));
+			pyBaseSet_baseset_isdisjoint, JyNI_JythonPyObject_FromPyObject(other)));
 }
 //	PyObject *key, *it, *tmp;
 //
@@ -1780,7 +1780,7 @@ set_difference_update(PySetObject *so, PyObject *args)
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
 
 	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-				pySetset_difference_update, jargs, length0StringArray);
+				pySet_set_difference_update, jargs, JyEmptyStringArray);
 	Py_RETURN_NONE;
 }
 //	Py_ssize_t i;
@@ -1802,7 +1802,7 @@ set_difference(PySetObject *so, PyObject *other)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyBaseSetbaseset_difference, JyNI_JythonPyObject_FromPyObject(other)));
+			pyBaseSet_baseset_difference, JyNI_JythonPyObject_FromPyObject(other)));
 }
 //	PyObject *result;
 //	setentry *entry;
@@ -1866,7 +1866,7 @@ set_difference_multi(PySetObject *so, PyObject *args)
 
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyBaseSetbaseset_differenceMulti, jargs));
+			pyBaseSet_baseset_differenceMulti, jargs));
 }
 //	Py_ssize_t i;
 //	PyObject *result, *other;
@@ -1909,7 +1909,7 @@ set_isub(PySetObject *so, PyObject *other)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-				pyObject__isub__, JyNI_JythonPyObject_FromPyObject(other)));
+				pyObject___isub__, JyNI_JythonPyObject_FromPyObject(other)));
 }
 //	if (!PyAnySet_Check(other)) {
 //		Py_INCREF(Py_NotImplemented);
@@ -1926,7 +1926,7 @@ set_symmetric_difference_update(PySetObject *so, PyObject *other)
 {
 	env(NULL);
 	(*env)->CallVoidMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-		pySetset_symmetric_difference_update, JyNI_JythonPyObject_FromPyObject(other));
+		pySet_set_symmetric_difference_update, JyNI_JythonPyObject_FromPyObject(other));
 	Py_RETURN_NONE;
 }
 //	PySetObject *otherset;
@@ -2047,7 +2047,7 @@ set_issubset(PySetObject *so, PyObject *other)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyBaseSetbaseset_issubset, JyNI_JythonPyObject_FromPyObject(other)));
+			pyBaseSet_baseset_issubset, JyNI_JythonPyObject_FromPyObject(other)));
 }
 //	setentry *entry;
 //	Py_ssize_t pos = 0;
@@ -2082,7 +2082,7 @@ set_issuperset(PySetObject *so, PyObject *other)
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
 		(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) so),
-			pyBaseSetbaseset_issuperset, JyNI_JythonPyObject_FromPyObject(other)));
+			pyBaseSet_baseset_issuperset, JyNI_JythonPyObject_FromPyObject(other)));
 }
 //	PyObject *tmp, *result;
 //
@@ -2123,8 +2123,8 @@ set_richcompare(PySetObject *v, PyObject *w, int op)
 		if (PyFrozenSet_CheckExact(v) && PyFrozenSet_CheckExact(w))
 		{
 			env(NULL);
-			if ((*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) v), pyObjectHashCode)
-				!= (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(w), pyObjectHashCode))
+			if ((*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) v), object_hashCode)
+				!= (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(w), object_hashCode))
 				Py_RETURN_FALSE;
 		}
 		return set_issubset(v, w);
@@ -2269,7 +2269,7 @@ set_reduce(PySetObject *so)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
-			JyNI_JythonPyObject_FromPyObject((PyObject*) so), pyObject__reduce__));
+			JyNI_JythonPyObject_FromPyObject((PyObject*) so), pyObject___reduce__));
 }
 //	PyObject *keys=NULL, *args=NULL, *result=NULL, *dict=NULL;
 //
@@ -2678,11 +2678,11 @@ _PySet_Next(PyObject *set, Py_ssize_t *pos, PyObject **key)
 	//*key = entry_ptr->key;
 	env(-1);
 	jobject res = (*env)->CallStaticObjectMethod(env, JyNIClass,
-			JyNIGetPySet_Next, JyNI_JythonPyObject_FromPyObject(set), *pos);
+			JyNI_getPySet_Next, JyNI_JythonPyObject_FromPyObject(set), *pos);
 	if (res == NULL) return 0;
-	jlong k = (*env)->GetLongField(env, res, JyNISetNextResultKeyHandleField);
+	jlong k = (*env)->GetLongField(env, res, JyNISetNextResult_keyHandleField);
 	if (k != NULL) *key = (PyObject*) k;
-	else *key = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, res, JyNISetNextResultKeyField));
+	else *key = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, res, JyNISetNextResult_keyField));
 
 	return 1;
 }
@@ -2703,14 +2703,14 @@ _PySet_NextEntry(PyObject *set, Py_ssize_t *pos, PyObject **key, long *hash)
 
 	env(-1);
 	jobject res = (*env)->CallStaticObjectMethod(env, JyNIClass,
-		JyNIGetPySet_Next, JyNI_JythonPyObject_FromPyObject(set), *pos);
+		JyNI_getPySet_Next, JyNI_JythonPyObject_FromPyObject(set), *pos);
 	if (res == NULL) return 0;
-	jlong k = (*env)->GetLongField(env, res, JyNISetNextResultKeyHandleField);
-	jobject k2 = (*env)->GetObjectField(env, res, JyNISetNextResultKeyField);
+	jlong k = (*env)->GetLongField(env, res, JyNISetNextResult_keyHandleField);
+	jobject k2 = (*env)->GetObjectField(env, res, JyNISetNextResult_keyField);
 	if (k != NULL) *key = (PyObject*) k;
 	else *key = JyNI_PyObject_FromJythonPyObject(k2);
 	if (k2 != NULL)
-		*hash = (*env)->CallIntMethod(env, k2, pyObjectHashCode);
+		*hash = (*env)->CallIntMethod(env, k2, object_hashCode);
 
 	return 1;
 }

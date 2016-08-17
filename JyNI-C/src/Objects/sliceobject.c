@@ -98,7 +98,7 @@ PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 	env(NULL);
 	PySliceObject *obj = (PySliceObject*) _JyObject_New(&PySlice_Type, &builtinTypes[TME_INDEX_Slice]);
 	JyObject* jy = AS_JY_NO_GC(obj);
-	jy->jy = (*env)->NewObject(env, pySliceClass, pySliceFromStartStopStepConstructor,
+	jy->jy = (*env)->NewObject(env, pySliceClass, pySlice_fromStartStopStepConstructor,
 			JyNI_JythonPyObject_FromPyObject(start),
 			JyNI_JythonPyObject_FromPyObject(stop),
 			JyNI_JythonPyObject_FromPyObject(step));
@@ -187,7 +187,7 @@ PySlice_GetIndicesEx(PySliceObject *r, Py_ssize_t length,
 	env(-1);
 	jarray res = (*env)->CallObjectMethod(env,
 			JyNI_JythonPyObject_FromPyObject((PyObject*) r),
-			pySliceIndicesEx, (jint) length);
+			pySlice_indicesEx, (jint) length);
 	jint* arr = (*env)->GetIntArrayElements(env, res, NULL);
 	if (arr == NULL)
 	{
@@ -296,9 +296,9 @@ slice_dealloc(PySliceObject *r)
 	if (JyObject_IS_INITIALIZED(jy))
 	{
 		env();
-		Py_DECREF(JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jy->jy, pySliceGetStart)));
-		Py_DECREF(JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jy->jy, pySliceGetStop)));
-		Py_DECREF(JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jy->jy, pySliceGetStep)));
+		Py_DECREF(JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jy->jy, pySlice_getStart)));
+		Py_DECREF(JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jy->jy, pySlice_getStop)));
+		Py_DECREF(JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jy->jy, pySlice_getStep)));
 //		Py_DECREF(r->step);
 //		Py_DECREF(r->start);
 //		Py_DECREF(r->stop);
@@ -316,7 +316,7 @@ slice_repr(PySliceObject *r)
 	return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env,
 					JyNI_JythonPyObject_FromPyObject((PyObject*) r),
-					pySliceToString));
+					object_toString));
 
 //	PyObject *s, *comma;
 //
@@ -344,7 +344,7 @@ slice_get_start(PySliceObject *m, void *closure)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) m), pySliceGetStart));
+			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) m), pySlice_getStart));
 }
 
 static PyObject *
@@ -352,7 +352,7 @@ slice_get_stop(PySliceObject *m, void *closure)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) m), pySliceGetStop));
+			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) m), pySlice_getStop));
 }
 
 static PyObject *
@@ -360,7 +360,7 @@ slice_get_step(PySliceObject *m, void *closure)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) m), pySliceGetStep));
+			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) m), pySlice_getStep));
 }
 
 static PyGetSetDef slice_getsets [] = {
@@ -403,11 +403,11 @@ slice_reduce(PySliceObject* self)
 	env(NULL);
 	return Py_BuildValue("O(OOO)", Py_TYPE(self), //self->start, self->stop, self->step);
 			JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
-					JyNI_JythonPyObject_FromPyObject((PyObject*) self), pySliceGetStart)),
+					JyNI_JythonPyObject_FromPyObject((PyObject*) self), pySlice_getStart)),
 			JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
-					JyNI_JythonPyObject_FromPyObject((PyObject*) self), pySliceGetStop)),
+					JyNI_JythonPyObject_FromPyObject((PyObject*) self), pySlice_getStop)),
 			JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
-					JyNI_JythonPyObject_FromPyObject((PyObject*) self), pySliceGetStep)));
+					JyNI_JythonPyObject_FromPyObject((PyObject*) self), pySlice_getStep)));
 }
 
 PyDoc_STRVAR(reduce_doc, "Return state information for pickling.");
@@ -424,7 +424,7 @@ static int
 slice_compare(PySliceObject *v, PySliceObject *w)
 {
 	env(-2);
-	return (*env)->CallIntMethod(env, JyNIClass, JyNISlice_compare,
+	return (*env)->CallIntMethod(env, JyNIClass, JyNI_slice_compare,
 			JyNI_JythonPyObject_FromPyObject((PyObject*) v),
 			JyNI_JythonPyObject_FromPyObject((PyObject*) w));
 //	int result = 0;

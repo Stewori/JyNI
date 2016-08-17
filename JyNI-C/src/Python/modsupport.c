@@ -102,7 +102,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 	//return NULL;
 	//if ((m = PyImport_AddModule(name)) == NULL)
 	env(NULL);
-	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_AddModule,
+	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_AddModule,
 				(*env)->NewStringUTF(env, name));
 	if (m == NULL)
 	{
@@ -112,7 +112,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 	}
 
 	//d = PyModule_GetDict(m);
-	d = (*env)->CallObjectMethod(env, m, pyModuleGetDict);
+	d = (*env)->CallObjectMethod(env, m, pyModule_getDict);
 
 	if (methods != NULL) {
 		n = PyString_FromString(name);
@@ -149,7 +149,7 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			}*/
 			ENTER_SubtypeLoop_Safe_Mode(d, __setitem__)
 			(*env)->CallVoidMethod(env, d, JMID(__setitem__),
-					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, ml->ml_name)),
+					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, (*env)->NewStringUTF(env, ml->ml_name)),
 					jv);
 			LEAVE_SubtypeLoop_Safe_Mode(d, __setitem__)
 			Py_DECREF(v);
@@ -726,7 +726,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 
 	//dict = PyModule_GetDict(m);
 	env(-1);
-	jobject dict = (*env)->CallObjectMethod(env, m, pyModuleGetDict);
+	jobject dict = (*env)->CallObjectMethod(env, m, pyModule_getDict);
 	//puts("dict obtained");
 	if (dict == NULL) {
 		//puts("dict NULL");
@@ -739,7 +739,7 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 	//	return -1;
 	ENTER_SubtypeLoop_Safe_Mode(dict, __setitem__)
 	(*env)->CallVoidMethod(env, dict, JMID(__setitem__),
-			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString,
+			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString,
 					(*env)->NewStringUTF(env, name)), o);
 	LEAVE_SubtypeLoop_Safe_Mode(dict, __setitem__)
 	//Py_DECREF(o);
@@ -763,7 +763,7 @@ inline int PyModule_AddStringConstantJy(jobject m, const char *name, const char 
 {
 	env(-1);
 	return PyModule_AddObjectJy(m, name,
-			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString,
+			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString,
 					//(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, value), stringIntern)));
 					(*env)->NewStringUTF(env, value)));
 }

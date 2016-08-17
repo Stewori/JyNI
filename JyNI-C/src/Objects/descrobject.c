@@ -164,7 +164,7 @@ method_get(PyMethodDescrObject *descr, PyObject *obj, PyObject *type)
 		jobject jobj = JyNI_JythonPyObject_FromPyObject(obj);
 		jobject jtp = JyNI_JythonPyObject_FromPyObject(type);
 		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(
-				env, jdescr, pyObject__get__, jobj, jtp));
+				env, jdescr, pyObject___get__, jobj, jtp));
 	}
 	return PyCFunction_New(descr->d_method, obj);
 }

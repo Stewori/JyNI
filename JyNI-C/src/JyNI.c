@@ -55,6 +55,25 @@ TypeMapEntry builtinTypes[builtinTypeCount];
 ExceptionMapEntry builtinExceptions[builtinExceptionCount];
 int (*PyOS_InputHook)(void) = NULL;
 
+int Py_DebugFlag; /* Needed by parser.c */
+int Py_VerboseFlag; /* Needed by import.c */
+int Py_InteractiveFlag; /* Needed by Py_FdIsInteractive() below */
+int Py_InspectFlag; /* Needed to determine whether to exit at SystemExit */
+int Py_NoSiteFlag; /* Suppress 'import site' */
+int Py_BytesWarningFlag; /* Warn on str(bytes) and str(buffer) */
+int Py_DontWriteBytecodeFlag; /* Suppress writing bytecode files (*.py[co]) */
+int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
+int Py_FrozenFlag; /* Needed by getpath.c */
+int Py_UnicodeFlag = 0; /* Needed by compile.c */
+int Py_OptimizeFlag = 0; /* Originally hosted in compile.c */
+int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
+/* _XXX Py_QnewFlag should go away in 2.3.  It's true iff -Qnew is passed,
+  on the command line, and is used in 2.2 by ceval.c to make all "/" divisions
+  true divisions (which they will be in 2.3). */
+int _Py_QnewFlag = 0;
+int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
+int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
+
 /*
  * Class:     JyNI_JyNI
  * Method:    loadModule
@@ -1457,7 +1476,7 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyClass(jclass jythonPyClass
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
-		if (builtinTypes[i].jy_class != NULL && (*env)->CallBooleanMethod(env, jythonPyClass, classEquals, builtinTypes[i].jy_class))
+		if (builtinTypes[i].jy_class != NULL && (*env)->CallBooleanMethod(env, jythonPyClass, class_equals, builtinTypes[i].jy_class))
 			return &(builtinTypes[i]);
 	}
 	return NULL;
@@ -1496,7 +1515,7 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name)
 inline TypeMapEntry* JyNI_JythonTypeEntry_FromJythonPyType(jobject jythonPyType)
 {
 	env(NULL);
-	return JyNI_JythonTypeEntry_FromJStringName((*env)->CallObjectMethod(env, jythonPyType, pyTypeGetName));
+	return JyNI_JythonTypeEntry_FromJStringName((*env)->CallObjectMethod(env, jythonPyType, pyType_getName));
 }
 
 /* Does not work for Heap-Type exceptions. */
@@ -1504,7 +1523,7 @@ inline jobject JyNI_JythonExceptionType_FromPyExceptionType(PyObject* exc)
 {
 	env(NULL);
 	//return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, ((PyTypeObject*) exc)->tp_name));
-	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIExceptionByName, (*env)->NewStringUTF(env, PyExceptionClass_Name(exc)));
+	return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_exceptionByName, (*env)->NewStringUTF(env, PyExceptionClass_Name(exc)));
 }
 
 /*
@@ -1515,7 +1534,7 @@ inline PyTypeObject* JyNI_PyExceptionType_FromJythonExceptionType(jobject exc)
 {
 	env(NULL);
 	jboolean isCopy;
-	jobject name = (*env)->CallObjectMethod(env, exc, pyTypeGetName);
+	jobject name = (*env)->CallObjectMethod(env, exc, pyType_getName);
 	const char* utf_string = (*env)->GetStringUTFChars(env, name, &isCopy);
 	//char mName[strlen(excPrefix)+strlen(utf_string)+1];
 	char mName[strlen(utf_string)+12];
@@ -1585,7 +1604,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	{
 		if ((*env)->IsSameObject(env, jythonPyObject, JyTrue)) Py_RETURN_TRUE;
 		if ((*env)->IsSameObject(env, jythonPyObject, JyFalse)) Py_RETURN_FALSE;
-		if ((*env)->GetBooleanField(env, pyBooleanClass, pyBoolVal)) Py_RETURN_TRUE;
+		if ((*env)->GetBooleanField(env, pyBooleanClass, pyBoolean_valueField)) Py_RETURN_TRUE;
 		else Py_RETURN_FALSE;
 	}
 	//Todo: Maybe the check for nullstring and unicode_empty is not needed
@@ -1621,18 +1640,18 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 	{
 		if ((*env)->IsInstanceOf(env, jythonPyObject, pyCPeerClass)) {
 			//puts("object is a PyCPeer");
-			PyObject* er = (PyObject*) (*env)->GetLongField(env, jythonPyObject, pyCPeerObjectHandle);
+			PyObject* er = (PyObject*) (*env)->GetLongField(env, jythonPyObject, pyCPeer_objectHandleField);
 			Py_INCREF(er);
 			return er;
 		} else {
-			PyObject* er = (PyObject*) (*env)->CallLongMethod(env, jythonPyObject, jyGCHeadGetHandle);
+			PyObject* er = (PyObject*) (*env)->CallLongMethod(env, jythonPyObject, jyGCHead_getHandle);
 			Py_INCREF(er);
 			return er;
 		}
 	}
 	if (lookupNative)
 	{
-		PyObject* handle = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNILookupNativeHandle, jythonPyObject);
+		PyObject* handle = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_lookupNativeHandle, jythonPyObject);
 		//printf("handle obtained: %u\n", handle);
 		if (handle)
 		{
@@ -1670,7 +1689,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 		//JyNI_printHash(jythonPyObject);
 		ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(
 			JyNI_PyExceptionType_FromJythonExceptionType(
-			(*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType)));
+			(*env)->CallObjectMethod(env, jythonPyObject, pyObject_getType)));
 		if (eme)
 		{
 			// No need to incref here, since JyNI_InitPyException returns NEW ref.
@@ -1678,7 +1697,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			return er;
 		} else
 		{
-			jobject tpe = (*env)->CallObjectMethod(env, jythonPyObject, pyObjectGetType);
+			jobject tpe = (*env)->CallObjectMethod(env, jythonPyObject, pyObject_getType);
 			PyTypeObject* pytpe;
 			PyObject* result;
 			if ((*env)->IsSameObject(env, jythonPyObject, tpe))
@@ -1742,15 +1761,15 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 		//Create base exception...
 		jobject type = JyNI_JythonExceptionType_FromPyExceptionType((PyObject*) Py_TYPE(src));
 		if (type)
-			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseExceptionSubTypeConstructor, type);
+			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_subTypeConstructor, type);
 		else
-			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseExceptionEmptyConstructor);
+			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_emptyConstructor);
 	}
 	if (!dest) return NULL;
 
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
 	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some exc_factories might already init this
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);//, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, dest, (jlong) src);//, srcJy->flags & JY_TRUNCATE_FLAG_MASK);
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;
@@ -1910,8 +1929,8 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 
 			jobject opType = JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(op));
 			jobject er = PyObject_IS_GC(op) ?
-					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGCConstructor, (jlong) op, opType) :
-					(*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) op, opType);
+					(*env)->NewObject(env, pyCPeerGCClass, pyCPeerGC_Constructor, (jlong) op, opType) :
+					(*env)->NewObject(env, pyCPeerClass, pyCPeer_Constructor, (jlong) op, opType);
 
 			jy->flags |= JY_INITIALIZED_FLAG_MASK;
 			/* JyNI_GC_EnsureHeadObject not needed here because the head is the
@@ -1931,7 +1950,7 @@ inline void JyNI_SyncPyCPeerTypeMRO(PyTypeObject* type, jobject jtype)
 		env();
 		if (!jtype)
 			jtype = (*env)->CallStaticObjectMethod(env, JyNIClass,
-					JyNILookupCPeerFromHandle, (jlong) type);
+					JyNI_lookupCPeerFromHandle, (jlong) type);
 		if (jtype && !(*env)->IsSameObject(env, jtype, NULL))
 		{
 			if (PyTuple_Check(type->tp_mro)) {
@@ -1942,7 +1961,7 @@ inline void JyNI_SyncPyCPeerTypeMRO(PyTypeObject* type, jobject jtype)
 					(*env)->SetObjectArrayElement(env, jmro, pos,
 							JyNI_JythonPyObject_FromPyObject(
 									PyTuple_GET_ITEM(type->tp_mro, pos)));
-				(*env)->SetObjectField(env, jtype, pyTypeMROField, jmro);
+				(*env)->SetObjectField(env, jtype, pyType_mroField, jmro);
 			} else {
 				jputs("JyNI-warning: Encountered non-NULL MRO that is not a tuple:");
 				jputs(type->tp_name);
@@ -1969,10 +1988,10 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 	env(NULL);
 	if (cls != NULL)
 	{
-		return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIGetPyType, cls);
+		return (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPyType, cls);
 	} else {
 		//setup and return PyCPeerType in this case...
-		jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) type);
+		jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_lookupCPeerFromHandle, (jlong) type);
 		//todo: Init this handle
 		//if (er != NULL) return er;
 		if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
@@ -2044,12 +2063,12 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
 				{
-					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameAndDictConstructor,
+					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerType_withNameAndDictConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags);
 				} else
 				{
-					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerTypeWithNameDictTypeConstructor,
+					er = (*env)->NewObject(env, pyCPeerTypeClass, pyCPeerType_withNameDictTypeConstructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags,
 							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
@@ -2058,12 +2077,12 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			{
 				if (Py_TYPE(type) == NULL || Py_TYPE(type) == &PyType_Type)
 				{
-					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructor,
+					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGC_Constructor,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags);
 				} else
 				{
-					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGCConstructorSubtype,
+					er = (*env)->NewObject(env, pyCPeerTypeGCClass, pyCPeerTypeGC_ConstructorSubtype,
 							(jlong) type, (*env)->NewStringUTF(env, type->tp_name),
 							JyNI_JythonPyObject_FromPyObject(type->tp_dict), methFlags,
 							JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(type)));
@@ -2071,14 +2090,14 @@ inline jobject _JyNI_JythonPyTypeObject_FromPyTypeObject(PyTypeObject* type, jcl
 			}
 			jweak ref = (*env)->NewWeakGlobalRef(env, er);
 			//todo: Check whether we clean this jweak up properly.
-			(*env)->SetLongField(env, er, pyCPeerTypeRefHandle, (jlong) ref);
+			(*env)->SetLongField(env, er, pyCPeerType_refHandleField, (jlong) ref);
 			/* Okay, here we insert the method resolution order to Jython-side, because
 			 * there are situations where Jython-PyType accesses its (or another PyType's)
 			 * mro-field directly, e.g. in computeMro. This can cause a subsequent
 			 * nullpointer exception, so we initialize it here.
 			 */
 			JyNI_SyncPyCPeerTypeMRO(type, er);
-			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, er, (jlong) type);
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, er, (jlong) type);
 			return er;
 		}
 	}
@@ -2103,11 +2122,11 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 	if ((*env)->IsInstanceOf(env, jythonPyTypeObject, pyCPeerTypeClass))
 	{
 		PyTypeObject* er = (PyTypeObject*) (*env)->GetLongField(env,
-				jythonPyTypeObject, pyCPeerTypeObjectHandle);
+				jythonPyTypeObject, pyCPeerType_objectHandleField);
 		Py_INCREF(er);
 		return er;
 	}
-	jstring name = (*env)->CallObjectMethod(env, jythonPyTypeObject, pyTypeGetName);
+	jstring name = (*env)->CallObjectMethod(env, jythonPyTypeObject, pyType_getName);
 	cstr_from_jstring(mName, name);
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
@@ -2151,11 +2170,11 @@ inline PyObject* JyNI_PyObject_Call(jobject func, PyObject *arg, PyObject *kw)
 	}
 	jobject jkw = dictSize > 0 ?
 			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict) :
-			length0StringArray;
+			JyEmptyStringArray;
 	jobject er;
 	Py_BEGIN_ALLOW_THREADS
 	er = (*env)->CallObjectMethod(env, func,
-			pyObject__call__, args, jkw);
+			pyObject___call__, args, jkw);
 	Py_END_ALLOW_THREADS
 	if ((*env)->ExceptionCheck(env))
 	{
@@ -2175,7 +2194,7 @@ inline jstring JyNI_jstring_FromPyStringObject(JNIEnv *env, PyStringObject* op)
 	JyObject* jy = AS_JY_NO_GC(op);
 	if (jy->flags & JY_INITIALIZED_FLAG_MASK)
 	{
-		return (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) op), pyStringAsString);
+		return (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) op), pyObject_asString);
 	} else
 	{
 		return (*env)->NewStringUTF(env, PyString_AS_STRING(op));
@@ -2188,17 +2207,17 @@ inline jstring JyNI_interned_jstring_FromPyStringObject(JNIEnv *env, PyStringObj
 	JyObject* jy = AS_JY_NO_GC(op);
 	if (jy->flags & JY_INITIALIZED_FLAG_MASK)
 	{
-		jstring er = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) op), pyStringAsString);
+		jstring er = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject((PyObject*) op), pyObject_asString);
 		if (JyNI_HasJyAttribute(jy, JyAttributeStringInterned))
 		{
 			return er;
 		} else
 		{
-			return (*env)->CallObjectMethod(env, er, stringIntern);
+			return (*env)->CallObjectMethod(env, er, string_intern);
 		}
 	} else
 	{
-		return (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, PyString_AS_STRING(op)), stringIntern);
+		return (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, PyString_AS_STRING(op)), string_intern);
 	}
 }
 
@@ -2313,7 +2332,7 @@ inline jobject JyNI_GetJythonDelegate(PyObject* v)
 inline jint JyNI_GetDLOpenFlags()
 {
 	env(0x00001 | 0x00100); //RTLD_LAZY | RTLD_GLOBAL
-	return (*env)->CallStaticIntMethod(env, JyNIClass, JyNIGetDLOpenFlags);
+	return (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_getDLOpenFlags);
 }
 
 inline void JyNI_CleanUp_JyObject(JyObject* obj)
@@ -2326,7 +2345,7 @@ inline void JyNI_CleanUp_JyObject(JyObject* obj)
 	{
 		env();
 		if ((obj->flags & JY_HAS_JHANDLE_FLAG_MASK) && !(*env)->IsSameObject(env, obj->jy, NULL))
-			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIClearNativeHandle, obj->jy);
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_clearNativeHandle, obj->jy);
 //		if (obj->flags & JY_CPEER_FLAG_MASK)
 //			(*env)->DeleteWeakGlobalRef(env, obj->jy);
 //		else
@@ -2353,1693 +2372,6 @@ Py_GetVersion(void)
 //	PyOS_snprintf(version, sizeof(version), "%.80s (%.80s) %.80s",
 //		      PY_VERSION, Py_GetBuildInfo(), Py_GetCompiler());
 	return version;
-}
-
-/* -----------------  JNI-section  ----------------- */
-
-//singletons:
-JavaVM* java;
-jweak JyNone;
-jweak JyNotImplemented;
-jweak JyEllipsis;
-jweak JyEmptyFrozenSet;
-jweak JyEmptyString;
-jweak JyEmptyUnicode;
-jweak JyEmptyTuple;
-jweak JyTrue;
-jweak JyFalse;
-jweak length0StringArray;
-jweak length0PyObjectArray;
-
-jclass objectClass;
-jmethodID objectToString;
-jmethodID objectGetClass;
-
-jclass classClass;
-jmethodID classEquals;
-
-jclass arrayListClass;
-jmethodID arrayListConstructor;
-jmethodID listAdd;
-//jmethodID listClear;
-//jmethodID listRemove;
-//jmethodID listRemoveIndex;
-//jmethodID listSet;
-
-//jclass systemClass;
-//jmethodID arraycopy;
-
-jclass JyNIClass;
-jmethodID JyNISetNativeHandle;
-//jmethodID JyNIRegisterNativeStaticTypeDict;
-jmethodID JyNI_registerNativeStaticJyGCHead;
-jmethodID JyNI_getNativeStaticJyGCHead;
-jmethodID JyNILookupNativeHandle;
-jmethodID JyNILookupCPeerFromHandle;
-jmethodID JyNIClearNativeHandle;
-//jmethodID JyNIConstructDefaultObject;
-jmethodID JyNIGetDLOpenFlags;
-jmethodID JyNIGetJyObjectByName;
-jmethodID JyNIGetPyObjectByName;
-jmethodID JyNIGetPyType;
-jmethodID JyNI_getNativeAvailableKeysAndValues;
-jmethodID JyNIExceptionByName;
-//jmethodID JyErr_SetCurExc;
-//jmethodID JyErr_GetCurExc;
-jmethodID JyNIJyErr_InsertCurExc;
-jmethodID JyNIJyErr_PrintEx;
-//jmethodID JyNIPyErr_Restore;
-//jmethodID JyNIPyErr_Clear;
-//jmethodID JyNIPyErr_Occurred;
-jmethodID JyNIPyErr_ExceptionMatches;
-//jmethodID JyNIPyErr_SetObject;
-//jmethodID JyNIPyErr_SetString;
-//jmethodID JyNIPyErr_SetNone;
-//jmethodID JyNIPyErr_NoMemory;
-//jmethodID JyNIPyErr_Fetch;
-jmethodID JyNI_PyTraceBack_Here;
-jmethodID JyNIPyErr_WriteUnraisable;
-jmethodID JyNIGetDLVerbose;
-jmethodID JyNI_PyImport_FindExtension;
-jmethodID JyNIGetPyDictionary_Next;
-jmethodID JyNIGetPySet_Next;
-jmethodID JyNIPyImport_GetModuleDict;
-jmethodID JyNIPyImport_AddModule;
-jmethodID JyNIPyImport_ImportModuleNoBlock;
-jmethodID JyNIJyNI_GetModule;
-jmethodID JyNISlice_compare;
-jmethodID JyNIPrintPyLong;
-jmethodID JyNILookupNativeHandles;
-jmethodID JyNI_prepareKeywordArgs;
-jmethodID JyNI_getCurrentThreadID;
-jmethodID JyNI_pyCode_co_code;
-jmethodID JyNI_pyCode_co_flags;
-jmethodID JyNI_pyCode_co_lnotab;
-jmethodID JyNI_jPrint;
-jmethodID JyNI_jPrintLong;
-jmethodID JyNI_jGetHash;
-//jmethodID JyNIPySet_pop;
-jmethodID JyNI_makeGCHead;
-jmethodID JyNI_makeStaticGCHead;
-jmethodID JyNI_gcDeletionReport;
-jmethodID JyNI_waitForCStubs;
-jmethodID JyNI_addJyNICriticalObject;
-jmethodID JyNI_removeJyNICriticalObject;
-jmethodID JyNI_suspendPyInstanceFinalizer;
-jmethodID JyNI_restorePyInstanceFinalizer;
-jmethodID JyNI_createWeakReferenceFromNative;
-jmethodID JyNI_createProxyFromNative;
-jmethodID JyNI_createCallableProxyFromNative;
-jmethodID JyNI_getGlobalRef;
-jmethodID JyNI_getTypeNameForNativeConversion;
-jmethodID JyNI_getTypeOldStyleParent;
-jmethodID JyNI_getJythonGlobals;
-jmethodID JyNI_getPlatform;
-
-jclass JyTStateClass;
-jmethodID JyTState_setRecursionLimit;
-jmethodID JyTState_prepareNativeThreadState;
-jfieldID JyTState_nativeRecursionLimitField;
-
-jclass JyNIDictNextResultClass;
-jfieldID JyNIDictNextResultKeyField;
-jfieldID JyNIDictNextResultValueField;
-jfieldID JyNIDictNextResultNewIndexField;
-jfieldID JyNIDictNextResultKeyHandleField;
-jfieldID JyNIDictNextResultValueHandleField;
-
-jclass JyNISetNextResultClass;
-jfieldID JyNISetNextResultKeyField;
-jfieldID JyNISetNextResultNewIndexField;
-jfieldID JyNISetNextResultKeyHandleField;
-
-jclass JyListClass;
-jmethodID JyListFromBackendHandleConstructor;
-//jmethodID JyListInstallToPyList;
-
-jclass JySetClass;
-jmethodID JySetFromBackendHandleConstructor;
-//jmethodID JySetInstallToPySet;
-
-jclass JyLockClass;
-jmethodID JyLockConstructor;
-jmethodID JyLockAcquire;
-jmethodID JyLockRelease;
-
-jclass NativeActionClass;
-jmethodID NativeAction_constructor;
-jfieldID NativeAction_action;
-jfieldID NativeAction_obj;
-jfieldID NativeAction_nativeRef1;
-jfieldID NativeAction_nativeRef2;
-jfieldID NativeAction_cTypeName;
-jfieldID NativeAction_cMethod;
-jfieldID NativeAction_cLine;
-jfieldID NativeAction_cFile;
-
-jclass JyReferenceMonitorClass;
-jmethodID JyRefMonitorMakeDebugInfo;
-jmethodID JyRefMonitorAddAction;
-
-jclass pyCPeerClass;
-jmethodID pyCPeerConstructor;
-jfieldID pyCPeerObjectHandle;
-//jfieldID pyCPeerRefHandle;
-
-jclass pyCPeerGCClass;
-jmethodID pyCPeerGCConstructor;
-//jfieldID pyCPeerLinksHandle;
-
-jclass pyCPeerTypeGCClass;
-jmethodID pyCPeerTypeGCConstructor;
-jmethodID pyCPeerTypeGCConstructorSubtype;
-
-// Subclasses:
-jclass pyDictCPeerClass;
-jclass pyTupleCPeerClass;
-jmethodID pyTupleCPeerConstructor;
-
-jclass jyGCHeadClass;
-jmethodID traversableGCHeadSetLinks;
-jmethodID traversableGCHeadSetLink;
-jmethodID traversableGCHeadInsertLink;
-jmethodID traversableGCHeadClearLink;
-jmethodID traversableGCHeadClearLinksFromIndex;
-jmethodID traversableGCHeadEnsureSize;
-jmethodID pyObjectGCHeadSetObject;
-jmethodID jyGCHeadGetHandle;
-
-jclass cPeerInterface;
-jclass cPeerNativeDelegateInterface;
-jmethodID super__call__;
-jmethodID super__findattr_ex__;
-jmethodID super__setattr__;
-jmethodID super__str__;
-jmethodID super__repr__;
-jmethodID super__finditem__;
-jmethodID super__setitem__;
-jmethodID super__delitem__;
-jmethodID super__len__;
-jmethodID super_toString;
-
-jclass pyCPeerTypeClass;
-//jmethodID pyCPeerTypeConstructor;
-jmethodID pyCPeerTypeWithNameAndDictConstructor;
-jmethodID pyCPeerTypeWithNameDictTypeConstructor;
-jfieldID pyCPeerTypeObjectHandle;
-jfieldID pyCPeerTypeRefHandle;
-
-jclass stringClass;
-jmethodID stringFromBytesAndCharsetNameConstructor;
-jmethodID stringToUpperCase;
-jmethodID stringGetBytesUsingCharset;
-jmethodID stringIntern;
-
-jclass bigIntClass;
-jmethodID bigIntFromStringConstructor;
-jmethodID bigIntFromStringRadixConstructor;
-jmethodID bigIntegerFromByteArrayConstructor;
-jmethodID bigIntegerFromSignByteArrayConstructor;
-jmethodID bigIntToByteArray;
-jmethodID bigIntSignum;
-jmethodID bigIntToStringRadix;
-
-jclass pyPyClass;
-jmethodID pyPyGetThreadState;
-jmethodID pyPyGetFrame;
-jmethodID pyPyIsSubClass;
-jmethodID pyPyWarning;
-jmethodID pyPyNewString;
-jmethodID pyPyNewUnicode;
-jmethodID pyPyNewIntFromInt;
-jmethodID pyPyNewIntFromLong;
-jmethodID pyPyNewLongFromBigInt;
-jmethodID pyPyNewLongFromInt;
-jmethodID pyPyNewLongFromLong;
-jmethodID pyPyNewLongFromString;
-jmethodID pyPyNewFloatFromDouble;
-jmethodID pyPyWarningStck;
-jmethodID pyPyExplicitWarning;
-jfieldID pyPyImportError;
-jfieldID pyPySystemError;
-jfieldID pyPyUnicodeError;
-jfieldID pyPyUnicodeEncodeError;
-jfieldID pyPyUnicodeDecodeError;
-jfieldID pyPyUnicodeTranslateError;
-jfieldID pyPyUnicodeWarning;
-jmethodID pyPyUnicodeErrorFactory;
-jmethodID pyPyUnicodeEncodeErrorFactory;
-jmethodID pyPyUnicodeDecodeErrorFactory;
-jmethodID pyPyUnicodeTranslateErrorFactory;
-jmethodID pyPyRaiseUnicodeWarning;
-jmethodID pyPyMakeClass;
-//pre-allocated:
-jfieldID pyPyIntegerCache;
-jfieldID pyPyLetters;
-//No unicode letters are cached in Jython
-
-jclass pyObjectClass;
-jmethodID pyObjectGetType;
-jmethodID pyObjectAsString;
-jfieldID pyObjectType;
-jmethodID pyObject__getattr__;
-jmethodID pyObject__findattr__;
-jmethodID pyObject__setattr__;
-jmethodID pyObject__repr__;
-jmethodID pyObject__cmp__;
-jmethodID pyObject__reduce__;
-jmethodID pyObject__and__;
-jmethodID pyObject__or__;
-jmethodID pyObject__sub__;
-jmethodID pyObject__xor__;
-jmethodID pyObject__isub__;
-jmethodID pyObject__call__;
-jmethodID pyObject__str__;
-jmethodID pyObject__finditem__;
-//jmethodID pyObject__getitem__;
-jmethodID pyObject__setitem__;
-jmethodID pyObject__delitem__;
-jmethodID pyObject__get__;
-jmethodID pyObject__contains__;
-jmethodID pyObject__len__;
-jmethodID pyObject__getslice__;
-jmethodID pyObject__nonzero__;
-jmethodID pyObject__iter__;
-jmethodID pyObject__iternext__;
-jmethodID pyObject_cmp;
-jmethodID pyObjectGetDict;
-jmethodID pyObjectFastGetDict;
-jmethodID pyObjectSetDict;
-jmethodID pyObjectIsCallable;
-jmethodID pyObjectHashCode;
-
-jclass pyThreadStateClass;
-jfieldID pyThreadStateExceptionField;
-jfieldID pyThreadStateFrameField;
-//jfieldID pyThreadStateRecursionDepth;
-//jmethodID pyThreadStateEnterRecursiveCall;
-//jmethodID pyThreadStateLeaveRecursiveCall;
-jmethodID pyThreadStateEnterRepr;
-jmethodID pyThreadStateExitRepr;
-jmethodID pyThreadStateGetCompareStateDict;
-
-jclass pyInstanceClass;
-jmethodID pyInstanceConstructor;
-jfieldID pyInstanceInstclassField;
-jfieldID pyInstance__dict__;
-jmethodID pyInstanceIsSequenceType;
-
-jclass pyFrameClass;
-jmethodID pyFrameConstructor;
-jfieldID pyFrame_f_back;
-jfieldID pyFrame_f_builtins;
-jfieldID pyFrame_f_lineno;
-
-jclass pyTracebackClass;
-jmethodID pyTracebackByTracebackFrameConstructor;
-
-jclass pyExceptionClass;
-jfieldID pyExceptionTypeField;
-jfieldID pyExceptionValueField;
-jfieldID pyExceptionTracebackField;
-jmethodID pyExceptionFullConstructor;
-jmethodID pyExceptionTypeValueConstructor;
-jmethodID pyExceptionTypeConstructor;
-jmethodID pyExceptionNormalize;
-jmethodID pyExceptionMatch;
-jmethodID pyExceptionIsExceptionClass;
-jmethodID pyExceptionIsExceptionInstance;
-
-jclass pyBooleanClass;
-//jmethodID pyBooleanConstructor;
-jfieldID pyBoolVal;
-
-//jclass pyArrayClass;
-//jmethodID pyArrayGetTypecode;
-
-jclass pyTupleClass;
-jmethodID pyTupleConstructor;
-jmethodID pyTupleByPyObjectArrayBooleanConstructor;
-jmethodID pyTupleSize;
-jmethodID pyTuplePyGet;
-//jfieldID pyTupleArray;
-//jmethodID pyTupleGetArray;
-
-jclass pyListClass;
-jmethodID pyListConstructor;
-jmethodID pyListByPyObjectArrayConstructor;
-jmethodID pyListFromList;
-jmethodID pyListSize;
-jmethodID pyListPyGet;
-jmethodID pyListPySet;
-jmethodID pyListAppend;
-jmethodID pyListInsert;
-jmethodID pyListSort;
-jmethodID pyListReverse;
-jmethodID pyListGetArray;
-jfieldID pyListBackend;
-
-jclass pyAbstractDictClass;
-jmethodID pyAbstractDictCopy;
-jmethodID pyAbstractDictMerge;
-jmethodID pyAbstractDictMergeFromSeq;
-
-jclass pyDictClass;
-jmethodID pyDictConstructor;
-//jmethodID pyDictByPyObjectArrayConstructor;
-
-jclass pyStringMapClass;
-
-jclass pyIntClass;
-jmethodID pyIntConstructor;
-jmethodID pyIntGetValue;
-//jmethodID pyIntAsInt;
-//jmethodID pyIntAsLong;
-
-jclass pyLongClass;
-jmethodID pyLongByBigIntConstructor;
-jmethodID pyLongByLongConstructor;
-jmethodID pyLongAsLong;
-jmethodID pyLongGetLong;
-jmethodID pyLongGetValue;
-jmethodID pyLongBit_length;
-//jmethodID pyLongToString;
-
-jclass pyUnicodeClass;
-jmethodID pyUnicodeByJStringConstructor;
-jmethodID pyUnicodeAsString;
-
-jclass pyStringClass;
-jmethodID pyStringByJStringConstructor;
-jmethodID pyStringAsString;
-
-jclass pyFloatClass;
-jmethodID pyFloatByDoubleConstructor;
-jmethodID pyFloatAsDouble;
-jfieldID pyFloatTypeField;
-
-jclass pyComplexClass;
-jmethodID pyComplexBy2DoubleConstructor;
-jfieldID pyComplexRealField;
-jfieldID pyComplexImagField;
-
-jclass pySequenceClass;
-jmethodID pySequenceLen;
-jmethodID pySequenceGetItem;
-
-jclass pySequenceListClass;
-jmethodID pySequenceListSize;
-jmethodID pySequenceListPyGet;
-
-jclass pyTypeClass;
-jmethodID pyTypeGetName;
-jmethodID pyTypeSetName;
-jmethodID pyTypeGetBase;
-jmethodID pyTypeGetBases;
-jmethodID pyTypeGetMro;
-jmethodID pyTypeIsSubType;
-jmethodID pyTypeLookup;
-jfieldID pyTypeMROField;
-jfieldID pyTypeNameField;
-
-jclass pyCodecsClass;
-jmethodID pyCodecsDecode;
-jmethodID pyCodecsEncode;
-jmethodID pyCodecsGetDefaultEncoding;
-jmethodID pyCodecsLookup;
-jmethodID pyCodecsRegister;
-jmethodID pyCodecsLookupError;
-jmethodID pyCodecsRegisterError;
-
-//jclass jyObjectClass;
-//jfieldID jyObjectNativeHandleField;
-//jfieldID jyObjectObjectField;
-
-jclass pyFileClass;
-jmethodID pyFileWrite;
-
-jclass pyNotImplementedClass;
-jclass pyNoneClass;
-
-jclass pyModuleClass;
-jmethodID pyModuleByStringConstructor;
-jmethodID pyModuleGetDict;
-jmethodID pyModule__setattr__;
-jmethodID pyModule__delattr__;
-
-jclass pyCellClass;
-jmethodID pyCellConstructor;
-jfieldID pyCell_ob_ref;
-
-jclass pyClassClass;
-jmethodID pyClassClassobj___new__;
-jfieldID pyClass__bases__;
-jfieldID pyClass__dict__;
-jfieldID pyClass__name__;
-
-jclass pyMethodClass;
-jmethodID pyMethodConstructor;
-jfieldID pyMethod__func__;
-jfieldID pyMethod__self__;
-jfieldID pyMethodImClass;
-
-jclass pyFunctionClass;
-jmethodID pyFunctionConstructor;
-jfieldID pyFunction__code__;
-jmethodID pyFunctionSetCode;
-jmethodID pyFunctionGetFuncGlobals;
-jfieldID pyFunction__module__;
-jmethodID pyFunctionGetFuncDefaults;
-jmethodID pyFunctionSetFuncDefaults;
-jfieldID pyFunctionFuncClosure;
-jfieldID pyFunction__doc__;
-//jmethodID pyFunctionGetDict; use pyObjectGetDict
-//jemthodID pyFunctionSetDict; use pyObjectSetDict
-jfieldID pyFunction__name__;
-//jmethodID pyFunctionCall; use pyObject__call__
-
-jclass pyClassMethodClass;
-jmethodID pyClassMethodConstructor;
-jfieldID pyClassMethod_callable;
-
-jclass pyStaticMethodClass;
-jmethodID pyStaticMethodConstructor;
-jfieldID pyStaticMethod_callable;
-
-jclass pyBuiltinCallableInfoClass;
-jmethodID pyBuiltinCallableInfoMin;
-jmethodID pyBuiltinCallableInfoMax;
-jmethodID pyBuiltinCallableInfoName;
-
-jclass pyBuiltinCallableClass;
-jmethodID pyBuiltinCallable_getSelf;
-jmethodID pyBuiltinCallable_getModule;
-jmethodID pyBuiltinCallable_getDoc;
-//jmethodID pyBuiltinCallable_fastGetName;
-jfieldID pyBuiltinCallable_info;
-
-jclass pyCMethodDefClass;
-jmethodID pyCMethodDefConstructor;
-
-jclass pyCFunctionClass;
-jmethodID pyCFunctionConstructor;
-
-jclass pyDescrClass;
-jfieldID pyDescr_dtype;
-
-jclass pyMethodDescrClass;
-jmethodID pyMethodDescrConstructor;
-
-jclass pyClassMethodDescrClass;
-
-jclass pyDictProxyClass;
-jmethodID pyDictProxyConstructor;
-jfieldID pyDictProxy_dict;
-
-jclass pyPropertyClass;
-jmethodID pyPropertyConstructor;
-jfieldID pyProperty_fget;
-jfieldID pyProperty_fset;
-jfieldID pyProperty_fdel;
-jfieldID pyProperty_doc;
-jfieldID pyProperty_docFromGetter;
-
-//jclass pyBaseStringClass;
-//jclass pyXRangeClass;
-
-jclass pySequenceIterClass;
-jmethodID pySequenceIterConstructor;
-jfieldID pySequenceIter_seq;
-jfieldID pySequenceIter_index;
-
-//jclass pyFastSequenceIterClass;
-//jclass pyReversedIteratorClass;
-
-//jclass pyBaseSetClass;
-jfieldID pyBaseSet_set;
-jmethodID pyBaseSetSize;
-//jmethodID pyBaseSetClear;
-//jmethodID pyBaseSetContains;
-//jmethodID pyBaseSetRemove;
-//jmethodID pyBaseSetAdd;
-jmethodID pyBaseSet_update;//+
-//jmethodID pyBaseSetbaseset_union;//-
-jmethodID pyBaseSetbaseset_issubset;//+
-jmethodID pyBaseSetbaseset_issuperset;//-
-jmethodID pyBaseSetbaseset_isdisjoint;//+
-jmethodID pyBaseSetbaseset_difference;//+
-jmethodID pyBaseSetbaseset_differenceMulti;//+
-jmethodID pyBaseSetbaseset_symmetric_difference;//-
-jmethodID pyBaseSetbaseset_intersection;//-
-//jmethodID pyBaseSetbaseset_copy;//-
-jmethodID pyBaseSetbaseset___contains__;//+
-//jmethodID pyBaseSetbaseset_difference_multi;
-//jmethodID pyBaseSetbaseset_intersection_multi;
-//jmethodID pyBaseSetbaseset___iter__;
-
-jclass pySetClass;
-jmethodID pySetFromIterableConstructor;
-jmethodID pySetset_pop;//+
-jmethodID pySetset_clear;//+
-//jmethodID pySetset_remove;
-jmethodID pySetset_discard;//+
-jmethodID pySetset_add;//+
-jmethodID pySetset_difference_update;//+
-jmethodID pySetset_intersection_update;//+
-jmethodID pySetset_symmetric_difference_update;//+
-//jmethodID pySetset___isub__;
-//jmethodID pySetset___iand__;
-//jmethodID pySetset___ixor__;
-
-jclass pyFrozenSetClass;
-jmethodID pyFrozenSetFromIterableConstructor;
-//jmethodID pyFrozenSetSize;
-
-//jclass pyEnumerationClass;
-
-jclass pySliceClass;
-jmethodID pySliceFromStartStopStepConstructor;
-jmethodID pySliceToString;
-jmethodID pySliceGetStart;
-jmethodID pySliceGetStop;
-jmethodID pySliceGetStep;
-jmethodID pySliceIndicesEx;
-
-jclass pyEllipsisClass;
-//jclass pyGeneratorClass;
-
-jclass pyWeakReferenceClass;
-jclass pyWeakProxyClass;
-jclass pyWeakCallableProxyClass;
-
-//jclass pyCodeClass;
-jfieldID pyCode_co_name;
-
-//jclass pyBaseCodeClass;
-jfieldID pyBaseCode_co_argcount;
-jfieldID pyBaseCode_co_cellvars;
-jfieldID pyBaseCode_co_filename;
-jfieldID pyBaseCode_co_firstlineno;
-//jfieldID pyBaseCode_co_flags;
-jfieldID pyBaseCode_co_freevars;
-jfieldID pyBaseCode_co_nlocals;
-jfieldID pyBaseCode_co_varnames;
-
-jclass pyBytecodeClass;
-jmethodID pyBytecodeConstructor;
-//jfieldID pyBytecode_co_code;
-jfieldID pyBytecode_co_consts;
-//jfieldID pyBytecode_co_lnotab;
-jfieldID pyBytecode_co_names;
-jfieldID pyBytecode_co_stacksize;
-
-jclass pyTableCodeClass;
-//jfieldID pyTableCode_co_code;
-
-//jclass pyCallIterClass;
-//jclass pySuperClass;
-
-jclass GlobalRefClass;
-jmethodID GlobalRef_retryFactory;
-
-jclass AbstractReferenceClass;
-jmethodID AbstractReference_get;
-
-jclass JyNIGlobalRefClass;
-jmethodID JyNIGlobalRef_initNativeHandle;
-
-jclass pyBaseExceptionClass;
-//jfieldID pyBaseException__dict__;
-jmethodID pyBaseExceptionEmptyConstructor;
-jmethodID pyBaseExceptionSubTypeConstructor;
-jmethodID pyBaseException__init__;
-jmethodID pyBaseException__setstate__;
-jmethodID pyBaseException__unicode__;
-jfieldID pyBaseExceptionArgs;
-jmethodID pyBaseExceptionSetArgs;
-jmethodID pyBaseExceptionGetMessage;
-jmethodID pyBaseExceptionSetMessage;
-
-//jclass pyByteArrayClass;
-//jclass pyBufferClass;
-//jclass pyMemoryViewClass;
-
-jclass __builtin__Class;
-//jmethodID __builtin__Import;
-jmethodID __builtin__ImportLevel;
-
-jclass impClass;
-jmethodID imp_importName;
-jmethodID imp_reload;
-
-jclass exceptionsClass;
-jmethodID exceptionsKeyError;
-jmethodID exceptionsKeyError__str__;
-jmethodID exceptionsEnvironmentError;
-jmethodID exceptionsEnvironmentError__init__;
-jmethodID exceptionsEnvironmentError__str__;
-jmethodID exceptionsEnvironmentError__reduce__;
-jmethodID exceptionsSyntaxError;
-jmethodID exceptionsSyntaxError__init__;
-jmethodID exceptionsSyntaxError__str__;
-jmethodID exceptionsSystemExit;
-jmethodID exceptionsSystemExit__init__;
-
-jmethodID exceptionsUnicodeError;
-#ifdef Py_USING_UNICODE
-jmethodID exceptionsGetStart;
-jmethodID exceptionsGetEnd;
-jmethodID exceptionsGetString;
-jmethodID exceptionsGetUnicode;
-jmethodID exceptionsUnicodeError__init__;
-jmethodID exceptionsUnicodeEncodeError;
-jmethodID exceptionsUnicodeEncodeError__init__;
-jmethodID exceptionsUnicodeEncodeError__str__;
-jmethodID exceptionsUnicodeDecodeError;
-jmethodID exceptionsUnicodeDecodeError__init__;
-jmethodID exceptionsUnicodeDecodeError__str__;
-jmethodID exceptionsUnicodeTranslateError;
-jmethodID exceptionsUnicodeTranslateError__init__;
-jmethodID exceptionsUnicodeTranslateError__str__;
-#endif
-
-#define JNI_CLS(cPrefix, cls, jPath) \
-	jclass cPrefix ## cls ## Local = (*env)->FindClass(env, jPath); \
-	if (cPrefix ## cls ## Local == NULL) { puts(jPath); return JNI_ERR;} \
-	cPrefix ## cls = (jclass) (*env)->NewWeakGlobalRef(env, cPrefix ## cls ## Local); \
-	(*env)->DeleteLocalRef(env, cPrefix ## cls ## Local);
-
-#define JNI_CLASS(cPrefix, jPath) JNI_CLS(cPrefix, Class, jPath)
-#define JNI_INTERFACE(cPrefix, jPath) JNI_CLS(cPrefix, Interface, jPath)
-
-inline jint initJNI(JNIEnv *env)
-{
-	JNI_CLASS(object, "java/lang/Object")
-	objectToString = (*env)->GetMethodID(env, objectClass, "toString", "()Ljava/lang/String;");
-	objectGetClass = (*env)->GetMethodID(env, objectClass, "getClass", "()Ljava/lang/Class;");
-
-	JNI_CLASS(class, "java/lang/Class")
-	classEquals = (*env)->GetMethodID(env, classClass, "equals", "(Ljava/lang/Object;)Z");
-
-	JNI_CLASS(string, "java/lang/String")
-	stringFromBytesAndCharsetNameConstructor = (*env)->GetMethodID(env, stringClass, "<init>", "([BLjava/lang/String;)V");
-	stringToUpperCase = (*env)->GetMethodID(env, stringClass, "toUpperCase", "()Ljava/lang/String;");
-	stringGetBytesUsingCharset = (*env)->GetMethodID(env, stringClass, "getBytes", "(Ljava/lang/String;)[B");
-	stringIntern = (*env)->GetMethodID(env, stringClass, "intern", "()Ljava/lang/String;");
-
-	JNI_CLASS(bigInt, "java/math/BigInteger")
-	bigIntegerFromByteArrayConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "([B)V");
-	bigIntegerFromSignByteArrayConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "(I[B)V");
-	bigIntFromStringConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "(Ljava/lang/String;)V");
-	bigIntFromStringRadixConstructor = (*env)->GetMethodID(env, bigIntClass, "<init>", "(Ljava/lang/String;I)V");
-	bigIntToByteArray = (*env)->GetMethodID(env, bigIntClass, "toByteArray", "()[B");
-	bigIntSignum = (*env)->GetMethodID(env, bigIntClass, "signum", "()I");
-	bigIntToStringRadix = (*env)->GetMethodID(env, bigIntClass, "toString", "(I)Ljava/lang/String;");
-
-	JNI_CLASS(arrayList, "java/util/ArrayList")
-	arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "(I)V");
-	jclass listClassLocal = (*env)->FindClass(env, "java/util/List");
-	listAdd = (*env)->GetMethodID(env, listClassLocal, "add", "(Ljava/lang/Object;)Z");
-	(*env)->DeleteLocalRef(env, listClassLocal);
-
-	return JNI_VERSION_1_2;
-}
-
-inline jint initJyNI(JNIEnv *env)
-{
-	JNI_CLASS(JyNI, "JyNI/JyNI")
-	JyNISetNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "setNativeHandle", "(Lorg/python/core/PyObject;J)V");
-	//JyNIRegisterNativeStaticTypeDict = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticTypeDict", "(Ljava/lang/String;Lorg/python/core/PyDictionary;)V");
-	JyNI_registerNativeStaticJyGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "registerNativeStaticJyGCHead", "(JLJyNI/gc/JyGCHead;)V");
-	JyNI_getNativeStaticJyGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "getNativeStaticJyGCHead", "(J)LJyNI/gc/JyGCHead;");
-	JyNILookupNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "lookupNativeHandle", "(Lorg/python/core/PyObject;)J");
-	JyNIClearNativeHandle = (*env)->GetStaticMethodID(env, JyNIClass, "clearNativeHandle", "(Lorg/python/core/PyObject;)V");
-	JyNILookupCPeerFromHandle = (*env)->GetStaticMethodID(env, JyNIClass, "lookupCPeerFromHandle", "(J)Lorg/python/core/PyObject;");
-	//JyNIConstructDefaultObject = (*env)->GetStaticMethodID(env, JyNIClass, "constructDefaultObject", "(Ljava/lang/Class;)Lorg/python/core/PyObject;");
-	JyNIGetDLOpenFlags = (*env)->GetStaticMethodID(env, JyNIClass, "getDLOpenFlags", "()I");
-	JyNIGetDLVerbose = (*env)->GetStaticMethodID(env, JyNIClass, "getDLVerbose", "()I");
-	JyNIGetJyObjectByName = (*env)->GetStaticMethodID(env, JyNIClass, "getJyObjectByName", "(Ljava/lang/String;)J");
-	JyNIGetPyObjectByName = (*env)->GetStaticMethodID(env, JyNIClass, "getPyObjectByName", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	JyNI_PyImport_FindExtension = (*env)->GetStaticMethodID(env, JyNIClass, "_PyImport_FindExtension", "(Ljava/lang/String;Ljava/lang/String;)Lorg/python/core/PyObject;");
-	JyNI_getNativeAvailableKeysAndValues = (*env)->GetStaticMethodID(env, JyNIClass, "getNativeAvailableKeysAndValues", "(Lorg/python/core/PyDictionary;)[J");
-	JyNIGetPyDictionary_Next = (*env)->GetStaticMethodID(env, JyNIClass, "getPyDictionary_Next", "(Lorg/python/core/PyDictionary;I)LJyNI/JyNIDictNextResult;");
-	JyNIGetPySet_Next = (*env)->GetStaticMethodID(env, JyNIClass, "getPySet_Next", "(Lorg/python/core/BaseSet;I)LJyNI/JyNISetNextResult;");
-	JyNIPyImport_GetModuleDict = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_GetModuleDict", "()Lorg/python/core/PyObject;");
-	JyNIPyImport_AddModule = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_AddModule", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	JyNIPyImport_ImportModuleNoBlock = (*env)->GetStaticMethodID(env, JyNIClass, "PyImport_ImportModuleNoBlock", "(Ljava/lang/String;Z)Lorg/python/core/PyObject;");
-	JyNIJyNI_GetModule = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_GetModule", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	JyNISlice_compare = (*env)->GetStaticMethodID(env, JyNIClass, "slice_compare", "(Lorg/python/core/PySlice;Lorg/python/core/PySlice;)I");
-	JyNIPrintPyLong = (*env)->GetStaticMethodID(env, JyNIClass, "printPyLong", "(Lorg/python/core/PyObject;)V");
-	JyNILookupNativeHandles = (*env)->GetStaticMethodID(env, JyNIClass, "lookupNativeHandles", "(Lorg/python/core/PyList;)[J");
-	JyNI_prepareKeywordArgs = (*env)->GetStaticMethodID(env, JyNIClass, "prepareKeywordArgs", "([Lorg/python/core/PyObject;Lorg/python/core/PyDictionary;)[Ljava/lang/String;");
-	JyNI_getCurrentThreadID = (*env)->GetStaticMethodID(env, JyNIClass, "getCurrentThreadID", "()J");
-	JyNI_pyCode_co_code = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_pyCode_co_code", "(Lorg/python/core/PyBaseCode;)Ljava/lang/String;");
-	JyNI_pyCode_co_flags = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_pyCode_co_flags", "(Lorg/python/core/PyBaseCode;)I");
-	JyNI_pyCode_co_lnotab = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_pyCode_co_lnotab", "(Lorg/python/core/PyBytecode;)Ljava/lang/String;");
-	JyNI_jPrint = (*env)->GetStaticMethodID(env, JyNIClass, "jPrint", "(Ljava/lang/String;)V");
-	JyNI_jPrintLong = (*env)->GetStaticMethodID(env, JyNIClass, "jPrint", "(J)V");
-	JyNI_jGetHash = (*env)->GetStaticMethodID(env, JyNIClass, "jGetHash", "(Ljava/lang/Object;)I");
-	//JyNIPySet_pop = (*env)->GetStaticMethodID(env, JyNIClass, "PySet_pop", "(Lorg/python/core/BaseSet;)Lorg/python/core/PyObject;");
-	JyNI_makeGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeGCHead", "(JZZ)LJyNI/gc/PyObjectGCHead;");
-	JyNI_makeStaticGCHead = (*env)->GetStaticMethodID(env, JyNIClass, "makeStaticGCHead", "(JZ)LJyNI/gc/JyGCHead;");
-	JyNI_gcDeletionReport = (*env)->GetStaticMethodID(env, JyNIClass, "gcDeletionReport", "([J[J)V");
-	JyNI_waitForCStubs = (*env)->GetStaticMethodID(env, JyNIClass, "waitForCStubs", "()V");
-	JyNI_addJyNICriticalObject = (*env)->GetStaticMethodID(env, JyNIClass, "addJyNICriticalObject", "(J)V");
-	JyNI_removeJyNICriticalObject = (*env)->GetStaticMethodID(env, JyNIClass, "removeJyNICriticalObject", "(J)V");
-	JyNI_suspendPyInstanceFinalizer = (*env)->GetStaticMethodID(env, JyNIClass, "suspendPyInstanceFinalizer", "(Lorg/python/core/PyInstance;)V");
-	JyNI_restorePyInstanceFinalizer = (*env)->GetStaticMethodID(env, JyNIClass, "restorePyInstanceFinalizer", "(Lorg/python/core/PyInstance;)V");
-	JyNI_createWeakReferenceFromNative = (*env)->GetStaticMethodID(env, JyNIClass, "createWeakReferenceFromNative",
-			"(Lorg/python/core/PyObject;JLorg/python/core/PyObject;)Lorg/python/modules/_weakref/ReferenceType;");
-	JyNI_createProxyFromNative = (*env)->GetStaticMethodID(env, JyNIClass, "createProxyFromNative",
-			"(Lorg/python/core/PyObject;JLorg/python/core/PyObject;)Lorg/python/modules/_weakref/ProxyType;");
-	JyNI_createCallableProxyFromNative = (*env)->GetStaticMethodID(env, JyNIClass, "createCallableProxyFromNative",
-			"(Lorg/python/core/PyObject;JLorg/python/core/PyObject;)Lorg/python/modules/_weakref/CallableProxyType;");
-	JyNI_getGlobalRef = (*env)->GetStaticMethodID(env, JyNIClass, "getGlobalRef",
-			"(Lorg/python/core/PyObject;)Lorg/python/modules/_weakref/ReferenceBackend;");
-	JyNI_getTypeNameForNativeConversion = (*env)->GetStaticMethodID(env, JyNIClass, "getTypeNameForNativeConversion",
-			"(Lorg/python/core/PyObject;)Ljava/lang/String;");
-	JyNI_getTypeOldStyleParent = (*env)->GetStaticMethodID(env, JyNIClass, "getTypeOldStyleParent",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyClass;");
-	JyNI_getJythonGlobals = (*env)->GetStaticMethodID(env, JyNIClass, "getJythonGlobals",
-			"()Lorg/python/core/PyObject;");
-	JyNI_getPlatform = (*env)->GetStaticMethodID(env, JyNIClass, "getPlatform",
-			"()Ljava/lang/String;");
-
-	//Error stuff:
-//	JyErr_SetCurExc = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_SetCurExc",
-//	        "(Lorg/python/core/ThreadState;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
-//	JyErr_GetCurExc = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_GetCurExc",
-//	        "(Lorg/python/core/ThreadState;)Lorg/python/core/PyException;");
-	JyNIJyErr_InsertCurExc = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_InsertCurExc",
-			"(Lorg/python/core/ThreadState;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
-	JyNIJyErr_PrintEx = (*env)->GetStaticMethodID(env, JyNIClass, "JyErr_PrintEx",
-			"(ZLorg/python/core/ThreadState;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
-
-//	JyNIPyErr_Restore = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Restore", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
-//	JyNIPyErr_Clear = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Clear", "()V");
-//	JyNIPyErr_Occurred = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Occurred", "()Lorg/python/core/PyObject;");
-	JyNIPyErr_ExceptionMatches = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_ExceptionMatches",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)Z");
-	JyNI_PyTraceBack_Here = (*env)->GetStaticMethodID(env, JyNIClass, "JyNI_PyTraceBack_Here",
-			"(Lorg/python/core/PyFrame;Lorg/python/core/ThreadState;)Lorg/python/core/PyTraceback;");
-//	JyNIPyErr_SetObject = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetObject", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-//	JyNIPyErr_SetString = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetString", "(Lorg/python/core/PyObject;Ljava/lang/String;)V");
-//	JyNIPyErr_SetNone = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_SetNone", "(Lorg/python/core/PyObject;)V");
-//	JyNIPyErr_NoMemory = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_NoMemory", "()Lorg/python/core/PyObject;");
-//	JyNIPyErr_Fetch = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_Fetch", "()Lorg/python/core/PyException;");
-	JyNIPyErr_WriteUnraisable = (*env)->GetStaticMethodID(env, JyNIClass, "PyErr_WriteUnraisable", "(Lorg/python/core/PyObject;)V");
-	JyNIExceptionByName = (*env)->GetStaticMethodID(env, JyNIClass, "exceptionByName", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	JyNIGetPyType = (*env)->GetStaticMethodID(env, JyNIClass, "getPyType", "(Ljava/lang/Class;)Lorg/python/core/PyType;");
-
-
-	//ThreadState stuff:
-	JNI_CLASS(JyTState, "JyNI/JyTState")
-	JyTState_setRecursionLimit = (*env)->GetStaticMethodID(env, JyTStateClass, "setRecursionLimit", "(I)V");
-	JyTState_prepareNativeThreadState = (*env)->GetStaticMethodID(env, JyTStateClass,
-			"prepareNativeThreadState", "()J");
-	JyTState_nativeRecursionLimitField = (*env)->GetStaticFieldID(env, JyTStateClass, "nativeRecursionLimit", "I");
-
-	JNI_CLASS(JyNIDictNextResult, "JyNI/JyNIDictNextResult")
-	JyNIDictNextResultKeyField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "key", "Lorg/python/core/PyObject;");
-	JyNIDictNextResultValueField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "value", "Lorg/python/core/PyObject;");
-	JyNIDictNextResultNewIndexField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "newIndex", "I");
-	JyNIDictNextResultKeyHandleField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "keyHandle", "J");
-	JyNIDictNextResultValueHandleField = (*env)->GetFieldID(env, JyNIDictNextResultClass, "valueHandle", "J");
-
-	JNI_CLASS(JyNISetNextResult, "JyNI/JyNISetNextResult")
-	JyNISetNextResultKeyField = (*env)->GetFieldID(env, JyNISetNextResultClass, "key", "Lorg/python/core/PyObject;");
-	JyNISetNextResultNewIndexField = (*env)->GetFieldID(env, JyNISetNextResultClass, "newIndex", "I");
-	JyNISetNextResultKeyHandleField = (*env)->GetFieldID(env, JyNISetNextResultClass, "keyHandle", "J");
-
-	JNI_CLASS(JyList, "JyNI/JyList")
-	JyListFromBackendHandleConstructor = (*env)->GetMethodID(env, JyListClass, "<init>", "(J)V");
-
-	JNI_CLASS(JySet, "JyNI/JySet")
-	JySetFromBackendHandleConstructor = (*env)->GetMethodID(env, JySetClass, "<init>", "(Ljava/util/Set;J)V");
-
-	JNI_CLASS(JyLock, "JyNI/JyLock")
-	JyLockConstructor = (*env)->GetMethodID(env, JyLockClass, "<init>", "()V");
-	JyLockAcquire = (*env)->GetMethodID(env, JyLockClass, "acquire", "(Z)Z");
-	JyLockRelease = (*env)->GetMethodID(env, JyLockClass, "release", "()V");
-
-	JNI_CLASS(NativeAction, "JyNI/JyReferenceMonitor$NativeAction")
-	NativeAction_constructor = (*env)->GetMethodID(env, NativeActionClass, "<init>", "()V");
-	NativeAction_action = (*env)->GetFieldID(env, NativeActionClass, "action", "S");
-	NativeAction_obj = (*env)->GetFieldID(env, NativeActionClass, "obj", "Lorg/python/core/PyObject;");
-	NativeAction_nativeRef1 = (*env)->GetFieldID(env, NativeActionClass, "nativeRef1", "J");
-	NativeAction_nativeRef2 = (*env)->GetFieldID(env, NativeActionClass, "nativeRef2", "J");
-	NativeAction_cTypeName = (*env)->GetFieldID(env, NativeActionClass, "cTypeName", "Ljava/lang/String;");
-	NativeAction_cMethod = (*env)->GetFieldID(env, NativeActionClass, "cMethod", "Ljava/lang/String;");
-	NativeAction_cLine = (*env)->GetFieldID(env, NativeActionClass, "cLine", "I");
-	NativeAction_cFile = (*env)->GetFieldID(env, NativeActionClass, "cFile", "Ljava/lang/String;");
-
-	JNI_CLASS(JyReferenceMonitor, "JyNI/JyReferenceMonitor")
-	JyRefMonitorAddAction = (*env)->GetStaticMethodID(env, JyReferenceMonitorClass, "addNativeAction",
-			"(LJyNI/JyReferenceMonitor$NativeAction;)V");
-
-	//Peer stuff:
-	JNI_CLASS(pyCPeer, "JyNI/PyCPeer")
-	pyCPeerConstructor = (*env)->GetMethodID(env, pyCPeerClass, "<init>", "(JLorg/python/core/PyType;)V");
-	pyCPeerObjectHandle = (*env)->GetFieldID(env, pyCPeerClass, "objectHandle", "J");
-
-	JNI_CLASS(pyCPeerGC, "JyNI/gc/PyCPeerGC")
-	pyCPeerGCConstructor = (*env)->GetMethodID(env, pyCPeerGCClass, "<init>", "(JLorg/python/core/PyType;)V");
-
-	JNI_CLASS(pyCPeerTypeGC, "JyNI/gc/PyCPeerTypeGC")
-	pyCPeerTypeGCConstructor = (*env)->GetMethodID(env, pyCPeerTypeGCClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;J)V");
-	pyCPeerTypeGCConstructorSubtype = (*env)->GetMethodID(env, pyCPeerTypeGCClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;JLorg/python/core/PyType;)V");
-
-	JNI_CLASS(pyDictCPeer, "JyNI/PyDictionaryCPeer")
-
-	JNI_CLASS(pyTupleCPeer, "JyNI/PyTupleCPeer")
-	pyTupleCPeerConstructor = (*env)->GetMethodID(env, pyTupleCPeerClass,
-			"<init>", "(JLJyNI/PyCPeerType;[Lorg/python/core/PyObject;)V");
-
-	JNI_CLASS(pyCPeerType, "JyNI/PyCPeerType")
-	pyCPeerTypeWithNameAndDictConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;J)V");
-	pyCPeerTypeWithNameDictTypeConstructor = (*env)->GetMethodID(env, pyCPeerTypeClass, "<init>",
-			"(JLjava/lang/String;Lorg/python/core/PyObject;JLorg/python/core/PyType;)V");
-	pyCPeerTypeObjectHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "objectHandle", "J");
-	pyCPeerTypeRefHandle = (*env)->GetFieldID(env, pyCPeerTypeClass, "refHandle", "J");
-
-	jclass traversableGCHeadInterface = (*env)->FindClass(env, "JyNI/gc/TraversableGCHead");
-	traversableGCHeadSetLinks = (*env)->GetMethodID(env, traversableGCHeadInterface, "setLinks", "(Ljava/lang/Object;)V");
-	traversableGCHeadSetLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "setLink", "(ILJyNI/gc/JyGCHead;)I");
-	traversableGCHeadInsertLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "insertLink", "(ILJyNI/gc/JyGCHead;)I");
-	traversableGCHeadClearLink = (*env)->GetMethodID(env, traversableGCHeadInterface, "clearLink", "(I)I");
-	traversableGCHeadClearLinksFromIndex = (*env)->GetMethodID(env, traversableGCHeadInterface, "clearLinksFromIndex", "(I)I");
-	traversableGCHeadEnsureSize = (*env)->GetMethodID(env, traversableGCHeadInterface, "ensureSize", "(I)V");
-	(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
-
-	JNI_CLASS(jyGCHead, "JyNI/gc/JyGCHead")
-	jyGCHeadGetHandle = (*env)->GetMethodID(env, jyGCHeadClass, "getHandle", "()J");
-
-	jclass pyObjectGCHeadInterface = (*env)->FindClass(env, "JyNI/gc/PyObjectGCHead");
-	pyObjectGCHeadSetObject = (*env)->GetMethodID(env, pyObjectGCHeadInterface, "setPyObject", "(Lorg/python/core/PyObject;)V");
-	(*env)->DeleteLocalRef(env, pyObjectGCHeadInterface);
-
-	JNI_INTERFACE(cPeer, "JyNI/CPeerInterface")
-
-	JNI_INTERFACE(cPeerNativeDelegate, "JyNI/CPeerNativeDelegateSubtype")
-	super__call__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__call__",
-			"([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
-	super__findattr_ex__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__findattr_ex__",
-			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	super__setattr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setattr__",
-			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
-	super__str__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__str__",
-				"()Lorg/python/core/PyString;");
-	super__repr__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__repr__",
-			"()Lorg/python/core/PyString;");
-	super__finditem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__finditem__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	super__setitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__setitem__",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-	super__delitem__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__delitem__",
-			"(Lorg/python/core/PyObject;)V");
-	super__len__ = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super__len__", "()I");
-	super_toString = (*env)->GetMethodID(env, cPeerNativeDelegateInterface, "super_toString",
-			"()Ljava/lang/String;");
-
-	return JNI_VERSION_1_2;
-}
-
-inline jint initJythonSite(JNIEnv *env)
-{
-	JNI_CLASS(pyPy, "org/python/core/Py")
-	pyPyGetThreadState = (*env)->GetStaticMethodID(env, pyPyClass, "getThreadState", "()Lorg/python/core/ThreadState;");
-	pyPyGetFrame = (*env)->GetStaticMethodID(env, pyPyClass, "getFrame", "()Lorg/python/core/PyFrame;");
-	pyPyIsSubClass = (*env)->GetStaticMethodID(env, pyPyClass, "isSubClass", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Z");
-	pyPyWarning = (*env)->GetStaticMethodID(env, pyPyClass, "warning", "(Lorg/python/core/PyObject;Ljava/lang/String;)V");
-	pyPyWarningStck = (*env)->GetStaticMethodID(env, pyPyClass, "warning", "(Lorg/python/core/PyObject;Ljava/lang/String;I)V");
-	pyPyExplicitWarning = (*env)->GetStaticMethodID(env, pyPyClass, "warning",
-			"(Lorg/python/core/PyObject;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Lorg/python/core/PyObject;)V");
-	pyPyImportError = (*env)->GetStaticFieldID(env, pyPyClass, "ImportError", "Lorg/python/core/PyObject;");
-	pyPySystemError = (*env)->GetStaticFieldID(env, pyPyClass, "SystemError", "Lorg/python/core/PyObject;");
-	pyPyNewString = (*env)->GetStaticMethodID(env, pyPyClass, "newString", "(Ljava/lang/String;)Lorg/python/core/PyString;");
-	pyPyNewUnicode = (*env)->GetStaticMethodID(env, pyPyClass, "newUnicode", "(Ljava/lang/String;)Lorg/python/core/PyUnicode;");
-	pyPyNewIntFromInt = (*env)->GetStaticMethodID(env, pyPyClass, "newInteger", "(I)Lorg/python/core/PyInteger;");
-	pyPyNewIntFromLong = (*env)->GetStaticMethodID(env, pyPyClass, "newInteger", "(J)Lorg/python/core/PyObject;");
-	pyPyNewLongFromBigInt = (*env)->GetStaticMethodID(env, pyPyClass, "newLong", "(Ljava/math/BigInteger;)Lorg/python/core/PyLong;");
-	pyPyNewLongFromInt = (*env)->GetStaticMethodID(env, pyPyClass, "newLong", "(I)Lorg/python/core/PyLong;");
-	pyPyNewLongFromLong = (*env)->GetStaticMethodID(env, pyPyClass, "newLong", "(J)Lorg/python/core/PyLong;");
-	pyPyNewLongFromString = (*env)->GetStaticMethodID(env, pyPyClass, "newLong", "(Ljava/lang/String;)Lorg/python/core/PyLong;");
-	pyPyNewFloatFromDouble = (*env)->GetStaticMethodID(env, pyPyClass, "newFloat", "(D)Lorg/python/core/PyFloat;");
-	pyPyUnicodeError = (*env)->GetStaticFieldID(env, pyPyClass, "UnicodeError", "Lorg/python/core/PyObject;");
-	pyPyUnicodeEncodeError = (*env)->GetStaticFieldID(env, pyPyClass, "UnicodeEncodeError", "Lorg/python/core/PyObject;");
-	pyPyUnicodeDecodeError = (*env)->GetStaticFieldID(env, pyPyClass, "UnicodeDecodeError", "Lorg/python/core/PyObject;");
-	pyPyUnicodeTranslateError = (*env)->GetStaticFieldID(env, pyPyClass, "UnicodeTranslateError", "Lorg/python/core/PyObject;");
-	pyPyUnicodeWarning = (*env)->GetStaticFieldID(env, pyPyClass, "UnicodeWarning", "Lorg/python/core/PyObject;");
-	pyPyUnicodeErrorFactory = (*env)->GetStaticMethodID(env, pyPyClass, "UnicodeError", "(Ljava/lang/String;)Lorg/python/core/PyException;");
-	pyPyUnicodeEncodeErrorFactory = (*env)->GetStaticMethodID(env, pyPyClass, "UnicodeEncodeError",
-			"(Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;)Lorg/python/core/PyException;");
-	pyPyUnicodeDecodeErrorFactory = (*env)->GetStaticMethodID(env, pyPyClass, "UnicodeDecodeError",
-			"(Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;)Lorg/python/core/PyException;");
-	pyPyUnicodeTranslateErrorFactory = (*env)->GetStaticMethodID(env, pyPyClass, "UnicodeTranslateError",
-			"(Ljava/lang/String;IILjava/lang/String;)Lorg/python/core/PyException;");
-	pyPyRaiseUnicodeWarning = (*env)->GetStaticMethodID(env, pyPyClass, "UnicodeWarning", "(Ljava/lang/String;)V");
-	pyPyMakeClass = (*env)->GetStaticMethodID(env, pyPyClass, "makeClass",
-			"(Ljava/lang/String;[Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyPyIntegerCache = (*env)->GetStaticFieldID(env, pyPyClass, "integerCache", "[Lorg/python/core/PyInteger;");
-	pyPyLetters = (*env)->GetStaticFieldID(env, pyPyClass, "letters", "[Lorg/python/core/PyString;");
-
-	JNI_CLASS(pyTraceback, "org/python/core/PyTraceback")
-	pyTracebackByTracebackFrameConstructor = (*env)->GetMethodID(env, pyTracebackClass, "<init>", "(Lorg/python/core/PyTraceback;Lorg/python/core/PyFrame;)V");
-
-	JNI_CLASS(pyException, "org/python/core/PyException")
-	pyExceptionTypeField = (*env)->GetFieldID(env, pyExceptionClass, "type", "Lorg/python/core/PyObject;");
-	pyExceptionValueField = (*env)->GetFieldID(env, pyExceptionClass, "value", "Lorg/python/core/PyObject;");
-	pyExceptionTracebackField = (*env)->GetFieldID(env, pyExceptionClass, "traceback", "Lorg/python/core/PyTraceback;");
-	pyExceptionFullConstructor = (*env)->GetMethodID(env, pyExceptionClass, "<init>", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyTraceback;)V");
-	pyExceptionTypeValueConstructor = (*env)->GetMethodID(env, pyExceptionClass, "<init>", "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-	pyExceptionTypeConstructor = (*env)->GetMethodID(env, pyExceptionClass, "<init>", "(Lorg/python/core/PyObject;)V");
-	pyExceptionNormalize = (*env)->GetMethodID(env, pyExceptionClass, "normalize", "()V");
-	pyExceptionMatch = (*env)->GetMethodID(env, pyExceptionClass, "match", "(Lorg/python/core/PyObject;)Z");
-	pyExceptionIsExceptionClass = (*env)->GetStaticMethodID(env, pyExceptionClass, "isExceptionClass", "(Lorg/python/core/PyObject;)Z");
-	pyExceptionIsExceptionInstance = (*env)->GetStaticMethodID(env, pyExceptionClass, "isExceptionInstance", "(Lorg/python/core/PyObject;)Z");
-
-	JNI_CLASS(pyThreadState, "org/python/core/ThreadState")
-	pyThreadStateExceptionField = (*env)->GetFieldID(env, pyThreadStateClass, "exception", "Lorg/python/core/PyException;");
-	pyThreadStateFrameField = (*env)->GetFieldID(env, pyThreadStateClass, "frame", "Lorg/python/core/PyFrame;");
-	//pyThreadStateRecursionDepth = (*env)->GetFieldID(env, pyThreadStateClass, "recursion_depth", "I");
-	//pyThreadStateEnterRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "enterRecursiveCall", "(Ljava/lang/String;)V");
-	//pyThreadStateLeaveRecursiveCall = (*env)->GetMethodID(env, pyThreadStateClass, "leaveRecursiveCall", "()V");
-	pyThreadStateEnterRepr = (*env)->GetMethodID(env, pyThreadStateClass, "enterRepr", "(Lorg/python/core/PyObject;)Z");
-	pyThreadStateExitRepr = (*env)->GetMethodID(env, pyThreadStateClass, "exitRepr", "(Lorg/python/core/PyObject;)V");
-	pyThreadStateGetCompareStateDict = (*env)->GetMethodID(env, pyThreadStateClass, "getCompareStateDict", "()Lorg/python/core/PyDictionary;");
-
-	return JNI_VERSION_1_2;
-}
-
-inline jint initJythonObjects(JNIEnv *env)
-{
-	JNI_CLASS(pyNone, "org/python/core/PyNone")
-
-	JNI_CLASS(pyObject, "org/python/core/PyObject")
-	pyObjectGetType = (*env)->GetMethodID(env, pyObjectClass, "getType",
-			"()Lorg/python/core/PyType;");
-	pyObjectAsString = (*env)->GetMethodID(env, pyObjectClass, "asString",
-			"()Ljava/lang/String;");
-	pyObjectType = (*env)->GetStaticFieldID(env, pyObjectClass, "TYPE",
-			"Lorg/python/core/PyType;");
-	pyObject__getattr__ = (*env)->GetMethodID(env, pyObjectClass, "__getattr__",
-			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	pyObject__findattr__ = (*env)->GetMethodID(env, pyObjectClass, "__findattr__",
-			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	pyObject__setattr__ = (*env)->GetMethodID(env, pyObjectClass, "__setattr__",
-			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
-	pyObject__repr__ = (*env)->GetMethodID(env, pyObjectClass, "__repr__",
-			"()Lorg/python/core/PyString;");
-	pyObject__cmp__ = (*env)->GetMethodID(env, pyObjectClass, "__cmp__",
-			"(Lorg/python/core/PyObject;)I");
-	pyObject__reduce__ = (*env)->GetMethodID(env, pyObjectClass, "__reduce__",
-			"()Lorg/python/core/PyObject;");
-	pyObject__and__ = (*env)->GetMethodID(env, pyObjectClass, "__and__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__or__ = (*env)->GetMethodID(env, pyObjectClass, "__or__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__sub__ = (*env)->GetMethodID(env, pyObjectClass, "__sub__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__xor__ = (*env)->GetMethodID(env, pyObjectClass, "__xor__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__isub__ = (*env)->GetMethodID(env, pyObjectClass, "__isub__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__call__ = (*env)->GetMethodID(env, pyObjectClass, "__call__",
-			"([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
-	pyObject__str__ = (*env)->GetMethodID(env, pyObjectClass, "__str__",
-			"()Lorg/python/core/PyString;");
-	//pyObject__getitem__ = (*env)->GetMethodID(env, pyObjectClass, "__getitem__",
-	//		"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__finditem__ = (*env)->GetMethodID(env, pyObjectClass, "__finditem__",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__setitem__ = (*env)->GetMethodID(env, pyObjectClass, "__setitem__",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-	pyObject__delitem__ = (*env)->GetMethodID(env, pyObjectClass, "__delitem__",
-			"(Lorg/python/core/PyObject;)V");
-	pyObject__get__ = (*env)->GetMethodID(env, pyObjectClass, "__get__",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__contains__ = (*env)->GetMethodID(env, pyObjectClass, "__contains__",
-			"(Lorg/python/core/PyObject;)Z");
-	pyObject__len__ = (*env)->GetMethodID(env, pyObjectClass, "__len__", "()I");
-	pyObject__getslice__ = (*env)->GetMethodID(env, pyObjectClass, "__getslice__",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyObject__nonzero__ = (*env)->GetMethodID(env, pyObjectClass, "__nonzero__", "()Z");
-	pyObject__iter__ = (*env)->GetMethodID(env, pyObjectClass, "__iter__",
-			"()Lorg/python/core/PyObject;");
-	pyObject__iternext__ = (*env)->GetMethodID(env, pyObjectClass, "__iternext__",
-			"()Lorg/python/core/PyObject;");
-	pyObject_cmp = (*env)->GetMethodID(env, pyObjectClass, "_cmp",
-			"(Lorg/python/core/PyObject;)I");
-	pyObjectGetDict = (*env)->GetMethodID(env, pyObjectClass, "getDict",
-			"()Lorg/python/core/PyObject;");
-	pyObjectFastGetDict = (*env)->GetMethodID(env, pyObjectClass, "fastGetDict",
-			"()Lorg/python/core/PyObject;");
-	pyObjectSetDict = (*env)->GetMethodID(env, pyObjectClass, "setDict",
-			"(Lorg/python/core/PyObject;)V");
-	pyObjectIsCallable = (*env)->GetMethodID(env, pyObjectClass, "isCallable", "()Z");
-	pyObjectHashCode = (*env)->GetMethodID(env, pyObjectClass, "hashCode", "()I");
-
-	JNI_CLASS(pyInstance, "org/python/core/PyInstance")
-	pyInstanceConstructor = (*env)->GetMethodID(env, pyInstanceClass, "<init>",
-			"(Lorg/python/core/PyClass;Lorg/python/core/PyObject;)V");
-	pyInstanceInstclassField = (*env)->GetFieldID(env, pyInstanceClass, "instclass",
-			"Lorg/python/core/PyClass;");
-	pyInstance__dict__ = (*env)->GetFieldID(env, pyInstanceClass, "__dict__",
-			"Lorg/python/core/PyObject;");
-	pyInstanceIsSequenceType = (*env)->GetMethodID(env, pyInstanceClass, "isSequenceType", "()Z");
-
-	JNI_CLASS(pyFrame, "org/python/core/PyFrame")
-	pyFrameConstructor = (*env)->GetMethodID(env, pyFrameClass, "<init>",
-			"(Lorg/python/core/PyBaseCode;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-	pyFrame_f_back = (*env)->GetFieldID(env, pyFrameClass, "f_back",
-			"Lorg/python/core/PyFrame;");
-	pyFrame_f_builtins = (*env)->GetFieldID(env, pyFrameClass, "f_builtins",
-			"Lorg/python/core/PyObject;");
-	pyFrame_f_lineno = (*env)->GetFieldID(env, pyFrameClass, "f_lineno", "I");
-
-	JNI_CLASS(pyBoolean, "org/python/core/PyBoolean")
-	pyBoolVal = (*env)->GetFieldID(env, pyBooleanClass, "value", "Z");
-
-	JNI_CLASS(pyInt, "org/python/core/PyInteger")
-	pyIntConstructor = (*env)->GetMethodID(env, pyIntClass, "<init>", "(I)V");
-	pyIntGetValue = (*env)->GetMethodID(env, pyIntClass, "getValue", "()I");
-
-	JNI_CLASS(pyLong, "org/python/core/PyLong")
-	pyLongByLongConstructor = (*env)->GetMethodID(env, pyLongClass, "<init>", "(J)V");
-	pyLongByBigIntConstructor = (*env)->GetMethodID(env, pyLongClass, "<init>",
-			"(Ljava/math/BigInteger;)V");
-	pyLongAsLong = (*env)->GetMethodID(env, pyLongClass, "asLong", "()J");
-	pyLongGetLong = (*env)->GetMethodID(env, pyLongClass, "getLong", "(JJ)J");
-	pyLongGetValue = (*env)->GetMethodID(env, pyLongClass, "getValue",
-			"()Ljava/math/BigInteger;");
-	pyLongBit_length = (*env)->GetMethodID(env, pyLongClass, "bit_length", "()I");
-
-	JNI_CLASS(pyUnicode, "org/python/core/PyUnicode")
-	pyUnicodeByJStringConstructor = (*env)->GetMethodID(env, pyUnicodeClass, "<init>",
-			"(Ljava/lang/String;)V");
-	pyUnicodeAsString = (*env)->GetMethodID(env, pyUnicodeClass, "asString",
-			"()Ljava/lang/String;");
-
-	JNI_CLASS(pyString, "org/python/core/PyString")
-	pyStringByJStringConstructor = (*env)->GetMethodID(env, pyStringClass, "<init>",
-			"(Ljava/lang/String;)V");
-	pyStringAsString = (*env)->GetMethodID(env, pyStringClass, "asString",
-			"()Ljava/lang/String;");
-
-	JNI_CLASS(pyFloat, "org/python/core/PyFloat")
-	pyFloatByDoubleConstructor = (*env)->GetMethodID(env, pyFloatClass, "<init>", "(D)V");
-	pyFloatAsDouble = (*env)->GetMethodID(env, pyFloatClass, "asDouble", "()D");
-	pyFloatTypeField = (*env)->GetStaticFieldID(env, pyFloatClass, "TYPE",
-			"Lorg/python/core/PyType;");
-
-	JNI_CLASS(pyComplex, "org/python/core/PyComplex")
-	pyComplexBy2DoubleConstructor = (*env)->GetMethodID(env, pyComplexClass, "<init>", "(DD)V");
-
-//	JNI_CLASS(pyArray, "org/python/core/PyArray")
-//	pyArrayGetTypecode = (*env)->GetMethodID(env, pyArrayClass, "getTypecode", "()Ljava/lang/String;");
-
-	JNI_CLASS(pyTuple, "org/python/core/PyTuple")
-	pyTupleConstructor = (*env)->GetMethodID(env, pyTupleClass, "<init>", "()V");
-	pyTupleByPyObjectArrayBooleanConstructor = (*env)->GetMethodID(env, pyTupleClass, "<init>",
-			"([Lorg/python/core/PyObject;Z)V");
-	pyTupleSize = (*env)->GetMethodID(env, pyTupleClass, "size", "()I");
-	pyTuplePyGet = (*env)->GetMethodID(env, pyTupleClass, "pyget",
-			"(I)Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyList, "org/python/core/PyList")
-	pyListConstructor = (*env)->GetMethodID(env, pyListClass, "<init>", "()V");
-	pyListByPyObjectArrayConstructor = (*env)->GetMethodID(env, pyListClass, "<init>",
-			"([Lorg/python/core/PyObject;)V");
-	pyListFromList = (*env)->GetStaticMethodID(env, pyListClass, "fromList",
-			"(Ljava/util/List;)Lorg/python/core/PyList;");
-	pyListSize = (*env)->GetMethodID(env, pyListClass, "size", "()I");
-	pyListPyGet = (*env)->GetMethodID(env, pyListClass, "pyget",
-			"(I)Lorg/python/core/PyObject;");
-	pyListPySet = (*env)->GetMethodID(env, pyListClass, "pyset",
-			"(ILorg/python/core/PyObject;)V");
-	pyListAppend = (*env)->GetMethodID(env, pyListClass, "append",
-			"(Lorg/python/core/PyObject;)V");
-	pyListInsert = (*env)->GetMethodID(env, pyListClass, "insert",
-			"(ILorg/python/core/PyObject;)V");
-	pyListSort = (*env)->GetMethodID(env, pyListClass, "sort", "()V");
-	pyListReverse = (*env)->GetMethodID(env, pyListClass, "reverse", "()V");
-	pyListGetArray = (*env)->GetMethodID(env, pyListClass, "getArray",
-			"()[Lorg/python/core/PyObject;");
-	pyListBackend = (*env)->GetFieldID(env, pyListClass, "list", "Ljava/util/List;");
-
-	JNI_CLASS(pyAbstractDict, "org/python/core/AbstractDict")
-	pyAbstractDictCopy = (*env)->GetMethodID(env, pyAbstractDictClass, "copy",
-			"()Lorg/python/core/AbstractDict;");
-	pyAbstractDictMerge = (*env)->GetMethodID(env, pyAbstractDictClass, "merge",
-			"(Lorg/python/core/PyObject;Z)V");
-	pyAbstractDictMergeFromSeq = (*env)->GetMethodID(env, pyAbstractDictClass, "mergeFromSeq",
-			"(Lorg/python/core/PyObject;Z)V");
-
-	JNI_CLASS(pyDict, "org/python/core/PyDictionary")
-	pyDictConstructor = (*env)->GetMethodID(env, pyDictClass, "<init>", "()V");
-
-	JNI_CLASS(pyStringMap, "org/python/core/PyStringMap")
-
-	JNI_CLASS(pySequence, "org/python/core/PySequence")
-	pySequenceLen = (*env)->GetMethodID(env, pySequenceClass, "__len__", "()I");
-	pySequenceGetItem = (*env)->GetMethodID(env, pySequenceClass, "__finditem__",
-			"(I)Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pySequenceList, "org/python/core/PySequenceList")
-	pySequenceListSize = (*env)->GetMethodID(env, pySequenceListClass, "size", "()I");
-	pySequenceListPyGet = (*env)->GetMethodID(env, pySequenceListClass, "pyget",
-			"(I)Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyType, "org/python/core/PyType")
-	pyTypeGetName = (*env)->GetMethodID(env, pyTypeClass, "getName",
-			"()Ljava/lang/String;");
-	pyTypeSetName = (*env)->GetMethodID(env, pyTypeClass, "setName",
-			"(Ljava/lang/String;)V");
-	pyTypeGetBase = (*env)->GetMethodID(env, pyTypeClass, "getBase",
-			"()Lorg/python/core/PyObject;");
-	pyTypeGetBases = (*env)->GetMethodID(env, pyTypeClass, "getBases",
-			"()Lorg/python/core/PyObject;");
-	pyTypeGetMro = (*env)->GetMethodID(env, pyTypeClass, "getMro",
-			"()Lorg/python/core/PyTuple;");
-	pyTypeIsSubType = (*env)->GetMethodID(env, pyTypeClass, "isSubType",
-			"(Lorg/python/core/PyType;)Z");
-	pyTypeLookup = (*env)->GetMethodID(env, pyTypeClass, "lookup",
-			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	pyTypeMROField = (*env)->GetFieldID(env, pyTypeClass, "mro",
-			"[Lorg/python/core/PyObject;");
-	pyTypeNameField = (*env)->GetFieldID(env, pyTypeClass, "name",
-			"Ljava/lang/String;");
-
-	JNI_CLASS(pyCodecs, "org/python/core/codecs")
-	pyCodecsDecode = (*env)->GetStaticMethodID(env, pyCodecsClass, "decode",
-			"(Lorg/python/core/PyString;Ljava/lang/String;Ljava/lang/String;)Lorg/python/core/PyObject;");
-	pyCodecsEncode = (*env)->GetStaticMethodID(env, pyCodecsClass, "encode",
-			"(Lorg/python/core/PyString;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-	pyCodecsGetDefaultEncoding = (*env)->GetStaticMethodID(env, pyCodecsClass, "getDefaultEncoding",
-			"()Ljava/lang/String;");
-	pyCodecsLookup = (*env)->GetStaticMethodID(env, pyCodecsClass, "lookup",
-			"(Ljava/lang/String;)Lorg/python/core/PyTuple;");
-	pyCodecsRegister = (*env)->GetStaticMethodID(env, pyCodecsClass, "register",
-			"(Lorg/python/core/PyObject;)V");
-	pyCodecsLookupError = (*env)->GetStaticMethodID(env, pyCodecsClass, "lookup_error",
-			"(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	pyCodecsRegisterError = (*env)->GetStaticMethodID(env, pyCodecsClass, "register_error",
-			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
-
-	JNI_CLASS(pyNotImplemented, "org/python/core/PyNotImplemented")
-
-	JNI_CLASS(pyFile, "org/python/core/PyFile")
-	pyFileWrite = (*env)->GetMethodID(env, pyFileClass, "write", "(Ljava/lang/String;)V");
-
-	JNI_CLASS(pyModule, "org/python/core/PyModule")
-	pyModuleByStringConstructor = (*env)->GetMethodID(env, pyModuleClass, "<init>",
-			"(Ljava/lang/String;)V");
-	pyModuleGetDict = (*env)->GetMethodID(env, pyModuleClass, "getDict",
-			"()Lorg/python/core/PyObject;");
-	pyModule__setattr__ = (*env)->GetMethodID(env, pyModuleClass, "__setattr__",
-			"(Ljava/lang/String;Lorg/python/core/PyObject;)V");
-	pyModule__delattr__ = (*env)->GetMethodID(env, pyModuleClass, "__delattr__",
-			"(Ljava/lang/String;)V");
-
-	JNI_CLASS(pyCell, "org/python/core/PyCell")
-	pyCellConstructor = (*env)->GetMethodID(env, pyCellClass, "<init>", "()V");
-	pyCell_ob_ref = (*env)->GetFieldID(env, pyCellClass, "ob_ref", "Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyClass, "org/python/core/PyClass")
-	pyClassClassobj___new__ = (*env)->GetStaticMethodID(env, pyClassClass, "classobj___new__",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyClass__bases__ = (*env)->GetFieldID(env, pyClassClass, "__bases__", "Lorg/python/core/PyTuple;");
-	pyClass__dict__ = (*env)->GetFieldID(env, pyClassClass, "__dict__", "Lorg/python/core/PyObject;");
-	pyClass__name__ = (*env)->GetFieldID(env, pyClassClass, "__name__", "Ljava/lang/String;");
-
-	JNI_CLASS(pyMethod, "org/python/core/PyMethod")
-	pyMethodConstructor = (*env)->GetMethodID(env, pyMethodClass, "<init>",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-	pyMethod__func__ = (*env)->GetFieldID(env, pyMethodClass, "__func__", "Lorg/python/core/PyObject;");
-	pyMethod__self__ = (*env)->GetFieldID(env, pyMethodClass, "__self__", "Lorg/python/core/PyObject;");
-	pyMethodImClass = (*env)->GetFieldID(env, pyMethodClass, "im_class", "Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyFunction, "org/python/core/PyFunction")
-	pyFunctionConstructor = (*env)->GetMethodID(env, pyFunctionClass, "<init>",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;)V");
-	pyFunction__code__ = (*env)->GetFieldID(env, pyFunctionClass, "__code__",
-			"Lorg/python/core/PyCode;");
-	pyFunctionSetCode = (*env)->GetMethodID(env, pyFunctionClass, "setCode",
-			"(Lorg/python/core/PyCode;)V");
-	pyFunctionGetFuncGlobals = (*env)->GetMethodID(env, pyFunctionClass, "getFuncGlobals",
-			"()Lorg/python/core/PyObject;");
-	pyFunction__module__ = (*env)->GetFieldID(env, pyFunctionClass, "__module__",
-			"Lorg/python/core/PyObject;");
-	pyFunctionGetFuncDefaults = (*env)->GetMethodID(env, pyFunctionClass, "getFuncDefaults",
-			"()Lorg/python/core/PyObject;");
-	pyFunctionSetFuncDefaults = (*env)->GetMethodID(env, pyFunctionClass, "setFuncDefaults",
-			"(Lorg/python/core/PyObject;)V");
-	pyFunctionFuncClosure = (*env)->GetFieldID(env, pyFunctionClass, "__closure__",
-			"Lorg/python/core/PyObject;");
-	pyFunction__doc__ = (*env)->GetFieldID(env, pyFunctionClass, "__doc__",
-			"Lorg/python/core/PyObject;");
-	pyFunction__name__ = (*env)->GetFieldID(env, pyFunctionClass, "__name__",
-			"Ljava/lang/String;");
-
-	JNI_CLASS(pyClassMethod, "org/python/core/PyClassMethod")
-	pyClassMethodConstructor = (*env)->GetMethodID(env, pyClassMethodClass, "<init>",
-			"(Lorg/python/core/PyObject;)V");
-	pyClassMethod_callable = (*env)->GetFieldID(env, pyClassMethodClass, "callable",
-			"Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyStaticMethod, "org/python/core/PyStaticMethod")
-	pyStaticMethodConstructor = (*env)->GetMethodID(env, pyStaticMethodClass, "<init>",
-			"(Lorg/python/core/PyObject;)V");
-	pyStaticMethod_callable = (*env)->GetFieldID(env, pyStaticMethodClass, "callable",
-			"Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyBuiltinCallableInfo, "org/python/core/PyBuiltinCallable$Info")
-	pyBuiltinCallableInfoMin = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass,
-			"getMinargs", "()I");
-	pyBuiltinCallableInfoMax = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass,
-			"getMaxargs", "()I");
-	pyBuiltinCallableInfoName = (*env)->GetMethodID(env, pyBuiltinCallableInfoClass, "getName",
-			"()Ljava/lang/String;");
-
-	JNI_CLASS(pyBuiltinCallable, "org/python/core/PyBuiltinCallable")
-	pyBuiltinCallable_getSelf = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getSelf",
-			"()Lorg/python/core/PyObject;");
-	pyBuiltinCallable_getModule = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getModule",
-			"()Lorg/python/core/PyObject;");
-	pyBuiltinCallable_getDoc = (*env)->GetMethodID(env, pyBuiltinCallableClass, "getDoc",
-			"()Ljava/lang/String;");
-//	pyBuiltinCallable_fastGetName = (*env)->GetMethodID(env, pyBuiltinCallableClass, "fastGetName",
-//			"()Lorg/python/core/PyObject;");
-	pyBuiltinCallable_info = (*env)->GetFieldID(env, pyBuiltinCallableClass, "info",
-			"Lorg/python/core/PyBuiltinCallable$Info;");
-
-	JNI_CLASS(pyCMethodDef, "JyNI/CMethodDef")
-	pyCMethodDefConstructor = (*env)->GetMethodID(env, pyCMethodDefClass, "<init>",
-			"(JLjava/lang/String;ZLjava/lang/String;)V");
-
-	JNI_CLASS(pyCFunction, "JyNI/PyCFunction")
-	pyCFunctionConstructor = (*env)->GetMethodID(env, pyCFunctionClass, "<init>",
-			"(JLorg/python/core/PyType;Ljava/lang/String;ZLjava/lang/String;)V");
-
-	JNI_CLASS(pyDescr, "org/python/core/PyDescriptor")
-	pyDescr_dtype = (*env)->GetFieldID(env, pyDescrClass, "dtype",
-			"Lorg/python/core/PyType;");
-
-	JNI_CLASS(pyMethodDescr, "org/python/core/PyMethodDescr")
-	pyMethodDescrConstructor = (*env)->GetMethodID(env, pyMethodDescrClass, "<init>",
-			"(Lorg/python/core/PyType;Lorg/python/core/PyBuiltinCallable;)V");
-
-	JNI_CLASS(pyClassMethodDescr, "org/python/core/PyClassMethodDescr")
-
-	JNI_CLASS(pyDictProxy, "org/python/core/PyDictProxy")
-	pyDictProxyConstructor = (*env)->GetMethodID(env, pyDictProxyClass, "<init>",
-			"(Lorg/python/core/PyObject;)V");
-	pyDictProxy_dict = (*env)->GetFieldID(env, pyDictProxyClass, "dict",
-			"Lorg/python/core/PyObject;");
-
-	JNI_CLASS(pyProperty, "org/python/core/PyProperty")
-	pyPropertyConstructor = (*env)->GetMethodID(env, pyPropertyClass, "<init>", "()V");
-	pyProperty_fget = (*env)->GetFieldID(env, pyPropertyClass, "fget", "Lorg/python/core/PyObject;");
-	pyProperty_fset = (*env)->GetFieldID(env, pyPropertyClass, "fset", "Lorg/python/core/PyObject;");
-	pyProperty_fdel = (*env)->GetFieldID(env, pyPropertyClass, "fdel", "Lorg/python/core/PyObject;");
-	pyProperty_doc = (*env)->GetFieldID(env, pyPropertyClass, "doc", "Lorg/python/core/PyObject;");
-	pyProperty_docFromGetter = (*env)->GetFieldID(env, pyPropertyClass, "docFromGetter", "Z");
-
-//	JNI_CLASS(pyBaseString, "org/python/core/PyBaseString")
-//	JNI_CLASS(pyXRange, "org/python/core/PyXRange")
-
-	JNI_CLASS(pySequenceIter, "org/python/core/PySequenceIter")
-	pySequenceIterConstructor = (*env)->GetMethodID(env, pySequenceIterClass, "<init>",
-			"(Lorg/python/core/PyObject;)V");
-	pySequenceIter_seq = (*env)->GetFieldID(env, pySequenceIterClass, "seq",
-			"Lorg/python/core/PyObject;");
-	jfieldID pySequenceIter_index = (*env)->GetFieldID(env, pySequenceIterClass, "index", "I");
-
-//	JNI_CLASS(pyFastSequenceIter, "org/python/core/PyFastSequenceIter")
-//	JNI_CLASS(pyReversedIterator, "org/python/core/PyReversedIterator")
-
-	jclass pyBaseSetClass = (*env)->FindClass(env, "org/python/core/BaseSet");
-//	if (pyBaseSetClassLocal == NULL) { return JNI_ERR;}
-//	pyBaseSetClass = (jclass) (*env)->NewWeakGlobalRef(env, pyBaseSetClassLocal);
-//	(*env)->DeleteLocalRef(env, pyBaseSetClassLocal);
-	pyBaseSet_set = (*env)->GetFieldID(env, pyBaseSetClass, "_set", "Ljava/util/Set;");
-	pyBaseSetSize = (*env)->GetMethodID(env, pyBaseSetClass, "size", "()I");
-	pyBaseSet_update = (*env)->GetMethodID(env, pyBaseSetClass, "_update",
-			"(Lorg/python/core/PyObject;)V");
-	pyBaseSetbaseset_issubset = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_issubset",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset_issuperset = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_issuperset",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset_isdisjoint = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_isdisjoint",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset_difference = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_difference",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset_differenceMulti = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_difference",
-			"([Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset_symmetric_difference = (*env)->GetMethodID(env, pyBaseSetClass,
-			"baseset_symmetric_difference", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset_intersection = (*env)->GetMethodID(env, pyBaseSetClass, "baseset_intersection",
-			"(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseSetbaseset___contains__ = (*env)->GetMethodID(env, pyBaseSetClass, "baseset___contains__",
-			"(Lorg/python/core/PyObject;)Z");
-	(*env)->DeleteLocalRef(env, pyBaseSetClass);
-
-	JNI_CLASS(pySet, "org/python/core/PySet")
-	pySetFromIterableConstructor = (*env)->GetMethodID(env, pySetClass, "<init>",
-			"(Lorg/python/core/PyObject;)V");
-	pySetset_pop = (*env)->GetMethodID(env, pySetClass, "set_pop",
-			"()Lorg/python/core/PyObject;");
-	pySetset_clear = (*env)->GetMethodID(env, pySetClass, "set_clear", "()V");
-	pySetset_discard = (*env)->GetMethodID(env, pySetClass, "set_discard",
-			"(Lorg/python/core/PyObject;)V");
-	pySetset_add = (*env)->GetMethodID(env, pySetClass, "set_add",
-			"(Lorg/python/core/PyObject;)V");
-	pySetset_difference_update = (*env)->GetMethodID(env, pySetClass, "set_difference_update",
-			"([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	pySetset_intersection_update = (*env)->GetMethodID(env, pySetClass, "set_intersection_update",
-			"([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	pySetset_symmetric_difference_update = (*env)->GetMethodID(env, pySetClass,
-			"set_symmetric_difference_update", "(Lorg/python/core/PyObject;)V");
-
-	JNI_CLASS(pyFrozenSet, "org/python/core/PyFrozenSet")
-	pyFrozenSetFromIterableConstructor = (*env)->GetMethodID(env, pyFrozenSetClass, "<init>",
-			"(Lorg/python/core/PyObject;)V");
-
-//	JNI_CLASS(pyEnumeration, "org/python/core/PyEnumerate")
-
-	JNI_CLASS(pySlice, "org/python/core/PySlice")
-	pySliceFromStartStopStepConstructor = (*env)->GetMethodID(env, pySliceClass, "<init>",
-			"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
-	pySliceToString = (*env)->GetMethodID(env, pySliceClass, "toString",
-			"()Ljava/lang/String;");
-	pySliceGetStart = (*env)->GetMethodID(env, pySliceClass, "getStart",
-			"()Lorg/python/core/PyObject;");
-	pySliceGetStop = (*env)->GetMethodID(env, pySliceClass, "getStop",
-			"()Lorg/python/core/PyObject;");
-	pySliceGetStep = (*env)->GetMethodID(env, pySliceClass, "getStep",
-			"()Lorg/python/core/PyObject;");
-	pySliceIndicesEx = (*env)->GetMethodID(env, pySliceClass, "indicesEx", "(I)[I");
-
-	JNI_CLASS(pyEllipsis, "org/python/core/PyEllipsis")
-//	JNI_CLASS(pyGenerator, "org/python/core/PyGenerator")
-	JNI_CLASS(pyWeakReference, "org/python/modules/_weakref/ReferenceType")
-	JNI_CLASS(pyWeakProxy, "org/python/modules/_weakref/ProxyType")
-	JNI_CLASS(pyWeakCallableProxy, "org/python/modules/_weakref/CallableProxyType")
-
-	jclass pyCodeClassLocal = (*env)->FindClass(env, "org/python/core/PyCode");
-//	if (pyCodeClassLocal == NULL) { return JNI_ERR;}
-	pyCode_co_name = (*env)->GetFieldID(env, pyCodeClassLocal, "co_name", "Ljava/lang/String;");
-	(*env)->DeleteLocalRef(env, pyCodeClassLocal);
-
-	jclass pyBaseCodeClassLocal = (*env)->FindClass(env, "org/python/core/PyBaseCode");
-	if (pyBaseCodeClassLocal == NULL) { return JNI_ERR;}
-	pyBaseCode_co_argcount = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_argcount", "I");
-	pyBaseCode_co_cellvars = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_cellvars",
-			"[Ljava/lang/String;");
-	pyBaseCode_co_filename = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_filename",
-			"Ljava/lang/String;");
-	pyBaseCode_co_firstlineno = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_firstlineno", "I");
-	pyBaseCode_co_freevars = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_freevars",
-			"[Ljava/lang/String;");
-	pyBaseCode_co_nlocals = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_nlocals", "I");
-	pyBaseCode_co_varnames = (*env)->GetFieldID(env, pyBaseCodeClassLocal, "co_varnames",
-			"[Ljava/lang/String;");
-	(*env)->DeleteLocalRef(env, pyBaseCodeClassLocal);
-
-	JNI_CLASS(pyBytecode, "org/python/core/PyBytecode")
-	pyBytecodeConstructor = (*env)->GetMethodID(env, pyBytecodeClass, "<init>",
-			"(IIIILjava/lang/String;[Lorg/python/core/PyObject;[Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)V");
-	pyBytecode_co_consts = (*env)->GetFieldID(env, pyBytecodeClass, "co_consts",
-			"[Lorg/python/core/PyObject;");
-	pyBytecode_co_names = (*env)->GetFieldID(env, pyBytecodeClass, "co_names",
-			"[Ljava/lang/String;");
-	pyBytecode_co_stacksize = (*env)->GetFieldID(env, pyBytecodeClass, "co_stacksize", "I");
-
-	JNI_CLASS(pyTableCode, "org/python/core/PyTableCode")
-
-//	JNI_CLASS(pyCallIter, "org/python/core/PyCallIter")
-//	JNI_CLASS(pySuper, "org/python/core/PySuper")
-
-	JNI_CLASS(GlobalRef, "org/python/modules/_weakref/GlobalRef")
-	GlobalRef_retryFactory = (*env)->GetMethodID(env, GlobalRefClass, "retryFactory",
-			"()Lorg/python/modules/_weakref/ReferenceBackend;");
-
-	JNI_CLASS(AbstractReference, "org/python/modules/_weakref/AbstractReference")
-	AbstractReference_get = (*env)->GetMethodID(env, AbstractReferenceClass, "get",
-			"()Lorg/python/core/PyObject;");
-
-	JNI_CLASS(JyNIGlobalRef, "JyNI/JyNIGlobalRef")
-	JyNIGlobalRef_initNativeHandle = (*env)->GetMethodID(env, JyNIGlobalRefClass,
-			"initNativeHandle", "(J)V");
-
-	JNI_CLASS(pyBaseException, "org/python/core/PyBaseException")
-	pyBaseExceptionEmptyConstructor = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"<init>", "()V");
-	pyBaseExceptionSubTypeConstructor = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"<init>", "(Lorg/python/core/PyType;)V");
-	pyBaseException__init__ = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"__init__", "([Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	pyBaseException__setstate__ = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"__setstate__", "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
-	pyBaseException__unicode__ = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"__unicode__", "()Lorg/python/core/PyUnicode;");
-	pyBaseExceptionArgs = (*env)->GetFieldID(env, pyBaseExceptionClass,
-			"args", "Lorg/python/core/PyObject;");
-	pyBaseExceptionSetArgs = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"setArgs", "(Lorg/python/core/PyObject;)V");
-	pyBaseExceptionGetMessage = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"getMessage", "()Lorg/python/core/PyObject;");
-	pyBaseExceptionSetMessage = (*env)->GetMethodID(env, pyBaseExceptionClass,
-			"setMessage", "(Lorg/python/core/PyObject;)V");
-
-//	JNI_CLASS(pyByteArray, "org/python/core/PyByteArray")
-//	JNI_CLASS(pyBuffer, "org/python/core/PyBuffer")
-//	JNI_CLASS(pyMemoryView, "org/python/core/PyMemoryView")
-
-	JNI_CLASS(__builtin__, "org/python/core/__builtin__")
-	//__builtin__Import = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__", "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-	__builtin__ImportLevel = (*env)->GetStaticMethodID(env, __builtin__Class, "__import__",
-			"(Ljava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;I)Lorg/python/core/PyObject;");
-
-	JNI_CLASS(imp, "org/python/core/imp")
-	imp_importName = (*env)->GetStaticMethodID(env, impClass, "importName",
-			"(Ljava/lang/String;Z)Lorg/python/core/PyObject;");
-	imp_reload = (*env)->GetStaticMethodID(env, impClass, "reload",
-			"(Lorg/python/core/PyModule;)Lorg/python/core/PyObject;");
-
-	JNI_CLASS(exceptions, "org/python/core/exceptions")
-	exceptionsKeyError = (*env)->GetStaticMethodID(env, exceptionsClass, "KeyError",
-			"()Lorg/python/core/PyObject;");
-	exceptionsKeyError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "KeyError__str__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
-	exceptionsEnvironmentError = (*env)->GetStaticMethodID(env, exceptionsClass, "EnvironmentError",
-			"()Lorg/python/core/PyObject;");
-	exceptionsEnvironmentError__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "EnvironmentError__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	exceptionsEnvironmentError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "EnvironmentError__str__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
-	exceptionsEnvironmentError__reduce__ = (*env)->GetStaticMethodID(env, exceptionsClass, "EnvironmentError__reduce__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
-	exceptionsSyntaxError = (*env)->GetStaticMethodID(env, exceptionsClass, "SyntaxError",
-			"()Lorg/python/core/PyObject;");
-	exceptionsSyntaxError__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "SyntaxError__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	exceptionsSyntaxError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "SyntaxError__str__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyString;");
-	exceptionsSystemExit = (*env)->GetStaticMethodID(env, exceptionsClass, "SystemExit",
-			"()Lorg/python/core/PyObject;");
-	exceptionsSystemExit__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "SystemExit__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	exceptionsUnicodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeError",
-			"()Lorg/python/core/PyObject;");
-	#ifdef Py_USING_UNICODE
-	exceptionsGetStart = (*env)->GetStaticMethodID(env, exceptionsClass, "getStart",
-			"(Lorg/python/core/PyObject;Z)I");
-	exceptionsGetEnd = (*env)->GetStaticMethodID(env, exceptionsClass, "getEnd",
-			"(Lorg/python/core/PyObject;Z)I");
-	exceptionsGetString = (*env)->GetStaticMethodID(env, exceptionsClass, "getString",
-			"(Lorg/python/core/PyObject;Ljava/lang/String;)Lorg/python/core/PyString;");
-	exceptionsGetUnicode = (*env)->GetStaticMethodID(env, exceptionsClass, "getUnicode",
-			"(Lorg/python/core/PyObject;Ljava/lang/String;)Lorg/python/core/PyUnicode;");
-	exceptionsUnicodeError__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeError__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;Lorg/python/core/PyType;)V");
-	exceptionsUnicodeEncodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeDecodeError",
-			"()Lorg/python/core/PyObject;");
-	exceptionsUnicodeEncodeError__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeEncodeError__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	exceptionsUnicodeEncodeError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeEncodeError__str__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyString;");
-	exceptionsUnicodeDecodeError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeEncodeError",
-			"()Lorg/python/core/PyObject;");
-	exceptionsUnicodeDecodeError__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeDecodeError__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	exceptionsUnicodeDecodeError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeDecodeError__str__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyString;");
-	exceptionsUnicodeTranslateError = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeTranslateError",
-			"()Lorg/python/core/PyObject;");
-	exceptionsUnicodeTranslateError__init__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeTranslateError__init__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)V");
-	exceptionsUnicodeTranslateError__str__ = (*env)->GetStaticMethodID(env, exceptionsClass, "UnicodeTranslateError__str__",
-			"(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyString;");
-	#endif
-
-	return JNI_VERSION_1_2;
-}
-
-inline jint initSingletons(JNIEnv *env)
-{
-	/*jmethodID pyUnicodeEmptyConstructor = (*env)->GetMethodID(env, pyUnicodeClass, "<init>", "()V");
-	jobject unicode_emptyLocal = (*env)->NewObject(env, pyUnicodeClass, pyUnicodeEmptyConstructor);
-	unicode_empty = JyNI_PyObject_FromJythonPyObject((*env)->NewWeakGlobalRef(env, unicode_emptyLocal));
-	(*env)->DeleteLocalRef(env, unicode_emptyLocal);
-	*/
-	//jmethodID pyNoneConstructor = (*env)->GetMethodID(env, pyNoneClass, "<init>", "()V");
-	//if (pyNoneConstructor == NULL) { return JNI_ERR;}
-	//JyNone = JyNI_PyObject_FromJythonPyObject((*env)->NewWeakGlobalRef(env, (*env)->NewObject(env, pyNoneClass, pyNoneConstructor)));
-	jfieldID jyNone = (*env)->GetStaticFieldID(env, pyPyClass, "None", "Lorg/python/core/PyObject;");
-	JyNone = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyNone));
-	jfieldID jyNotImplemented = (*env)->GetStaticFieldID(env, pyPyClass, "NotImplemented", "Lorg/python/core/PyObject;");
-	JyNotImplemented = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyNotImplemented));
-	jfieldID jyEllipsis = (*env)->GetStaticFieldID(env, pyPyClass, "Ellipsis", "Lorg/python/core/PyObject;");
-	JyEllipsis = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEllipsis));
-	jfieldID jyEmptyFrozenSet = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyFrozenSet", "Lorg/python/core/PyFrozenSet;");
-	JyEmptyFrozenSet = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyFrozenSet));
-	jfieldID jyEmptyString = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyString", "Lorg/python/core/PyString;");
-	JyEmptyString = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyString));
-	jfieldID jyEmptyUnicode = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyUnicode", "Lorg/python/core/PyUnicode;");
-	JyEmptyUnicode = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyUnicode));
-	jfieldID jyEmptyTuple = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyTuple", "Lorg/python/core/PyTuple;");
-	JyEmptyTuple = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyTuple));
-	jfieldID jyEmptyStringArray = (*env)->GetStaticFieldID(env, pyPyClass, "NoKeywords", "[Ljava/lang/String;");
-	length0StringArray = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyStringArray));
-	jfieldID jyEmptyPyObjArray = (*env)->GetStaticFieldID(env, pyPyClass, "EmptyObjects", "[Lorg/python/core/PyObject;");
-	length0PyObjectArray = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyEmptyPyObjArray));
-	jfieldID jyTrue = (*env)->GetStaticFieldID(env, pyPyClass, "True", "Lorg/python/core/PyBoolean;");
-	JyTrue = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyTrue));
-	jfieldID jyFalse = (*env)->GetStaticFieldID(env, pyPyClass, "False", "Lorg/python/core/PyBoolean;");
-	JyFalse = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, pyPyClass, jyFalse));
-
-
-//	length0StringArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, stringClass, NULL));
-//	length0PyObjectArray = (*env)->NewGlobalRef(env, (*env)->NewObjectArray(env, 0, pyObjectClass, NULL));
-
-//	jfieldID jyMemoryErrorInst = (*env)->GetStaticFieldID(env, pyPyClass, );
-//	PyExc_MemoryErrorInst = JyNI_PyObject_FromJythonPyObject();
-	return JNI_VERSION_1_2;
-}
-
-#define native_table_index_long 10
-#define native_table_index_ulong 11
-static inline void patchJythonStructModule(JNIEnv *env)
-{
-	if (sizeof(long) != 4)
-	{
-		jclass structModuleClass = (*env)->FindClass(env, "org/python/modules/struct");
-		jfieldID structModule_native_table = (*env)->GetStaticFieldID(env, structModuleClass,
-				"native_table", "[Lorg/python/modules/struct$FormatDef;");
-		jclass structModule_FormatDefClass = (*env)->FindClass(env, "org/python/modules/struct$FormatDef");
-		jfieldID structModule_FormatDef_size = (*env)->GetFieldID(env, structModule_FormatDefClass, "size", "I");
-		jfieldID structModule_FormatDef_align = (*env)->GetFieldID(env, structModule_FormatDefClass, "alignment", "I");
-		jarray struct_native_table = (*env)->GetStaticObjectField(env, structModuleClass, structModule_native_table);
-		jobject long_FormatDef = (*env)->GetObjectArrayElement(env, struct_native_table, native_table_index_long);
-		jobject ulong_FormatDef = (*env)->GetObjectArrayElement(env, struct_native_table, native_table_index_ulong);
-		(*env)->SetIntField(env, long_FormatDef, structModule_FormatDef_size, sizeof(long));
-		(*env)->SetIntField(env, long_FormatDef, structModule_FormatDef_align, sizeof(long));
-		(*env)->SetIntField(env, ulong_FormatDef, structModule_FormatDef_size, sizeof(long));
-		(*env)->SetIntField(env, ulong_FormatDef, structModule_FormatDef_align, sizeof(long));
-	}
-}
-
-int Py_DebugFlag; /* Needed by parser.c */
-int Py_VerboseFlag; /* Needed by import.c */
-int Py_InteractiveFlag; /* Needed by Py_FdIsInteractive() below */
-int Py_InspectFlag; /* Needed to determine whether to exit at SystemExit */
-int Py_NoSiteFlag; /* Suppress 'import site' */
-int Py_BytesWarningFlag; /* Warn on str(bytes) and str(buffer) */
-int Py_DontWriteBytecodeFlag; /* Suppress writing bytecode files (*.py[co]) */
-int Py_UseClassExceptionsFlag = 1; /* Needed by bltinmodule.c: deprecated */
-int Py_FrozenFlag; /* Needed by getpath.c */
-int Py_UnicodeFlag = 0; /* Needed by compile.c */
-int Py_OptimizeFlag = 0; /* Originally hosted in compile.c */
-int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
-/* _XXX Py_QnewFlag should go away in 2.3.  It's true iff -Qnew is passed,
-  on the command line, and is used in 2.2 by ceval.c to make all "/" divisions
-  true divisions (which they will be in 2.3). */
-int _Py_QnewFlag = 0;
-int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
-int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
-
-//JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
-jint JyNI_init(JavaVM *jvm)
-{
-	//puts("JyNI_init");
-	java = jvm; // cache the JavaVM pointer
-	JNIEnv *env;
-
-	if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_2)) {
-		return JNI_ERR; // JNI version not supported
-	}
-	JyHash_init();
-	//Py_Py3kWarningFlag
-	if (initJNI(env) == JNI_ERR) return JNI_ERR;
-	if (initJyNI(env) == JNI_ERR) return JNI_ERR;
-	if (initJythonSite(env) == JNI_ERR) return JNI_ERR;
-	if (initJythonObjects(env) == JNI_ERR) return JNI_ERR;
-	initBuiltinTypes();
-	initBuiltinExceptions();
-	if (initSingletons(env) == JNI_ERR) return JNI_ERR;
-
-	patchJythonStructModule(env);
-
-	//puts("characters-info:");
-	//characters[UCHAR_MAX + 1]
-	//characters2[0] = NULL;
-	//printf("%u\n", characters2[0]);
-	//dlopen("/home/stefan/eclipseWorkspace/JyNI/JyNI-C/Debug/libJyNI.so", RTLD_NOLOAD | RTLD_GLOBAL);
-	//initErrorsFromJython(env);
-
-	//init native objects where necessary:
-	PyEval_InitThreads();
-	_PyInt_Init();
-	PyType_Ready(&PyBool_Type);
-
-	return JNI_VERSION_1_2;
-}
-
-void JyNI_unload(JavaVM *jvm)
-{
-	jputs("JyNI_unload");
-	PyString_Fini();
-	PyInt_Fini();
-	PyTuple_Fini();
-	PyDict_Fini();
-	PyCFunction_Fini();
-	PySet_Fini();
-
-	int i;
-	for (i = 0; i < builtinTypeCount; ++i)
-	{
-		if (builtinTypes[i].sync != NULL) free(builtinTypes[i].sync);
-		if (builtinTypes[i].type_name != NULL) free(builtinTypes[i].type_name);
-	}
-
-	//free(specialPyInstance.sync);
-
-	env();
-	(*env)->DeleteWeakGlobalRef(env, JyNone);
-	(*env)->DeleteWeakGlobalRef(env, JyNotImplemented);
-	(*env)->DeleteWeakGlobalRef(env, JyEllipsis);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyFrozenSet);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyString);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyUnicode);
-	(*env)->DeleteWeakGlobalRef(env, JyTrue);
-	(*env)->DeleteWeakGlobalRef(env, JyFalse);
-
-	(*env)->DeleteWeakGlobalRef(env, length0StringArray);
-	(*env)->DeleteWeakGlobalRef(env, length0PyObjectArray);
 }
 
 //inline void JyNI_printJ(jobject obj)
@@ -4073,7 +2405,7 @@ inline void JyNI_jprintJ(jobject obj)
 		if ((*env)->GetObjectRefType(env, obj)) {
 			if (!(*env)->IsSameObject(env, obj, NULL)) {
 				//jputsLong(__LINE__);
-				jstring msg = (*env)->CallObjectMethod(env, obj, objectToString);
+				jstring msg = (*env)->CallObjectMethod(env, obj, object_toString);
 				(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_jPrint, msg);
 				//jputsLong(__LINE__);
 			} else jputs("NULL (equal)");
@@ -4086,7 +2418,7 @@ inline void JyNI_printJInfo(jobject obj)
 	if (obj)
 	{
 		env();
-		jobject cls = (*env)->CallObjectMethod(env, obj, objectGetClass);
+		jobject cls = (*env)->CallObjectMethod(env, obj, object_getClass);
 		JyNI_jprintJ(cls);
 	} else jputs("object is NULL");
 }

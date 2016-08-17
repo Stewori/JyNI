@@ -700,16 +700,16 @@ PyFrame_New(PyThreadState *tstate, PyCodeObject *code, PyObject *globals,
 	if (tstate)
 	{
 		jobject jts = TS_GET_JY(tstate);
-		back = (*env)->GetObjectField(env, jts, pyThreadStateFrameField);
-		builtins = (*env)->GetObjectField(env, back, pyFrame_f_builtins);
+		back = (*env)->GetObjectField(env, jts, pyThreadState_frameField);
+		builtins = (*env)->GetObjectField(env, back, pyFrame_f_builtinsField);
 	}
-	jobject f = (*env)->NewObject(env, pyFrameClass, pyFrameConstructor,
+	jobject f = (*env)->NewObject(env, pyFrameClass, pyFrame_Constructor,
 			JyNI_JythonPyObject_FromPyObject(code),
 			JyNI_JythonPyObject_FromPyObject(locals),
 			JyNI_JythonPyObject_FromPyObject(globals),
 			builtins);
 	if (back)
-		(*env)->SetObjectField(env, f, pyFrame_f_back, back);
+		(*env)->SetObjectField(env, f, pyFrame_f_backField, back);
 	return (PyFrameObject*) JyNI_PyObject_FromJythonPyObject(f);
 
 //	PyFrameObject *back = tstate->frame;PyTraceBack_Here

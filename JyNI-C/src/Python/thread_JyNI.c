@@ -65,7 +65,7 @@ PyAPI_FUNC(PyThread_type_lock) PyThread_allocate_lock(void)
 //PyThread_type_lock PyThread_allocate_lock(void)
 {
 	env(NULL);
-	return (PyThread_type_lock) (*env)->NewGlobalRef(env, (*env)->NewObject(env, JyLockClass, JyLockConstructor));
+	return (PyThread_type_lock) (*env)->NewGlobalRef(env, (*env)->NewObject(env, JyLockClass, JyLock_Constructor));
 }
 
 PyAPI_FUNC(void) PyThread_free_lock(PyThread_type_lock lock)
@@ -77,13 +77,13 @@ PyAPI_FUNC(void) PyThread_free_lock(PyThread_type_lock lock)
 PyAPI_FUNC(int) PyThread_acquire_lock(PyThread_type_lock lock, int waitflag)
 {
 	env(0);
-	return (*env)->CallBooleanMethod(env, (jobject) lock, JyLockAcquire, waitflag);//waitflag == WAIT_LOCK);
+	return (*env)->CallBooleanMethod(env, (jobject) lock, JyLock_acquire, waitflag);//waitflag == WAIT_LOCK);
 }
 
 PyAPI_FUNC(void) PyThread_release_lock(PyThread_type_lock lock)
 {
 	env();
-	(*env)->CallVoidMethod(env, (jobject) lock, JyLockRelease);
+	(*env)->CallVoidMethod(env, (jobject) lock, JyLock_release);
 	if ((*env)->ExceptionOccurred(env))
 		(*env)->ExceptionClear(env); //this means, lock was already released, but we don't mind this
 }

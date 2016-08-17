@@ -2318,7 +2318,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 				 */
 				jobject jtp;
 				Py_BEGIN_ALLOW_THREADS
-				jtp = (*env)->CallObjectMethod(env, pyPyClass, pyPyMakeClass,
+				jtp = (*env)->CallObjectMethod(env, pyPyClass, pyPy_makeClass,
 						(*env)->NewStringUTF(env, PyString_AS_STRING(name)), jbases,
 						dct);
 				Py_END_ALLOW_THREADS
@@ -2855,7 +2855,7 @@ type_getattro(PyTypeObject *type, PyObject *name)
 	{
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+			(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 	}
 	PyTypeObject *metatype = Py_TYPE(type);
@@ -2942,7 +2942,7 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
 	if (delegate)
 	{
 		env(NULL);
-		(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
+		(*env)->CallObjectMethod(env, delegate, pyObject___setattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name),
 				JyNI_JythonPyObject_FromPyObject(value));
 		if ((*env)->ExceptionCheck(env))
@@ -3324,7 +3324,7 @@ object_repr(PyObject *self)
 	{
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
-				(*env)->CallObjectMethod(env, delegate, pyObject__repr__));
+				(*env)->CallObjectMethod(env, delegate, pyObject___repr__));
 	}
 
 	PyTypeObject *type;
@@ -3362,7 +3362,7 @@ object_str(PyObject *self)
 	{
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
-				(*env)->CallObjectMethod(env, delegate, pyObject__str__));
+				(*env)->CallObjectMethod(env, delegate, pyObject___str__));
 	}
 	unaryfunc f;
 

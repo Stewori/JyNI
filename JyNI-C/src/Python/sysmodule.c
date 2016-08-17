@@ -86,12 +86,12 @@ PySys_GetObject(char *name)
 		return NULL; // JNI version not supported
 	}
 	jobject nameStr = (*env)->NewStringUTF(env, name);
-	PyObject* er = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNIGetJyObjectByName, nameStr);
+	PyObject* er = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getJyObjectByName, nameStr);
 	if (er != NULL)
 		return  er;
 	else
 	{
-		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIGetPyObjectByName, nameStr);
+		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPyObjectByName, nameStr);
 		if (result == NULL)
 			return NULL;
 		else

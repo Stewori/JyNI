@@ -6362,7 +6362,7 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 	   "failed to convert both arguments to Unicode - "
 	   "interpreting them as being unequal";
 	env(NULL);
-	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPyRaiseUnicodeWarning, (*env)->NewStringUTF(env, text));
+	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_raiseUnicodeWarning, (*env)->NewStringUTF(env, text));
 	if ((*env)->ExceptionCheck(env))
 	{
 		(*env)->ExceptionClear(env);

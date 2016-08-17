@@ -1702,7 +1702,7 @@ jboolean JyNI_GC_EnsureHeadObject(JNIEnv* env, PyObject* op, JyObject* jy)
 
 		jobject jjy = (*env)->NewLocalRef(env, jy->jy);
 		if (!(*env)->IsSameObject(env, jjy, NULL)) {
-			(*env)->CallVoidMethod(env, result, pyObjectGCHeadSetObject, jjy);
+			(*env)->CallVoidMethod(env, result, pyObjectGCHead_setPyObject, jjy);
 		}
 		else return JNI_FALSE;
 		(*env)->DeleteLocalRef(env, jjy);
@@ -1768,7 +1768,7 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 			if (Py_TYPE(op) == &PyList_Type)
 			{
 				/* Set up JyGCHead before we call track: */
-				result = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) op);
+				result = (*env)->NewObject(env, JyListClass, JyList_fromBackendHandleConstructor, (jlong) op);
 //				if ((*env)->ExceptionCheck(env)) {
 //					jputs("exception occurred creating JyList:");
 //					(*env)->ExceptionDescribe(env);
@@ -1794,7 +1794,7 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 					if (!(*env)->IsSameObject(env, jjy, NULL)) {
 						//jputs("RefType1");
 //						jputsLong(__LINE__);
-						(*env)->CallVoidMethod(env, result, pyObjectGCHeadSetObject, jjy);
+						(*env)->CallVoidMethod(env, result, pyObjectGCHead_setPyObject, jjy);
 					}
 					(*env)->DeleteLocalRef(env, jjy);
 				} //else jputs("obj for head not yet initialized!");
@@ -1856,7 +1856,7 @@ visit_exploreListLink(PyObject *op, void *arg)
 	//if (!Is_Static_PyObject(op)) {
 	jobject head = JyNI_GC_ObtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
 	(*((exploreJNI*) arg)->env)->CallBooleanMethod(((exploreJNI*) arg)->env,
-			((exploreJNI*) arg)->dest, listAdd, head);
+			((exploreJNI*) arg)->dest, list_add, head);
 	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
 	//}
 	return 0;
@@ -1886,7 +1886,7 @@ visit_updateLinks(PyObject *op, void *arg)
 //	debugContext("   ->", op, "|");
 	jobject head = JyNI_GC_ObtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
 	if ( (*((exploreJNI*) arg)->env)->CallIntMethod(((exploreJNI*) arg)->env,
-			((exploreJNI*) arg)->dest, traversableGCHeadSetLink,
+			((exploreJNI*) arg)->dest, traversableGCHead_setLink,
 			((exploreJNI*) arg)->pos++, head)
 			== -1)
 	{
@@ -1895,9 +1895,9 @@ visit_updateLinks(PyObject *op, void *arg)
 //		jputs("Native ensure size:");
 //		jputsLong(size);
 		(*((exploreJNI*) arg)->env)->CallVoidMethod(((exploreJNI*) arg)->env,
-				((exploreJNI*) arg)->dest, traversableGCHeadEnsureSize, size);
+				((exploreJNI*) arg)->dest, traversableGCHead_ensureSize, size);
 		(*((exploreJNI*) arg)->env)->CallIntMethod(((exploreJNI*) arg)->env,
-					((exploreJNI*) arg)->dest, traversableGCHeadSetLink,
+					((exploreJNI*) arg)->dest, traversableGCHead_setLink,
 					((exploreJNI*) arg)->pos-1, head);
 	}
 	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
@@ -1958,7 +1958,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 		initSize = 0;
 		trav((PyObject*) op, (visitproc) visit_count, &initSize);
 	}
-	jobject result = (*env)->NewObject(env, arrayListClass, arrayListConstructor, initSize);
+	jobject result = (*env)->NewObject(env, arrayListClass, arrayList_Constructor, initSize);
 	exploreJNI expl = {env, result, 0};
 	trav(op, visit_exploreListLink, &expl);
 	return result;
@@ -1970,7 +1970,7 @@ int updateJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 	if (!newItem) {
 		env(GC_OBJECT_JNIFAIL);
 		jobject gcHead = JyNI_GC_ObtainJyGCHead(env, op, jy);
-		return (*env)->CallIntMethod(env, gcHead, traversableGCHeadClearLink, index);
+		return (*env)->CallIntMethod(env, gcHead, traversableGCHead_clearLink, index);
 	}
 	if (IS_UNEXPLORED(op))
 	{
@@ -1984,12 +1984,12 @@ int updateJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		env(GC_OBJECT_JNIFAIL);
 		jobject gcHead = JyNI_GC_ObtainJyGCHead(env, op, jy);
 		jobject linkHead = JyNI_GC_ObtainJyGCHead(env, newItem, newItemJy);
-		int result = (*env)->CallIntMethod(env, gcHead, traversableGCHeadSetLink, index, linkHead);
+		int result = (*env)->CallIntMethod(env, gcHead, traversableGCHead_setLink, index, linkHead);
 		if (result == -1)
 		{
 			jsize size = countReferences(op, NULL);
-			(*env)->CallVoidMethod(env, gcHead, traversableGCHeadEnsureSize, size);
-			result = (*env)->CallIntMethod(env, gcHead, traversableGCHeadInsertLink, index, linkHead);
+			(*env)->CallVoidMethod(env, gcHead, traversableGCHead_ensureSize, size);
+			result = (*env)->CallIntMethod(env, gcHead, traversableGCHead_insertLink, index, linkHead);
 		}
 		return result;
 	}
@@ -2031,7 +2031,7 @@ int updateClearJyGCHeadLinks(PyObject* op, JyObject* jy, jsize startIndex)
 			return GC_OBJECT_INVALIDHEAD;
 		}
 		int result = (*env)->CallIntMethod(env, gcHead,
-				traversableGCHeadClearLinksFromIndex, startIndex);
+				traversableGCHead_clearLinksFromIndex, startIndex);
 		(*env)->DeleteLocalRef(env, gcHead);
 		return result;
 	}
@@ -2053,12 +2053,12 @@ int updateInsertJyGCHeadLink(PyObject* op, JyObject* jy, jsize index,
 		env(GC_OBJECT_JNIFAIL);
 		jobject gcHead = JyNI_GC_ObtainJyGCHead(env, op, jy);
 		jobject linkHead = JyNI_GC_ObtainJyGCHead(env, newItem, newItemJy);
-		int result = (*env)->CallIntMethod(env, gcHead, traversableGCHeadInsertLink, index, linkHead);
+		int result = (*env)->CallIntMethod(env, gcHead, traversableGCHead_insertLink, index, linkHead);
 		if (result == -1)
 		{
 			jsize size = countReferences(op, NULL);
-			(*env)->CallVoidMethod(env, gcHead, traversableGCHeadEnsureSize, size);
-			result = (*env)->CallIntMethod(env, gcHead, traversableGCHeadInsertLink, index, linkHead);
+			(*env)->CallVoidMethod(env, gcHead, traversableGCHead_ensureSize, size);
+			result = (*env)->CallIntMethod(env, gcHead, traversableGCHead_insertLink, index, linkHead);
 		}
 		return result;
 	}
@@ -2087,7 +2087,7 @@ int updateJyGCHeadLinks(PyObject* op, JyObject* jy) {
 		jobject destHead = JyNI_GC_ObtainJyGCHead(env, op, jy);
 		exploreJNI expl = {env, destHead, 0};
 		trav(op, visit_updateLinks, &expl);
-		(*env)->CallIntMethod(env, destHead, traversableGCHeadClearLinksFromIndex, expl.pos);
+		(*env)->CallIntMethod(env, destHead, traversableGCHead_clearLinksFromIndex, expl.pos);
 		(*env)->DeleteLocalRef(env, destHead);
 		return 0;
 	}
@@ -2141,7 +2141,7 @@ void JyNI_GC_ExploreObject(PyObject* op)
 		/* perform exploration here and add all reachable JyGCHeads as links to jyHead.
 		 * If the object is JyNI-GC-Var, use a list or something as head-links.*/
 		jobject linkHeads = exploreJyGCHeadLinks(env, op, jy);
-		(*env)->CallVoidMethod(env, jyHead, traversableGCHeadSetLinks, linkHeads);
+		(*env)->CallVoidMethod(env, jyHead, traversableGCHead_setLinks, linkHeads);
 	}
 	/*
 	 * The code above does the following:
@@ -3005,7 +3005,7 @@ _PyObject_GC_Resize(PyVarObject *op, Py_ssize_t nitems)
 		{
 			/* take care to correct the handle on java-side */
 			env(NULL);
-			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNISetNativeHandle, jy->jy, (jlong) op);//, (jy->flags & JY_TRUNCATE_FLAG_MASK) != 0);
+			(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_setNativeHandle, jy->jy, (jlong) op);//, (jy->flags & JY_TRUNCATE_FLAG_MASK) != 0);
 			//todo: maybe do sync here
 		}
 		//JyNIDebug2(JY_NATIVE_REALLOC_GC, AS_JY_WITH_GC(op0), jy, basicsize, NULL);

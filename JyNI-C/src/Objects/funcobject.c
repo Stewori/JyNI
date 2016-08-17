@@ -53,7 +53,7 @@ PyFunction_New(PyObject *code, PyObject *globals)
 	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
 	jobject jGlobals = JyNI_JythonPyObject_FromPyObject(globals);
-	jobject result = (*env)->NewObject(env, pyFunctionClass, pyFunctionConstructor, jGlobals, NULL, jCode);
+	jobject result = (*env)->NewObject(env, pyFunctionClass, pyFunction_Constructor, jGlobals, NULL, jCode);
 	return JyNI_PyObject_FromJythonPyObject(result);
 //	PyFunctionObject *op = PyObject_GC_New(PyFunctionObject,
 //										&PyFunction_Type);
@@ -170,7 +170,7 @@ PyFunction_SetDefaults(PyObject *op, PyObject *defaults)
 	env(-1);
 	jobject jOp = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jDefaults = JyNI_JythonPyObject_FromPyObject(defaults);
-	(*env)->CallVoidMethod(env, jOp, pyFunctionSetFuncDefaults, jDefaults);
+	(*env)->CallVoidMethod(env, jOp, pyFunction_setFuncDefaults, jDefaults);
 
 	return 0;
 }
@@ -211,7 +211,7 @@ PyFunction_SetClosure(PyObject *op, PyObject *closure)
 	env(-1);
 	jobject jOp = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jClosure = JyNI_JythonPyObject_FromPyObject(closure);
-	(*env)->SetObjectField(env, jOp, pyFunctionFuncClosure, jClosure);
+	(*env)->SetObjectField(env, jOp, pyFunction___closure__Field, jClosure);
 
 	return 0;
 }
@@ -250,7 +250,7 @@ func_get_dict(PyFunctionObject *op)
 {
 	env(NULL);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
-	jobject result = (*env)->CallObjectMethod(env, jFunc, pyObjectGetDict);
+	jobject result = (*env)->CallObjectMethod(env, jFunc, pyObject_getDict);
 	return JyNI_PyObject_FromJythonPyObject(result);
 //	if (restricted())
 //		return NULL;
@@ -285,7 +285,7 @@ func_set_dict(PyFunctionObject *op, PyObject *value)
 	env(-1);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jDict = JyNI_JythonPyObject_FromPyObject(value);
-	(*env)->CallObjectMethod(env, jFunc, pyObjectSetDict, jDict);
+	(*env)->CallObjectMethod(env, jFunc, pyObject_setDict, jDict);
 	if ((*env)->ExceptionCheck(env))
 	{
 		jputs("Exception in func_set_dict");
@@ -337,7 +337,7 @@ func_set_code(PyFunctionObject *op, PyObject *value)
 	env(-1);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(value);
-	(*env)->CallObjectMethod(env, jFunc, pyFunctionSetCode, jCode);
+	(*env)->CallObjectMethod(env, jFunc, pyFunction_setCode, jCode);
 	if ((*env)->ExceptionCheck(env))
 	{
 		jputs("Exception in func_set_code");
@@ -358,7 +358,7 @@ func_get_name(PyFunctionObject *op)
 {
 	env(NULL);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
-	jobject result = (*env)->GetObjectField(env, jFunc, pyFunction__name__);
+	jobject result = (*env)->GetObjectField(env, jFunc, pyFunction___name__Field);
 	return JyNI_PyObject_FromJythonPyObject(result);
 //	Py_INCREF(op->func_name);
 //	return op->func_name;
@@ -382,7 +382,7 @@ func_set_name(PyFunctionObject *op, PyObject *value)
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jName = JyNI_JythonPyObject_FromPyObject(value);
 	//(*env)->CallObjectMethod(env, jFunc, pyFunctionSetCode, jName);
-	(*env)->SetObjectField(env, jFunc, pyFunction__name__, jName);
+	(*env)->SetObjectField(env, jFunc, pyFunction___name__Field, jName);
 	if ((*env)->ExceptionCheck(env))
 	{
 		jputs("Exception in func_set_name");
@@ -430,7 +430,7 @@ func_set_defaults(PyFunctionObject *op, PyObject *value)
 	env(-1);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
 	jobject jDefaults = JyNI_JythonPyObject_FromPyObject(value);
-	(*env)->CallObjectMethod(env, jFunc, pyFunctionSetFuncDefaults, jDefaults);
+	(*env)->CallObjectMethod(env, jFunc, pyFunction_setFuncDefaults, jDefaults);
 	if ((*env)->ExceptionCheck(env))
 	{
 		jputs("Exception in func_set_defaults");
@@ -584,7 +584,7 @@ func_repr(PyFunctionObject *op)
 {
 	env(NULL);
 	jobject jFunc = JyNI_JythonPyObject_FromPyObject(op);
-	jobject result = (*env)->CallObjectMethod(env, jFunc, pyObject__repr__);
+	jobject result = (*env)->CallObjectMethod(env, jFunc, pyObject___repr__);
 	return JyNI_PyObject_FromJythonPyObject(result);
 //	return PyString_FromFormat("<function %s at %p>",
 //							   PyString_AsString(op->func_name),
@@ -640,7 +640,7 @@ function_call(PyObject *func, PyObject *arg, PyObject *kw)
 	}
 	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, args, jdict);
-	else jkw = length0StringArray;
+	else jkw = JyEmptyStringArray;
 	jobject er;
 
 	/* When entering Java-world with arbitrary code, GIL must be released,
@@ -649,7 +649,7 @@ function_call(PyObject *func, PyObject *arg, PyObject *kw)
 	Py_BEGIN_ALLOW_THREADS
 	//if ((*env)->ExceptionCheck(env)) jputs("Exception before function call");
 	er = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(func),
-			pyObject__call__, args, jkw);
+			pyObject___call__, args, jkw);
 //	if ((*env)->ExceptionCheck(env))
 //	{
 //		jputs("Exception after function call");

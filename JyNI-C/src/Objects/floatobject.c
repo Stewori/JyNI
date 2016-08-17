@@ -2307,7 +2307,7 @@ PyFloat_Fini(void)
 
 	env();
 	jint Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
-				JyNIGetDLVerbose);
+				JyNI_getDLVerbose);
 	if (!Py_VerboseFlag)
 		return;
 	fprintf(stderr, "# cleanup floats");

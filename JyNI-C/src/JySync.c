@@ -58,10 +58,10 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src, PyTypeObject* nonNativeS
 	//jputs("JySync_Init_PyTuple_From_JyTuple");
 	env(NULL);
 	//jarray back = (*env)->CallObjectMethod(env, src, pyTupleGetArray);
-	jint srcSize = (*env)->CallIntMethod(env, src, pyTupleSize);
+	jint srcSize = (*env)->CallIntMethod(env, src, collection_size);
 	//jputs("### creating tuple...");
 	PyObject* er = PyTuple_New(srcSize);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) er);//, JNI_FALSE);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) er);//, JNI_FALSE);
 	AS_JY_WITH_GC(er)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	//jputs("### created tuple...");
 	//Py_XINCREF(er);
@@ -70,7 +70,7 @@ PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src, PyTypeObject* nonNativeS
 	for (i = 0; i < srcSize; ++i)
 	{
 		//jputsLong(i);
-		PyObject* item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyTuplePyGet, i));
+		PyObject* item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pySequence_pyget, i));
 		//Py_XINCREF(item);
 		//PyTuple_SetItem(er, i, item);
 		PyTuple_SET_ITEM(er, i, item);
@@ -110,14 +110,14 @@ jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src, jclass subtype)
 				//Py_XINCREF(PyTuple_GET_ITEM(src, i));
 			}
 		} else
-			back = length0PyObjectArray;
+			back = JyEmptyPyObjectArray;
 		if (!subtype)
-			return (*env)->NewObject(env, pyTupleClass, pyTupleByPyObjectArrayBooleanConstructor,
+			return (*env)->NewObject(env, pyTupleClass, pyTuple_byPyObjectArrayBooleanConstructor,
 					back, JNI_FALSE);
 		else
 		{
 			jobject jsrcType = JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src));
-			return (*env)->NewObject(env, subtype, pyTupleCPeerConstructor,
+			return (*env)->NewObject(env, subtype, pyTupleCPeer_Constructor,
 					(jlong) src, jsrcType, back);
 		}
 	}
@@ -128,7 +128,7 @@ jboolean isPreAllocatedJythonString(jobject obj, char value)//jchar value)
 	if (value >= LETTERCHAR_MAXJYTHON)
 		return JNI_FALSE;
 	env(JNI_FALSE);
-	jarray scache = (*env)->GetStaticObjectField(env, pyPyClass, pyPyLetters);
+	jarray scache = (*env)->GetStaticObjectField(env, pyPyClass, pyPy_lettersField);
 	jobject cachedString = (*env)->GetObjectArrayElement(env, scache, (jint) value);
 	return (*env)->IsSameObject(env, cachedString, obj);
 }
@@ -139,7 +139,7 @@ jboolean isPreAllocatedJythonString(jobject obj, char value)//jchar value)
 PyObject* JySync_Init_PyString_From_JyString(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
-	jstring jstr = (*env)->CallObjectMethod(env, src, pyStringAsString);
+	jstring jstr = (*env)->CallObjectMethod(env, src, pyObject_asString);
 	//cstr_from_jstring(cstr, jstr);
 
 	//cstr_from_jstring(cstrName, jstr)
@@ -173,8 +173,8 @@ jobject JySync_Init_JyString_From_PyString(PyObject* src, jclass subtype)
 	env(NULL);
 	jstring jstr = (*env)->NewStringUTF(env, PyString_AS_STRING(src));
 	if (JyNI_HasJyAttribute(AS_JY_NO_GC(src), JyAttributeStringInterned))
-		jstr = (*env)->CallObjectMethod(env, jstr, stringIntern);
-	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, jstr);
+		jstr = (*env)->CallObjectMethod(env, jstr, string_intern);
+	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, jstr);
 }
 
 
@@ -184,10 +184,10 @@ jobject JySync_Init_JyString_From_PyString(PyObject* src, jclass subtype)
 PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
-	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
+	jstring jstr = (*env)->CallObjectMethod(env, src, pyObject_asString);
 	jstring charsetName = (*env)->NewStringUTF(env, "UTF-16BE");
 	jobject stringByteArray = (*env)->CallObjectMethod(env, jstr,
-		stringGetBytesUsingCharset, charsetName);
+		string_getBytes, charsetName);
 	jbyte* stringBytes = (*env)->GetByteArrayElements(env, stringByteArray, NULL);
 	jsize len = (*env)->GetArrayLength(env, stringByteArray);
 	int byteOrder = 1; //indicates BE
@@ -262,10 +262,10 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src, jclass subtype)
 	//memcpy(strBytes, PyUnicode_AS_DATA(utf16), len);
 	(*env)->ReleaseByteArrayElements(env, strByteArray, strBytes, 0); //copy back and free buffer
 	jobject jstr = (*env)->NewObject(env, stringClass,
-		stringFromBytesAndCharsetNameConstructor, strByteArray, charsetName);
+		string_fromBytesAndCharsetNameConstructor, strByteArray, charsetName);
 //	if (JyNI_HasJyAttribute(AS_JY_NO_GC(src), JyAttributeStringInterned))
 //		jstr = (*env)->CallObjectMethod(env, jstr, stringIntern);
-	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
+	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newUnicode, jstr);
 }
 
 //jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
@@ -294,7 +294,7 @@ static inline jboolean isPreAllocatedJythonInt(jobject obj, jint value)
 	if (value < -NSMALLNEGINTSJYTHON || value >= NSMALLPOSINTSJYTHON)
 		return JNI_FALSE;
 	env(JNI_FALSE);
-	jarray icache = (*env)->GetStaticObjectField(env, pyPyClass, pyPyIntegerCache);
+	jarray icache = (*env)->GetStaticObjectField(env, pyPyClass, pyPy_integerCacheField);
 	jobject cachedInt = (*env)->GetObjectArrayElement(env, icache, value+NSMALLNEGINTSJYTHON);
 	return (*env)->IsSameObject(env, cachedInt, obj);
 }
@@ -306,7 +306,7 @@ PyObject* JySync_Init_PyInt_From_JyInt(jobject src, PyTypeObject* nonNativeSubty
 {
 	env(NULL);
 	//return PyInt_FromLong((long) (*env)->CallLongMethod(env, src, pyIntAsLong));
-	jint value = (*env)->CallIntMethod(env, src, pyIntGetValue);
+	jint value = (*env)->CallIntMethod(env, src, pyInt_getValue);
 	PyObject* result = PyInt_FromLong((long) value);
 	if (!nonNativeSubtype && isPreAllocatedJythonInt(src, value))
 		/* The JY_CACHE_ETERNAL-flag tells JyNI permanently that accessing
@@ -331,7 +331,7 @@ PyObject* JySync_Init_PyInt_From_JyInt(jobject src, PyTypeObject* nonNativeSubty
 jobject JySync_Init_JyInt_From_PyInt(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewIntFromLong, (jlong) PyInt_AS_LONG(src));
+	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newIntFromLong, (jlong) PyInt_AS_LONG(src));
 }
 
 /*
@@ -340,13 +340,13 @@ jobject JySync_Init_JyInt_From_PyInt(PyObject* src, jclass subtype)
 PyObject* JySync_Init_PyFloat_From_JyFloat(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
-	return PyFloat_FromDouble((double) (*env)->CallDoubleMethod(env, src, pyFloatAsDouble));
+	return PyFloat_FromDouble((double) (*env)->CallDoubleMethod(env, src, pyFloat_asDouble));
 }
 
 jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewFloatFromDouble, (jdouble) PyFloat_AS_DOUBLE(src));
+	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newFloatFromDouble, (jdouble) PyFloat_AS_DOUBLE(src));
 }
 
 /*
@@ -363,7 +363,7 @@ PyObject* JySync_Init_PyComplex_From_JyComplex(jobject src, PyTypeObject* nonNat
 jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	return (*env)->NewObject(env, pyComplexClass, pyComplexBy2DoubleConstructor,
+	return (*env)->NewObject(env, pyComplexClass, pyComplex_by2DoubleConstructor,
 			PyComplex_RealAsDouble(src),
 			PyComplex_ImagAsDouble(src));
 }
@@ -374,8 +374,8 @@ jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src, jclass subtype)
 PyObject* JySync_Init_PyLong_From_JyLong(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
-	jobject bival = (*env)->CallObjectMethod(env, src, pyLongGetValue);
-	jarray jbytes = (*env)->CallObjectMethod(env, bival, bigIntToByteArray);
+	jobject bival = (*env)->CallObjectMethod(env, src, pyLong_getValue);
+	jarray jbytes = (*env)->CallObjectMethod(env, bival, bigInt_toByteArray);
 	jsize n = (*env)->GetArrayLength(env, jbytes);
 	jbyte* bbytes = (*env)->GetByteArrayElements(env, jbytes, NULL);
 	//memcpy(bytes+n-cpl, bbytes+lb-cpl, cpl);
@@ -397,8 +397,8 @@ jobject JySync_Init_JyLong_From_PyLong(PyObject* src, jclass subtype)
 	_PyLong_AsByteArray(src, bbytes, n, JNI_FALSE, JNI_TRUE);
 	(*env)->ReleaseByteArrayElements(env, jbytes, bbytes, 0);
 	//jobject bival;
-	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewLongFromBigInt,
-			(*env)->NewObject(env, bigIntClass, bigIntegerFromByteArrayConstructor, jbytes));
+	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newLongFromBigInt,
+			(*env)->NewObject(env, bigIntClass, bigInt_fromByteArrayConstructor, jbytes));
 }
 
 jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
@@ -416,7 +416,7 @@ jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
 		if (!jyList) jputs("truely NULL");
 		else (*env)->DeleteWeakGlobalRef(env, jyList);
 		jputs("Restore it...");
-		jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src);
+		jyList = (*env)->NewObject(env, JyListClass, JyList_fromBackendHandleConstructor, (jlong) src);
 		JyObject_AddOrSetJyGCHead(src, AS_JY_WITH_GC(src), (*env)->NewWeakGlobalRef(env, jyList));
 		JyNI_GC_ExploreObject(src);
 	}
@@ -425,7 +425,7 @@ jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
 //		jputs("Exception happened converting list:");
 //		(*env)->ExceptionDescribe(env);
 //	}
-	return (*env)->CallStaticObjectMethod(env, pyListClass, pyListFromList, jyList);
+	return (*env)->CallStaticObjectMethod(env, pyListClass, pyList_fromList, jyList);
 }
 
 
@@ -438,10 +438,10 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src, PyTypeObject* nonNativeSub
 	//maybe optimize a bit more here:
 	//if most objects in the list have not yet been converted,
 	//much lookup is done twice here.
-	jarray handles = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupNativeHandles, src);
+	jarray handles = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_lookupNativeHandles, src);
 	jsize size = (*env)->GetArrayLength(env, handles);
 	PyObject* op = PyList_New((Py_ssize_t) size);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) op);//, JNI_FALSE);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) op);//, JNI_FALSE);
 	AS_JY_WITH_GC(op)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	jsize i;
 	PyObject* v;
@@ -449,7 +449,7 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src, PyTypeObject* nonNativeSub
 	for (i = 0; i < size; ++i)
 	{
 		v = (PyObject*) arr[i];
-		if (!v) v = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyListPyGet, i));
+		if (!v) v = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pySequence_pyget, i));
 		else Py_INCREF(v);
 //		if (!v) v = _JyNI_PyObject_FromJythonPyObject(
 //				(*env)->CallObjectMethod(env, src, pyListPyGet, i), JNI_FALSE, JNI_FALSE, JNI_TRUE);
@@ -467,14 +467,14 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src, PyTypeObject* nonNativeSub
 		if (!jyList) jputs("truely NULL");
 		else (*env)->DeleteWeakGlobalRef(env, jyList);
 		jputs("Restore it...");
-		jyList = (*env)->NewObject(env, JyListClass, JyListFromBackendHandleConstructor, (jlong) src);
+		jyList = (*env)->NewObject(env, JyListClass, JyList_fromBackendHandleConstructor, (jlong) src);
 		JyObject_AddOrSetJyGCHead(src, AS_JY_WITH_GC(src), (*env)->NewWeakGlobalRef(env, jyList));
 		JyNI_GC_ExploreObject(src);
 	}
 	//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
-	(*env)->SetObjectField(env, src, pyListBackend, jyList);
+	(*env)->SetObjectField(env, src, pyList_listField, jyList);
 //	jputsLong(__LINE__);
-	(*env)->CallObjectMethod(env, jyList, pyObjectGCHeadSetObject, src);
+	(*env)->CallObjectMethod(env, jyList, pyObjectGCHead_setPyObject, src);
 	(*env)->DeleteLocalRef(env, jyList);
 
 	//Py_INCREF(op); //For now we make the list immortal here. Later GC will take care of it.
@@ -496,11 +496,11 @@ PyObject* JySync_Init_PySet_From_JySet(jobject src, PyTypeObject* nonNativeSubty
 //	jy->jy = src;
 //	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	env(NULL);
-	so->used = (*env)->CallIntMethod(env, src, pyBaseSetSize);
-	jobject _set = (*env)->GetObjectField(env, src, pyBaseSet_set);
-	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, _set, (jlong) so);
+	so->used = (*env)->CallIntMethod(env, src, collection_size);
+	jobject _set = (*env)->GetObjectField(env, src, pyBaseSet__setField);
+	jobject jySet = (*env)->NewObject(env, JySetClass, JySet_fromBackendHandleConstructor, _set, (jlong) so);
 //	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src);
-	(*env)->SetObjectField(env, src, pyBaseSet_set, jySet);
+	(*env)->SetObjectField(env, src, pyBaseSet__setField, jySet);
 	return (PyObject*) so;
 }
 
@@ -516,11 +516,11 @@ PyObject* JySync_Init_PyFrozenSet_From_JyFrozenSet(jobject src, PyTypeObject* no
 //	jy->jy = src;
 //	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	env(NULL);
-	so->used = (*env)->CallIntMethod(env, src, pyBaseSetSize);
-	jobject _set = (*env)->GetObjectField(env, src, pyBaseSet_set);
-	jobject jySet = (*env)->NewObject(env, JySetClass, JySetFromBackendHandleConstructor, _set, (jlong) so);
+	so->used = (*env)->CallIntMethod(env, src, collection_size);
+	jobject _set = (*env)->GetObjectField(env, src, pyBaseSet__setField);
+	jobject jySet = (*env)->NewObject(env, JySetClass, JySet_fromBackendHandleConstructor, _set, (jlong) so);
 //	(*env)->CallVoidMethod(env, jySet, JySetInstallToPySet, src);
-	(*env)->SetObjectField(env, src, pyBaseSet_set, jySet);
+	(*env)->SetObjectField(env, src, pyBaseSet__setField, jySet);
 	return (PyObject*) so;
 }
 
@@ -529,7 +529,7 @@ jobject JySync_Init_JyClass_From_PyClass(PyObject* src, jclass subtype)
 {
 	PyClassObject* cls = (PyClassObject*) src;
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, pyClassClass, pyClassClassobj___new__,
+	return (*env)->CallStaticObjectMethod(env, pyClassClass, pyClass_classobj___new__,
 		JyNI_JythonPyObject_FromPyObject(cls->cl_name),
 		JyNI_JythonPyObject_FromPyObject(cls->cl_bases),
 		JyNI_JythonPyObject_FromPyObject(cls->cl_dict));
@@ -541,13 +541,13 @@ jobject JySync_Init_JyClass_From_PyClass(PyObject* src, jclass subtype)
 PyObject* JySync_Init_PyClass_From_JyClass(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	env(NULL);
-	jstring nm = (*env)->GetObjectField(env, src, pyClass__name__);
+	jstring nm = (*env)->GetObjectField(env, src, pyClass___name__Field);
 	cstr_from_jstring(cnm, nm);
 //	jputs("Sync-Class:");
 //	jputs(cnm);
 	return PyClass_New(
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass__bases__)),
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass__dict__)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass___bases__Field)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyClass___dict__Field)),
 		PyString_FromString(cnm));
 }
 
@@ -563,7 +563,7 @@ jobject JySync_Init_JyInstance_From_PyInstance(PyObject* src, jclass subtype)
 	 * takes care to keep the instance's Finalizetrigger suspended as long
 	 * as we desire.
 	 */
-	return (*env)->NewObject(env, pyInstanceClass, pyInstanceConstructor,
+	return (*env)->NewObject(env, pyInstanceClass, pyInstance_Constructor,
 		JyNI_JythonPyObject_FromPyObject((PyObject*) inst->in_class),
 		JyNI_JythonPyObject_FromPyObject(inst->in_dict));
 }
@@ -576,8 +576,8 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src, PyTypeObject* nonN
 	env(NULL);
 	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
 	PyObject* er = PyInstance_NewRaw(
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstanceInstclassField)),
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance__dict__)));
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance_instclassField)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyInstance___dict__Field)));
 	return er;
 }
 
@@ -605,7 +605,7 @@ jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src, jclass subtype)
 {
 	PyMethodObject* meth = (PyMethodObject*) src;
 	env(NULL);
-	return (*env)->NewObject(env, pyMethodClass, pyMethodConstructor,
+	return (*env)->NewObject(env, pyMethodClass, pyMethod_Constructor,
 		JyNI_JythonPyObject_FromPyObject(meth->im_func),
 		JyNI_JythonPyObject_FromPyObject(meth->im_self),
 		JyNI_JythonPyObject_FromPyObject(meth->im_class));
@@ -618,15 +618,15 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src, PyTypeObject* nonNativ
 {
 	env(NULL);
 	return PyMethod_New(
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__func__)),
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod__self__)),
-		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethodImClass)));
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod___func__Field)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod___self__Field)),
+		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod_im_classField)));
 }
 
 jobject JySync_Init_JyClassMethod_From_PyClassMethod(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	return (*env)->NewObject(env, pyClassMethodClass, pyClassMethodConstructor,
+	return (*env)->NewObject(env, pyClassMethodClass, pyClassMethod_Constructor,
 		JyNI_JythonPyObject_FromPyObject(((classmethod*) src)->cm_callable));
 }
 
@@ -634,13 +634,13 @@ PyObject* JySync_Init_PyClassMethod_From_JyClassMethod(jobject src, PyTypeObject
 {
 	env(NULL);
 	return PyClassMethod_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
-		src, pyClassMethod_callable)));
+		src, pyClassMethod_callableField)));
 }
 
 jobject JySync_Init_JyStaticMethod_From_PyStaticMethod(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	return (*env)->NewObject(env, pyStaticMethodClass, pyStaticMethodConstructor,
+	return (*env)->NewObject(env, pyStaticMethodClass, pyStaticMethod_Constructor,
 		JyNI_JythonPyObject_FromPyObject(((staticmethod*) src)->sm_callable));
 }
 
@@ -648,13 +648,13 @@ PyObject* JySync_Init_PyStaticMethod_From_JyStaticMethod(jobject src, PyTypeObje
 {
 	env(NULL);
 	return PyStaticMethod_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
-		src, pyStaticMethod_callable)));
+		src, pyStaticMethod_callableField)));
 }
 
 jobject JySync_Init_JyDictProxy_From_PyDictProxy(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	return (*env)->NewObject(env, pyDictProxyClass, pyDictProxyConstructor,
+	return (*env)->NewObject(env, pyDictProxyClass, pyDictProxy_Constructor,
 		JyNI_JythonPyObject_FromPyObject(((proxyobject*) src)->dict));
 }
 
@@ -662,22 +662,22 @@ PyObject* JySync_Init_PyDictProxy_From_JyDictProxy(jobject src, PyTypeObject* no
 {
 	env(NULL);
 	return PyDictProxy_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
-		src, pyDictProxy_dict)));
+		src, pyDictProxy_dictField)));
 }
 
 jobject JySync_Init_JyProperty_From_PyProperty(PyObject* src, jclass subtype)
 {
 	env(NULL);
-	jobject result = (*env)->NewObject(env, pyPropertyClass, pyPropertyConstructor);
-	(*env)->SetObjectField(env, result, pyProperty_fget,
+	jobject result = (*env)->NewObject(env, pyPropertyClass, pyProperty_Constructor);
+	(*env)->SetObjectField(env, result, pyProperty_fgetField,
 		JyNI_JythonPyObject_FromPyObject(((propertyobject*) src)->prop_get));
-	(*env)->SetObjectField(env, result, pyProperty_fset,
+	(*env)->SetObjectField(env, result, pyProperty_fsetField,
 			JyNI_JythonPyObject_FromPyObject(((propertyobject*) src)->prop_set));
-	(*env)->SetObjectField(env, result, pyProperty_fdel,
+	(*env)->SetObjectField(env, result, pyProperty_fdelField,
 			JyNI_JythonPyObject_FromPyObject(((propertyobject*) src)->prop_del));
-	(*env)->SetObjectField(env, result, pyProperty_doc,
+	(*env)->SetObjectField(env, result, pyProperty_docField,
 			JyNI_JythonPyObject_FromPyObject(((propertyobject*) src)->prop_doc));
-	(*env)->SetBooleanField(env, result, pyProperty_docFromGetter,
+	(*env)->SetBooleanField(env, result, pyProperty_docFromGetterField,
 			JyNI_JythonPyObject_FromPyObject(((propertyobject*) src)->getter_doc));
 	return result;
 }
@@ -688,14 +688,14 @@ PyObject* JySync_Init_PyProperty_From_JyProperty(jobject src, PyTypeObject* nonN
 	propertyobject* result = PyObject_GC_New(propertyobject, &PyProperty_Type);
 	if (result != NULL) {
 		result->prop_get = JyNI_PyObject_FromJythonPyObject(
-				(*env)->GetObjectField(env, src, pyProperty_fget));
+				(*env)->GetObjectField(env, src, pyProperty_fgetField));
 		result->prop_set = JyNI_PyObject_FromJythonPyObject(
-				(*env)->GetObjectField(env, src, pyProperty_fset));
+				(*env)->GetObjectField(env, src, pyProperty_fsetField));
 		result->prop_del = JyNI_PyObject_FromJythonPyObject(
-				(*env)->GetObjectField(env, src, pyProperty_fdel));
+				(*env)->GetObjectField(env, src, pyProperty_fdelField));
 		result->prop_doc = JyNI_PyObject_FromJythonPyObject(
-				(*env)->GetObjectField(env, src, pyProperty_doc));
-		result->getter_doc = (*env)->GetBooleanField(env, src, pyProperty_docFromGetter);
+				(*env)->GetObjectField(env, src, pyProperty_docField));
+		result->getter_doc = (*env)->GetBooleanField(env, src, pyProperty_docFromGetterField);
 		_JyNI_GC_TRACK(result);
 	}
 	return (PyObject *) result;
@@ -852,7 +852,7 @@ jobject JySync_Init_JyCFunction_From_PyCFunction(PyObject* src, jclass subtype)
 	//JyNI_jprintJ(jtype); //builtinTypes[TME_INDEX_CFunction].jy_class
 	//jobject test = _JyNI_JythonPyTypeObject_FromPyTypeObject(Py_TYPE(src), NULL);
 
-	jobject result = (*env)->NewObject(env, pyCFunctionClass, pyCFunctionConstructor,
+	jobject result = (*env)->NewObject(env, pyCFunctionClass, pyCFunction_Constructor,
 			(jlong) src, jtype,
 			name, func->m_ml->ml_flags & METH_NOARGS, doc);
 //	if (dbg) {
@@ -903,11 +903,11 @@ PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObje
 		jputs("JyNI-warning: JySync_Init_PyCFunction_From_JyBuiltinCallable shouldn't be called with PyCFunction.");
 	}
 	PyMethodDef* mdef = malloc(sizeof(PyMethodDef));
-	jobject info = (*env)->GetObjectField(env, src, pyBuiltinCallable_info);
-	jint max = (*env)->CallIntMethod(env, info, pyBuiltinCallableInfoMax);
+	jobject info = (*env)->GetObjectField(env, src, pyBuiltinCallable_infoField);
+	jint max = (*env)->CallIntMethod(env, info, pyBuiltinCallableInfo_getMaxargs);
 	mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS) | METH_JYTHON;
 
-	jstring jtmp = (*env)->CallObjectMethod(env, info, pyBuiltinCallableInfoName);
+	jstring jtmp = (*env)->CallObjectMethod(env, info, pyBuiltinCallableInfo_getName);
 	global_cstr_from_jstring(cName, jtmp);
 	mdef->ml_name = cName;
 //	puts(cName);
@@ -949,12 +949,12 @@ jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subty
 //	if (jdbg) jputs(((PyMethodDescrObject*) src)->d_type->tp_name);
 //	if (jdbg) jputsLong(((PyMethodDescrObject*) src)->d_type->tp_as_number->nb_add);
 	env(NULL);
-	jobject mdef = (*env)->NewObject(env, pyCMethodDefClass, pyCMethodDefConstructor,
+	jobject mdef = (*env)->NewObject(env, pyCMethodDefClass, pyCMethodDef_Constructor,
 			(jlong) ((PyMethodDescrObject*) src)->d_method,
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_name),
 			((PyMethodDescrObject*) src)->d_method->ml_flags & METH_NOARGS,
 			(*env)->NewStringUTF(env, ((PyMethodDescrObject*) src)->d_method->ml_doc));
-	jobject res = (*env)->NewObject(env, pyMethodDescrClass, pyMethodDescrConstructor,
+	jobject res = (*env)->NewObject(env, pyMethodDescrClass, pyMethodDescr_Constructor,
 			JyNI_JythonPyObject_FromPyObject((PyObject*) ((PyMethodDescrObject*) src)->d_type),
 			mdef);
 	return res;
@@ -964,14 +964,14 @@ PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject
 {
 //	jputs(__FUNCTION__);
 	env(NULL);
-	jint max = (*env)->CallIntMethod(env, src, pyBuiltinCallableInfoMax);
+	jint max = (*env)->CallIntMethod(env, src, pyBuiltinCallableInfo_getMaxargs);
 	//mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS) | METH_JYTHON;
 
-	jstring jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallableInfoName);
+	jstring jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallableInfo_getName);
 	global_cstr_from_jstring(cName, jtmp);
 	//mdef->ml_name = cName;
 
-	jobject dtype = (*env)->GetObjectField(env, src, pyDescr_dtype);
+	jobject dtype = (*env)->GetObjectField(env, src, pyDescr_dtypeField);
 
 	PyMethodDef* mdef = malloc(sizeof(PyMethodDef));
 	mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS)
@@ -1005,7 +1005,7 @@ void JySync_PyCode_From_JyCode(jobject src, PyObject* dest)
 	env();
 	//puts("JySync_PyCode_From_JyCode");
 	//jobject jCode = JyNI_JythonPyObject_FromPyObject(src);
-	jobject jArray = (*env)->GetObjectField(env, src, pyBaseCode_co_freevars);
+	jobject jArray = (*env)->GetObjectField(env, src, pyBaseCode_co_freevarsField);
 	//puts("get free vars...");
 	//if (jArray == NULL) //puts("free vars NULL");
 	Py_ssize_t size = 0;
@@ -1035,18 +1035,18 @@ void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
 //Need to sync:
 //func_code, func_globals, func_module, func_defaults, func_closure
 	env();
-	jobject jCode = (*env)->GetObjectField(env, src, pyFunction__code__);
+	jobject jCode = (*env)->GetObjectField(env, src, pyFunction___code__Field);
 	PyObject* pt = JyNI_PyObject_FromJythonPyObject(jCode);
 	((PyFunctionObject*) dest)->func_code = pt;
-	jobject jGlobals = (*env)->CallObjectMethod(env, src, pyFunctionGetFuncGlobals);
+	jobject jGlobals = (*env)->CallObjectMethod(env, src, pyFunction_getFuncGlobals);
 	((PyFunctionObject*) dest)->func_globals = JyNI_PyObject_FromJythonPyObject(jGlobals);
-	jobject jModule = (*env)->GetObjectField(env, src, pyFunction__module__);
+	jobject jModule = (*env)->GetObjectField(env, src, pyFunction___module__Field);
 	((PyFunctionObject*) dest)->func_module = JyNI_PyObject_FromJythonPyObject(jModule);
-	jobject jDefaults = (*env)->CallObjectMethod(env, src, pyFunctionGetFuncDefaults);
+	jobject jDefaults = (*env)->CallObjectMethod(env, src, pyFunction_getFuncDefaults);
 	((PyFunctionObject*) dest)->func_defaults = JyNI_PyObject_FromJythonPyObject(jDefaults);
-	jobject jClosure = (*env)->GetObjectField(env, src, pyFunctionFuncClosure);
+	jobject jClosure = (*env)->GetObjectField(env, src, pyFunction___closure__Field);
 	((PyFunctionObject*) dest)->func_closure = JyNI_PyObject_FromJythonPyObject(jClosure);
-	jstring jName = (*env)->GetObjectField(env, src, pyFunction__name__);
+	jstring jName = (*env)->GetObjectField(env, src, pyFunction___name__Field);
 	cstr_from_jstring(cName, jName);
 	((PyFunctionObject*) dest)->func_name = PyString_FromString(cName);
 }
@@ -1054,7 +1054,7 @@ void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
 void JySync_JyCell_From_PyCell(PyObject* src, jobject dest)
 {
 	env();
-	(*env)->SetObjectField(env, dest, pyCell_ob_ref,
+	(*env)->SetObjectField(env, dest, pyCell_ob_refField,
 		JyNI_JythonPyObject_FromPyObject(PyCell_GET(src)));
 
 }
@@ -1063,84 +1063,84 @@ void JySync_PyCell_From_JyCell(jobject src, PyObject* dest)
 {
 	env();
 	PyCell_SET(dest, JyNI_PyObject_FromJythonPyObject(
-		(*env)->GetObjectField(env, src, pyCell_ob_ref)));
+		(*env)->GetObjectField(env, src, pyCell_ob_refField)));
 }
 
 void JySync_JyFrame_From_PyFrame(PyObject* src, jobject dest)
 {
 	// we only care for lineno so far
 	env();
-	(*env)->SetIntField(env, dest, pyFrame_f_lineno, ((PyFrameObject*) src)->f_lineno);
+	(*env)->SetIntField(env, dest, pyFrame_f_linenoField, ((PyFrameObject*) src)->f_lineno);
 }
 
 void JySync_PyFrame_From_JyFrame(jobject src, PyObject* dest)
 {
 	// we only care for lineno so far
 	env();
-	((PyFrameObject*) dest)->f_lineno = (*env)->GetIntField(env, src, pyFrame_f_lineno);
+	((PyFrameObject*) dest)->f_lineno = (*env)->GetIntField(env, src, pyFrame_f_linenoField);
 }
 
 jobject JyExc_KeyErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsKeyError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_KeyError);
 }
 
 jobject JyExc_SystemExitFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsSystemExit);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_SystemExit);
 }
 
 jobject JyExc_EnvironmentErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsEnvironmentError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_EnvironmentError);
 }
 
 jobject JyExc_SyntaxErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsSyntaxError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_SyntaxError);
 }
 
 jobject JyExc_UnicodeErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeError);
 }
 
 #ifdef Py_USING_UNICODE
 jobject JyExc_UnicodeEncodeErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeEncodeError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeEncodeError);
 }
 
 jobject JyExc_UnicodeDecodeErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeDecodeError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeDecodeError);
 }
 
 jobject JyExc_UnicodeTranslateErrorFactory()
 {
 	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptionsUnicodeTranslateError);
+	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeTranslateError);
 }
 #endif
 
 PyObject* JySync_Init_PyTuple_From_JyTupleForMRO(jobject src)
 {
 	env(NULL);
-	jint srcSize = (*env)->CallIntMethod(env, src, pyTupleSize);
+	jint srcSize = (*env)->CallIntMethod(env, src, collection_size);
 	PyObject* er = PyTuple_New(srcSize);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) er);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) er);
 	AS_JY_WITH_GC(er)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	int i;
 	for (i = 1; i < srcSize; ++i)
 	{
-		PyObject* item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyTuplePyGet, i));
+		PyObject* item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pySequence_pyget, i));
 		PyTuple_SET_ITEM(er, i, item);
 	}
 	return er;
@@ -1153,7 +1153,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	PyTypeObject* tp = (PyTypeObject*) dest;
 	env();
 	//name:
-	jobject jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetName);
+	jobject jtmp = (*env)->CallObjectMethod(env, src, pyType_getName);
 	//jobject jtmp = (*env)->GetObjectField(env, src, pyTypeNameField);
 	//if (!jtmp) jputs("JySync_PyType_From_JyType: type with NULL-name!");
 	//cstr_from_jstring(cname, jname);
@@ -1174,11 +1174,11 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	//SyncFunctions* sync = (SyncFunctions*) JyNI_GetJyAttribute(AS_JY_WITH_GC(dest), JyAttributeSyncFunctions);
 
 	//dict:
-	jtmp = (*env)->CallObjectMethod(env, src, pyObjectFastGetDict);
+	jtmp = (*env)->CallObjectMethod(env, src, pyObject_fastGetDict);
 	tp->tp_dict = JyNI_PyObject_FromJythonPyObject(jtmp);
 
 	//base:
-	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBase);
+	jtmp = (*env)->CallObjectMethod(env, src, pyType_getBase);
 	tp->tp_base = (PyTypeObject*) JyNI_PyObject_FromJythonPyObject(jtmp);
 
 	// Note that basicsize must be set before bases, because some bases access basicsize
@@ -1187,7 +1187,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	tp->tp_basicsize = tp->tp_base == Py_None ? sizeof(PyObject) : tp->tp_base->tp_basicsize;
 
 	//bases:
-	jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetBases);
+	jtmp = (*env)->CallObjectMethod(env, src, pyType_getBases);
 	tp->tp_bases = JyNI_PyObject_FromJythonPyObject(jtmp);
 
 	//We try to get away with just setting this to default for now:
@@ -1208,7 +1208,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	//mro:
 	if (!tp->tp_mro)
 	{
-		jtmp = (*env)->CallObjectMethod(env, src, pyTypeGetMro);
+		jtmp = (*env)->CallObjectMethod(env, src, pyType_getMro);
 		PyObject* mro = JySync_Init_PyTuple_From_JyTupleForMRO(jtmp);
 		PyTuple_SET_ITEM(mro, 0, tp);
 		tp->tp_mro = mro;

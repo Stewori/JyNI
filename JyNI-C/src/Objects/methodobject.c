@@ -329,7 +329,7 @@ meth_hash(PyCFunctionObject *a)
 	if (a->m_ml->ml_flags & METH_JYTHON)
 	{
 		env(-1);
-		return (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(a), pyObjectHashCode);
+		return (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(a), object_hashCode);
 	}
 	long x,y;
 	if (a->m_self == NULL)

@@ -186,7 +186,7 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 		JyNI_AddJyAttribute(_jy, JyAttributeSyncFunctions, tme->sync); \
 	_jy->jy = (*env)->NewWeakGlobalRef(env, src); \
 	if (!(_jy->flags & JY_HAS_JHANDLE_FLAG_MASK)) { /*some sync-on-init methods might already init this */ \
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest); \
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) dest); \
 		_jy->flags |= JY_HAS_JHANDLE_FLAG_MASK; \
 	} \
 	/* Take care for already existing Jython-weak references */ \
@@ -210,7 +210,7 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 		if (tme == &builtinTypes[TME_INDEX_Type]) \
 			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE; \
 		jy = AS_JY(dest); \
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest); \
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) dest); \
 		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK; \
 		if (dest && tme->sync && tme->sync->jy2py) { \
 			tme->sync->jy2py(src, dest); \
@@ -311,7 +311,7 @@ inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject
 
 	jy = AS_JY(dest);
 	env(NULL);
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) dest);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) dest);
 	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK | JY_SUBTYPE_FLAG_MASK;// | JY_INITIALIZED_FLAG_MASK;
 	//jy->jy = (*env)->NewWeakGlobalRef(env, src);
 
@@ -357,7 +357,7 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 	env(NULL);
 	jy->jy = (*env)->NewWeakGlobalRef(env, src);
 	//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
 	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
 	if (PyType_IS_GC(eme->exc_type))
@@ -374,7 +374,7 @@ inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 //	jputs(__FUNCTION__);
 //	JyNI_jprintJ(srctype);
 	env(NULL);
-	jstring jName = (*env)->GetObjectField(env, srctype, pyTypeNameField);
+	jstring jName = (*env)->GetObjectField(env, srctype, pyType_nameField);
 	cstr_from_jstring(cName, jName);
 //	jputs(cName);
 	PyTypeObject* dest =
@@ -446,7 +446,7 @@ inline jobject JyNI_InitStaticJythonPyObject(PyObject* src)
 //	jputs(Py_TYPE(src)->tp_name);
 	env(NULL);
 	//setup and return PyCPeer in this case...
-	jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNILookupCPeerFromHandle, (jlong) src);
+	jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_lookupCPeerFromHandle, (jlong) src);
 	if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
 	else {
 		TypeMapEntry* tme = JyNI_JythonTypeEntry_FromSubType(Py_TYPE(src));
@@ -455,10 +455,10 @@ inline jobject JyNI_InitStaticJythonPyObject(PyObject* src)
 			J_INIT(src, er, tme)
 		} else
 		{
-			er = (*env)->NewObject(env, pyCPeerClass, pyCPeerConstructor, (jlong) src,
+			er = (*env)->NewObject(env, pyCPeerClass, pyCPeer_Constructor, (jlong) src,
 					JyNI_JythonPyObject_FromPyObject(Py_TYPE(src)));
 		}
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, er, (jlong) src);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, er, (jlong) src);
 		return er;
 	}
 }
@@ -484,7 +484,7 @@ inline jobject JyNI_InitJythonPyObject(TypeMapEntry* tme, PyObject* src, JyObjec
 		JyNI_AddJyAttribute(srcJy, JyAttributeSyncFunctions, tme->sync);
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
 	if (!(srcJy->flags & JY_HAS_JHANDLE_FLAG_MASK)) {  //some sync-on-init methods might already init this
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNISetNativeHandle, dest, (jlong) src);
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, dest, (jlong) src);
 		srcJy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
 	}
 	srcJy->flags |= JY_INITIALIZED_FLAG_MASK;

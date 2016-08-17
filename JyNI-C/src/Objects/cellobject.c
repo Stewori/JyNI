@@ -80,7 +80,7 @@ PyCell_Set(PyObject *op, PyObject *obj)
 	if (JyObject_IS_INITIALIZED(jy))
 	{
 		env(-1);
-		(*env)->SetObjectField(env, jy->jy, pyCell_ob_ref,
+		(*env)->SetObjectField(env, jy->jy, pyCell_ob_refField,
 					JyNI_JythonPyObject_FromPyObject(obj));
 	}
 	return 0;

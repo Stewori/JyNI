@@ -42,11 +42,10 @@
 #include <jni.h>
 #include <Python_JyNI.h>
 //#include <JyNI_JyNI.h>
-#include <JythonSite.h>
 #include <JyList.h>
 #include <JyTState.h>
 #include <JyNI-Debug.h>
-
+#include <JyNI_JNI.h>
 
 // We could alternatively include JyNI-Java/include/JyNI_JyNI.h,
 // but for now it feels more lightweight to simply redefine the
@@ -368,7 +367,7 @@ extern jlong ptrCount;
 
 /* Generates the JNI jmethodID name for PyObject methods from bare method name. */
 //#define JMID(method) pyObject ## method
-#define JMID(method) jmid ## method
+#define JMID(method) jmid ## _ ## method
 
 /* Generates a name for a tmp helper-var. */
 //#define jytmp(jObject) jytmp_ ## jObject
@@ -397,9 +396,9 @@ extern jlong ptrCount;
 			return NULL
 
 #define ENTER_SubtypeLoop_Safe_Mode(jObject, method) \
-	jmethodID jmid ## method = pyObject ## method; \
+	jmethodID jmid ## _ ## method = pyObject ## _ ## method; \
 	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) \
-		jmid ## method = super ## method;
+		jmid ## _ ## method = super ## method;
 
 #define ENTER_SubtypeLoop_Safe_ModePy(jObject, pyObj, method) \
 	ENTER_SubtypeLoop_Safe_Mode(jObject, method)
@@ -1079,202 +1078,6 @@ inline void JyNI_AddJyAttributeWithFlags(JyObject* obj, const char* name, void* 
 inline void JyNI_AddOrSetJyAttribute(JyObject* obj, const char* name, void* value);
 inline void JyNI_AddOrSetJyAttributeWithFlags(JyObject* obj, const char* name, void* value, char flags);
 inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
-
-
-/* JNI IDs for Jython-stuff: */
-
-/* singletons: */
-extern JavaVM* java;
-extern jweak length0StringArray;
-extern jweak length0PyObjectArray;
-
-extern jclass objectClass;
-extern jmethodID objectToString;
-extern jmethodID objectGetClass;
-
-extern jclass classClass;
-extern jmethodID classEquals;
-
-extern jclass arrayListClass;
-extern jmethodID arrayListConstructor;
-extern jmethodID listAdd;
-
-//extern jclass systemClass;
-//extern jmethodID arraycopy;
-
-extern jclass stringClass;
-extern jmethodID stringToUpperCase;
-extern jmethodID stringFromBytesAndCharsetNameConstructor;
-extern jmethodID stringGetBytesUsingCharset;
-extern jmethodID stringIntern;
-
-extern jclass bigIntClass;
-extern jmethodID bigIntFromStringConstructor;
-extern jmethodID bigIntFromStringRadixConstructor;
-extern jmethodID bigIntegerFromByteArrayConstructor;
-extern jmethodID bigIntegerFromSignByteArrayConstructor;
-extern jmethodID bigIntToByteArray;
-extern jmethodID bigIntSignum;
-extern jmethodID bigIntToStringRadix;
-
-extern jclass JyNIClass;
-extern jmethodID JyNISetNativeHandle;
-//extern jmethodID JyNIRegisterNativeStaticTypeDict;
-extern jmethodID JyNI_registerNativeStaticJyGCHead;
-extern jmethodID JyNI_getNativeStaticJyGCHead;
-extern jmethodID JyNILookupNativeHandle;
-extern jmethodID JyNIClearNativeHandle;
-extern jmethodID JyNILookupCPeerFromHandle;
-extern jmethodID JyNIGetDLOpenFlags;
-extern jmethodID JyNIGetDLVerbose;
-extern jmethodID JyNIGetJyObjectByName;
-extern jmethodID JyNIGetPyObjectByName;
-extern jmethodID JyNI_PyImport_FindExtension;
-extern jmethodID JyNIGetPyType;
-extern jmethodID JyNI_getNativeAvailableKeysAndValues;
-extern jmethodID JyNIGetPyDictionary_Next;
-extern jmethodID JyNIGetPySet_Next;
-extern jmethodID JyNIPyImport_GetModuleDict;
-extern jmethodID JyNIPyImport_AddModule;
-extern jmethodID JyNIPyImport_ImportModuleNoBlock;
-extern jmethodID JyNIJyNI_GetModule;
-extern jmethodID JyNISlice_compare;
-extern jmethodID JyNIPrintPyLong;
-extern jmethodID JyNILookupNativeHandles;
-extern jmethodID JyNI_prepareKeywordArgs;
-extern jmethodID JyNI_getCurrentThreadID;
-extern jmethodID JyNI_pyCode_co_code;
-extern jmethodID JyNI_pyCode_co_flags;
-extern jmethodID JyNI_pyCode_co_lnotab;
-extern jmethodID JyNI_jPrint;
-extern jmethodID JyNI_jPrintLong;
-extern jmethodID JyNI_jGetHash;
-//extern jmethodID JyNIPySet_pop;
-extern jmethodID JyNI_makeGCHead;
-extern jmethodID JyNI_makeStaticGCHead;
-extern jmethodID JyNI_gcDeletionReport;
-extern jmethodID JyNI_waitForCStubs;
-extern jmethodID JyNI_addJyNICriticalObject;
-extern jmethodID JyNI_removeJyNICriticalObject;
-extern jmethodID JyNI_suspendPyInstanceFinalizer;
-extern jmethodID JyNI_restorePyInstanceFinalizer;
-extern jmethodID JyNI_createWeakReferenceFromNative;
-extern jmethodID JyNI_createProxyFromNative;
-extern jmethodID JyNI_createCallableProxyFromNative;
-extern jmethodID JyNI_getGlobalRef;
-extern jmethodID JyNI_getTypeNameForNativeConversion;
-extern jmethodID JyNI_getTypeOldStyleParent;
-extern jmethodID JyNI_getJythonGlobals;
-extern jmethodID JyNI_getPlatform;
-
-extern jclass JyTStateClass;
-extern jmethodID JyTState_setRecursionLimit;
-extern jmethodID JyTState_prepareNativeThreadState;
-extern jfieldID JyTState_nativeRecursionLimitField;
-
-extern jclass JyNIDictNextResultClass;
-extern jfieldID JyNIDictNextResultKeyField;
-extern jfieldID JyNIDictNextResultValueField;
-extern jfieldID JyNIDictNextResultNewIndexField;
-extern jfieldID JyNIDictNextResultKeyHandleField;
-extern jfieldID JyNIDictNextResultValueHandleField;
-
-extern jclass JyNISetNextResultClass;
-extern jfieldID JyNISetNextResultKeyField;
-extern jfieldID JyNISetNextResultNewIndexField;
-extern jfieldID JyNISetNextResultKeyHandleField;
-
-extern jmethodID JyNIExceptionByName;
-//extern jmethodID JyErr_SetCurExc;
-//extern jmethodID JyErr_GetCurExc;
-extern jmethodID JyNIJyErr_InsertCurExc;
-extern jmethodID JyNIJyErr_PrintEx;
-//extern jmethodID JyNIPyErr_Restore;
-//extern jmethodID JyNIPyErr_Clear;
-//extern jmethodID JyNIPyErr_Occurred;
-extern jmethodID JyNIPyErr_ExceptionMatches;
-extern jmethodID JyNI_PyTraceBack_Here;
-//extern jmethodID JyNIPyErr_SetObject;
-//extern jmethodID JyNIPyErr_SetString;
-//extern jmethodID JyNIPyErr_SetNone;
-//extern jmethodID JyNIPyErr_NoMemory;
-//extern jmethodID JyNIPyErr_Fetch;
-extern jmethodID JyNIPyErr_WriteUnraisable;
-
-extern jclass JyListClass;
-extern jmethodID JyListFromBackendHandleConstructor;
-//extern jmethodID JyListInstallToPyList;
-
-extern jclass JySetClass;
-extern jmethodID JySetFromBackendHandleConstructor;
-//extern jmethodID JySetInstallToPySet;
-
-extern jclass JyLockClass;
-extern jmethodID JyLockConstructor;
-extern jmethodID JyLockAcquire;
-extern jmethodID JyLockRelease;
-
-extern jclass NativeActionClass;
-extern jmethodID NativeAction_constructor;
-extern jfieldID NativeAction_action;
-extern jfieldID NativeAction_obj;
-extern jfieldID NativeAction_nativeRef1;
-extern jfieldID NativeAction_nativeRef2;
-extern jfieldID NativeAction_cTypeName;
-extern jfieldID NativeAction_cMethod;
-extern jfieldID NativeAction_cLine;
-extern jfieldID NativeAction_cFile;
-
-extern jclass JyReferenceMonitorClass;
-extern jmethodID JyRefMonitorMakeDebugInfo;
-extern jmethodID JyRefMonitorAddAction;
-
-extern jclass pyCPeerClass;
-extern jmethodID pyCPeerConstructor;
-extern jfieldID pyCPeerObjectHandle;
-//extern jfieldID pyCPeerRefHandle;
-
-extern jclass pyCPeerGCClass;
-extern jmethodID pyCPeerGCConstructor;
-//extern jfieldID pyCPeerLinksHandle;
-
-extern jclass pyCPeerTypeGCClass;
-extern jmethodID pyCPeerTypeGCConstructor;
-extern jmethodID pyCPeerTypeGCConstructorSubtype;
-
-extern jclass pyDictCPeerClass;
-extern jclass pyTupleCPeerClass;
-extern jmethodID pyTupleCPeerConstructor;
-
-extern jclass jyGCHeadClass;
-extern jmethodID traversableGCHeadSetLinks;
-extern jmethodID traversableGCHeadSetLink;
-extern jmethodID traversableGCHeadInsertLink;
-extern jmethodID traversableGCHeadClearLink;
-extern jmethodID traversableGCHeadClearLinksFromIndex;
-extern jmethodID traversableGCHeadEnsureSize;
-extern jmethodID pyObjectGCHeadSetObject;
-extern jmethodID jyGCHeadGetHandle;
-
-extern jclass cPeerInterface;
-extern jclass cPeerNativeDelegateInterface;
-extern jmethodID super__call__;
-extern jmethodID super__findattr_ex__;
-extern jmethodID super__setattr__;
-extern jmethodID super__str__;
-extern jmethodID super__repr__;
-extern jmethodID super__finditem__;
-extern jmethodID super__setitem__;
-extern jmethodID super__delitem__;
-extern jmethodID super__len__;
-extern jmethodID super_toString;
-
-extern jclass pyCPeerTypeClass;
-//extern jmethodID pyCPeerTypeConstructor;
-extern jmethodID pyCPeerTypeWithNameAndDictConstructor;
-extern jmethodID pyCPeerTypeWithNameDictTypeConstructor;
-extern jfieldID pyCPeerTypeObjectHandle;
-extern jfieldID pyCPeerTypeRefHandle;
 
 //extern jlong JyNIDebugMode;
 

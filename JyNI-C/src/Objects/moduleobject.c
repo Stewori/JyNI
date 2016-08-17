@@ -54,8 +54,8 @@ PyModule_New(const char *name)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->NewObject(env, pyModuleClass, pyModuleByStringConstructor,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern)));
+			(*env)->NewObject(env, pyModuleClass, pyModule_byStringConstructor,
+			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), string_intern)));
 
     /*PyModuleObject *m;
     PyObject *nameobj;
@@ -93,7 +93,7 @@ PyModule_GetDict(PyObject *m)
 	env(NULL);
 	//jobject jm = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict);
 	PyObject* er = JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict));
+			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModule_getDict));
 	return er;
     /*PyObject *d;
     if (!PyModule_Check(m)) {
@@ -120,14 +120,14 @@ PyModule_GetName(PyObject *m)
 	}
 	//stringIntern
 	env(NULL);
-	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__name__"), stringIntern));
+	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject___getattr__,
+			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__name__"), string_intern));
 	if (pyStr == NULL)
 	{
 		PyErr_SetString(PyExc_SystemError, "nameless module");
 		return NULL;
 	}
-	jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
+	jstring er = (*env)->CallObjectMethod(env, pyStr, pyObject_asString);
 	global_cstr_from_jstring(cstr, er);
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
@@ -164,8 +164,8 @@ PyModule_GetFilename(PyObject *m)
 	}
 	//stringIntern
 	env(NULL);
-	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), stringIntern));
+	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject___getattr__,
+			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), string_intern));
 	if (pyStr == NULL)
 	{
 		puts("module filename missing");
@@ -175,7 +175,7 @@ PyModule_GetFilename(PyObject *m)
 		//PyErr_SetString(PyExc_SystemError, "module filename missing");
 		return NULL;
 	}
-	jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
+	jstring er = (*env)->CallObjectMethod(env, pyStr, pyObject_asString);
 	global_cstr_from_jstring(cstr, er);
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
@@ -290,7 +290,7 @@ module_repr(PyModuleObject *m)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
-		JyNI_JythonPyObject_FromPyObject((PyObject*) m), pyObject__repr__));
+		JyNI_JythonPyObject_FromPyObject((PyObject*) m), pyObject___repr__));
 //    char *name;
 //    char *filename;
 //

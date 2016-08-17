@@ -61,37 +61,37 @@ void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2,
 {
 	env();
 	jobject nativeAction = (*env)->NewObject(env, NativeActionClass, NativeAction_constructor);
-	(*env)->SetShortField(env, nativeAction, NativeAction_action, action);
-	(*env)->SetIntField(env, nativeAction, NativeAction_cLine, line);
+	(*env)->SetShortField(env, nativeAction, NativeAction_actionField, action);
+	(*env)->SetIntField(env, nativeAction, NativeAction_cLineField, line);
 
-	(*env)->SetLongField(env, nativeAction, NativeAction_nativeRef1, (jlong) FROM_JY(object));
+	(*env)->SetLongField(env, nativeAction, NativeAction_nativeRef1Field, (jlong) FROM_JY(object));
 
 	if (object2)
-		(*env)->SetLongField(env, nativeAction, NativeAction_nativeRef2, (jlong) FROM_JY(object));
+		(*env)->SetLongField(env, nativeAction, NativeAction_nativeRef2Field, (jlong) FROM_JY(object));
 
 	if (type)
 	{
 		jstring jtp = (*env)->NewStringUTF(env, type);
-		(*env)->SetObjectField(env, nativeAction, NativeAction_cTypeName, jtp);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_cTypeNameField, jtp);
 		(*env)->DeleteLocalRef(env, jtp);
 	}
 
 	if (function)
 	{
 		jstring jcm = (*env)->NewStringUTF(env, function);
-		(*env)->SetObjectField(env, nativeAction, NativeAction_cMethod, jcm);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_cMethodField, jcm);
 		(*env)->DeleteLocalRef(env, jcm);
 	}
 
 	if (file)
 	{
 		jstring jfl = (*env)->NewStringUTF(env, file);
-		(*env)->SetObjectField(env, nativeAction, NativeAction_cFile, jfl);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_cFileField, jfl);
 		(*env)->DeleteLocalRef(env, jfl);
 	}
 
 	if (object && (object->flags & JY_INITIALIZED_FLAG_MASK))
-		(*env)->SetObjectField(env, nativeAction, NativeAction_obj, object->jy);
-	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass, JyRefMonitorAddAction, nativeAction);
+		(*env)->SetObjectField(env, nativeAction, NativeAction_objField, object->jy);
+	(*env)->CallStaticVoidMethod(env, JyReferenceMonitorClass, JyReferenceMonitor_addNativeAction, nativeAction);
 	(*env)->DeleteLocalRef(env, nativeAction);
 }

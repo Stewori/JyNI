@@ -425,7 +425,7 @@ PyImport_GetModuleDict(void)
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_GetModuleDict));
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_GetModuleDict));
 //    PyInterpreterState *interp = PyThreadState_GET()->interp;
 //    if (interp->modules == NULL)
 //        Py_FatalError("PyImport_GetModuleDict: no module dictionary!");
@@ -609,7 +609,7 @@ PyObject *
 _PyImport_FixupExtension(char *name, char *filename)
 {
 	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_FindExtension));
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNI__PyImport_FindExtension));
 //    PyObject *modules, *mod, *dict, *copy;
 //    if (extensions == NULL) {
 //        extensions = PyDict_New();
@@ -669,7 +669,7 @@ PyImport_AddModule(const char *name)
 {
 	env(NULL);
 	PyObject* er = JyNI_PyObject_FromJythonPyObject(
-		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_AddModule,
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_AddModule,
 		(*env)->NewStringUTF(env, name)));
 	//printf("dest-check for module6: %u\n", (int) PyModule_Check(er));
 	/*int i;
@@ -2221,7 +2221,7 @@ PyImport_ImportModuleNoBlock(const char *name)
         PyErr_Clear();
     }
     env(NULL);
-    jobject jres = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNIPyImport_ImportModuleNoBlock,
+    jobject jres = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_ImportModuleNoBlock,
     		(*env)->NewStringUTF(env, name), JNI_FALSE);
     if ((*env)->ExceptionCheck(env)) {
     	return NULL;
@@ -2350,7 +2350,7 @@ PyImport_ImportModuleLevel(char *name, PyObject *globals, PyObject *locals,
 {
 	env(NULL);
 	return JyNI_PyObject_FromJythonPyObject(
-		(*env)->CallStaticObjectMethod(env, __builtin__Class, __builtin__ImportLevel,
+		(*env)->CallStaticObjectMethod(env, __builtin__Class, __builtin___ImportLevel,
 		(*env)->NewStringUTF(env, name), JyNI_JythonPyObject_FromPyObject(globals),
 		JyNI_JythonPyObject_FromPyObject(locals), JyNI_JythonPyObject_FromPyObject(fromlist),
 		level));

@@ -43,7 +43,7 @@ inline void JyErr_InsertCurExc()
 	PyObject *curexc_type, *curexc_value, *curexc_traceback;
 	PyErr_Fetch(&curexc_type, &curexc_value, &curexc_traceback);
 	env();
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIJyErr_InsertCurExc,
+	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_JyErr_InsertCurExc,
 			TS_GET_JY(tstate),
 			JyNI_JythonPyObject_FromPyObject(curexc_type),
 			JyNI_JythonPyObject_FromPyObject(curexc_value),

@@ -1266,7 +1266,7 @@ PyErr_PrintEx(int set_sys_last_vars)
 	Py_XDECREF(v);
 	Py_XDECREF(tb);
 	env();
-	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNIJyErr_PrintEx, (jboolean) set_sys_last_vars,
+	(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_JyErr_PrintEx, (jboolean) set_sys_last_vars,
 			TS_GET_JY(PyThreadState_GET()), jexc, jexcval, jexctb);
 }
 

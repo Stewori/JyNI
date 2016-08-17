@@ -1087,29 +1087,29 @@ PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
 		return 0;
 
 	jobject obj = (*env)->CallStaticObjectMethod(env, JyNIClass,
-			JyNIGetPyDictionary_Next, JyNI_JythonPyObject_FromPyObject(op), i);
+			JyNI_getPyDictionary_Next, JyNI_JythonPyObject_FromPyObject(op), i);
 	if (obj == NULL) return 0;
 	if (pkey)
 	{
-		PyObject* keyHandle = (PyObject*) (*env)->GetLongField(env, obj, JyNIDictNextResultKeyHandleField);
+		PyObject* keyHandle = (PyObject*) (*env)->GetLongField(env, obj, JyNIDictNextResult_keyHandleField);
 		if (keyHandle != NULL) *pkey = keyHandle;
 		else
 		{
-			jobject jkey = (*env)->GetObjectField(env, obj, JyNIDictNextResultKeyField);
+			jobject jkey = (*env)->GetObjectField(env, obj, JyNIDictNextResult_keyField);
 			*pkey = JyNI_PyObject_FromJythonPyObject(jkey);
 		}
 	}
 	if (pvalue)
 	{
-		PyObject* valueHandle = (PyObject*) (*env)->GetLongField(env, obj, JyNIDictNextResultValueHandleField);
+		PyObject* valueHandle = (PyObject*) (*env)->GetLongField(env, obj, JyNIDictNextResult_valueHandleField);
 		if (valueHandle != NULL) *pvalue = valueHandle;
 		else
 		{
-			jobject jvalue = (*env)->GetObjectField(env, obj, JyNIDictNextResultValueField);
+			jobject jvalue = (*env)->GetObjectField(env, obj, JyNIDictNextResult_valueField);
 			*pvalue = JyNI_PyObject_FromJythonPyObject(jvalue);
 		}
 	}
-	i = (*env)->GetIntField(env, obj, JyNIDictNextResultNewIndexField);
+	i = (*env)->GetIntField(env, obj, JyNIDictNextResult_newIndexField);
 	if (i < 0)
 	{
 		*ppos = -i;
@@ -1676,7 +1676,7 @@ PyDict_MergeFromSeq2(PyObject *d, PyObject *seq2, int override)
 	env(-1);
 	jobject jd = JyNI_JythonPyObject_FromPyObject(d);
 	jobject jseq2 = JyNI_JythonPyObject_FromPyObject(seq2);
-	(*env)->CallVoidMethod(env, jd, pyAbstractDictMergeFromSeq, jseq2, override);
+	(*env)->CallVoidMethod(env, jd, pyAbstractDict_mergeFromSeq, jseq2, override);
 
 //	it = PyObject_GetIter(seq2);
 //	if (it == NULL)
@@ -1768,7 +1768,7 @@ PyDict_Merge(PyObject *a, PyObject *b, int override)
 //	if ((*env)->IsInstanceOf(env, ja, pyDictClass)) puts("a is PyDictionary");
 //	if ((*env)->IsInstanceOf(env, ja, pyCPeerClass)) puts("a is PyCPeer");
 //	if (PyType_IsSubtype(Py_TYPE(a), &PyDict_Type)) puts("a is dict-subtype");
-	(*env)->CallVoidMethod(env, ja, pyAbstractDictMerge, jb, override);
+	(*env)->CallVoidMethod(env, ja, pyAbstractDict_merge, jb, override);
 //	if (((*env)->IsInstanceOf(a, pyDictClass))
 //			(*env)->CallObjectMethod(env, a, pyDictMerge, b);
 
@@ -1870,7 +1870,7 @@ PyDict_Copy(PyObject *o)
 	}
 	env(NULL);
 	jobject backend = JyNI_JythonPyObject_FromPyObject(o);
-	jobject cpy = (*env)->CallObjectMethod(env, backend, pyAbstractDictCopy);
+	jobject cpy = (*env)->CallObjectMethod(env, backend, pyAbstractDict_copy);
 //	if ((*env)->IsInstanceOf(env, backend, pyStringMapClass))
 //		cpy = (*env)->CallObjectMethod(env, backend, pyStringMapCopy);
 //	else //if ((*env)->IsInstanceOf(env, backend, pyDictClass))
@@ -2514,7 +2514,7 @@ PyDict_Contains(PyObject *op, PyObject *key)
 	jobject k = JyNI_JythonPyObject_FromPyObject(key);
 	jboolean result = (*env)->CallBooleanMethod(env,
 		dict,
-		pyObject__contains__,
+		pyObject___contains__,
 		k
 	);
 	if ((*env)->ExceptionCheck(env)) {
@@ -2697,7 +2697,7 @@ PyDict_GetItemString(PyObject *v, const char *key)
 		return NULL;
 	}
 	env(NULL);
-	return PyDict_GetItemStringJy(v, (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, key)));
+	return PyDict_GetItemStringJy(v, (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, (*env)->NewStringUTF(env, key)));
 	/*PyObject *kv, *rv;
 	kv = PyString_FromString(key);
 	if (kv == NULL)
@@ -2756,7 +2756,7 @@ PyDict_SetItemString(PyObject *v, const char *key, PyObject *item)
 	(*env)->CallVoidMethod(env,
 			jv, JMID(__setitem__),
 			//(*env)->NewObject(env, pyStringClass, pyStringByJStringConstructor, (*env)->NewStringUTF(env, key)),
-			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, key)),
+			(*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, (*env)->NewStringUTF(env, key)),
 			jitem);
 	LEAVE_SubtypeLoop_Safe_ModePy(jv, __setitem__)
 	return 0;
@@ -2775,7 +2775,7 @@ int
 PyDict_DelItemString(PyObject *v, const char *key)
 {
 	env(-1);
-	jobject key2 = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, key));
+	jobject key2 = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, (*env)->NewStringUTF(env, key));
 	if (!PyDict_Check(v)) {
 		//PyErr_BadInternalCall();
 		return -1;

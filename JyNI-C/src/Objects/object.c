@@ -479,7 +479,7 @@ PyObject_Repr(PyObject *v)
 	{
 		//jputs("PyObject_Repr delegate");
 		env(NULL);
-		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObject__repr__));
+		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObject___repr__));
 	}
 
 	if (Py_TYPE(v)->tp_repr == NULL)
@@ -535,7 +535,7 @@ _PyObject_Str(PyObject *v)
 		env(NULL);
 		jobject er;
 		Py_BEGIN_ALLOW_THREADS
-		er = (*env)->CallObjectMethod(env, delegate, pyObject__str__);
+		er = (*env)->CallObjectMethod(env, delegate, pyObject___str__);
 		Py_END_ALLOW_THREADS
 		return JyNI_PyObject_FromJythonPyObject(er);
 	}
@@ -993,7 +993,7 @@ PyObject_Compare(PyObject *v, PyObject *w)
 		env(-1);
 		jint result = (*env)->CallIntMethod(env,
 				JyNI_JythonPyObject_FromPyObject(v),
-				pyObject_cmp,
+				pyObject__cmp,
 				JyNI_JythonPyObject_FromPyObject(w));
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->ExceptionClear(env);
@@ -1285,8 +1285,8 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 	{
 //		if (dbg) jputs("delegate GetAttrString");
 		env(NULL);
-		jobject jres = (*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
-				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern));
+		jobject jres = (*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
+				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), string_intern));
 //		JyNI_jprintJ(jres);
 		return JyNI_PyObject_FromJythonPyObject(jres);
 	}
@@ -1343,8 +1343,8 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 	if (delegate)
 	{
 		env(-1);
-		(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern),
+		(*env)->CallObjectMethod(env, delegate, pyObject___setattr__,
+			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), string_intern),
 			JyNI_JythonPyObject_FromPyObject(w));
 		if ((*env)->ExceptionCheck(env))
 		{
@@ -1395,7 +1395,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 	{
 		env(NULL);
 		return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+			(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 	}
 //	jputs("no delegate in PyString-version");
@@ -1469,7 +1469,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
 		{
 //			jputsLong(__LINE__);
 			env(NULL);
-			(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
+			(*env)->CallObjectMethod(env, delegate, pyObject___setattr__,
 					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name),
 					JyNI_JythonPyObject_FromPyObject(value));
 			if ((*env)->ExceptionCheck(env))
@@ -1612,7 +1612,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 //		jputsLong(__LINE__);
 		env(NULL);
 		res = JyNI_PyObject_FromJythonPyObject(
-				(*env)->CallObjectMethod(env, delegate, pyObject__findattr__,
+				(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
 				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
 		goto done;
 	}
@@ -1762,7 +1762,7 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 		{
 //			jputsLong(__LINE__);
 			env(NULL);
-			(*env)->CallObjectMethod(env, delegate, pyObject__setattr__,
+			(*env)->CallObjectMethod(env, delegate, pyObject___setattr__,
 					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name),
 				JyNI_JythonPyObject_FromPyObject(value));
 			if ((*env)->ExceptionCheck(env))
@@ -1873,7 +1873,7 @@ PyObject_IsTrue(PyObject *v)
 	if (delegate)
 	{
 		env(-1);
-		return (*env)->CallBooleanMethod(env, delegate, pyObject__nonzero__);
+		return (*env)->CallBooleanMethod(env, delegate, pyObject___nonzero__);
 	} else
 	{
 
@@ -2705,7 +2705,7 @@ Py_ReprEnter(PyObject *obj)
 		//Result true means 0, false means 1, error means -1
 		jboolean result = (*env)->CallIntMethod(env,
 					TS_GET_JY(_PyThreadState_Current),
-					pyThreadStateEnterRepr,
+					pyThreadState_enterRepr,
 					JyNI_JythonPyObject_FromPyObject(obj)
 		);
 		if ((*env)->ExceptionCheck(env)) {
@@ -2746,7 +2746,7 @@ Py_ReprLeave(PyObject *obj)
 	env();
 	(*env)->CallVoidMethod(env,
 			TS_GET_JY(_PyThreadState_Current),
-			pyThreadStateExitRepr,
+			pyThreadState_exitRepr,
 			JyNI_JythonPyObject_FromPyObject(obj)
 	);
 //	PyObject *dict;

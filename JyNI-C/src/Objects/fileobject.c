@@ -2634,7 +2634,7 @@ PyFile_WriteString(const char *s, PyObject *f)
 		puts("PyFile_WriteString with NULL-pointer");
 	jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
 	//(*env)->CallVoidMethod(env, ((JyObject*) f)->jy, pyFileWrite, (*env)->NewStringUTF(env, s));
-	(*env)->CallVoidMethod(env, f2, pyFileWrite, (*env)->NewStringUTF(env, s));
+	(*env)->CallVoidMethod(env, f2, pyFile_write, (*env)->NewStringUTF(env, s));
 	//todo: JNI Exception handling
 	return 0;
 

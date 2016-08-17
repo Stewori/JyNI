@@ -141,7 +141,7 @@ PyTraceBack_Here(PyFrameObject *frame)
 	PyThreadState *tstate = PyThreadState_GET();
 	PyTracebackObject *oldtb = (PyTracebackObject *) tstate->curexc_traceback;
 	env(-1);
-	jobject new_tb = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyTraceBack_Here,
+	jobject new_tb = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_PyTraceBack_Here,
 			JyNI_JythonPyObject_FromPyObject(frame), TS_GET_JY(tstate));
 	if ((*env)->IsSameObject(env, new_tb, NULL))
 	{

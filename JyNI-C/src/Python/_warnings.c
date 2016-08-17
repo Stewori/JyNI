@@ -751,7 +751,7 @@ PyErr_WarnEx(PyObject *category, const char *text, Py_ssize_t stack_level)
 	jstring message = (*env)->NewStringUTF(env, text);
 	if (message == NULL) return -1;
 	if (category == NULL) category = PyExc_RuntimeWarning;
-	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPyWarningStck,
+	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_warningStck,
 			JyNI_JythonExceptionType_FromPyExceptionType(category), message, stack_level);
 
 //	if ((*env)->ExceptionCheck(env)) {
@@ -799,7 +799,7 @@ PyErr_WarnExplicit(PyObject *category, const char *text,
 	jstring message = (*env)->NewStringUTF(env, text);
 	if (message == NULL) return -1;
 	if (category == NULL) category = PyExc_RuntimeWarning;
-	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPyExplicitWarning,
+	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_explicitWarning,
 			JyNI_JythonExceptionType_FromPyExceptionType(category), message,
 			(*env)->NewStringUTF(env, filename_str), (*env)->NewStringUTF(env, module_str),
 			JyNI_JythonPyObject_FromPyObject(registry));
