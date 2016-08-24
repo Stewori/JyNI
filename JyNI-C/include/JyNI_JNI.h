@@ -574,6 +574,7 @@ extern jfieldID pyDescr_dtypeField;
 
 extern jclass pyMethodDescrClass;
 extern jmethodID pyMethodDescr_Constructor;
+extern jmethodID pyMethodDescr_getDoc;
 
 extern jclass pyClassMethodDescrClass;
 

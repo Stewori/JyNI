@@ -86,9 +86,11 @@ fill_free_list(void)
 //Modified for JyNI:
 	{
 		Py_TYPE(FROM_JY_NO_GC(q)) = (struct _typeobject *)(FROM_JY_NO_GC(q-1));
+		notifyAlloc((JyObject*) q);
 		Jy_InitImmutable((JyObject*) q);
 	}
 	Py_TYPE(FROM_JY_NO_GC(q)) = NULL;
+	notifyAlloc((JyObject*) q);
 	Jy_InitImmutable((JyObject*) q);
 	return (PyFloatObject*) FROM_JY_NO_GC(p + N_FLOATOBJECTS - 1);
 }
@@ -2279,6 +2281,7 @@ PyFloat_ClearFreeList(void)
 				 i++, p++) {
 				if (!PyFloat_CheckExact(FROM_JY_NO_GC(p)) ||
 							p->pyFloat.ob_refcnt == 0) {
+					notifyFree((JyObject*) p);
 					JyNI_CleanUp_JyObject((JyObject*) p);
 					Py_TYPE(FROM_JY_NO_GC(p)) = (struct _typeobject *)
 						free_list;

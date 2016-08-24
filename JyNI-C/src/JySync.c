@@ -978,7 +978,7 @@ PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject
 			| METH_JYTHON | METH_JYTHON_CDEF;
 	mdef->ml_name = cName;
 
-	jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallable_getDoc);
+	jtmp = (*env)->CallObjectMethod(env, src, pyMethodDescr_getDoc);
 	if (jtmp)
 	{
 		global_cstr_from_jstring2(cDoc, jtmp);

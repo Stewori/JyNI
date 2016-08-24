@@ -291,6 +291,14 @@ _PyObject_New(PyTypeObject *tp)
  */
 inline void _PyObject_InitJy(PyObject *op, TypeMapEntry* tme)
 {
+//	if (!Is_DynPtrPy(op))
+//	{
+//		// todo: Also check this stuff in _PyInt_Init
+//		jputs("JyNI Warning: Potential seg-fault in ");
+//		jputs(__FUNCTION__);
+//		jputs(Py_TYPE(op)->tp_name);
+//		jPrintCStackTrace();
+//	}
 	JyObject* jy = AS_JY_NO_GC(op);
 	/*
 	 * We abuse the jy-field here to cache the already

@@ -515,6 +515,7 @@ jfieldID pyDescr_dtypeField;
 
 jclass pyMethodDescrClass;
 jmethodID pyMethodDescr_Constructor;
+jmethodID pyMethodDescr_getDoc;
 
 jclass pyClassMethodDescrClass;
 
@@ -1155,6 +1156,7 @@ inline jint initJythonObjects(JNIEnv *env)
 
 	JNI_CLASS(pyMethodDescr)
 	JNI_CONSTRUCTOR(pyMethodDescr, Constructor, pyType, pyBuiltinCallable)
+	JNI_METH_CLASS(pyMethodDescr, getDoc, string)
 
 	JNI_CLASS(pyClassMethodDescr)
 

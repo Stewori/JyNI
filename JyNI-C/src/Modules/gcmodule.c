@@ -1715,8 +1715,14 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 {
 //	jputs(__FUNCTION__);
 //	jputs(op->ob_type->tp_name);
-	if (Is_Static_PyObject(op))
+	if (Is_Static_PyObject(op) && !Is_DynPtr(jy))
 	{
+		if (Is_DynPtr(jy)) {
+			printf("!!! WARNING: Using non-static object as static: %s %i (%s %lld)\n", __FUNCTION__, __LINE__, Py_TYPE(op)->tp_name, op);
+			if (Py_TYPE(op) == &PyType_Type) {
+				puts(((PyTypeObject*) op)->tp_name);
+			}
+		}
 		//jputs("JyNI-Warning: JyNI_GC_ObtainJyGCHead was called with non-heap object.");
 		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass,
 				JyNI_getNativeStaticJyGCHead, (jlong) op);
@@ -1727,6 +1733,9 @@ jobject JyNI_GC_ObtainJyGCHead(JNIEnv* env, PyObject* op, JyObject* jy)
 					(jlong) op, result);
 		}
 		return result;
+	}
+	if (!Is_DynPtr(jy)) {
+		printf("!!! Segfault-WARNING: %s %i (%lld)\n", __FUNCTION__, __LINE__, op);
 	}
 	if (jy->flags & JY_CPEER_FLAG_MASK)
 	{
@@ -1839,7 +1848,7 @@ visit_exploreArrayLink(PyObject *op, void *arg)
 	 * so an invalid pointer causes no harm.
 	 */
 	//if (!Is_Static_PyObject(op)) {
-	jobject head = JyNI_GC_ObtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+	jobject head = JyNI_GC_ObtainJyGCHead(((exploreJNI*) arg)->env, op, _AS_JY(op));
 	(*((exploreJNI*) arg)->env)->SetObjectArrayElement(((exploreJNI*) arg)->env,
 			((exploreJNI*) arg)->dest, ((exploreJNI*) arg)->pos++, head);
 	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
@@ -1854,7 +1863,7 @@ visit_exploreListLink(PyObject *op, void *arg)
 	 * See note in visit_exploreArrayLink.
 	 */
 	//if (!Is_Static_PyObject(op)) {
-	jobject head = JyNI_GC_ObtainJyGCHead(((exploreJNI*) arg)->env, op, AS_JY(op));
+	jobject head = JyNI_GC_ObtainJyGCHead(((exploreJNI*) arg)->env, op, _AS_JY(op));
 	(*((exploreJNI*) arg)->env)->CallBooleanMethod(((exploreJNI*) arg)->env,
 			((exploreJNI*) arg)->dest, list_add, head);
 	(*((exploreJNI*) arg)->env)->DeleteLocalRef(((exploreJNI*) arg)->env, head);
@@ -1913,7 +1922,12 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 		//todo: use heap-types own traverse method for heap-types again.
 		trav = statictype_traverse; //For now we use this traverse-method also for heap-types.
 	} else trav = Py_TYPE((PyObject*) op)->tp_traverse;
-	if (!(jy->flags & JY_GC_VAR_SIZE)) {
+	if (!PyType_Check(op) && !Is_DynPtr(jy)) {
+		printf("!!! potential Segfault-WARNING: %s %i (%lld)\n", __FUNCTION__, __LINE__, op);
+		puts(Py_TYPE(op)->tp_name);
+		if (Py_TYPE(op) == &PyType_Type) puts(((PyTypeObject*) op)->tp_name);
+	}
+	if (PyType_Check(op) || !(jy->flags & JY_GC_VAR_SIZE)) {
 		jsize fixedSize = JyObject_FixedGCSize(op);
 		if (fixedSize == UNKNOWN_FIXED_GC_SIZE &&
 			Py_TYPE(op)->tp_itemsize < sizeof(PyObject*))
@@ -1934,7 +1948,7 @@ static jobject exploreJyGCHeadLinks(JNIEnv* env, PyObject* op, JyObject* jy) {
 				PyObject* singleLink = NULL;
 				trav(op, (visitproc)visit_exploreSingleLink, &singleLink);
 				if (singleLink) {// && !Is_Static_PyObject(singleLink)) {
-					JyObject* jy = AS_JY(singleLink);
+					JyObject* jy = _AS_JY(singleLink);
 					jobject result0 = JyNI_GC_ObtainJyGCHead(env, singleLink, jy);
 					return result0;
 					//return JyNI_GC_ObtainJyGCHead(env, singleLink, AS_JY(singleLink));
@@ -2130,11 +2144,11 @@ void JyNI_GC_ExploreObject(PyObject* op)
 		{
 			/* Pure CStub-case (as pure CStubs are the only tracked non-gc objects,
 			 * except some static ones.) Just create GCHead and get out of here: */
-			jy = AS_JY_NO_GC(op);
+			jy = _AS_JY_NO_GC(op);
 			JyNI_GC_ObtainJyGCHead(env, op, jy);
 			return;
 		}
-		jy = AS_JY_WITH_GC(op);
+		jy = _AS_JY_WITH_GC(op);
 		/* Note that JyNI_GC_ObtainJyGCHead checks again for staticness and doesn't
 		 * use jy in static case (which would otherwise result in a memory flaw).*/
 		jobject jyHead = JyNI_GC_ObtainJyGCHead(env, op, jy);

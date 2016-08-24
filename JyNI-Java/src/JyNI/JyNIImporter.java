@@ -73,14 +73,14 @@ public class JyNIImporter extends PyObject {
 //			"cStringIO", "_csv", "_functools", "itertools", "_json",
 //			"math", "operator", "_random", "time", "bz2",
 			);
-	
+
 	List<String> knownPaths = null;
 	Vector<String> libPaths = new Vector<String>();
 
 	public JyNIImporter() {
 		super();
 	}
-	
+
 // Currently not used:
 //	public JyNIImporter(List<String> knownPaths) {
 //		super();
@@ -95,11 +95,11 @@ public class JyNIImporter extends PyObject {
 //		PyModule osModule = (PyModule) imp.importName("os", true);
 //		osModule.__setattr__("name".intern(), new PyOSNameString());
 //	}
-	
+
 	public PyObject __call__(PyObject args[], String keywords[]) {
 		String s = args[0].toString();
 //		System.out.print("JyNI call... "+s);
-		
+
 		/*
 		 * In order to be recognized by Jython we must return 'this' at
 		 * least once. For statically linked modules no corresponding
@@ -125,7 +125,7 @@ public class JyNIImporter extends PyObject {
 		}
 		throw Py.ImportError("unable to handle");
 	}
-	
+
 	/**
 	 * Find the module for the fully qualified name.
 	 *
@@ -167,7 +167,7 @@ public class JyNIImporter extends PyObject {
 			subPath = subPath.replace('.', File.separatorChar);
 		}
 		if (blacklist.contains(modname)) return Py.None;
-		String suf = "."+getSystemDependendDynamicLibraryExtension();
+		String suf = "."+getSystemDependentDynamicLibraryExtension();
 		for (String s : libPaths)
 		{
 //			System.out.println("JyNI look in "+s+File.separatorChar+subPath);
@@ -239,7 +239,7 @@ public class JyNIImporter extends PyObject {
 		//System.out.println("000path: "+inf.path);
 		//return Py.NotImplemented; //PySystemState.packageManager.lookupName(name.intern());
 	}
-	
+
 	/**
 	 * Returns a string representation of the object.
 	 *
@@ -248,14 +248,14 @@ public class JyNIImporter extends PyObject {
 	public String toString() {
 		return this.getType().toString();
 	}
-	
-	public static String getSystemDependendDynamicLibraryExtension() {
+
+	public static String getSystemDependentDynamicLibraryExtension() {
 		String OS = System.getProperty("os.name").toLowerCase();
 		//if isWindows:
 		if (OS.indexOf("win") >= 0) return "dll";
 		else return "so";
 	}
-	
+
 	/**	This method is actually not needed, since CPython-extensions ignore this naming-standard.
 		Filenames only differ in the ending, i.e. ".so" vs ".dll".
 	*/
@@ -271,6 +271,5 @@ public class JyNIImporter extends PyObject {
 		if (OS.indexOf("mac") >= 0) return "lib"+libName+".so";
 		//isSolaris:
 		if (OS.indexOf("sunos") >= 0) return "lib"+libName+".so";*/
-	 
 	}
 }

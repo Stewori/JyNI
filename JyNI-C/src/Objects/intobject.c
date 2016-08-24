@@ -83,6 +83,7 @@ fill_free_list(void)
 {
 	JyIntObject *p, *q;
 	/* Python's object allocator isn't appropriate for large blocks. */
+	//JyNI-todo: Use a PyMem_MALLOC
 	p = (JyIntObject *) PyMem_MALLOC(sizeof(PyIntBlock));
 	if (p == NULL)
 		return (PyIntObject *) PyErr_NoMemory();
@@ -96,9 +97,11 @@ fill_free_list(void)
 //Modified for JyNI:
 	{
 		Py_TYPE(FROM_JY_NO_GC(q)) = (struct _typeobject *)(FROM_JY_NO_GC(q-1));
+		notifyAlloc((JyObject*) q);
 		Jy_InitImmutable((JyObject*) q);
 	}
 	Py_TYPE(FROM_JY_NO_GC(q)) = NULL;
+	notifyAlloc((JyObject*) q);
 	Jy_InitImmutable((JyObject*) q);
 	return (PyIntObject*) FROM_JY_NO_GC(p + N_INTOBJECTS - 1);
 }
@@ -1510,10 +1513,18 @@ _PyInt_Init(void)
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
 	JyObject* jy;
 	for (ival = -NSMALLNEGINTS; ival < NSMALLPOSINTS; ival++) {
-		  if (!free_list && (free_list = fill_free_list()) == NULL)
-					return 0;
+		if (!free_list && (free_list = fill_free_list()) == NULL)
+				return 0;
 		/* PyObject_New is inlined */
 		v = free_list;
+//		if (!Is_DynPtrPy(v))
+//		{
+//			// todo: Also check this stuff in _PyInt_Init
+//			jputs("JyNI Warning: Potential seg-fault in ");
+//			jputs(__FUNCTION__);
+//			//jPrintCStackTrace();
+//			jputsLong(v);
+//		}
 		free_list = (PyIntObject *)Py_TYPE(v);
 		PyObject_INIT(v, &PyInt_Type);
 		_PyObject_InitJy(v, &(builtinTypes[TME_INDEX_Int]));
@@ -1554,6 +1565,7 @@ PyInt_ClearFreeList(void)
 			for (i = 0, p = &list->objects[0];
 				 i < N_INTOBJECTS;
 				 i++, p++) {
+				notifyFree((JyObject*) p);
 				if (!PyInt_CheckExact(FROM_JY_NO_GC(p)) ||
 						p->pyInt.ob_refcnt == 0) {
 					JyNI_CleanUp_JyObject((JyObject*) p);

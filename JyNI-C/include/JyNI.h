@@ -252,7 +252,7 @@ extern jlong ptrCount;
 //#define Is_DynPtr(p) (minDynPtr && (((jlong) p) >= ((jlong) minDynPtr)) && (((jlong) p) <= ((jlong) maxDynPtr)))
 #define Is_DynPtr(ptr) JyHash_contains(ptr)
 
-#define Is_DynPtrPy(p) Is_DynPtr(AS_JY_NO_GC(p))
+#define Is_DynPtrPy(p) Is_DynPtr(_AS_JY_NO_GC(p))
 
 //#define Update_DynPtr(p) \
 //	if (!minDynPtr) minDynPtr = maxDynPtr = p; \
@@ -678,13 +678,24 @@ typedef struct {
 //Todo: Find better solution.
 #define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op) && !PyCFunction_Check(op))
 
-#define AS_JY(o) ((  (PyObject_IS_GC(o)) ? (JyObject *) _Py_AS_GC(o) : (JyObject *) (o)  )-1)
+#define _AS_JY(o) ((  (PyObject_IS_GC(o)) ? (JyObject *) _Py_AS_GC(o) : (JyObject *) (o)  )-1)
 #define FROM_JY(o) ((JyObject_IS_GC(o)) ? JyNI_FROM_GC((((JyObject *)(o))+1)) : ((PyObject *)(((JyObject *)(o))+1)))
 #define GC_FROM_JY(o) (PyGC_Head*) (((JyObject *)(o))+1)
 #define FROM_JY_WITH_GC(o) (JyNI_FROM_GC((((JyObject *)(o))+1)))
 #define FROM_JY_NO_GC(o) ((PyObject *)(((JyObject *)(o))+1))
-#define AS_JY_WITH_GC(o) ((JyObject *)(_Py_AS_GC(o))-1)
-#define AS_JY_NO_GC(o) (((JyObject *)(o))-1)
+#define _AS_JY_WITH_GC(o) ((JyObject *)(_Py_AS_GC(o))-1)
+#define _AS_JY_NO_GC(o) (((JyObject *)(o))-1)
+
+//Is_DynPtrPy(p)
+//#define AS_JY(o) (Is_DynPtr(_AS_JY(o)) ? _AS_JY(o) : (puts("AS_JY-Warning:"), puts(__FUNCTION__), _AS_JY(o)))
+
+//#define AS_JY(o) (Is_DynPtr(_AS_JY(o)) ? _AS_JY(o) : (printf("AS_JY-Warning: %s %i (%lld)\n", __FUNCTION__, __LINE__, o), _AS_JY(o)))
+//#define AS_JY_WITH_GC(o) (Is_DynPtr(_AS_JY_WITH_GC(o)) ? _AS_JY_WITH_GC(o) : (printf("AS_JY-Warning: %s %i (%lld)\n", __FUNCTION__, __LINE__, o), _AS_JY_WITH_GC(o)))
+//#define AS_JY_NO_GC(o) (Is_DynPtr(_AS_JY_NO_GC(o)) ? _AS_JY_NO_GC(o) : (printf("AS_JY-Warning: %s %i (%lld)\n", __FUNCTION__, __LINE__, o), _AS_JY_NO_GC(o)))
+
+#define AS_JY(o) _AS_JY(o)
+#define AS_JY_WITH_GC(o) _AS_JY_WITH_GC(o)
+#define AS_JY_NO_GC(o) _AS_JY_NO_GC(o)
 
 //#define AS_GC(o) ((PyGC_Head *)(o)-1)
 //#define FROM_GC(g) ((PyObject *)(((PyGC_Head *)g)+1))
