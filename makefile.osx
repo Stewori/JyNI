@@ -11,21 +11,19 @@ OUTPUTDIR = ./build
 
 # Adjust the following line to point to Jython 2.7
 JYTHON = ./jython.jar
-#for instance, if you extracted it to your home folder:
-#JYTHON = /home/your_name/jython.jar
+# for instance, if you extracted it to your home folder:
+# JYTHON = /home/your_name/jython.jar
 
-# Adjust the two paths below to match your system, if not yet appropriate
-PY_INCLUDE = /usr/include/python2.7
+# Adjust the path below to match your system, if not yet appropriate
 JAVA_HOME ?= /Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home
+
 PLATFORM = darwin
 
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
 
-#INCLUDES = -I./JyNI-C/include -I./JyNI-C/include/Python_JyNI -I./JyNI-Java/include -I$(JAVA_HOME)/include -I$(PY_INCLUDE)
 INCLUDES = -I./JyNI-C/include -I./JyNI-C/include/Python_JyNI -I./JyNI-Java/include -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM) `python2.7-config --includes`
 
-#CFLAGS = -fPIC -Wl,--add-stdcall-alias -c $(INCLUDES)
 CFLAGS = -std=gnu89 -fPIC -Wl,--add-stdcall-alias -c $(INCLUDES)
 
 LDFLAGS = -shared -undefined dynamic_lookup
