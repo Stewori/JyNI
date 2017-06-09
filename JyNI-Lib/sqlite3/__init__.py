@@ -33,7 +33,7 @@
 
 # pysqlite2/__init__.py: the pysqlite2 package.
 #
-# Copyright (C) 2005 Gerhard Hï¿½ring <gh@ghaering.de>
+# Copyright (C) 2005 Gerhard Häring <gh@ghaering.de>
 #
 # This file is part of pysqlite.
 #
