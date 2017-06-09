@@ -1,12 +1,13 @@
 /*
  * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015, 2016 Stefan Richthofer.
+ * Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
  * All rights reserved.
  *
  *
  * Copyright of Python and Jython:
- * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
- * 2010, 2011, 2012, 2013, 2014, 2015, 2016 Python Software Foundation.
+ * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+ * 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
+ * Python Software Foundation.
  * All rights reserved.
  *
  *
@@ -38,10 +39,6 @@ import org.python.core.PyType;
 public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 	protected Object links;
 
-//	public PyCPeerTypeGC(long objectHandle) {
-//		super(objectHandle);
-//	}
-
 	public PyCPeerTypeGC(long objectHandle, String name, PyObject dict, long natMethFlags) {
 		super(objectHandle, name, dict, natMethFlags);
 	}
@@ -57,7 +54,6 @@ public class PyCPeerTypeGC extends PyCPeerType implements TraversableGCHead {
 
 	@Override
 	public int setLink(int index, JyGCHead link) {
-//		System.out.println(this.getClass()+".setLink ("+System.identityHashCode(this)+") "+index);
 		int result = DefaultTraversableGCHead.setLink(links, index, link);
 		if (result == 1) {
 			links = link;

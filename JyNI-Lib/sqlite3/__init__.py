@@ -4,13 +4,14 @@
 #  It has been modified to suit JyNI needs.
 #
 #  Copyright of JyNI:
-#  Copyright (c) 2013, 2014, 2015, 2016 Stefan Richthofer.
+#  Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
 #  All rights reserved.
 #
 #
 #  Copyright of Python and Jython:
-#  Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-#  2010, 2011, 2012, 2013, 2014, 2015, 2016 Python Software Foundation.
+#  Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+#  2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
+#  Python Software Foundation.
 #  All rights reserved.
 #
 #
@@ -32,7 +33,7 @@
 
 # pysqlite2/__init__.py: the pysqlite2 package.
 #
-# Copyright (C) 2005 Gerhard Häring <gh@ghaering.de>
+# Copyright (C) 2005 Gerhard Hï¿½ring <gh@ghaering.de>
 #
 # This file is part of pysqlite.
 #

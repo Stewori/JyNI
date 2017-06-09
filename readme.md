@@ -272,11 +272,11 @@ that access the data only via other functions are mostly kept unchanged.
 
 Copyright of Python and Jython:
 Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012, 2013, 2014, 2015, 2016 Python Software Foundation.
+2011, 2012, 2013, 2014, 2015, 2016, 2017 Python Software Foundation.
 All rights reserved.
 
 Copyright of JyNI:
-Copyright (c) 2013, 2014, 2015, 2016 Stefan Richthofer.
+Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
 All rights reserved.
 
 
@@ -296,8 +296,10 @@ If you do not have the source code, it is available at:
 
 
 JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
-2.7.7, 2.7.8 and 2.7.9. As such, it includes the common license of CPython
-2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11 and Jython in
+2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12 and 2.7.13.
+As such, it includes the common license of CPython
+2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12,
+2.7.13 and Jython in
 the file "PSF-LICENSE-2". Whether a source-file is directly based on CPython
 source-code is documented at the beginning of each file.
 
