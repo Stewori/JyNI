@@ -161,12 +161,12 @@ print "Check conversion of new-style class: "+str(DemoExtension.newstyleCheck(no
 print "Check new-style is string-subtype: "+str(DemoExtension.newstyleCheckSubtype(nobj, type("")))
 
 # Let's test instances of custom type that is not necessarily new-style class:
-from JyNI import PyShadowString
-nobj2 = PyShadowString("a", "b")
+# from JyNI import PyShadowString
+# nobj2 = PyShadowString("a", "b")
 
-print "Check conversion of Java-custom class: "+str(DemoExtension.newstyleCheck(nobj2))
-print "Check custom class is string-subtype: "+str(DemoExtension.newstyleCheckSubtype(nobj2, type("")))
-print "Check custom class is int-subtype (shouldn't be): "+str(DemoExtension.newstyleCheckSubtype(nobj2, type(6)))
+# print "Check conversion of Java-custom class: "+str(DemoExtension.newstyleCheck(nobj2))
+# print "Check custom class is string-subtype: "+str(DemoExtension.newstyleCheckSubtype(nobj2, type("")))
+# print "Check custom class is int-subtype (shouldn't be): "+str(DemoExtension.newstyleCheckSubtype(nobj2, type(6)))
 
 print ""
 print "======in JyNI-case expect native output after these lines on some consoles======"

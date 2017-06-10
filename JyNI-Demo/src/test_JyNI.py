@@ -238,7 +238,7 @@ class TestJyNI(unittest.TestCase):
 	@unittest.skipUnless(os.name == 'java',
 		'Not runnable with CPython, because it uses JyNI-classes for testing.')
 	def test_custom_classes(self):
-		from JyNI import JyNIImporter, PyShadowString
+		from JyNI import JyNIImporter #, PyShadowString
 
 		strType = type("")
 		intType = type(6)
@@ -248,10 +248,10 @@ class TestJyNI(unittest.TestCase):
 		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, strType))
 		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
 
-		nobj = PyShadowString("a", "b")
-		self.assertTrue(DemoExtension.newstyleCheck(nobj))
-		self.assertTrue(DemoExtension.newstyleCheckSubtype(nobj, strType))
-		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
+# 		nobj = PyShadowString("a", "b")
+# 		self.assertTrue(DemoExtension.newstyleCheck(nobj))
+# 		self.assertTrue(DemoExtension.newstyleCheckSubtype(nobj, strType))
+# 		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
 
 	@unittest.skipUnless(hasNativeDatetime(),
 		'datetime.so not found (probably part of libpython2.7.so)')
