@@ -92,7 +92,7 @@ JAVA_HOME_hint:
 ifeq "$(wildcard $(JAVA_HOME) )" ""
 	@echo 'Getting JAVA_HOME from java...'
 	@echo 'To avoid this extra startup-time, set JAVA_HOME explicitly, e.g.'
-	@echo 'export JAVA_HOME='"'"'/usr/lib/jvm/java-7-openjdk-amd64'"'"
+	@echo 'export JAVA_HOME='"'"'/usr/lib/jvm/java-8-openjdk-amd64'"'"
 endif
 
 # We could inline JAVA_HOME_hint into this recipe, but then it wouldn't be flushed before the user waits during the startup-time.

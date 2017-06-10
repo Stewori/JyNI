@@ -201,19 +201,7 @@ public class JyNIImporter extends PyObject {
 	}
 
 	public PyObject load_module(String name) {
-//		System.out.println("JyNI load... "+name);
-		// This stuff should move to JyNIInitializer, but there it currently
-		// breaks sysconfig.py. Is fixed in Jython 2.7.1 final.
-		PySystemState sysState = Py.getSystemState();
-		if (!(sysState.getPlatform() instanceof PyShadowString)) {
-			sysState.setPlatform(new PyShadowString(sysState.getPlatform(),
-					JyNI.getNativePlatform()));
-			PyModule osModule = (PyModule) imp.importName("os", true);
-			String _name = osModule.__getattr__("_name".intern()).toString();
-			String nameval = "name".intern();
-			PyObject osname = osModule.__getattr__(nameval);
-			osModule.__setattr__(nameval, new PyShadowString(osname, _name));
-		}
+		//System.out.println("JyNI load... "+name);
 
 		//ToDo:
 		//Maybe check via 

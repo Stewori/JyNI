@@ -183,7 +183,7 @@ if _os.name in ("nt", "ce"):
     if WINFUNCTYPE.__doc__:
         WINFUNCTYPE.__doc__ = CFUNCTYPE.__doc__.replace("CFUNCTYPE", "WINFUNCTYPE")
 
-elif _os.name == "posix": #isPosix:
+elif _os.name == "posix":
     from _ctypes import dlopen as _dlopen
 
 from _ctypes import sizeof, byref, addressof, alignment, resize
@@ -417,7 +417,7 @@ class CDLL(object):
                 id(self) & (_sys.maxint*2 + 1))
 
     def __getattr__(self, name):
-    	#print "CDLL getattr: "+str(name)
+        #print "CDLL getattr: "+str(name)
         if name.startswith('__') and name.endswith('__'):
             raise AttributeError(name)
         func = self.__getitem__(name)
@@ -480,7 +480,7 @@ class LibraryLoader(object):
         self._dlltype = dlltype
 
     def __getattr__(self, name):
-    	#print "LibraryLoader getattr: "+str(name)
+        #print "LibraryLoader getattr: "+str(name)
         if name[0] == '_':
             raise AttributeError(name)
         dll = self._dlltype(name)

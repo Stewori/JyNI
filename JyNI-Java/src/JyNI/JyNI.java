@@ -72,6 +72,8 @@ public class JyNI {
 
 	public static final int RTLD_JyNI_DEFAULT = RTLD_LAZY | RTLD_GLOBAL;//RTLD_NOW;
 
+	public static final String DLOPENFLAGS_NAME = "dlopenflags".intern();
+
 	public static final int Py_LT = 0;
 	public static final int Py_LE = 1;
 	public static final int Py_EQ = 2;
@@ -389,11 +391,13 @@ public class JyNI {
 	public static int getDLOpenFlags()
 	{
 		try {
-			return ((PyInteger) Py.getThreadState().getSystemState().__getattr__("dlopenflags")).asInt();
+			return ((PyInteger) Py.getThreadState().getSystemState().__getattr__(
+					DLOPENFLAGS_NAME)).asInt();
 		} catch (Exception e1)
 		{
 			try {
-				return ((PyInteger) Py.getSystemState().__getattr__("dlopenflags")).asInt();
+				return ((PyInteger) Py.getSystemState().__getattr__(
+						DLOPENFLAGS_NAME)).asInt();
 			} catch (Exception e2)
 			{
 				return RTLD_JyNI_DEFAULT;
@@ -404,11 +408,47 @@ public class JyNI {
 	public static void setDLOpenFlags(int n)
 	{
 		try {
-			Py.getThreadState().getSystemState().__setattr__("dlopenflags", new PyInteger(n));
+			Py.getThreadState().getSystemState().__setattr__(
+					DLOPENFLAGS_NAME, Py.newInteger(n));
 		} catch (Exception e1)
 		{
 			try {
-				Py.getSystemState().__setattr__("dlopenflags", new PyInteger(n));
+				Py.getSystemState().__setattr__(DLOPENFLAGS_NAME, Py.newInteger(n));
+			} catch (Exception e2)
+			{
+				return;
+			}
+		}
+	}
+
+	public static PyObject sys_getdlopenflags(PyObject[] args, String[] kws)
+	{
+		try {
+			return Py.getThreadState().getSystemState().__getattr__(DLOPENFLAGS_NAME);
+		} catch (Exception e1)
+		{
+			try {
+				return Py.getSystemState().__getattr__(DLOPENFLAGS_NAME);
+			} catch (Exception e2)
+			{
+				return Py.newInteger(RTLD_JyNI_DEFAULT);
+			}
+		}
+	}
+
+	public static void sys_setdlopenflags(PyObject[] args, String[] kws)
+	{
+		System.out.println(408+" "+args.length+"   "+kws.length);
+		if (args.length != 1) throw Py.makeException(Py.TypeError,
+			Py.newString("setdlopenflags() takes exactly 1 argument ("+args.length+" given)"));
+		if (!(args[0] instanceof PyInteger)) throw Py.makeException(Py.TypeError,
+			Py.newString("integer argument expected, got "+args[0].getType().getName()));
+		try {
+			Py.getThreadState().getSystemState().__setattr__(DLOPENFLAGS_NAME, args[0]);
+		} catch (Exception e1)
+		{
+			try {
+				Py.getSystemState().__setattr__(DLOPENFLAGS_NAME, args[0]);
 			} catch (Exception e2)
 			{
 				return;

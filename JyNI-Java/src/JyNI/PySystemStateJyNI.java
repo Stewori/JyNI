@@ -30,8 +30,8 @@
 
 package JyNI;
 
+import org.python.core.Py;
 import org.python.core.PySystemState;
-import org.python.util.PythonInterpreter;
 
 /**
  * A variant of PySystemState that supports the sys-functions
@@ -46,37 +46,19 @@ import org.python.util.PythonInterpreter;
  * 
  * PythonInterpreter pint = new PythonInterpreter(new PySystemStateJyNI());
  * 
- * This is equivalent to calling
- * 
- * PythonInterpreter pint = new PythonInterpreter(new PySystemState());
- * pint.exec("import sys");
- * pint.exec("import JyNI.JyNI");
- * pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_NOW");
- * pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
- * pint.exec("sys.setdlopenflags = setdlopenflags");
- * pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
- * 
  * @author Stefan Richthofer
  *
  */
+
 public class PySystemStateJyNI extends PySystemState {
-	//protected int dlopenflags = JyNI.RTLD_NOW;
-	//public int getdlopenflags() {return dlopenflags;}
-	//public void setdlopenflags(int n) {this.dlopenflags = n;}
 	
 	public PySystemStateJyNI()
 	{
 		super();
-		PythonInterpreter pint = new PythonInterpreter(this);
-		pint.exec("import sys");
-		pint.exec("import JyNI.JyNI");
-		pint.exec("sys.dlopenflags = JyNI.JyNI.RTLD_JyNI_DEFAULT");
-		//pint.exec("sys.setdlopenflags = JyNI.JyNI.setDLOpenFlags");
-		//pint.exec("sys.getdlopenflags = JyNI.JyNI.getDLOpenFlags");
-		//pint.exec("sys.setdlopenflags = lambda n: (sys.dlopenflags = n)");
-		pint.exec("def setdlopenflags(n): sys.dlopenflags = n");
-		pint.exec("sys.setdlopenflags = setdlopenflags");
-		pint.exec("sys.getdlopenflags = lambda: sys.dlopenflags");
-		pint.cleanup();
+		// See comment in JyNIInitializer for why we needn't put stuff here like
+		// ((PyShadowString) initState.platform).addTarget("OpenGL.*", null);
+		__setattr__(JyNI.DLOPENFLAGS_NAME, Py.newInteger(JyNI.RTLD_JyNI_DEFAULT));
+		__setattr__("setdlopenflags".intern(), Py.newJavaFunc(JyNI.class, "sys_setdlopenflags"));
+		__setattr__("getdlopenflags".intern(), Py.newJavaFunc(JyNI.class, "sys_getdlopenflags"));
 	}
 }
