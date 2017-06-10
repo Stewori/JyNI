@@ -438,7 +438,6 @@ public class JyNI {
 
 	public static void sys_setdlopenflags(PyObject[] args, String[] kws)
 	{
-		System.out.println(408+" "+args.length+"   "+kws.length);
 		if (args.length != 1) throw Py.makeException(Py.TypeError,
 			Py.newString("setdlopenflags() takes exactly 1 argument ("+args.length+" given)"));
 		if (!(args[0] instanceof PyInteger)) throw Py.makeException(Py.TypeError,
