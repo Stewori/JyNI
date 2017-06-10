@@ -38,18 +38,13 @@ import platform
 # This will vastly simplify once Jython 2.7.1 is out and we have
 # uname and mac_ver available in Jython:
 if os.name == 'java':
-	machine = platform.java_ver()[-1][-1]
-	if machine == 'amd64':
-		machine = 'x86_64'
-	elif machine == 'x86':
-		machine = 'i686'
 	systm = platform.java_ver()[-1][0].lower().replace(' ', '')
 	if systm == 'macosx':
 		ver = platform.java_ver()[-1][1]
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join((systm, ver, 'intel'))
 	else:
-		buildf = '-'.join((systm, machine))
+		buildf = '-'.join((systm, os.uname()[-1]))
 else:
 	systm = os.uname()[0].lower()
 	if systm == 'darwin':
