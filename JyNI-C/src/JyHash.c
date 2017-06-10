@@ -111,13 +111,13 @@ TableEntry* ptrTable;
  * It appears for memory pointers the identity modulo capacity
  * is actually a rather good hash function.
  */
-//#define hash_func(i) ((jlong) i)*2654435761 % tableCapacity
-#define hash_func(i) ((jlong) i) % tableCapacity
+//#define hash_func(i) ((ssize_t) i)*2654435761 % tableCapacity
+#define hash_func(i) ((uintptr_t) i) % tableCapacity
 
 //#define rehash_func(i, k, prev) hash_func(prev)
 
-#define rehash_func(i, k, prev) hash_func((((jlong) i) << k))
-//#define rehash_func(i, k, prev) hash_func((((jlong) i) << k)*((jlong) prev))
+#define rehash_func(i, k, prev) hash_func((((uintptr_t) i) << k))
+//#define rehash_func(i, k, prev) hash_func((((ssize_t) i) << k)*((ssize_t) prev))
 //#define rehash_func(i, k, prev) hash_func(i >> k)
 
 inline void JyHash_init()
