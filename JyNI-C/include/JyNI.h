@@ -674,11 +674,6 @@ typedef struct {
 #define JyObject_IS_CPEER(o) (((JyObject *) o)->flags & JY_CPEER_FLAG_MASK)
 #define JyNI_FROM_GC(o) ((PyObject *)(((PyGC_Head *)o)+1))
 
-//We determine mirror-mode by lack of truncate-flag.
-//This currently fails for PyFunction, so we treat it as special case for now.
-//Todo: Find better solution.
-#define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op) && !PyCFunction_Check(op))
-
 #define _AS_JY(o) ((  (PyObject_IS_GC(o)) ? (JyObject *) _Py_AS_GC(o) : (JyObject *) (o)  )-1)
 #define FROM_JY(o) ((JyObject_IS_GC(o)) ? JyNI_FROM_GC((((JyObject *)(o))+1)) : ((PyObject *)(((JyObject *)(o))+1)))
 #define GC_FROM_JY(o) (PyGC_Head*) (((JyObject *)(o))+1)

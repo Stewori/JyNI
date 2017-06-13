@@ -244,15 +244,15 @@ class TestJyNI_gc(unittest.TestCase):
 		runGC()
 		self.assertTrue(monitor.lastClearGraphValid)
 
- 		# For some reason resurrected objects persist one more
- 		# gc-cycle in principle. So we have to run gc again before
- 		# we can observe wkd2 to die. It is currently unclear whether
- 		# this behavior is a JyNI-bug or natural Java-gc behavior,
- 		# but for now (with some evidence) we assume the latter.
+		# For some reason resurrected objects persist one more
+		# gc-cycle in principle. So we have to run gc again before
+		# we can observe wkd2 to die. It is currently unclear whether
+		# this behavior is a JyNI-bug or natural Java-gc behavior,
+		# but for now (with some evidence) we assume the latter.
 		# Note: Since WeakRef-support wkd2 actually keeps the native
 		# referent alive for one more cycle. So also the monitor-refcount
 		# test only passes after another gc-run now.
- 		runGC()
+		runGC()
 		self.assertTrue(monitor.lastClearGraphValid)
 		self.assertEqual(len(monitor.getCurrentNativeLeaks()), 0)
 		self.assertIsNone(wkl2())

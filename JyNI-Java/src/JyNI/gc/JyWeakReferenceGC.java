@@ -45,6 +45,8 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 	protected static ReferenceQueue<JyGCHead> refQueue = new ReferenceQueue<>();
 	protected static HashMap<Long, JyWeakReferenceGC> refList = new HashMap<>();
 	protected static GCReaperThread reaper = new GCReaperThread();
+	
+//	public static HashMap<Long, String> refTNList = new HashMap<>();
 
 	protected long nativeRef;
 
@@ -57,6 +59,7 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 			JyReferenceMonitor.addJyWeakRef(nativeRef);
 		} //else System.out.println("Create JyWeakRef: sentinel");
 		refList.put(nativeRef, this);
+//		refTNList.put(nativeRef, head.getClass().getSimpleName());
 //		if (reaper == null) {
 //		reaper = new GCReaperThread();
 //		reaper.start();
@@ -80,7 +83,7 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 		}
 
 		public void run() {
-			ArrayList<JyWeakReferenceGC> refCache = new ArrayList<>(100);
+			ArrayList<JyWeakReferenceGC> refCache = new ArrayList<>(500);
 			JyWeakReferenceGC ref;
 			int pos;
 			long[] clearRefs;
@@ -90,7 +93,7 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 					ref = (JyWeakReferenceGC) refQueue.remove();
 					if (ref.nativeRef != 0) refCache.add(ref);
 					//else System.out.println("sentinel0");
-					Thread.sleep(500); //Todo: Find a cleaner solution here.
+					Thread.sleep(100); //Todo: Find a cleaner solution here.
 				} catch(InterruptedException ie) {} //never happens
 				//We try to chunk some refs here to reduce native calls.
 				ref = (JyWeakReferenceGC) refQueue.poll();
@@ -117,10 +120,10 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 							JyReferenceMonitor.notifyJyNIFree(l);
 					}
 					if (nativecollectionEnabled) {
-						//System.out.println("Attempt native clear...");
+						//System.out.println("\nAttempt native clear... "+clearRefs.length);
 						boolean validGraph = JyNI.JyGC_clearNativeReferences(clearRefs,
 								JyTState.prepareNativeThreadState(Py.getThreadState()));
-						//System.out.println("native clear done "+validGraph);
+						//System.out.println("native clear done "+validGraph+"\n");
 						JyReferenceMonitor.notifyClearReferences(clearRefs, validGraph);
 					}
 				}

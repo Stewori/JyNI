@@ -47,7 +47,7 @@ from java.lang import System
 
 def runGC():
 	System.gc()
-	time.sleep(1)
+	time.sleep(2)
 
 def clearCurrentLeaks():
 	leaks = monitor.getCurrentNativeLeaks()

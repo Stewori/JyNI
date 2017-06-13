@@ -35,7 +35,7 @@ import JyNI.JyReferenceMonitor;
 import org.python.core.PyObject;
 import org.python.modules.gc;
 
-public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCHead {
+public class CStubGCHead extends DefaultTraversableGCHead implements ResurrectableGCHead {
 	protected PyObject object;
 
 	public CStubGCHead(long handle) {
@@ -53,25 +53,27 @@ public class CStubGCHead extends DefaultTraversableGCHead implements PyObjectGCH
 		return object;
 	}
 
+	public ResurrectableGCHead makeResurrectedHead() {
+		CStubGCHead newHead = new CStubGCHead(handle);
+		newHead.object = object;
+		newHead.gclinks = gclinks;
+		return newHead;
+	}
+	
 	@Override
 	protected void finalize() throws Throwable {
 		gc.notifyPreFinalization();
-		//System.out.println("CStubGCHead.finalize "+handle);
-		int result = JyNI.consumeConfirmation(handle);
+//		System.out.println("CStubGCHead.finalize "+handle);
+		int result = JyNI.consumeConfirmation(handle, this);
 		//System.out.println("consumeConfirmation done "+handle);
 		if ((result & JyNI.JYNI_GC_RESURRECTION_FLAG) != 0) {
-			CStubGCHead newHead = new CStubGCHead(handle);
-			newHead.object = object;
-			newHead.gclinks = gclinks;
-			JyNI.JyGC_restoreCStubBackend(handle, object, newHead);
-			new JyWeakReferenceGC(newHead);
-//			System.out.println("Resurrect CStub "+object);
-			JyNI.CStubRestoreAllReachables(object);
-			JyReferenceMonitor.notifyResurrect(handle, object);
+			JyNI.resurrect(handle, this);
 		} else if ((result & JyNI.JYNI_GC_CONFIRMED_FLAG) == 0) {
 // We make this temporarily silent. Todo: Investigate warnings!
 			//System.err.println("JyNI-Warning: Unconfirmed but finalized CStubGCHead: "+handle);
 			//System.err.println("  "+object);
+		} else if ((result & JyNI.JYNI_GC_MAYBE_RESURRECT_FLAG) == 0) {
+			//JyNI.maybeResurrect(handle, this);
 		}
 		if ((result & JyNI.JYNI_GC_LAST_CONFIRMATION_FLAG) != 0)
 			JyNI.postProcessCStubGCCycle();

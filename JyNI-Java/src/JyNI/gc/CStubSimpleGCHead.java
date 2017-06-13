@@ -36,7 +36,7 @@ import JyNI.JyReferenceMonitor;
 import org.python.core.PyObject;
 import org.python.modules.gc;
 
-public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
+public class CStubSimpleGCHead extends SimpleGCHead implements ResurrectableGCHead {
 	private PyObject object;
 
 	public CStubSimpleGCHead(long handle) {
@@ -56,58 +56,59 @@ public class CStubSimpleGCHead extends SimpleGCHead implements PyObjectGCHead {
 		return object;
 	}
 
-//	String nt = "";
+	public ResurrectableGCHead makeResurrectedHead() {
+		CStubSimpleGCHead newHead = new CStubSimpleGCHead(handle);
+//		newHead.nt = " (resurrected)"+System.identityHashCode(this);
+
+		/*
+		 * This line (the actual resurrection) for some strange reason
+		 * causes the object to persist the next gc-cycle, not only
+		 * the current one. And that without any notable further reference
+		 * to it. We might have overlooked something, but everything we
+		 * encountered hints to gc-responsibility.
+		 *  - without changing anything the object is collected by one
+		 *    gc-cycle later.
+		 *  - Its gc-head is directly collected in the next cycle
+		 *  - everything works as expected if we store a weak reference
+		 *    instead (but this would not allow to handle repeated
+		 *    occurrence of native silent modification and triggered
+		 *    resurrection)
+		 *  - getPyObject and setPyObject report no access between the
+		 *    gc cycles (and actually not at all)
+		 * So for now we assume that it is just natural gc-behavior that
+		 * a resurrected object with a direct strong reference (overall
+		 * just weakly reachable though) is kept alive for an additional
+		 * gc-cycle (maybe it has to do with generation management etc).
+		 * Since specification leaves these details undefined,
+		 * this is still valid behavior and only delays collection by one
+		 * cycle. Weak references hold somewhat longer, but apart from that
+		 * it is no leak and causes no harm.
+		 */
+		newHead.object = object;
+		return newHead;
+	}
+
+	String nt = "";
 //	Object obj = null;
 	@Override
 	protected void finalize() throws Throwable {
-//		System.out.println("CStubSimple finalize "+System.identityHashCode(this)+" "+object+" "+handle+" ("+JyNI.getNativeRefCount(object)+")");
+//		System.out.println("CStubSimple finalize "+System.identityHashCode(this)+" "+object+" "+handle);//+" ("+JyNI.getNativeRefCount(object)+")");
 //		System.out.println(Thread.currentThread().getName());
 		gc.notifyPreFinalization();
 		//System.out.println("CStubSimpleGCHead.finalize "+handle+nt);
-		int result = JyNI.consumeConfirmation(handle);
+		int result = JyNI.consumeConfirmation(handle, this);
 		//System.out.println("consumeConfirmation done "+handle+nt);
 		if ((result & JyNI.JYNI_GC_RESURRECTION_FLAG) != 0) {
 			//System.out.println("Resurrect: "+handle+nt);
-			CStubSimpleGCHead newHead = new CStubSimpleGCHead(handle);
-			//newHead.nt = " (resurrected)";
-
-			/*
-			 * This line (the actual resurrection) for some strange reason
-			 * causes the object to persist the next gc-cycle, not only
-			 * the current one. And that without any notable further reference
-			 * to it. We might have overlooked something, but everything we
-			 * encountered hints to gc-responsibility.
-			 *  - without changing anything the object is collected by one
-			 *    gc-cycle later.
-			 *  - Its gc-head is directly collected in the next cycle
-			 *  - everything works as expected if we store a weak reference
-			 *    instead (but this would not allow to handle repeated
-			 *    occurrence of native silent modification and triggered
-			 *    resurrection)
-			 *  - getPyObject and setPyObject report no access between the
-			 *    gc cycles (and actually not at all)
-			 * So for now we assume that it is just natural gc-behavior that
-			 * a resurrected object with a direct strong reference (overall
-			 * just weakly reachable though) is kept alive for an additional
-			 * gc-cycle (maybe it has to do with generation management etc).
-			 * Since specification leaves these details undefined,
-			 * this is still valid behavior and only delays collection by one
-			 * cycle. Weak references hold somewhat longer, but apart from that
-			 * it is no leak and causes no harm.
-			 */
-			newHead.object = object;
 
 			//newHead.obj = new WeakReference(object1);
-			JyNI.JyGC_restoreCStubBackend(handle, object, newHead);
-			new JyWeakReferenceGC(newHead);
-			JyNI.CStubRestoreAllReachables(object);
-//			System.out.println("Resurrect CStubSimple "+object);
-//			System.out.println(JyNI.lookupNativeHandle(object)+" ("+JyNI.getNativeRefCount(object)+")");
-			JyReferenceMonitor.notifyResurrect(handle, object);
+			JyNI.resurrect(handle, this);
 		} else if ((result & JyNI.JYNI_GC_CONFIRMED_FLAG) == 0) {
 // We make this temporarily silent. Todo: Investigate warnings!
 			//System.err.println("JyNI-Warning: Unconfirmed but finalized CStubSimpleGCHead: "+handle);
 			//System.err.println("  "+object1);
+		} else if ((result & JyNI.JYNI_GC_MAYBE_RESURRECT_FLAG) == 0) {
+			//JyNI.maybeResurrect(handle, this);
 		}
 		//object = null;  //(also makes no difference)
 		if ((result & JyNI.JYNI_GC_LAST_CONFIRMATION_FLAG) != 0)

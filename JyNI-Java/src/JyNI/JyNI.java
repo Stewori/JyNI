@@ -39,6 +39,7 @@ import org.python.modules._weakref.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.io.File;
 import java.nio.file.FileSystems;
@@ -1237,17 +1238,40 @@ public class JyNI {
 	public static final int JYNI_GC_CONFIRMED_FLAG = 1;
 	public static final int JYNI_GC_RESURRECTION_FLAG = 2;
 	public static final int JYNI_GC_LAST_CONFIRMATION_FLAG = 4;
+	public static final int JYNI_GC_MAYBE_RESURRECT_FLAG = 8;
 	//public static final int JYNI_GC_HANDLE_NO_CONFIRMATIONS = -1;
 
 	//Confirm deletion of C-Stubs:
 	static long[] confirmedDeletions, resurrections;
 	static int confirmationsUnconsumed = 0;
-	
+	static Set<Long> unconsumedTracker = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
+	static Map<Long, ResurrectableGCHead> preconsumedMaybeResurrect = new HashMap<>();
+
 	private static void gcDeletionReport(long[] confirmed, long[] resurrected) {
 		boolean postProcess = false;
+		int preconsumed = 0;
+		if (confirmed != null) {
+			for (long l: confirmed) {
+				if (preconsumedMaybeResurrect.containsKey(l)) {
+					++preconsumed;
+					preconsumedMaybeResurrect.remove(l);
+				} else
+					unconsumedTracker.add(l);
+			}
+		}
+		if (resurrected != null) {
+			for (long l: resurrected) {
+				if (preconsumedMaybeResurrect.containsKey(l)) {
+					++preconsumed;
+					resurrect(l, preconsumedMaybeResurrect.remove(l));
+				} else
+					unconsumedTracker.add(l);
+			}
+		}
+		//CStubGCHead.class.notify();
 
 		//some debug-info:
-		//System.out.println("gcDeletionReport");
+//		System.out.println("gcDeletionReport");
 //		if (confirmed != null) {
 //			System.out.println("confirmed cstub deletions:");
 //			for (int i = 0; i < confirmed.length; ++i) {
@@ -1274,6 +1298,9 @@ public class JyNI {
 				 * notify the user:
 				 */
 				System.err.println("JyNI-warning: There are unconsumed gc-confirmations!");
+//				for (long l: unconsumedTracker) {
+//					System.err.println(l+" - "+JyWeakReferenceGC.refTNList.get(l));
+//				}
 				while (confirmationsUnconsumed > 0) {
 					try {
 						CStubGCHead.class.wait();
@@ -1284,7 +1311,7 @@ public class JyNI {
 			resurrections = resurrected;
 			confirmationsUnconsumed =
 					(confirmedDeletions == null ? 0 : confirmedDeletions.length) +
-					(resurrections == null ? 0 : resurrections.length);
+					(resurrections == null ? 0 : resurrections.length) - preconsumed;
 			if (confirmationsUnconsumed == 0)
 				postProcess = true;
 			else
@@ -1297,7 +1324,7 @@ public class JyNI {
 	/**
 	 * Do not call this method, it is internal API.
 	 */
-	public static int consumeConfirmation(long handle) {
+	public static int consumeConfirmation(long handle, ResurrectableGCHead head) {
 		synchronized (CStubGCHead.class) {
 			while (confirmationsUnconsumed == 0) {
 				try {
@@ -1305,32 +1332,40 @@ public class JyNI {
 					CStubGCHead.class.wait();
 				} catch(InterruptedException ie) {}
 			}
-			//System.out.println("consumeConfirmation resume "+handle);
-			int i;
-			if (confirmedDeletions != null) {
-				for (i = 0; i < confirmedDeletions.length; ++i) {
-					if (confirmedDeletions[i] == handle) {
-						int result = --confirmationsUnconsumed != 0 ?
-								JYNI_GC_CONFIRMED_FLAG :
-								(JYNI_GC_CONFIRMED_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
-						//System.out.println("consumeConfirmation "+handle+" is deletion");
-						CStubGCHead.class.notify();
-						return result;
+			if (!unconsumedTracker.contains(handle)) {
+				//System.out.println("preconsume "+handle);
+				preconsumedMaybeResurrect.put(handle, head);
+				return JYNI_GC_MAYBE_RESURRECT_FLAG;
+			} else {
+				unconsumedTracker.remove(handle);
+				//System.out.println("consumeConfirmation resume "+handle);
+				int i;
+				if (confirmedDeletions != null) {
+					for (i = 0; i < confirmedDeletions.length; ++i) {
+						if (confirmedDeletions[i] == handle) {
+							int result = --confirmationsUnconsumed != 0 ?
+									JYNI_GC_CONFIRMED_FLAG :
+									(JYNI_GC_CONFIRMED_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
+							//System.out.println("consumeConfirmation "+handle+" is deletion");
+							CStubGCHead.class.notify();
+							return result;
+						}
 					}
 				}
-			}
-			if (resurrections != null) {
-				for (i = 0; i < resurrections.length; ++i) {
-					if (resurrections[i] == handle) {
-						CStubGCHead.class.notify();
-						int result = --confirmationsUnconsumed != 0 ?
-								(JYNI_GC_RESURRECTION_FLAG) :
-								(JYNI_GC_RESURRECTION_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
-						//System.out.println("consumedConfirmation "+handle+" is resurrection");
-						CStubGCHead.class.notify();
-						return result;
+				if (resurrections != null) {
+					for (i = 0; i < resurrections.length; ++i) {
+						if (resurrections[i] == handle) {
+							CStubGCHead.class.notify();
+							int result = --confirmationsUnconsumed != 0 ?
+									(JYNI_GC_RESURRECTION_FLAG) :
+									(JYNI_GC_RESURRECTION_FLAG | JYNI_GC_LAST_CONFIRMATION_FLAG);
+							//System.out.println("consumedConfirmation "+handle+" is resurrection");
+							CStubGCHead.class.notify();
+							return result;
+						}
 					}
 				}
+				System.err.println("Fatal JyNI GC error: Inconsistent tracker behavior!");
 			}
 			//System.out.println("consumeConfirmation "+handle+" not consumed anything");
 			return 0;
@@ -1342,12 +1377,30 @@ public class JyNI {
 		synchronized (CStubGCHead.class) {
 			while (confirmationsUnconsumed > 0) {
 				try {
-					//System.out.println("waitForCStubs "+confirmationsUnconsumed);
+					//System.out.println("waitForCStubs "+confirmationsUnconsumed+" "+Thread.currentThread().getName());
 					CStubGCHead.class.wait(); //JyNI-GCRefReaper thread hanging here
 				} catch(InterruptedException ie) {}
 			}
 			//System.out.println("waitForCStubs done");
 		}
+	}
+
+//	public static void maybeResurrect(long handle, ResurrectableGCHead head) {
+//		System.out.println("maybeResurrect "+ handle);
+//		preconsumedMaybeResurrect.put(handle, head);
+//	}
+
+	// To make sure that resurrected objects cannot be collected again within same cycle.
+	protected static List<JyGCHead> resurrectionQueue = new ArrayList<>(200);
+	public static void resurrect(long handle, ResurrectableGCHead head) {
+		ResurrectableGCHead newHead = head.makeResurrectedHead();
+		PyObject object = head.getPyObject();
+		JyGC_restoreCStubBackend(handle, object, newHead);
+		resurrectionQueue.add(newHead);
+		new JyWeakReferenceGC(newHead);
+		//System.out.println("Resurrect CStub "+object);
+		CStubRestoreAllReachables(object);
+		JyReferenceMonitor.notifyResurrect(handle, object);
 	}
 
 	protected static class visitRestoreCStubReachables implements Visitproc {
@@ -1418,6 +1471,12 @@ public class JyNI {
 		 * are expected.
 		 */
 		visitRestoreCStubReachables.clear();
+		// Todo: Better keep it for a while to avoid frequent resurrection of the same objects.
+		// E.g. use SoftReference or clear it partly or use some generation management.
+		resurrectionQueue.clear();
+		//System.out.println("preconsumedMaybeResurrect.clear");
+		preconsumedMaybeResurrect.clear();
+
 		//Should be done automatically:
 		//GlobalRef.processDelayedCallbacks();
 		//gc.notifyPostFinalization(); (maybe include this later)

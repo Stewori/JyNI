@@ -56,6 +56,16 @@
 #include "JyNI-Debug.h"
 //#include "frameobject.h"		// for PyFrame_ClearFreeList
 
+static jboolean needsConfirm_uninitialized(PyObject* o);
+
+#define PyObject_NEEDS_CONFIRM_GC(o, jy) (JyObject_IS_INITIALIZED(jy) ? \
+	PyObject_IS_TRUNCATED(o) : needsConfirm_uninitialized(o))
+
+//We determine mirror-mode by lack of truncate-flag.
+//This currently fails for PyFunction, so we treat it as special case for now.
+//Todo: Find better solution.
+//#define JyObject_IS_MIRROR(op, jy) (!(jy->flags & JY_TRUNCATE_FLAG_MASK) && !PyFunction_Check(op) && !PyCFunction_Check(op))
+#define JyObject_IS_MIRROR(op, jy) (!PyObject_NEEDS_CONFIRM_GC(op, jy) && !PyCFunction_Check(op))
 
 // *** Global GC state ***
 
@@ -2228,8 +2238,8 @@ visit_refCheckInc(PyObject *op, void *arg)
  * 'result' is a pointer to an int-array that will be filled with boolean
  * values indicating object-wise whether the component's reference count
  * is explainable within refPool (0 means explainable).
- * This array needs not to be initialized;
- * it is guaranteed that every component of it will be explicitly set.
+ * This array needs not to be initialized, but must be allocated with proper size.
+ * It is guaranteed that every component of it will be explicitly set.
  *
  *
  * Note that one must be holding the GIL to call this method.
@@ -2258,7 +2268,7 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 			--result[i];
 //		jputsLong(refPool[i]);
 //		jputsLong(result[i]);
-		//We store 'i+i' so that '0' can stand for uninitialized.
+		//We store 'i+1' so that '0' can stand for uninitialized.
 		JyNI_AddOrSetJyAttribute(jy, JyAttributeJyGCRefTmp, (void*) (i+1));
 //		}
 	}
@@ -2270,7 +2280,7 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 //			jputs("DecTraverse:");
 //			jputsLong(refPool[i]);
 //			debugContext("", refPool[i], "->");
-			Py_TYPE(refPool[i])->tp_traverse(refPool[i], (visitproc)visit_refCheckDec, result);
+			Py_TYPE(refPool[i])->tp_traverse(refPool[i], (visitproc) visit_refCheckDec, result);
 		}
 	}
 //	jputs(__FUNCTION__);
@@ -2300,14 +2310,28 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 			jputs(Py_TYPE(refPool[i])->tp_name);
 		}
 	}
+//	if (size > 10000) {
+//		for (i = 0; i < size; ++i)
+//		{
+//			jputs(Py_TYPE(refPool[i])->tp_name);
+//			//jy = AS_JY(refPool[i]);
+//			if (refPool[i] == NULL) jputs("NPPPPEE");
+//			jputsLong(refPool[i]->ob_refcnt);
+//			jputsLong(AS_JY(refPool[i])->flags);
+//		}
+//		jputs("stats done");
+//		jputsLong(size);
+//	}
+//	jputs("val done");
 	if (graphInvalid)
 	{
 		// We perform a breadth-first search to fully provide result-array.
-		//jputs("JyNI-Note: Invalid reference graph encountered!");
-		jint restoreStack[size];
-		jint restoreRefs[size];
+//		jputs("JyNI-Note: Invalid reference graph encountered!");
+//		jint restoreStack[size];
+//		jint restoreRefs[size];
+		jint* restoreStack = (jint*) malloc(size*sizeof(jint));
+		jint* restoreRefs = (jint*) malloc(size*sizeof(jint));
 		int stackTop = 0;
-		//jputsLong(__LINE__);
 		for (i = 0; i < size; ++i)
 		{
 			if (result[i] > 1 && PyObject_IS_GC(refPool[i]))
@@ -2346,6 +2370,8 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 				restoreRefs[i] = 0;
 			}
 		}
+		free(restoreStack);
+		free(restoreRefs);
 	}
 	//jputsLong(__LINE__);
 	for (i = 0; i < size; ++i)
@@ -2357,6 +2383,17 @@ static inline jboolean checkReferenceGraph(PyObject** refPool, jsize size, jint*
 //		}
 	}
 	return graphInvalid;
+}
+
+static jboolean needsConfirm_uninitialized(PyObject* o)
+{
+	assert (!JyObject_IS_INITIALIZED(AS_JY(o)));
+	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromPyType(Py_TYPE(o));
+	if (tme) {
+		if (!AS_JY(o)->jy) AS_JY(o)->jy = tme;
+		else assert (tme == AS_JY(o)->jy);
+		return (tme->flags & JY_TRUNCATE_FLAG_MASK) || PyFunction_Check(o);
+	} else return JNI_FALSE;
 }
 
 /*
@@ -2372,8 +2409,10 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 	//Here we decref the associated native objects.
 	jsize size = (*env)->GetArrayLength(env, references);
 	jsize i;
-	PyObject* refPool[size];
-	jint graphResult[size];
+//	PyObject* refPool[size];
+//	jint graphResult[size];
+	PyObject** refPool = (PyObject**) malloc(size*sizeof(PyObject*));
+	jint* graphResult = (jint*) malloc(size*sizeof(jint));
 	jlong* arr = (*env)->GetLongArrayElements(env, references, NULL);
 #if __SIZEOF_POINTER__ == 8
 	/* Regardless of the platform jlong is always 8 bytes. So this branch is processed
@@ -2392,7 +2431,7 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 		jsize confirmCount = 0, resurrectCount = 0;
 		for (i = 0; i < size; ++i)
 		{
-			if (PyObject_IS_TRUNCATED(refPool[i])) {
+			if (PyObject_NEEDS_CONFIRM_GC(refPool[i], AS_JY(refPool[i]))) {
 				if (graphResult[i] > 1) ++resurrectCount;
 				else ++confirmCount;
 			}
@@ -2404,7 +2443,7 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 		jlong* resurrectArr2 = resurrectArr ? (*env)->GetLongArrayElements(env, resurrectArr, NULL) : NULL;
 		for (i = 0; i < size; ++i)
 		{
-			if (PyObject_IS_TRUNCATED(refPool[i])) {
+			if (PyObject_NEEDS_CONFIRM_GC(refPool[i], AS_JY(refPool[i]))) {
 				if (graphResult[i] > 1) resurrectArr2[resurrectPos++] = (jlong) refPool[i];
 				else confirmArr2[confirmPos++] = (jlong) refPool[i];
 			}
@@ -2447,7 +2486,7 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 		jsize confirmCount = 0;
 		for (i = 0; i < size; ++i)
 		{
-			if (PyObject_IS_TRUNCATED(refPool[i])) {
+			if (PyObject_NEEDS_CONFIRM_GC(refPool[i], AS_JY(refPool[i]))) {
 				++confirmCount;
 			}
 		}
@@ -2456,7 +2495,7 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 		jlong* confirmArr2 = confirmArr ? (*env)->GetLongArrayElements(env, confirmArr, NULL) : NULL;
 		for (i = 0; i < size; ++i)
 		{
-			if (PyObject_IS_TRUNCATED(refPool[i])) {
+			if (PyObject_NEEDS_CONFIRM_GC(refPool[i], AS_JY(refPool[i]))) {
 				confirmArr2[confirmPos++] = (jlong) refPool[i];
 			}
 		}
@@ -2479,6 +2518,8 @@ jboolean JyGC_clearNativeReferences(JNIEnv *env, jclass class, jlongArray refere
 		Py_DECREF(refPool[i]);
 	}
 	LEAVE_JyNI
+	free(refPool);
+	free(graphResult);
 	//jputsLong(__LINE__);
 	return !graphInvalid;
 }
