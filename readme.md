@@ -1,9 +1,11 @@
-If not yet done, make sure to visit our project homepage at www.jyni.org
+# JyNI – Jython Native Interface
+
+If not yet done, make sure to visit our project homepage at [www.jyni.org](http://www.jyni.org).
 
 ![JyNI Logo](http://www.jyni.org/_static/JyNILogoShadow_s.png)
 
 
-Table of contents
+## Table of contents
 ---------------------------------------------
 
 1. What is JyNI?
@@ -21,8 +23,7 @@ Table of contents
 
 
 
-1. What is JyNI?
-----------------
+## 1. What is JyNI?
 
 One well known current drawback of Jython is that it does not support native
 extensions written for CPython like NumPy and SciPy. Since most scientific
@@ -46,8 +47,7 @@ After that we will focus on SciPy and others.
 
 
 
-2. Current state
-----------------
+## 2. Current state
 
 We are currently able to load a C-extension into Jython, call methods and access
 attributes, provided that the extension uses only CPython-API we have already
@@ -69,24 +69,26 @@ The following built-in types are already supported:
 * OOP types PyClass, PyInstance, PyMethod, PyClassMethod, PyStaticMethod
 * Singleton types PyNone, PyNotImplemented, PyEllipsis, PyBool
 * Native types PyCFunction, PyCapsule, PyCObject
-* Iterator types PySeqIter (as of alpha.4)
+* Iterator types PySeqIter
 * Natively defined custom types
 * Exception types
 * PyType as static type or heap type
 * Weak reference types
-* New-style classes/instances (as of alpha.4)
+* New-style classes/instances
 
 Planned:
 
 * Support for remaining iterator types, e.g. TupleIter, ListIter
 * Buffer protocol
+* Support for PyByteArray (along with buffer protocol)
+* Support for PyFile
 
 
 JyNI has been tested on
 
-* Linux Mint Debian edition (LMDE) (32 bit and 64 bit)
-* Linux Mint 17 (64 bit)
-* Mac OS-X (10.10 and 10.11)
+* Linux Mint Debian Edition (LMDE) (32 bit)
+* Linux Mint 18 (64 bit)
+* Mac OS-X (10.11)
 
 It would presumably work also on other posix systems.
 If you try it on further distributions, please consider to report your results
@@ -95,13 +97,15 @@ If you try it on further distributions, please consider to report your results
 
 
 
-3. Building and testing
------------------------
+## 3. Building and testing
 
-* Download the sources from the latest release or clone the github repository
-(https://github.com/Stewori/JyNI).
+* Download the sources from the latest release or clone the [github repository](https://github.com/Stewori/JyNI).
 
-* Provide Java: Make sure that Java 7 JDK or newer is installed. Some systems
+* Provide Java:
+As of 2.7-alpha.4 JyNI attempts to guess the JDK location from the
+JRE location. In most cases this should be sufficient and would not require
+this step any more. Otherwise:
+Make sure that Java 7 JDK or newer is installed. Some systems
 (e.g. Linux MINT) provide a symlink called "/usr/lib/jvm/default-java" that
 points to the specific Java folder named by Java version and architecture. If
 your system does not provide this generic link (e.g. Ubuntu does not), you
@@ -114,8 +118,8 @@ jython.jar into the JyNI base directory or you edit "makefile" and adjust the
 JYTHON-variable such that it points to jython.jar. If you want to use
 JyNIDemo.sh, you need to adjust the Jython-path in that file too. Same for
 the other demonstration shell-scripts.
-Note: Current JyNI repository version requires Jython 2.7.1 (beta 3) or newer.
-Jython 2.7.1 (beta 3) is available here: http://fwierzbicki.blogspot.de/2016/02/jython-271-beta3-released.html
+Note: Current JyNI repository version requires Jython 2.7.1RC2 or newer.
+Jython 2.7.1RC2 is available on [Frank Wierzbicki's blog](http://fwierzbicki.blogspot.de/2017/06/jython-271-rc2-released.html).
 
 * If not yet done, install the dev-package of Python 2.7. JyNI only needs
 pyconfig.h from that package. Alternatively (if you know what you're doing)
@@ -150,7 +154,7 @@ is NOT suitable to run Jython with JyNI support. It does not pass the
 provided classpath to Jython.
 
 
-###Test-Example
+### Test-Example
 
 "DemoExtension" is a CPython-extension that demonstrates some
 basic features of JyNI. It can be built like an
@@ -194,22 +198,20 @@ or
 
 
 
-4. Roadmap
-----------
+## 4. Roadmap
 
 Further steps:
-- improve ctypes support
-- support newstyle classes
-- support numpy
+- improve NumPy support
+- support Windows
 - support buffer protocol
-- test and support on other platforms
-- provide autotools-support
+- support CFFI and SciPy
+- support further extensions
+- JyNI 3
 
 
 
 
-5. Binary compatibility
------------------------
+## 5. Binary compatibility
 
 CPython-extensions must be compiled with the flag WITH_PYMALLOC activated
 (which is actually the default anyway). Otherwise they must not use
@@ -232,8 +234,7 @@ We hope that most extensions are not affected by this issue.
 
 
 
-6. Summary of changes to Python-code
-------------------------------------
+## 6. Summary of changes to Python-code
 
 Briefly speaking, we took the python files crucial for loading native
 C-extensions and modified them to perform the explained purpose of JyNI.
@@ -267,8 +268,7 @@ that access the data only via other functions are mostly kept unchanged.
 
 
 
-7. Copyright notice
--------------------
+## 7. Copyright notice
 
 Copyright of Python and Jython:
 Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
@@ -282,8 +282,7 @@ All rights reserved.
 
 
 
-8. License
-----------
+## 8. License
 
 The software in this package is distributed under the
 GNU Lesser General Public License.
@@ -292,7 +291,7 @@ A copy of GNU Lesser General Public License (LGPL) is included in this
 distribution, in the files "COPYING" and "COPYING.LESSER".
 If you do not have the source code, it is available at:
 
-    https://github.com/Stewori/JyNI
+    [https://github.com/Stewori/JyNI](https://github.com/Stewori/JyNI)
 
 
 JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
@@ -313,8 +312,7 @@ For convenience, a copy of the current section is provided in the file
 
 
 
-9. Contact
-----------
+## 9. Contact
 
-Please use the contact information provided on www.jyni.org/#contact.
+Please use the contact information provided on [www.jyni.org/#contact](http://www.jyni.org/#contact).
 
