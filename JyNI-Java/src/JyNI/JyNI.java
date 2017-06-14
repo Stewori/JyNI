@@ -1263,6 +1263,29 @@ public class JyNI {
 	static Set<Long> unconsumedTracker = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
 	static Map<Long, ResurrectableGCHead> preconsumedMaybeResurrect = new HashMap<>();
 
+	/**
+	 * Checks if JyNI's GC is in a proper workable state. We added this
+	 * method, because we had some bugs that resulted in a silent deadlock
+	 * of GC threads. This function aims to assert that GC-mechanism is in
+	 * a sane state.
+	 * Note that this method might block for a moment if it is called during
+	 * a GC run in progress. The timeout parameter ensures that it wouldn't
+	 * block forever if GC is deadlocked.
+	 * 
+	 * @return true if JyNI's GC is in a proper workable state.
+	 */
+	public static boolean isGCSane(int timeout_seconds) {
+		long timestamp = System.currentTimeMillis();
+		while (!JyWeakReferenceGC.isWaitingOnRefQueue()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException ie) {}
+			if (System.currentTimeMillis()-timestamp > timeout_seconds * 1000)
+				return false;
+		}
+		return true;
+	}
+
 	private static void gcDeletionReport(long[] confirmed, long[] resurrected) {
 		boolean postProcess = false;
 		int preconsumed = 0;

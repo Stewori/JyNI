@@ -42,6 +42,7 @@ import java.util.HashMap;
 public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 	public static boolean nativecollectionEnabled = true;
 	public static boolean monitorNativeCollection = false;
+	private static volatile boolean waitingOnRefQueue = false;
 	protected static ReferenceQueue<JyGCHead> refQueue = new ReferenceQueue<>();
 	protected static HashMap<Long, JyWeakReferenceGC> refList = new HashMap<>();
 	protected static GCReaperThread reaper = new GCReaperThread();
@@ -63,6 +64,10 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 //		if (reaper == null) {
 //		reaper = new GCReaperThread();
 //		reaper.start();
+	}
+
+	public static boolean isWaitingOnRefQueue() {
+		return waitingOnRefQueue;
 	}
 
 	public long getNativeRef() {
@@ -90,11 +95,15 @@ public class JyWeakReferenceGC extends WeakReference<JyGCHead> {
 			while (true) {
 				//System.out.println("GC-reaper cycle");
 				try {
+					waitingOnRefQueue = true;
 					ref = (JyWeakReferenceGC) refQueue.remove();
+					waitingOnRefQueue = false;
 					if (ref.nativeRef != 0) refCache.add(ref);
 					//else System.out.println("sentinel0");
 					Thread.sleep(100); //Todo: Find a cleaner solution here.
-				} catch(InterruptedException ie) {} //never happens
+				} catch(InterruptedException ie) { //never happens
+					waitingOnRefQueue = false;
+				}
 				//We try to chunk some refs here to reduce native calls.
 				ref = (JyWeakReferenceGC) refQueue.poll();
 				while (ref != null) {
