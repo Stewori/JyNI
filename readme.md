@@ -291,7 +291,7 @@ A copy of GNU Lesser General Public License (LGPL) is included in this
 distribution, in the files "COPYING" and "COPYING.LESSER".
 If you do not have the source code, it is available at:
 
-    [https://github.com/Stewori/JyNI](https://github.com/Stewori/JyNI)
+[https://github.com/Stewori/JyNI](https://github.com/Stewori/JyNI)
 
 
 JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
