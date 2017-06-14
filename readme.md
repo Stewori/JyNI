@@ -1,6 +1,6 @@
 If not yet done, make sure to visit our project homepage at www.jyni.org
 
-![JyNI Logo](http://www.jyni.org/_static/JyNILogo2s.png)
+![JyNI Logo](http://www.jyni.org/_static/JyNILogoShadow_s.png)
 
 
 Table of contents
