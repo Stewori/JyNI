@@ -1286,6 +1286,10 @@ public class JyNI {
 		return true;
 	}
 
+	public static int getPreconsumedSize() {
+		return preconsumedMaybeResurrect.size();
+	}
+
 	private static void gcDeletionReport(long[] confirmed, long[] resurrected) {
 		boolean postProcess = false;
 		int preconsumed = 0;
@@ -1513,7 +1517,10 @@ public class JyNI {
 		// Todo: Better keep it for a while to avoid frequent resurrection of the same objects.
 		// E.g. use SoftReference or clear it partly or use some generation management.
 		resurrectionQueue.clear();
-		//System.out.println("preconsumedMaybeResurrect.clear");
+
+		// Clearing preconsumedMaybeResurrect here can break GC if GC is called
+		// subsequently without delay. Todo: Secure this somehow via generation
+		// management or SoftReferences.
 		preconsumedMaybeResurrect.clear();
 
 		//Should be done automatically:
