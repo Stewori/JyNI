@@ -626,8 +626,24 @@ public class JyNI {
 		}
 	}
 
+	public static PyObject getJythonBuiltins()
+	{
+		PyFrame fr = Py.getFrame();
+		return fr != null ? fr.f_builtins : Py.getSystemState().builtins;
+	}
+
+	public static PyObject getJythonLocals() {
+		PyFrame fr = Py.getFrame();
+		return fr != null ? fr.getLocals() : null;
+	}
+
 	public static PyObject getJythonGlobals() {
-		return Py.getFrame().f_globals;
+		PyFrame fr = Py.getFrame();
+		return fr != null ? fr.f_globals : null;
+	}
+
+	public static PyFrame getJythonFrame() {
+		return Py.getFrame();
 	}
 
 	public static PyType getPyType(Class pyClass) {

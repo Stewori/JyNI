@@ -230,7 +230,10 @@ extern jmethodID JyNI_createCallableProxyFromNative;
 extern jmethodID JyNI_getGlobalRef;
 extern jmethodID JyNI_getTypeNameForNativeConversion;
 extern jmethodID JyNI_getTypeOldStyleParent;
+extern jmethodID JyNI_getJythonBuiltins;
+extern jmethodID JyNI_getJythonLocals;
 extern jmethodID JyNI_getJythonGlobals;
+extern jmethodID JyNI_getJythonFrame;
 extern jmethodID JyNI_getPlatform;
 
 extern jclass JyTStateClass;

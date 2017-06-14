@@ -45,8 +45,8 @@
 //#define PY_LOCAL_AGGRESSIVE
 
 #include "JyNI.h"
-//#include "code.h"
-//#include "frameobject.h"
+#include "code_JyNI.h"
+#include "frameobject_JyNI.h"
 //#include "eval.h"
 //#include "opcode.h"
 //#include "structmember_JyNI.h"
@@ -4147,26 +4147,36 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //	tstate->use_tracing = ((func != NULL)
 //						   || (tstate->c_profilefunc != NULL));
 //}
-//
-//PyObject *
-//PyEval_GetBuiltins(void)
-//{
+
+PyObject *
+PyEval_GetBuiltins(void)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNI_getJythonBuiltins)
+	);
 //	PyFrameObject *current_frame = PyEval_GetFrame();
 //	if (current_frame == NULL)
 //		return PyThreadState_GET()->interp->builtins;
 //	else
 //		return current_frame->f_builtins;
-//}
-//
-//PyObject *
-//PyEval_GetLocals(void)
-//{
+}
+
+PyObject *
+PyEval_GetLocals(void)
+{
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNI_getJythonLocals)
+	);
 //	PyFrameObject *current_frame = PyEval_GetFrame();
 //	if (current_frame == NULL)
 //		return NULL;
 //	PyFrame_FastToLocals(current_frame);
 //	return current_frame->f_locals;
-//}
+}
 
 PyObject *
 PyEval_GetGlobals(void)
@@ -4184,12 +4194,18 @@ PyEval_GetGlobals(void)
 //		return current_frame->f_globals;
 }
 
-//PyFrameObject *
-//PyEval_GetFrame(void)
-//{
+PyFrameObject *
+PyEval_GetFrame(void)
+{
+	env(NULL);
+	return (PyFrameObject*) JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallStaticObjectMethod(env, JyNIClass,
+					JyNI_getJythonFrame)
+	);
 //	PyThreadState *tstate = PyThreadState_GET();
 //	return _PyThreadState_GetFrame(tstate);
-//}
+}
+
 int
 PyEval_GetRestricted(void)
 {

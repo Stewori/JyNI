@@ -136,7 +136,10 @@ jmethodID JyNI_createCallableProxyFromNative;
 jmethodID JyNI_getGlobalRef;
 jmethodID JyNI_getTypeNameForNativeConversion;
 jmethodID JyNI_getTypeOldStyleParent;
+jmethodID JyNI_getJythonBuiltins;
+jmethodID JyNI_getJythonLocals;
 jmethodID JyNI_getJythonGlobals;
+jmethodID JyNI_getJythonFrame;
 jmethodID JyNI_getPlatform;
 
 jclass JyTStateClass;
@@ -771,7 +774,10 @@ inline jint initJyNI(JNIEnv *env)
 	JNI_METH_STATIC(JyNI, getGlobalRef, referenceBackend, pyObject)
 	JNI_METH_STATIC(JyNI, getTypeNameForNativeConversion, string, pyObject)
 	JNI_METH_STATIC(JyNI, getTypeOldStyleParent, pyClass, pyObject)
+	JNI_METH_STATIC(JyNI, getJythonBuiltins, pyObject)
+	JNI_METH_STATIC(JyNI, getJythonLocals, pyObject)
 	JNI_METH_STATIC(JyNI, getJythonGlobals, pyObject)
+	JNI_METH_STATIC(JyNI, getJythonFrame, pyFrame)
 	JNI_METH_STATIC(JyNI, getPlatform, string)
 
 	//Error stuff:
