@@ -506,6 +506,7 @@ extern jmethodID pyInstance_isSequenceType;
 
 extern jclass pyFileClass;
 extern jmethodID pyFile_write;
+extern jmethodID pyFile_fd;
 
 extern jclass pyTracebackClass;
 extern jmethodID pyTraceback_byTracebackFrameConstructor;
