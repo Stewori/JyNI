@@ -8,15 +8,15 @@ If not yet done, make sure to visit our project homepage at [www.jyni.org](http:
 ## Table of contents
 ---------------------------------------------
 
-1. What is JyNI?
-2. Current state
-3. Building and testing
-4. Roadmap
-5. Binary compatibility
-6. Summary of changes to Python-code
-7. Copyright notice
-8. License
-9. Contact
+1. [What is JyNI?](#1-what-is-jyni)
+2. [Current state](#2-current-state)
+3. [Building and testing](#3-building-and-testing)
+4. [Roadmap](#4-roadmap)
+5. [Binary compatibility](#5-binary-compatibility)
+6. [Summary of changes to Python-code](#6-summary-of-changes-to-python-code)
+7. [Copyright notice](#7-copyright-notice)
+8. [License](#8-license)
+9. [Contact](#9-contact)
 
 ---------------------------------------------
 
