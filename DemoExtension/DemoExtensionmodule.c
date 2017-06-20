@@ -35,7 +35,10 @@
  */
 
 #include <Python.h>
-//#include <malloc.h>
+
+#ifndef MS_WINDOWS
+#define _alloca alloca
+#endif
 
 PyObject *
 hello_world(PyObject *self, PyObject *args)
