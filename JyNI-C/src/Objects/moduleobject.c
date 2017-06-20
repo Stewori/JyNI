@@ -129,7 +129,7 @@ PyModule_GetName(PyObject *m)
 		return NULL;
 	}
 	jstring er = (*env)->CallObjectMethod(env, pyStr, pyObject_asString);
-	global_cstr_from_jstring(cstr, er);
+	global_cstr_from_jstring_C99_(cstr, er);
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
 	return cstr;
@@ -177,7 +177,7 @@ PyModule_GetFilename(PyObject *m)
 		return NULL;
 	}
 	jstring er = (*env)->CallObjectMethod(env, pyStr, pyObject_asString);
-	global_cstr_from_jstring(cstr, er);
+	global_cstr_from_jstring_C99_(cstr, er);
 	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
 	return cstr;

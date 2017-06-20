@@ -38,7 +38,13 @@
 #ifndef JYNI_DEBUG_H_
 #define JYNI_DEBUG_H_
 
+#ifdef MS_WINDOWS
+#include <Windows.h>
+#define backtrace(buf, size) CaptureStackBackTrace(0, size, buf, NULL)
+#else
 #include <execinfo.h>
+#endif
+
 /* We define some debug macros for JyNI: */
 char mbuf[100];
 

@@ -496,7 +496,7 @@ PyObject *PyCodec_LookupError(const char *name)
 				pyType_getName);
 	//puts("tp name obtained:");
 	jputsLong(__LINE__);
-	cstr_from_jstring(cName, tpName);
+	cstr_from_jstring_C99_(cName, tpName);
 	jputs(cName);
 	return JyNI_PyObject_FromJythonPyObject(er);
 //    PyObject *handler = NULL;

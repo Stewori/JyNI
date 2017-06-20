@@ -376,7 +376,7 @@ inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 //	JyNI_jprintJ(srctype);
 	env(NULL);
 	jstring jName = (*env)->GetObjectField(env, srctype, pyType_nameField);
-	cstr_from_jstring(cName, jName);
+	cstr_from_jstring_C99_(cName, jName);
 //	jputs(cName);
 	PyTypeObject* dest =
 			JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);

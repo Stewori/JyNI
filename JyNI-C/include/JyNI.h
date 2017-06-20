@@ -42,6 +42,7 @@
 //PyExc_UnicodeDecodeError
 #include <jni.h>
 #include <Python_JyNI.h>
+#include <Compat_C89_MSVC.h>
 //#include <JyNI_JyNI.h>
 #include <JyList.h>
 #include <JyTState.h>
@@ -96,34 +97,72 @@
 	if (!reenter) { LEAVE_JyNI } \
 	else {JyNI_GC_Explore();} //maybe also JyErr_InsertCurExc()...?
 
+
+#define cstr_decl(cstrName) \
+	const char* utf_string; \
+	VLA_DECL(char, cstrName)
+
+#define cstr_decl2(cstrName) \
+	VLA_DECL(char, cstrName)
+
+#define cstr_decl_global(cstrName) \
+	const char* utf_string; \
+	char* cstrName
+
+#define cstr_decl_global2(cstrName) \
+	char* cstrName
+
 /* Cleanly convert a jstring to a cstring with minimal JVM lock-time.
  * Use only once per Function. For further conversions use
  * cstr_from_jstring2. Note that at least one call of "env()" must
  * have happened before in the same block or in some parent block.
  * ("+1" in 3rd line is for 0-termination)
+ *
+ * Requires cstr_decl(cstrName) or cstr_decl2(cstrName).
  */
 #define cstr_from_jstring(cstrName, jstr) \
+	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+	VLA(char, cstrName, strlen(utf_string)+1); \
+	strcpy(cstrName, utf_string); \
+	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
+
+/*
+ * Requires cstr_decl_global(cstrName) or cstr_decl_global2(cstrName)
+ */
+#define global_cstr_from_jstring(cstrName, jstr) \
+	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+	cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
+	strcpy(cstrName, utf_string); \
+	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
+
+/* Cleanly convert a jstring to a cstring with minimal JVM lock-time.
+ * Use only once per Function. For further conversions use
+ * cstr_from_jstring_C99_2. Note that at least one call of "env()" must
+ * have happened before in the same block or in some parent block.
+ * ("+1" in 3rd line is for 0-termination)
+ */
+#define cstr_from_jstring_C99_(cstrName, jstr) \
 	const char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char cstrName[strlen(utf_string)+1]; \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
-#define global_cstr_from_jstring(cstrName, jstr) \
+#define global_cstr_from_jstring_C99_(cstrName, jstr) \
 	const char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
-/* Only use after one initial use of cstr_from_jstring in the same block.
+/* Only use after one initial use of cstr_from_jstring_C99_ in the same block.
  * ("+1" in 3rd line is for 0-termination)
  */
-#define cstr_from_jstring2(cstrName, jstr) \
+#define cstr_from_jstring_C99_2(cstrName, jstr) \
 	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char cstrName[strlen(utf_string)+1]; \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
-#define global_cstr_from_jstring2(cstrName, jstr) \
+#define global_cstr_from_jstring_C99_2(cstrName, jstr) \
 	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
 	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
 	strcpy(cstrName, utf_string); \

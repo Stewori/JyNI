@@ -215,7 +215,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 //	jputs("JyNI_getAttrString");
 //	jputsLong(handle);
 	if (handle == 0) return NULL;
-	cstr_from_jstring(cName, name);
+	cstr_from_jstring_C99_(cName, name);
 //	jputs(cName);
 //	jboolean jdbg = strcmp(cName, "__array_interface__") == 0;
 //	if (jdbg) jputs(__FUNCTION__);
@@ -243,7 +243,7 @@ jobject JyNI_getAttrString(JNIEnv *env, jclass class, jlong handle, jstring name
 jint JyNI_setAttrString(JNIEnv *env, jclass class, jlong handle, jstring name, jobject value, jlong tstate)
 {
 	if (handle == 0) return 0;
-	cstr_from_jstring(cName, name);
+	cstr_from_jstring_C99_(cName, name);
 	ENTER_JyNI
 	PyObject* vl = JyNI_PyObject_FromJythonPyObject(value);
 	jint er = PyObject_SetAttrString((PyObject*) handle, cName, vl);
@@ -1508,7 +1508,7 @@ inline TypeMapEntry* JyNI_JythonTypeEntry_FromJStringName(jstring name)
 {
 	if (name == NULL) return NULL;
 	env(NULL);
-	cstr_from_jstring(cName, name);
+	cstr_from_jstring_C99_(cName, name);
 	return JyNI_JythonTypeEntry_FromName(cName);
 }
 
@@ -1670,7 +1670,7 @@ PyObject* _JyNI_PyObject_FromJythonPyObject(jobject jythonPyObject, jboolean loo
 			JyNI_getTypeNameForNativeConversion, jythonPyObject);
 	//todo find out what name occurs if a Jython Java-proxy is used.
 	//     Can we make sense of it in default-instance case?
-	cstr_from_jstring(cName, tpName);
+	cstr_from_jstring_C99_(cName, tpName);
 //	jboolean dbg = strcmp(cName, "builtin_function_or_method") == 0;
 //	jputs(cName);
 	TypeMapEntry* tme = JyNI_JythonTypeEntry_FromName(cName);
@@ -2128,7 +2128,7 @@ inline PyTypeObject* JyNI_PyTypeObject_FromJythonPyTypeObject(jobject jythonPyTy
 		return er;
 	}
 	jstring name = (*env)->CallObjectMethod(env, jythonPyTypeObject, pyType_getName);
-	cstr_from_jstring(mName, name);
+	cstr_from_jstring_C99_(mName, name);
 	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
@@ -2381,7 +2381,7 @@ Py_GetVersion(void)
 //	{
 //		env();
 //		jstring msg = (*env)->CallObjectMethod(env, obj, objectToString);
-//		cstr_from_jstring(cmsg, msg);
+//		cstr_from_jstring_C99_(cmsg, msg);
 //		puts(cmsg);
 //	} else puts("NULL");
 //}

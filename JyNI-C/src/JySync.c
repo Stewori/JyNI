@@ -141,9 +141,9 @@ PyObject* JySync_Init_PyString_From_JyString(jobject src, PyTypeObject* nonNativ
 {
 	env(NULL);
 	jstring jstr = (*env)->CallObjectMethod(env, src, pyObject_asString);
-	//cstr_from_jstring(cstr, jstr);
+	//cstr_from_jstring_C99_(cstr, jstr);
 
-	//cstr_from_jstring(cstrName, jstr)
+	//cstr_from_jstring_C99_(cstrName, jstr)
 	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL);
 	size_t len = strlen(utf_string);
 	char cstr[len+1];
@@ -241,7 +241,7 @@ PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNat
 //	jputs("result-type:");
 //	jputs(unicode->ob_type->tp_name);
 //	return unicode;
-//	//cstr_from_jstring(cstr, jstr);
+//	//cstr_from_jstring_C99_(cstr, jstr);
 //	//return PyString_FromString(cstr);
 //}
 
@@ -543,7 +543,7 @@ PyObject* JySync_Init_PyClass_From_JyClass(jobject src, PyTypeObject* nonNativeS
 {
 	env(NULL);
 	jstring nm = (*env)->GetObjectField(env, src, pyClass___name__Field);
-	cstr_from_jstring(cnm, nm);
+	cstr_from_jstring_C99_(cnm, nm);
 //	jputs("Sync-Class:");
 //	jputs(cnm);
 	return PyClass_New(
@@ -909,14 +909,14 @@ PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObje
 	mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS) | METH_JYTHON;
 
 	jstring jtmp = (*env)->CallObjectMethod(env, info, pyBuiltinCallableInfo_getName);
-	global_cstr_from_jstring(cName, jtmp);
+	global_cstr_from_jstring_C99_(cName, jtmp);
 	mdef->ml_name = cName;
 //	puts(cName);
 
 	jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallable_getDoc);
 	if (jtmp)
 	{
-		global_cstr_from_jstring2(cDoc, jtmp);
+		global_cstr_from_jstring_C99_2(cDoc, jtmp);
 		mdef->ml_doc = cDoc;
 	} else mdef->ml_doc = NULL;
 
@@ -969,7 +969,7 @@ PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject
 	//mdef->ml_flags = (max ? (METH_KEYWORDS | METH_VARARGS) : METH_NOARGS) | METH_JYTHON;
 
 	jstring jtmp = (*env)->CallObjectMethod(env, src, pyBuiltinCallableInfo_getName);
-	global_cstr_from_jstring(cName, jtmp);
+	global_cstr_from_jstring_C99_(cName, jtmp);
 	//mdef->ml_name = cName;
 
 	jobject dtype = (*env)->GetObjectField(env, src, pyDescr_dtypeField);
@@ -982,7 +982,7 @@ PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject
 	jtmp = (*env)->CallObjectMethod(env, src, pyMethodDescr_getDoc);
 	if (jtmp)
 	{
-		global_cstr_from_jstring2(cDoc, jtmp);
+		global_cstr_from_jstring_C99_2(cDoc, jtmp);
 		mdef->ml_doc = cDoc;
 	} else mdef->ml_doc = NULL;
 	mdef->ml_meth = (PyCFunctionWithKeywords) jyBuiltinCallWithKeywords;
@@ -1048,7 +1048,7 @@ void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
 	jobject jClosure = (*env)->GetObjectField(env, src, pyFunction___closure__Field);
 	((PyFunctionObject*) dest)->func_closure = JyNI_PyObject_FromJythonPyObject(jClosure);
 	jstring jName = (*env)->GetObjectField(env, src, pyFunction___name__Field);
-	cstr_from_jstring(cName, jName);
+	cstr_from_jstring_C99_(cName, jName);
 	((PyFunctionObject*) dest)->func_name = PyString_FromString(cName);
 }
 
@@ -1157,7 +1157,7 @@ void JySync_PyType_From_JyType(jobject src, PyObject* dest)
 	jobject jtmp = (*env)->CallObjectMethod(env, src, pyType_getName);
 	//jobject jtmp = (*env)->GetObjectField(env, src, pyTypeNameField);
 	//if (!jtmp) jputs("JySync_PyType_From_JyType: type with NULL-name!");
-	//cstr_from_jstring(cname, jname);
+	//cstr_from_jstring_C99_(cname, jname);
 	char* utf_string = (*env)->GetStringUTFChars(env, jtmp, NULL);
 	char* cname = malloc(strlen(utf_string)+1);
 	strcpy(cname, utf_string);

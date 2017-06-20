@@ -35,6 +35,7 @@
  */
 
 #include <Python.h>
+//#include <malloc.h>
 
 PyObject *
 hello_world(PyObject *self, PyObject *args)
@@ -59,13 +60,21 @@ argCountToString(PyObject *self, PyObject *args)
 PyObject *
 concatFirstWithLastString(PyObject *self, PyObject *args)
 {
-	if (PyTuple_GET_SIZE(args) < 2) return PyString_FromString("");
+	//char* str1, str2, er;
+	//if (PyTuple_GET_SIZE(args) < 2) return PyString_FromString("");
 	char* str1 = PyString_AS_STRING(PyTuple_GET_ITEM(args, 0));
 	char* str2 = PyString_AS_STRING(PyTuple_GET_ITEM(args, PyTuple_GET_SIZE(args)-1));
-	char er[strlen(str1)+strlen(str2)+1];
+	//char er[500];// strlen(str1) + strlen(str2) + 1];
+	char* er;// = _alloca(strlen(str1) + strlen(str2) + 1);
+	PyObject* res;
+	if (PyTuple_GET_SIZE(args) < 2) return PyString_FromString("");
+	er = _alloca(strlen(str1) + strlen(str2) + 1);
+	//char er[strlen(str1) + strlen(str2) + 1];
 	strcpy(er, str1);
 	strcat(er, str2);
-	return PyString_FromString(er);
+	res = PyString_FromString(er);
+	//free(er);
+	return res;
 }
 
 PyObject *
@@ -115,13 +124,14 @@ keywordTest(PyObject* self, PyObject* args, PyObject* kw)
 	//else puts("keywords is NULL");
 	if (kw != NULL)
 	{
+		PyObject* ar;
 		//printf("Number of args: %i\n", PyTuple_GET_SIZE(args));
 		puts(PyString_AS_STRING(PyTuple_GET_ITEM(args, 0)));
 		puts(PyString_AS_STRING(PyTuple_GET_ITEM(args, 1)));
 
 		//printf("Number of kw: %i\n", PyDict_Size(kw));
 
-		PyObject* ar = PyDict_GetItemString(kw, "right");
+		ar = PyDict_GetItemString(kw, "right");
 		if (ar != NULL) puts(PyString_AS_STRING(ar));
 	}
 
@@ -131,18 +141,19 @@ keywordTest(PyObject* self, PyObject* args, PyObject* kw)
 PyObject*
 longTests(PyObject* self, PyObject* args, PyObject* kw)
 {
-	long int l;
+	long int l; unsigned long t;
+	PyObject *pl, *pls, *pt, *pts;
 	if (!PyArg_ParseTuple(args, "l", &l))
 		return NULL;
-	PyObject* pl = PyLong_FromLong(l);
+	pl = PyLong_FromLong(l);
 	printf("l: %i\n", l);
-	PyObject* pls = _PyLong_Format(pl, 10, 0, 0);
+	pls = _PyLong_Format(pl, 10, 0, 0);
 	printf("long to string: %u\n", pls);
 	puts(PyString_AS_STRING(pls));
 
-	unsigned long t = 10000000000000000002;
-	PyObject* pt = PyLong_FromUnsignedLong(t);
-	PyObject* pts = _PyLong_Format(pt, 10, 0, 0);
+	t = 10000000000000000002;
+	pt = PyLong_FromUnsignedLong(t);
+	pts = _PyLong_Format(pt, 10, 0, 0);
 	puts(PyString_AS_STRING(pts));
 	Py_RETURN_NONE;
 }
@@ -212,10 +223,9 @@ PyObject*
 setPopTest(PyObject* self, PyObject* args)
 {
 	PyObject* set;
-	int i;
+	int i, j;
 	if (!PyArg_ParseTuple(args, "O!i", &PySet_Type, &set, &i)) return NULL;
 	//printf("pop %i elements from the set...\n", i);
-	int j;
 	for (j = 0; j < i; ++j)
 	{
 		PyObject* pop = PySet_Pop(set);
@@ -350,23 +360,25 @@ PyObject*
 importAPIandMethodDescrTest(PyObject* self, PyObject* args)
 {
 //	puts(__FUNCTION__);
-	PyObject* moduleDict = PyImport_GetModuleDict();
-	PyObject* builtinModule = PyDict_GetItemString(moduleDict, "__builtin__");
-	Py_XDECREF(moduleDict);
-	PyObject* importFunction;
-	PyObject* attrStr = PyString_FromString("__import__");
-	PyTypeObject* tp = Py_TYPE(builtinModule);  //Borrowed ref, so don't decref!
-//	puts(tp->tp_name);
-//	puts(PyString_AS_STRING(PyObject_Str(builtinModule)));
-	if (strcmp(tp->tp_name, "module") != 0) return PyInt_FromLong(-__LINE__);
-	if (strcmp(PyString_AS_STRING(PyObject_Str(builtinModule)),
-			"<module '__builtin__' (built-in)>") != 0) return PyInt_FromLong(-__LINE__);
-//	PyObject* range = PyObject_GetAttrString(builtinModule, "range");
-	if (tp->tp_getattro) {
-		importFunction = tp->tp_getattro(builtinModule, attrStr);
+	PyObject *module, *importFunction, *lock, *__enter__;
+	{
+		PyObject* moduleDict = PyImport_GetModuleDict();
+		PyObject* builtinModule = PyDict_GetItemString(moduleDict, "__builtin__");
+		PyObject* attrStr = PyString_FromString("__import__");
+		PyTypeObject* tp = Py_TYPE(builtinModule);  //Borrowed ref, so don't decref!
+		Py_XDECREF(moduleDict);
+	//	puts(tp->tp_name);
+	//	puts(PyString_AS_STRING(PyObject_Str(builtinModule)));
+		if (strcmp(tp->tp_name, "module") != 0) return PyInt_FromLong(-__LINE__);
+		if (strcmp(PyString_AS_STRING(PyObject_Str(builtinModule)),
+				"<module '__builtin__' (built-in)>") != 0) return PyInt_FromLong(-__LINE__);
+	//	PyObject* range = PyObject_GetAttrString(builtinModule, "range");
+		if (tp->tp_getattro) {
+			importFunction = tp->tp_getattro(builtinModule, attrStr);
+		}
+		Py_XDECREF(builtinModule);
+		Py_XDECREF(attrStr);
 	}
-	Py_XDECREF(builtinModule);
-	Py_XDECREF(attrStr);
 //	puts(PyString_AS_STRING(PyObject_Str(importFunction)));
 //	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(importFunction))));
 	if (strcmp(PyString_AS_STRING(PyObject_Str(importFunction)),
@@ -374,48 +386,51 @@ importAPIandMethodDescrTest(PyObject* self, PyObject* args)
 	if (strcmp(PyString_AS_STRING(PyObject_Str(Py_TYPE(importFunction))),
 			"<type 'builtin_function_or_method'>") != 0) return PyInt_FromLong(-__LINE__);
 
-	PyObject* threadingname = PyString_FromString("threading");
-	PyObject* py_level = PyInt_FromLong(1);
-	PyObject* global_dict = PyDict_New();
-	PyObject* empty_dict = PyDict_New();
-	PyObject* list = PyList_New(0);
-	PyObject* module = PyObject_CallFunctionObjArgs(importFunction,
+	{
+		PyObject* threadingname = PyString_FromString("threading");
+		PyObject* py_level = PyInt_FromLong(1);
+		PyObject* global_dict = PyDict_New();
+		PyObject* empty_dict = PyDict_New();
+		PyObject* list = PyList_New(0);
+		module = PyObject_CallFunctionObjArgs(importFunction,
 			threadingname, global_dict, empty_dict, list, py_level, NULL);
-	Py_XDECREF(threadingname);
-	Py_XDECREF(py_level);
-	Py_XDECREF(global_dict);
-	Py_XDECREF(empty_dict);
-	Py_XDECREF(list);
+		Py_XDECREF(threadingname);
+		Py_XDECREF(py_level);
+		Py_XDECREF(global_dict);
+		Py_XDECREF(empty_dict);
+		Py_XDECREF(list);
+	}
 //	puts(PyString_AS_STRING(PyObject_Str(module)));
 	if (strncmp(PyString_AS_STRING(PyObject_Str(module)),
 			"<module 'threading'", 19) != 0) return PyInt_FromLong(-__LINE__);
 
-	PyObject *lockname = PyString_FromString("Lock");
-	PyObject* locktp = NULL;
-	PyTypeObject* tpl = Py_TYPE(module); //Borrowed ref, so don't decref!
-//	puts(PyString_AS_STRING(PyObject_Str(tpl)));
-	if (!locktp && tpl->tp_getattro) {
-//		printf("%s %i\n", __FUNCTION__, __LINE__);
-		locktp = tpl->tp_getattro(module, lockname);
+	{
+		PyObject* lockname = PyString_FromString("Lock");
+		PyObject* locktp = NULL;
+		PyTypeObject* tpl = Py_TYPE(module); //Borrowed ref, so don't decref!
+	//	puts(PyString_AS_STRING(PyObject_Str(tpl)));
+		if (!locktp && tpl->tp_getattro) {
+	//		printf("%s %i\n", __FUNCTION__, __LINE__);
+			locktp = tpl->tp_getattro(module, lockname);
+		}
+		if (!locktp && tpl->tp_getattr) {
+	//		printf("%s %i\n", __FUNCTION__, __LINE__);
+			locktp = tpl->tp_getattr(module, PyString_AS_STRING(lockname));
+		}
+		if (!locktp)
+			locktp = PyObject_GetAttr(module, lockname);
+		Py_XDECREF(lockname);
+		lock = PyObject_Call(locktp, PyTuple_New(0), NULL);
+	//	puts("getting __enter__...");
+		__enter__ = _PyType_Lookup(locktp, PyString_FromString("__enter__"));
+		Py_XDECREF(locktp);
+		Py_XDECREF(module);
+	//	puts(PyString_AS_STRING(PyObject_Str(locktp)));
+	//	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(lock))));
+	//	puts(PyString_AS_STRING(PyObject_Str(lock)));
+		if (strcmp(PyString_AS_STRING(PyObject_Str(locktp)),
+					"<type '_threading.Lock'>") != 0) return PyInt_FromLong(-__LINE__);
 	}
-	if (!locktp && tpl->tp_getattr) {
-//		printf("%s %i\n", __FUNCTION__, __LINE__);
-		locktp = tpl->tp_getattr(module, PyString_AS_STRING(lockname));
-	}
-	if (!locktp)
-		locktp = PyObject_GetAttr(module, lockname);
-	Py_XDECREF(module);
-	Py_XDECREF(lockname);
-	PyObject* lock = PyObject_Call(locktp, PyTuple_New(0), NULL);
-//	puts("getting __enter__...");
-	PyObject* __enter__ = _PyType_Lookup(locktp, PyString_FromString("__enter__"));
-	Py_XDECREF(locktp);
-
-//	puts(PyString_AS_STRING(PyObject_Str(locktp)));
-//	puts(PyString_AS_STRING(PyObject_Str(Py_TYPE(lock))));
-//	puts(PyString_AS_STRING(PyObject_Str(lock)));
-	if (strcmp(PyString_AS_STRING(PyObject_Str(locktp)),
-				"<type '_threading.Lock'>") != 0) return PyInt_FromLong(-__LINE__);
 	if (strcmp(PyString_AS_STRING(PyObject_Str(Py_TYPE(lock))),
 				"<type '_threading.Lock'>") != 0) return PyInt_FromLong(-__LINE__);
 	if (strcmp(PyString_AS_STRING(PyObject_Str(lock)),
@@ -445,17 +460,20 @@ importAPIandMethodDescrTest(PyObject* self, PyObject* args)
 		return PyInt_FromLong(-__LINE__);
 //	if (PyType_HasFeature(Py_TYPE(__enter__), Py_TPFLAGS_HEAPTYPE))
 //		puts("heaptype");
-	PyObject* argSelf = PyTuple_New(1);
-	PyTuple_SetItem(argSelf, 0, lock);
-	PyObject* p7 = PyObject_Call(__enter__, argSelf, NULL);
-//	puts(PyString_AS_STRING(PyObject_Str(p7)));
-	if (strcmp(PyString_AS_STRING(PyObject_Str(p7)),
-			"<_threading.Lock owner='MainThread' locked=True>") != 0)
-		return PyInt_FromLong(-__LINE__);
-//	puts("decref...");
+	{
+		PyObject *argSelf, *p7;
+		argSelf = PyTuple_New(1);
+		PyTuple_SetItem(argSelf, 0, lock);
+		p7 = PyObject_Call(__enter__, argSelf, NULL);
+	//	puts(PyString_AS_STRING(PyObject_Str(p7)));
+		if (strcmp(PyString_AS_STRING(PyObject_Str(p7)),
+				"<_threading.Lock owner='MainThread' locked=True>") != 0)
+			return PyInt_FromLong(-__LINE__);
+	//	puts("decref...");
+		Py_XDECREF(p7);
+		Py_XDECREF(argSelf);
+	}
 	Py_XDECREF(importFunction);
-	Py_XDECREF(p7);
-	Py_XDECREF(argSelf);
 	Py_XDECREF(lock);
 	Py_XDECREF(__enter__);
 //	puts("conversion test done");
@@ -496,5 +514,5 @@ PyMODINIT_FUNC
 initDemoExtension(void)
 {
 	//PyErr_Format(PyExc_ImportError, "test-error");
-	(void) Py_InitModule3("DemoExtension", DemoExtensionMethods, "This is a pure demo extension.");
+	(void)Py_InitModule3("DemoExtension", DemoExtensionMethods, "This is a pure demo extension.");
 }

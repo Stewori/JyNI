@@ -252,7 +252,7 @@ type_name(PyTypeObject *type, void *context)
 ////		jputs(PyString_AS_STRING(et->ht_name));
 ////		Py_INCREF(et->ht_name);
 ////		return et->ht_name;
-//		cstr_from_jstring(cname, jname);
+//		cstr_from_jstring_C99_(cname, jname);
 //		jputs(cname);
 //		return PyString_FromString(cname);
 	}

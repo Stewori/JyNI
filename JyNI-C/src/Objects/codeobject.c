@@ -405,7 +405,7 @@ PyObject* PyCode_Get_co_filename(PyObject* code)
 	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
 	jobject jstr = (*env)->GetObjectField(env, jCode, pyBaseCode_co_filenameField);
-	cstr_from_jstring(cstr, jstr);
+	cstr_from_jstring_C99_(cstr, jstr);
 	return PyString_FromString(cstr);
 }
 
@@ -414,7 +414,7 @@ PyObject* PyCode_Get_co_name(PyObject* code)
 	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
 	jobject jstr = (*env)->GetObjectField(env, jCode, pyCode_co_nameField);
-	cstr_from_jstring(cstr, jstr);
+	cstr_from_jstring_C99_(cstr, jstr);
 	return PyString_FromString(cstr);
 }
 
@@ -433,7 +433,7 @@ PyObject* PyCode_Get_co_lnotab(PyObject* code)
 	if ((*env)->IsInstanceOf(env, jCode, pyBytecodeClass))
 	{
 		jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
-		cstr_from_jstring(cstr, jstr);
+		cstr_from_jstring_C99_(cstr, jstr);
 		return PyString_FromString(cstr);
 	} else
 	{
