@@ -289,10 +289,11 @@ static PyMethodDef BaseException_methods[] = {
 static PyObject *
 BaseException_getitem(PyBaseExceptionObject *self, Py_ssize_t index)
 {
+	jobject result, jself;
 	env(NULL);
-	jobject jself = JyNI_JythonPyObject_FromPyObject((PyObject*) self);
+	jself = JyNI_JythonPyObject_FromPyObject((PyObject*) self);
 	ENTER_SubtypeLoop_Safe_ModePy(jself, self, __finditem__)
-	jobject result = (*env)->CallObjectMethod(env, jself, JMID(__finditem__),
+	result = (*env)->CallObjectMethod(env, jself, JMID(__finditem__),
 			JyNI_JythonPyObject_FromPyObject(PyInt_FromSsize_t(index)));
 	LEAVE_SubtypeLoop_Safe_ModePy(jself, __finditem__)
 	return JyNI_PyObject_FromJythonPyObject(result);
@@ -656,19 +657,21 @@ SimpleExtendsException(PyExc_BaseException, GeneratorExit,
 static int
 SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
 {
+	jobject jdict, jargs, jkw;
+	jint dictSize;
+	int i;
+
 	env(-1);
-	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
-	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-	jobject jargs = (*env)->NewObjectArray(env,
+	jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)+dictSize,
 		stringClass, NULL);
-	int i;
 	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
 		(*env)->SetObjectArrayElement(env, jargs, i,
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
-	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = JyEmptyStringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
@@ -790,20 +793,22 @@ SimpleExtendsException(PyExc_StandardError, ImportError,
 static int
 EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *kwds)
 {
+	jobject jdict, jargs, jkw;
+	jint dictSize;
+	int i;
+
 	env(-1);
-	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
-	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-	jobject jargs = (*env)->NewObjectArray(env,
+	jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
 		stringClass, NULL);
-	int i;
 	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
 		(*env)->SetObjectArrayElement(env, jargs, i,
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
-	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = JyEmptyStringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
@@ -1363,20 +1368,22 @@ SimpleExtendsException(PyExc_StandardError, AttributeError,
 static int
 SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
 {
+	jobject jdict, jargs, jkw;
+	jint dictSize;
+	int i;
+
 	env(-1);
-	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
-	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-	jobject jargs = (*env)->NewObjectArray(env,
+	jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
 		stringClass, NULL);
-	int i;
 	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
 		(*env)->SetObjectArrayElement(env, jargs, i,
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
-	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = JyEmptyStringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
@@ -2428,20 +2435,22 @@ static PyGetSetDef UnicodeError_getsets [] = {
 static int
 UnicodeEncodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
+	jobject jdict, jargs, jkw;
+	jint dictSize;
+	int i;
+
 	env(-1);
-	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
-	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-	jobject jargs = (*env)->NewObjectArray(env,
+	jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
 		stringClass, NULL);
-	int i;
 	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
 		(*env)->SetObjectArrayElement(env, jargs, i,
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
-	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = JyEmptyStringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
@@ -2541,20 +2550,22 @@ PyUnicodeEncodeError_Create(
 static int
 UnicodeDecodeError_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
+	jobject jdict, jargs, jkw;
+	jint dictSize;
+	int i;
+
 	env(-1);
-	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
-	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-	jobject jargs = (*env)->NewObjectArray(env,
+	jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
 		stringClass, NULL);
-	int i;
 	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
 		(*env)->SetObjectArrayElement(env, jargs, i,
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
-	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = JyEmptyStringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,
@@ -2650,20 +2661,22 @@ PyUnicodeDecodeError_Create(
 static int
 UnicodeTranslateError_init(PyUnicodeErrorObject *self, PyObject *args, PyObject *kwds)
 {
+	jobject jdict, jargs, jkw;
+	jint dictSize;
+	int i;
+
 	env(-1);
-	jobject jdict = JyNI_JythonPyObject_FromPyObject(kwds);
+	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
-	jint dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
+	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
 	LEAVE_SubtypeLoop_Safe_ModePy(jdict, __len__)
-	jobject jargs = (*env)->NewObjectArray(env,
+	jargs = (*env)->NewObjectArray(env,
 		PyTuple_GET_SIZE(args)
 		+dictSize,
 		stringClass, NULL);
-	int i;
 	for (i = 0; i < PyTuple_GET_SIZE(args); ++i)
 		(*env)->SetObjectArrayElement(env, jargs, i,
 			JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(args, i)));
-	jobject jkw;
 	if (dictSize > 0) jkw = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_prepareKeywordArgs, jargs, jdict);
 	else jkw = JyEmptyStringArray;
 	(*env)->CallStaticVoidMethod(env, exceptionsClass,

@@ -402,19 +402,23 @@ PyObject* PyCode_Get_co_cellvars(PyObject* code)
 
 PyObject* PyCode_Get_co_filename(PyObject* code)
 {
+	jobject jtmp;
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jstr = (*env)->GetObjectField(env, jCode, pyBaseCode_co_filenameField);
-	cstr_from_jstring_C99_(cstr, jstr);
+	jtmp = JyNI_JythonPyObject_FromPyObject(code);
+	jtmp = (*env)->GetObjectField(env, jtmp, pyBaseCode_co_filenameField);
+	cstr_decl(cstr);
+	cstr_from_jstring(cstr, jtmp);
 	return PyString_FromString(cstr);
 }
 
 PyObject* PyCode_Get_co_name(PyObject* code)
 {
+	cstr_decl(cstr);
+	jobject jtmp;
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jstr = (*env)->GetObjectField(env, jCode, pyCode_co_nameField);
-	cstr_from_jstring_C99_(cstr, jstr);
+	jtmp = JyNI_JythonPyObject_FromPyObject(code);
+	jtmp = (*env)->GetObjectField(env, jtmp, pyCode_co_nameField);
+	cstr_from_jstring(cstr, jtmp);
 	return PyString_FromString(cstr);
 }
 
@@ -428,12 +432,14 @@ PyObject* PyCode_Get_co_firstlineno(PyObject* code)
 
 PyObject* PyCode_Get_co_lnotab(PyObject* code)
 {
+	jobject jtmp;
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	if ((*env)->IsInstanceOf(env, jCode, pyBytecodeClass))
+	jtmp = JyNI_JythonPyObject_FromPyObject(code);
+	if ((*env)->IsInstanceOf(env, jtmp, pyBytecodeClass))
 	{
-		jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
-		cstr_from_jstring_C99_(cstr, jstr);
+		cstr_decl(cstr);
+		jtmp = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jtmp);
+		cstr_from_jstring(cstr, jtmp);
 		return PyString_FromString(cstr);
 	} else
 	{

@@ -489,16 +489,19 @@ int PyCodec_RegisterError(const char *name, PyObject *error)
 PyObject *PyCodec_LookupError(const char *name)
 {
 	env(NULL);
-	jobject er = (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_lookup_error,
-		(*env)->NewStringUTF(env, name));
-	jstring tpName = (*env)->CallObjectMethod(env,
-				(*env)->CallObjectMethod(env, er, pyObject_getType),
-				pyType_getName);
-	//puts("tp name obtained:");
-	jputsLong(__LINE__);
-	cstr_from_jstring_C99_(cName, tpName);
-	jputs(cName);
-	return JyNI_PyObject_FromJythonPyObject(er);
+	{
+		cstr_decl(cName);
+		jobject er = (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_lookup_error,
+			(*env)->NewStringUTF(env, name));
+		jstring tpName = (*env)->CallObjectMethod(env,
+					(*env)->CallObjectMethod(env, er, pyObject_getType),
+					pyType_getName);
+		//puts("tp name obtained:");
+		jputsLong(__LINE__);
+		cstr_from_jstring(cName, tpName);
+		jputs(cName);
+		return JyNI_PyObject_FromJythonPyObject(er);
+	}
 //    PyObject *handler = NULL;
 //
 //    PyInterpreterState *interp = PyThreadState_GET()->interp;

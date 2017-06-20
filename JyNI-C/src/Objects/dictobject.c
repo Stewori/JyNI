@@ -752,36 +752,25 @@ PyDict_New(void)
 PyObject *
 PyDict_GetItem(PyObject *op, PyObject *key)
 {
-//	int dbg = strcmp(PyString_AS_STRING(key), "range") == 0;
-//	if (dbg) jputs(__FUNCTION__);
-//	if (dbg) jputsPy(key);
-//	if (dbg) jputsLong(op);
-//	if (dbg) jputsPy(op);
 	if (!PyDict_Check(op)) {
-//		if (dbg) jputsLong(__LINE__);
 		return NULL;
+	} else {
+		jobject jop, jres;
+		PyObject* result;
+		env(NULL);
+
+	//	if ((*env)->ExceptionCheck(env)) {
+	//		jputs("PyDict_GetItem - previous exception");
+	//	}
+		jop = JyNI_JythonPyObject_FromPyObject(op);
+		ENTER_SubtypeLoop_Safe_ModePy(jop, op, __finditem__)
+	//	if (dbg) printf("%i\n", jmid__finditem__ == pyObject__finditem__);
+		jres = (*env)->CallObjectMethod(env, jop, JMID(__finditem__),
+				JyNI_JythonPyObject_FromPyObject(key));
+		result = JyNI_PyObject_FromJythonPyObject(jres);
+		LEAVE_SubtypeLoop_Safe_ModePy(jop, __finditem__)
+		return result;
 	}
-	env(NULL);
-//	if ((*env)->ExceptionCheck(env)) {
-//		jputs("PyDict_GetItem - previous exception");
-//	}
-	jobject jop = JyNI_JythonPyObject_FromPyObject(op);
-	ENTER_SubtypeLoop_Safe_ModePy(jop, op, __finditem__)
-//	if (dbg) printf("%i\n", jmid__finditem__ == pyObject__finditem__);
-	jobject jres = (*env)->CallObjectMethod(env, jop, JMID(__finditem__),
-			JyNI_JythonPyObject_FromPyObject(key));
-	PyObject* result = JyNI_PyObject_FromJythonPyObject(jres);
-	LEAVE_SubtypeLoop_Safe_ModePy(jop, __finditem__)
-//	if((*env)->ExceptionCheck(env)) {
-//		if (dbg) jputsLong(__LINE__);
-//		if (dbg) JyNI_jprintJ((*env)->ExceptionOccurred(env));
-//		if (dbg) (*env)->ExceptionDescribe(env);
-//		(*env)->ExceptionClear(env);
-//		return NULL;
-//	}
-//	if (dbg) jputsLong(__LINE__);
-//	if (dbg) jputsLong(result);
-	return result;
 //	return JyNI_PyObject_FromJythonPyObject(
 //			(*env)->CallObjectMethod(env,
 //				JyNI_JythonPyObject_FromPyObject(op),
@@ -1254,15 +1243,17 @@ dict_dealloc(register PyDictObject *mp)
 static PyObject *
 dict_repr(PyDictObject *mp)
 {
+	PyObject* result;
+	jobject jop;
+	env(NULL);
 //	jputs(__FUNCTION__);
 //	jputs(Py_TYPE(mp)->tp_name);
 	//PyString_FromString("{..dict_repr.}");
-	env(NULL);
-	jobject jop = JyNI_JythonPyObject_FromPyObject(mp);
+	jop = JyNI_JythonPyObject_FromPyObject(mp);
 //	JyNI_printJInfo(jop);
 
 	ENTER_SubtypeLoop_Safe_ModePy(jop, mp, __repr__)
-	PyObject* result = JyNI_PyObject_FromJythonPyObject(
+	result = JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallObjectMethod(env, jop, JMID(__repr__)));
 	LEAVE_SubtypeLoop_Safe_ModePy(jop, __repr__)
 
@@ -1894,15 +1885,19 @@ PyDict_Size(PyObject *mp)
 
 		PyErr_BadInternalCall();
 		return -1;
+	} else {
+		Py_ssize_t result;
+		jobject jmp;
+		env(-1);
+
+		jmp = JyNI_JythonPyObject_FromPyObject(mp);
+		ENTER_SubtypeLoop_Safe_ModePy(jmp, mp, __len__)
+		result = (Py_ssize_t) (*env)->CallIntMethod(env, jmp, JMID(__len__));
+		LEAVE_SubtypeLoop_Safe_ModePy(jmp, __len__)
+		return result;
+		//return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
+	//	return ((PyDictObject *)mp)->ma_used;
 	}
-	env(-1);
-	jobject jmp = JyNI_JythonPyObject_FromPyObject(mp);
-	ENTER_SubtypeLoop_Safe_ModePy(jmp, mp, __len__)
-	Py_ssize_t result = (Py_ssize_t) (*env)->CallIntMethod(env, jmp, JMID(__len__));
-	LEAVE_SubtypeLoop_Safe_ModePy(jmp, __len__)
-	return result;
-	//return (Py_ssize_t) (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(mp), pyDictSize);
-//	return ((PyDictObject *)mp)->ma_used;
 }
 
 //PyObject *
@@ -2667,15 +2662,18 @@ PyTypeObject PyDict_Type = {
 
 PyObject* PyDict_GetItemStringJy(PyObject* v, jobject key)
 {
+	jobject result, jv;
+	PyObject* res;
+	env(NULL);
+
 	//if (!PyDict_Check(op)) return NULL;
 //	jputs(__FUNCTION__);
-	env(NULL);
-	jobject jv = JyNI_JythonPyObject_FromPyObject(v);
+	jv = JyNI_JythonPyObject_FromPyObject(v);
 	ENTER_SubtypeLoop_Safe_ModePy(jv, v, __finditem__)
-	jobject result = (*env)->CallObjectMethod(env,
+	result = (*env)->CallObjectMethod(env,
 			jv, JMID(__finditem__), key);
 	LEAVE_SubtypeLoop_Safe_ModePy(jv, __finditem__)
-	PyObject* res = JyNI_PyObject_FromJythonPyObject(result);
+	res = JyNI_PyObject_FromJythonPyObject(result);
 	return res;
 //	return JyNI_PyObject_FromJythonPyObject(
 //			(*env)->CallObjectMethod(env,
