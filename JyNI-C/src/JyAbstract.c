@@ -47,9 +47,11 @@
 #define PyNumberMethod1(name) \
 jobject JyNI_PyNumber_ ## name (jlong o, jlong tstate) \
 { \
+	PyObject* res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* res = PyNumber_ ## name ((PyObject*) o); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	res = PyNumber_ ## name ((PyObject*) o); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
 	return jres; \
@@ -58,10 +60,12 @@ jobject JyNI_PyNumber_ ## name (jlong o, jlong tstate) \
 #define PyMethod2(pref, name) \
 jobject JyNI_ ## pref ## _ ## name (jlong o1, jobject o2, jlong tstate) \
 { \
+	PyObject* arg, *res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2); \
-	PyObject* res = pref ## _ ## name ((PyObject*) o1, arg); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	arg = JyNI_PyObject_FromJythonPyObject(o2); \
+	res = pref ## _ ## name ((PyObject*) o1, arg); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(arg); \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
@@ -73,11 +77,13 @@ jobject JyNI_ ## pref ## _ ## name (jlong o1, jobject o2, jlong tstate) \
 #define PyNumberMethod3(name) \
 jobject JyNI_PyNumber_ ## name (jlong o1, jobject o2, jobject o3, jlong tstate) \
 { \
+	PyObject* arg2, *arg3, *res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* arg2 = JyNI_PyObject_FromJythonPyObject(o2); \
-	PyObject* arg3 = JyNI_PyObject_FromJythonPyObject(o3); \
-	PyObject* res = PyNumber_ ## name ((PyObject*) o1, arg2, arg3); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	arg2 = JyNI_PyObject_FromJythonPyObject(o2); \
+	arg3 = JyNI_PyObject_FromJythonPyObject(o3); \
+	res = PyNumber_ ## name ((PyObject*) o1, arg2, arg3); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(arg2); \
 	Py_XDECREF(arg3); \
 	Py_XDECREF(res); \
@@ -98,9 +104,11 @@ jint JyNI_ ## prefix ## _Length(jlong o, jlong tstate) \
 #define PySequenceSizeArgFunc(name) \
 jobject JyNI_PySequence_ ## name (jlong o, jint l, jlong tstate) \
 { \
+	PyObject* res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* res = PySequence_ ## name ((PyObject*) o, l); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	res = PySequence_ ## name ((PyObject*) o, l); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
 	return jres; \
@@ -265,9 +273,12 @@ jobject JyNI_PySequence_GetSlice(jlong o, jint l1, jint l2, jlong tstate)
 
 jint JyNI_PySequence_SetItem(jlong o1, jint l, jobject o2, jlong tstate)
 {
+	PyObject* arg;
+	jint res;
+
 	ENTER_JyNI
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2);
-	jint res = PySequence_SetItem((PyObject*) o1, l, arg);
+	arg = JyNI_PyObject_FromJythonPyObject(o2);
+	res = PySequence_SetItem((PyObject*) o1, l, arg);
 	Py_XDECREF(arg);
 	LEAVE_JyNI
 	return res;
@@ -275,9 +286,12 @@ jint JyNI_PySequence_SetItem(jlong o1, jint l, jobject o2, jlong tstate)
 
 jint JyNI_PySequence_SetSlice(jlong o1, jint l1, jint l2, jobject o2, jlong tstate)
 {
+	PyObject* arg;
+	jint res;
+
 	ENTER_JyNI
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2);
-	jint res = PySequence_SetSlice((PyObject*) o1, l1, l2, arg);
+	arg = JyNI_PyObject_FromJythonPyObject(o2);
+	res = PySequence_SetSlice((PyObject*) o1, l1, l2, arg);
 	Py_XDECREF(arg);
 	LEAVE_JyNI
 	return res;
@@ -287,6 +301,7 @@ jint JyNI_PySequence_Contains(jlong o1, jobject o2, jlong tstate)
 {
 	jint res;
 	PyObject* arg;
+
 	RE_ENTER_JyNI
 	arg = JyNI_PyObject_FromJythonPyObject(o2);
 	res = PySequence_Contains((PyObject*) o1, arg);

@@ -1882,10 +1882,10 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 	 * Heap-types are treated like ordinary objects.
 	 * Note: Don't confuse the following line with checking op->ob_type rather than op itself.
 	 */
-	env(NULL);
 	{ // env-area
 		JyObject* jy;
 		TypeMapEntry* tme;
+		env(NULL);
 		if (PyType_Check(op) && !PyType_HasFeature((PyTypeObject*) op, Py_TPFLAGS_HEAPTYPE))
 		{
 			if (PyExceptionClass_Check(op))
