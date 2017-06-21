@@ -189,10 +189,12 @@ static inline ssize_t getPosForInsert(void* ptr)
 //	printf("%i %i\n", pos, pos);
 	if (ptrTable[pos].ptr == ptr) return pos;
 	else if (!ptrTable[pos].ptr) return ~pos;
-	else if (ptrTable[pos].ptr == delDummy && freePos == -1)
+	else if (ptrTable[pos].ptr == delDummy && freePos == -1) {
+		freePos = pos;
+	}
+
 	{
 		int rehash = 1;
-		freePos = pos;
 		++collisions;
 		//printf("rehash %i over %i\n", ptr, ptrTable[pos].ptr);
 		pos = rehash_func(ptr, rehash, pos);
