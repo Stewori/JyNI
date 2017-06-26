@@ -694,33 +694,47 @@ jmethodID exceptions_UnicodeTranslateError__str__;
 inline jint initJNI(JNIEnv *env)
 {
 	JNI_CLASS(object)
-	JNI_METH_CLASS(object, toString, string)
-	JNI_METH_CLASS(object, getClass, class)
-	JNI_METH_CLASS(object, hashCode, int)
+	{
+		JNI_METH_CLASS(object, toString, string)
+		JNI_METH_CLASS(object, getClass, class)
+		JNI_METH_CLASS(object, hashCode, int)
+	}
 
 	JNI_CLASS(class)
-	JNI_METH_CLASS(class, equals, boolean, object);
+	{
+		JNI_METH_CLASS(class, equals, boolean, object)
+	}
 
 	JNI_CLASS(string)
-	JNI_CONSTRUCTOR(string, fromBytesAndCharsetNameConstructor, byte array, string)
-	JNI_METH_CLASS(string, toUpperCase, string)
-	JNI_METH_CLASS(string, getBytes, byte array, string)
-	JNI_METH_CLASS(string, intern, string)
+	{
+		JNI_CONSTRUCTOR(string, fromBytesAndCharsetNameConstructor, byte array, string)
+		JNI_METH_CLASS(string, toUpperCase, string)
+		JNI_METH_CLASS(string, getBytes, byte array, string)
+		JNI_METH_CLASS(string, intern, string)
+	}
 
 	JNI_CLASS(bigInt)
-	JNI_CONSTRUCTOR(bigInt, fromByteArrayConstructor, byte array)
-	JNI_METH_CLASS(bigInt, toByteArray, byte array)
+	{
+		JNI_CONSTRUCTOR(bigInt, fromByteArrayConstructor, byte array)
+		JNI_METH_CLASS(bigInt, toByteArray, byte array)
+	}
 
 	JNI_CLASS(arrayList)
-	JNI_CONSTRUCTOR(arrayList, Constructor, int)
+	{
+		JNI_CONSTRUCTOR(arrayList, Constructor, int)
+	}
 
-	jclass collectionClass = (*env)->FindClass(env, pack_collection);
-	JNI_METH_CLASS(collection, size, int)
-	(*env)->DeleteLocalRef(env, collectionClass);
+	{
+		jclass collectionClass = (*env)->FindClass(env, pack_collection);
+		JNI_METH_CLASS(collection, size, int)
+		(*env)->DeleteLocalRef(env, collectionClass);
+	}
 
-	jclass listClass = (*env)->FindClass(env, pack_list);
-	JNI_METH_CLASS(list, add, boolean, object)
-	(*env)->DeleteLocalRef(env, listClass);
+	{
+		jclass listClass = (*env)->FindClass(env, pack_list);
+		JNI_METH_CLASS(list, add, boolean, object)
+		(*env)->DeleteLocalRef(env, listClass);
+	}
 
 	return JNI_VERSION_1_2;
 }
@@ -862,21 +876,25 @@ inline jint initJyNI(JNIEnv *env)
 	JNI_FIELD(pyCPeerType, objectHandle, long)
 	JNI_FIELD(pyCPeerType, refHandle, long)
 
-	jclass traversableGCHeadInterface = (*env)->FindClass(env, pack_traversableGCHead);
-	JNI_METH_INTERFACE(traversableGCHead, setLinks, void, object)
-	JNI_METH_INTERFACE(traversableGCHead, setLink, int, int, jyGCHead)
-	JNI_METH_INTERFACE(traversableGCHead, insertLink, int, int, jyGCHead)
-	JNI_METH_INTERFACE(traversableGCHead, clearLink, int, int)
-	JNI_METH_INTERFACE(traversableGCHead, clearLinksFromIndex, int, int)
-	JNI_METH_INTERFACE(traversableGCHead, ensureSize, void, int)
-	(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
+	{
+		jclass traversableGCHeadInterface = (*env)->FindClass(env, pack_traversableGCHead);
+		JNI_METH_INTERFACE(traversableGCHead, setLinks, void, object)
+		JNI_METH_INTERFACE(traversableGCHead, setLink, int, int, jyGCHead)
+		JNI_METH_INTERFACE(traversableGCHead, insertLink, int, int, jyGCHead)
+		JNI_METH_INTERFACE(traversableGCHead, clearLink, int, int)
+		JNI_METH_INTERFACE(traversableGCHead, clearLinksFromIndex, int, int)
+		JNI_METH_INTERFACE(traversableGCHead, ensureSize, void, int)
+		(*env)->DeleteLocalRef(env, traversableGCHeadInterface);
+	}
 
 	JNI_CLASS(jyGCHead)
 	JNI_METH_CLASS(jyGCHead, getHandle, long)
 
-	jclass pyObjectGCHeadInterface = (*env)->FindClass(env, pack_pyObjectGCHead);
-	JNI_METH_INTERFACE(pyObjectGCHead, setPyObject, void, pyObject)
-	(*env)->DeleteLocalRef(env, pyObjectGCHeadInterface);
+	{
+		jclass pyObjectGCHeadInterface = (*env)->FindClass(env, pack_pyObjectGCHead);
+		JNI_METH_INTERFACE(pyObjectGCHead, setPyObject, void, pyObject)
+		(*env)->DeleteLocalRef(env, pyObjectGCHeadInterface);
+	}
 
 	JNI_INTERFACE1(cPeer)
 
@@ -1190,19 +1208,21 @@ inline jint initJythonObjects(JNIEnv *env)
 //	JNI_CLASS(pyFastSequenceIter)
 //	JNI_CLASS(pyReversedIterator)
 
-	jclass pyBaseSetClass = (*env)->FindClass(env, pack_baseSet);
-	JNI_FIELD(pyBaseSet, _set, set)
-	JNI_METH_CLASS(pyBaseSet, _update, void, pyObject)
-	JNI_METH_CLASS(pyBaseSet, baseset_issubset, pyObject, pyObject)
-	JNI_METH_CLASS(pyBaseSet, baseset_issuperset, pyObject, pyObject)
-	JNI_METH_CLASS(pyBaseSet, baseset_isdisjoint, pyObject, pyObject)
-	JNI_METH_CLASS(pyBaseSet, baseset_difference, pyObject, pyObject)
-	JNI_METH_CLASS2(pyBaseSet, baseset_difference, baseset_differenceMulti,
-			pyObject, pyObject array)
-	JNI_METH_CLASS(pyBaseSet, baseset_symmetric_difference, pyObject, pyObject)
-	JNI_METH_CLASS(pyBaseSet, baseset_intersection, pyObject, pyObject)
-	JNI_METH_CLASS(pyBaseSet, baseset___contains__, boolean, pyObject)
-	(*env)->DeleteLocalRef(env, pyBaseSetClass);
+	{
+		jclass pyBaseSetClass = (*env)->FindClass(env, pack_baseSet);
+		JNI_FIELD(pyBaseSet, _set, set)
+		JNI_METH_CLASS(pyBaseSet, _update, void, pyObject)
+		JNI_METH_CLASS(pyBaseSet, baseset_issubset, pyObject, pyObject)
+		JNI_METH_CLASS(pyBaseSet, baseset_issuperset, pyObject, pyObject)
+		JNI_METH_CLASS(pyBaseSet, baseset_isdisjoint, pyObject, pyObject)
+		JNI_METH_CLASS(pyBaseSet, baseset_difference, pyObject, pyObject)
+		JNI_METH_CLASS2(pyBaseSet, baseset_difference, baseset_differenceMulti,
+				pyObject, pyObject array)
+		JNI_METH_CLASS(pyBaseSet, baseset_symmetric_difference, pyObject, pyObject)
+		JNI_METH_CLASS(pyBaseSet, baseset_intersection, pyObject, pyObject)
+		JNI_METH_CLASS(pyBaseSet, baseset___contains__, boolean, pyObject)
+		(*env)->DeleteLocalRef(env, pyBaseSetClass);
+	}
 
 	JNI_CLASS(pySet)
 	JNI_CONSTRUCTOR(pySet, fromIterableConstructor, pyObject)
@@ -1232,19 +1252,23 @@ inline jint initJythonObjects(JNIEnv *env)
 	JNI_CLASS(pyWeakProxy)
 	JNI_CLASS(pyWeakCallableProxy)
 
-	jclass pyCodeClass = (*env)->FindClass(env, pack_pyCode);
-	JNI_FIELD(pyCode, co_name, string)
-	(*env)->DeleteLocalRef(env, pyCodeClass);
+	{
+		jclass pyCodeClass = (*env)->FindClass(env, pack_pyCode);
+		JNI_FIELD(pyCode, co_name, string)
+		(*env)->DeleteLocalRef(env, pyCodeClass);
+	}
 
-	jclass pyBaseCodeClass = (*env)->FindClass(env, pack_pyBaseCode);
-	JNI_FIELD(pyBaseCode, co_argcount, int)
-	JNI_FIELD(pyBaseCode, co_cellvars, string array)
-	JNI_FIELD(pyBaseCode, co_filename, string)
-	JNI_FIELD(pyBaseCode, co_firstlineno, int)
-	JNI_FIELD(pyBaseCode, co_freevars, string array)
-	JNI_FIELD(pyBaseCode, co_nlocals, int)
-	JNI_FIELD(pyBaseCode, co_varnames, string array)
-	(*env)->DeleteLocalRef(env, pyBaseCodeClass);
+	{
+		jclass pyBaseCodeClass = (*env)->FindClass(env, pack_pyBaseCode);
+		JNI_FIELD(pyBaseCode, co_argcount, int)
+		JNI_FIELD(pyBaseCode, co_cellvars, string array)
+		JNI_FIELD(pyBaseCode, co_filename, string)
+		JNI_FIELD(pyBaseCode, co_firstlineno, int)
+		JNI_FIELD(pyBaseCode, co_freevars, string array)
+		JNI_FIELD(pyBaseCode, co_nlocals, int)
+		JNI_FIELD(pyBaseCode, co_varnames, string array)
+		(*env)->DeleteLocalRef(env, pyBaseCodeClass);
+	}
 
 	JNI_CLASS(pyBytecode)
 	JNI_CONSTRUCTOR(pyBytecode, Constructor, int, int, int, int, string, pyObject array,
@@ -1381,8 +1405,8 @@ static inline void patchJythonStructModule(JNIEnv *env)
 //JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 jint JyNI_init(JavaVM *jvm)
 {
-	java = jvm; // cache the JavaVM pointer
 	JNIEnv *env;
+	java = jvm; // cache the JavaVM pointer
 
 	if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_2)) {
 		return JNI_ERR; // JNI version not supported
@@ -1409,6 +1433,7 @@ jint JyNI_init(JavaVM *jvm)
 
 void JyNI_unload(JavaVM *jvm)
 {
+	int i;
 	jputs("JyNI_unload");
 	PyString_Fini();
 	PyInt_Fini();
@@ -1417,7 +1442,6 @@ void JyNI_unload(JavaVM *jvm)
 	PyCFunction_Fini();
 	PySet_Fini();
 
-	int i;
 	for (i = 0; i < builtinTypeCount; ++i)
 	{
 		if (builtinTypes[i].sync != NULL) free(builtinTypes[i].sync);
@@ -1425,17 +1449,18 @@ void JyNI_unload(JavaVM *jvm)
 	}
 
 	//free(specialPyInstance.sync);
+	{
+		env();
+		(*env)->DeleteWeakGlobalRef(env, JyNone);
+		(*env)->DeleteWeakGlobalRef(env, JyNotImplemented);
+		(*env)->DeleteWeakGlobalRef(env, JyEllipsis);
+		(*env)->DeleteWeakGlobalRef(env, JyEmptyFrozenSet);
+		(*env)->DeleteWeakGlobalRef(env, JyEmptyString);
+		(*env)->DeleteWeakGlobalRef(env, JyEmptyUnicode);
+		(*env)->DeleteWeakGlobalRef(env, JyTrue);
+		(*env)->DeleteWeakGlobalRef(env, JyFalse);
 
-	env();
-	(*env)->DeleteWeakGlobalRef(env, JyNone);
-	(*env)->DeleteWeakGlobalRef(env, JyNotImplemented);
-	(*env)->DeleteWeakGlobalRef(env, JyEllipsis);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyFrozenSet);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyString);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyUnicode);
-	(*env)->DeleteWeakGlobalRef(env, JyTrue);
-	(*env)->DeleteWeakGlobalRef(env, JyFalse);
-
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyStringArray);
-	(*env)->DeleteWeakGlobalRef(env, JyEmptyPyObjectArray);
+		(*env)->DeleteWeakGlobalRef(env, JyEmptyStringArray);
+		(*env)->DeleteWeakGlobalRef(env, JyEmptyPyObjectArray);
+	}
 }

@@ -38,6 +38,10 @@
 #ifndef INCLUDE_JNI_UTIL_H_
 #define INCLUDE_JNI_UTIL_H_
 
+// EXPAND is required by MSVC, see https://stackoverflow.com/a/5134656
+// It is used frequently in this file to fix parsing of __VA_ARGS__.
+#define EXPAND(x) x
+
 #define obj_sig(cls) "L" pack_ ## cls ";"
 
 #define __JNI_ , ,
@@ -79,7 +83,7 @@
 #define array__JNI_j(x) , JNI_tp1(x)Array
 
 #define CHECK_N(x, y, n, ...) n
-#define CHECK(x, ...) CHECK_N(x, __VA_ARGS__, x)
+#define CHECK(x, ...) EXPAND(CHECK_N(x, __VA_ARGS__, x))
 
 #define JNI_sig0(x) CHECK(obj_sig(x), __JNI_ ## x)
 
@@ -91,29 +95,31 @@
 
 // Yes there are hacks to achieve true recursion, but here we simply limit
 // to a handful of args - trade completeness for maintainability
-#define JNI_sigN(arg, ...) JNI_sig(arg) JNI_sigN2(__VA_ARGS__)
-#define JNI_sigN2(arg, ...) JNI_sig(arg) JNI_sigN3(__VA_ARGS__)
-#define JNI_sigN3(arg, ...) JNI_sig(arg) JNI_sigN4(__VA_ARGS__)
-#define JNI_sigN4(arg, ...) JNI_sig(arg) JNI_sigN5(__VA_ARGS__)
-#define JNI_sigN5(arg, ...) JNI_sig(arg) JNI_sigN6(__VA_ARGS__)
-#define JNI_sigN6(arg, ...) JNI_sig(arg) JNI_sigN7(__VA_ARGS__)
-#define JNI_sigN7(arg, ...) JNI_sig(arg) JNI_sigN8(__VA_ARGS__)
-#define JNI_sigN8(arg, ...) JNI_sig(arg) JNI_sigN9(__VA_ARGS__)
-#define JNI_sigN9(arg, ...) JNI_sig(arg) JNI_sigN10(__VA_ARGS__)
-#define JNI_sigN10(arg, ...) JNI_sig(arg) JNI_sigN11(__VA_ARGS__)
-#define JNI_sigN11(arg, ...) JNI_sig(arg) JNI_sigN12(__VA_ARGS__)
-#define JNI_sigN12(arg, ...) JNI_sig(arg) JNI_sigN13(__VA_ARGS__)
-#define JNI_sigN13(arg, ...) JNI_sig(arg) JNI_sigN14(__VA_ARGS__)
-#define JNI_sigN14(arg, ...) JNI_sig(arg) JNI_sigN15(__VA_ARGS__)
+#define JNI_sigN(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN2(__VA_ARGS__))
+#define JNI_sigN2(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN3(__VA_ARGS__))
+#define JNI_sigN3(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN4(__VA_ARGS__))
+#define JNI_sigN4(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN5(__VA_ARGS__))
+#define JNI_sigN5(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN6(__VA_ARGS__))
+#define JNI_sigN6(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN7(__VA_ARGS__))
+#define JNI_sigN7(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN8(__VA_ARGS__))
+#define JNI_sigN8(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN9(__VA_ARGS__))
+#define JNI_sigN9(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN10(__VA_ARGS__))
+#define JNI_sigN10(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN11(__VA_ARGS__))
+#define JNI_sigN11(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN12(__VA_ARGS__))
+#define JNI_sigN12(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN13(__VA_ARGS__))
+#define JNI_sigN13(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN14(__VA_ARGS__))
+#define JNI_sigN14(arg, ...) JNI_sig(arg) EXPAND(JNI_sigN15(__VA_ARGS__))
 #define JNI_sigN15(arg, ...) JNI_sig(arg)
 
-#define JNI_sigM(ret, ...) "(" JNI_sigN(__VA_ARGS__) ")" JNI_sig(ret)
+#define JNI_sigM(ret, ...) "(" EXPAND(JNI_sigN(__VA_ARGS__)) ")" JNI_sig(ret)
 
 #define JNI_CLS(cPrefix, cls, jPath) \
-	jclass cPrefix ## cls ## Local = (*env)->FindClass(env, jPath); \
-	if (cPrefix ## cls ## Local == NULL) { puts(jPath); return JNI_ERR;} \
-	cPrefix ## cls = (jclass) (*env)->NewWeakGlobalRef(env, cPrefix ## cls ## Local); \
-	(*env)->DeleteLocalRef(env, cPrefix ## cls ## Local);
+	{ \
+		jclass cPrefix ## cls ## Local = (*env)->FindClass(env, jPath); \
+		if (cPrefix ## cls ## Local == NULL) { puts(jPath); return JNI_ERR;} \
+		cPrefix ## cls = (jclass) (*env)->NewWeakGlobalRef(env, cPrefix ## cls ## Local); \
+		(*env)->DeleteLocalRef(env, cPrefix ## cls ## Local); \
+	}
 
 #define JNI_CLASS(cPrefix) JNI_CLS(cPrefix, Class, pack_ ## cPrefix)
 #define JNI_INTERFACE(cPrefix, jPath) JNI_CLS(cPrefix, Interface, jPath)
@@ -147,12 +153,16 @@
 	classID ## _ ## cName = (*env)->GetMethodID(env, classID ## Class, "<init>", JNI_sigM(void, __VA_ARGS__));
 
 #define JNI_SINGLETON(classID, name, tp) \
-	jfieldID jy ## name = (*env)->GetStaticFieldID(env, classID ## Class, #name, JNI_sig(tp)); \
-	Jy ## name = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, classID ## Class, jy ## name));
+	{ \
+		jfieldID jy ## name = (*env)->GetStaticFieldID(env, classID ## Class, #name, JNI_sig(tp)); \
+		Jy ## name = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, classID ## Class, jy ## name)); \
+	}
 
 #define JNI_SINGLETON2(classID, name, cName, tp) \
-	jfieldID jy ## name = (*env)->GetStaticFieldID(env, classID ## Class, #name, JNI_sig(tp)); \
-	Jy ## cName = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, classID ## Class, jy ## name));
+	{ \
+		jfieldID jy ## name = (*env)->GetStaticFieldID(env, classID ## Class, #name, JNI_sig(tp)); \
+		Jy ## cName = (*env)->NewWeakGlobalRef(env, (*env)->GetStaticObjectField(env, classID ## Class, jy ## name)); \
+	}
 
 #define CallobjectMethod CallObjectMethod
 #define jObject jobject
