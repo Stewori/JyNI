@@ -83,8 +83,8 @@ jobject JyList_set(JNIEnv *env, jclass class, jlong handle, jint index, jobject 
 //	jputsLong(handle);
 //	jputsLong(index);
 	jobject old = JyNI_JythonPyObject_FromPyObject(PyList_GET_ITEM((PyObject*) handle, index));
-	Py_XDECREF(PyList_GET_ITEM((PyObject*) handle, index));
 	PyObject* op = (PyObject*) pyObj;
+	Py_XDECREF(PyList_GET_ITEM((PyObject*) handle, index));
 	if (op) Py_INCREF(op);
 	else op = JyNI_PyObject_FromJythonPyObject(obj);
 	//PyList_SetItem((PyObject*) handle, index, op);
