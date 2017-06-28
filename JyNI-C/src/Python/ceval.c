@@ -642,9 +642,9 @@ Py_SetRecursionLimitNative(int new_limit)
 void
 Py_SetRecursionLimit(int new_limit)
 {
+	env();
 	Py_SetRecursionLimitNative(new_limit);
 	/* set Jython's recursion limit here too: */
-	env();
 	(*env)->CallStaticIntMethod(env, JyTStateClass,
 				JyTState_setRecursionLimit, new_limit);
 	(*env)->SetStaticIntField(env, JyTStateClass,

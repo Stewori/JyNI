@@ -705,6 +705,22 @@ inline void initBuiltinTypes()
 //		builtinTypes[i].truncate_trailing = 0;
 //		builtinTypes[i].type_name = NULL;
 //	}
+//	PyNone_Type;
+//	PyNotImplemented_Type;
+//	Pyrangeiter_Type; /* jython uses PySequenceIter. */
+//	PyTupleIter_Type; /* jython uses PyFastSequenceIter. */
+//	PyListIter_Type; /* jython uses PyFastSequenceIter. */
+//	PyListRevIter_Type; /* jython uses PyReversedSequenceIter. */
+//	PySetIter_Type; /* jython uses inline subclass of PyIterator. */
+//	PyMethodDescr_Type;
+//	PyClassMethodDescr_Type;
+	PyTraceBack_Type.ob_type = &PyType_Type;
+//	Long_InfoType;
+//	FloatInfoType;
+//	EncodingMapType;
+//	wrappertype;
+//	cmpwrapper_type;
+//	sortwrapper_type;
 
 	builtinTypes[TME_INDEX_Type].py_type = &PyType_Type;
 	builtinTypes[TME_INDEX_Type].jy_class = pyTypeClass;

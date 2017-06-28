@@ -197,12 +197,14 @@ PyErr_GivenExceptionMatches(PyObject *err, PyObject *exc)
 	if (err == NULL || exc == NULL) {
 		/* maybe caused by "import exceptions" that failed early on */
 		return 0;
+	} else {
+		jobject pyExc;
+		env(-1);
+		pyExc = (*env)->NewObject(env, pyExceptionClass, pyException_typeConstructor,
+			JyNI_JythonPyObject_FromPyObject(err));
+		return (*env)->CallBooleanMethod(env, pyExc, pyException_match,
+			JyNI_JythonPyObject_FromPyObject(exc));
 	}
-	env(-1);
-	jobject pyExc = (*env)->NewObject(env, pyExceptionClass, pyException_typeConstructor,
-		JyNI_JythonPyObject_FromPyObject(err));
-	return (*env)->CallBooleanMethod(env, pyExc, pyException_match,
-		JyNI_JythonPyObject_FromPyObject(exc));
 
 //	if (PyTuple_Check(exc)) {
 //		Py_ssize_t i, n;
@@ -272,25 +274,26 @@ PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 	if (*exc == NULL) {
 		/* There was no exception, so nothing to do. */
 		return;
+	} else {
+		jobject pyExc;
+		env();
+		pyExc = (*env)->NewObject(env, pyExceptionClass, pyException_fullConstructor,
+			JyNI_JythonPyObject_FromPyObject(*exc),
+			JyNI_JythonPyObject_FromPyObject(*val),
+			JyNI_JythonPyObject_FromPyObject(*tb));
+	//	if (!(*exc)->ob_type) {
+	//		puts("exc ob_type is still null");
+	//	} else
+	//		puts((*exc)->ob_type->tp_name);
+	//	jputs("old val:");
+	//	if (*val && PyString_CheckExact(*val)) jputs(PyString_AS_STRING(*val));
+	//	else jputs("val null");
+		(*env)->CallVoidMethod(env, pyExc, pyException_normalize);
+
+		*exc = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyException_typeField));
+		*val = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyException_valueField));
+		*tb = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyException_tracebackField));
 	}
-
-	env();
-	jobject pyExc = (*env)->NewObject(env, pyExceptionClass, pyException_fullConstructor,
-		JyNI_JythonPyObject_FromPyObject(*exc),
-		JyNI_JythonPyObject_FromPyObject(*val),
-		JyNI_JythonPyObject_FromPyObject(*tb));
-//	if (!(*exc)->ob_type) {
-//		puts("exc ob_type is still null");
-//	} else
-//		puts((*exc)->ob_type->tp_name);
-//	jputs("old val:");
-//	if (*val && PyString_CheckExact(*val)) jputs(PyString_AS_STRING(*val));
-//	else jputs("val null");
-	(*env)->CallVoidMethod(env, pyExc, pyException_normalize);
-
-	*exc = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyException_typeField));
-	*val = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyException_valueField));
-	*tb = JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, pyExc, pyException_tracebackField));
 
 //	PyObject *type = *exc;
 //	PyObject *value = *val;
@@ -785,50 +788,53 @@ PyErr_NewException(char *name, PyObject *base, PyObject *dict)
 	//puts("enter JNI part of exception creation...");
 	/* Create a real new-style class. */
 	//TODO clean this up. There should be a method to create objects like is done below.
-	env(NULL);
-	jobject jbases = (*env)->NewObjectArray(env,
-			PyTuple_GET_SIZE(bases),
-			pyObjectClass, NULL);
-	if ((*env)->ExceptionCheck(env))
-	{
-		jputs("Exception on creating jbases call:");
-		jobject exc = (*env)->ExceptionOccurred(env);
-		JyNI_jprintJ(exc);
-		(*env)->ExceptionClear(env);
+	{ // env-area
+		int i;
+		jobject jbases, jres;
+		env(NULL);
+		jbases = (*env)->NewObjectArray(env,
+				PyTuple_GET_SIZE(bases),
+				pyObjectClass, NULL);
+		if ((*env)->ExceptionCheck(env))
+		{
+			jobject exc = (*env)->ExceptionOccurred(env);
+			jputs("Exception on creating jbases call:");
+			JyNI_jprintJ(exc);
+			(*env)->ExceptionClear(env);
+		}
+		for (i = 0; i < PyTuple_GET_SIZE(bases); ++i)
+			(*env)->SetObjectArrayElement(env, jbases, i, JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(bases, i)));
+		if ((*env)->ExceptionCheck(env))
+		{
+			jobject exc = (*env)->ExceptionOccurred(env);
+			jputs("Exception on storing in jbases call:");
+			JyNI_jprintJ(exc);
+			(*env)->ExceptionClear(env);
+		}
+	//	jputs("PyErrNewException:");
+	//	if (name) jputs(name);
+	//	else jputs("name is NULL");
+		jres = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_makeClass,
+			(*env)->NewStringUTF(env, name), jbases, JyNI_JythonPyObject_FromPyObject(dict));
+		if ((*env)->ExceptionCheck(env))
+		{
+	//		jputs("Exception on makeClass call:");
+			jobject exc = (*env)->ExceptionOccurred(env);
+	//		JyNI_jprintJ(exc);
+			(*env)->ExceptionClear(env);
+		}
+	//	jputs(__FUNCTION__);
+	//	jputs(name);
+	//	JyNI_jprintJ(jres);
+	//	JyNI_printJInfo(jres);
+		//result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO", dot+1, bases, dict);
+		result = JyNI_PyObject_FromJythonPyObject(jres);
+	//	jputs("New exception created:");
+	//	jputs(name);
+	//	jputsLong(PyType_HasFeature(((PyTypeObject*) result)->ob_type, Py_TPFLAGS_HEAPTYPE));
+	//	jputs("control name");
+	//	jputs(((PyTypeObject*) result)->tp_name);
 	}
-	int i;
-	for (i = 0; i < PyTuple_GET_SIZE(bases); ++i)
-		(*env)->SetObjectArrayElement(env, jbases, i, JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(bases, i)));
-	if ((*env)->ExceptionCheck(env))
-	{
-		jputs("Exception on storing in jbases call:");
-		jobject exc = (*env)->ExceptionOccurred(env);
-		JyNI_jprintJ(exc);
-		(*env)->ExceptionClear(env);
-	}
-//	jputs("PyErrNewException:");
-//	if (name) jputs(name);
-//	else jputs("name is NULL");
-	jobject jres = (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_makeClass,
-		(*env)->NewStringUTF(env, name), jbases, JyNI_JythonPyObject_FromPyObject(dict));
-	if ((*env)->ExceptionCheck(env))
-	{
-//		jputs("Exception on makeClass call:");
-		jobject exc = (*env)->ExceptionOccurred(env);
-//		JyNI_jprintJ(exc);
-		(*env)->ExceptionClear(env);
-	}
-//	jputs(__FUNCTION__);
-//	jputs(name);
-//	JyNI_jprintJ(jres);
-//	JyNI_printJInfo(jres);
-	//result = PyObject_CallFunction((PyObject *)&PyType_Type, "sOO", dot+1, bases, dict);
-	result = JyNI_PyObject_FromJythonPyObject(jres);
-//	jputs("New exception created:");
-//	jputs(name);
-//	jputsLong(PyType_HasFeature(((PyTypeObject*) result)->ob_type, Py_TPFLAGS_HEAPTYPE));
-//	jputs("control name");
-//	jputs(((PyTypeObject*) result)->tp_name);
 
   failure:
 	Py_XDECREF(bases);

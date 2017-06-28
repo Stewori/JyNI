@@ -60,8 +60,9 @@ void JyRefMonitor_addAction(jshort action, PyObject* op, JyObject* object,
 void JyRefMonitor_addAction2(jshort action, JyObject* object, JyObject* object2, size_t size,
 		const char* type, const char* function, const char* file, jint line)
 {
+	jobject nativeAction;
 	env();
-	jobject nativeAction = (*env)->NewObject(env, NativeActionClass, NativeAction_constructor);
+	nativeAction = (*env)->NewObject(env, NativeActionClass, NativeAction_constructor);
 	(*env)->SetShortField(env, nativeAction, NativeAction_actionField, action);
 	(*env)->SetIntField(env, nativeAction, NativeAction_cLineField, line);
 

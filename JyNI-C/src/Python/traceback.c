@@ -39,7 +39,7 @@
 #include "frameobject_JyNI.h"
 #include "structmember_JyNI.h"
 //#include "osdefs.h"
-//#include "traceback.h"
+#include "traceback_JyNI.h"
 
 //#define OFF(x) offsetof(PyTracebackObject, x)
 //
@@ -79,7 +79,7 @@ tb_dealloc(PyTracebackObject *tb)
 //}
 
 PyTypeObject PyTraceBack_Type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
+	PyVarObject_HEAD_INIT(NULL, 0) //&PyType_Type, 0)
 	"traceback",
 	sizeof(PyTracebackObject),
 	0,
@@ -140,9 +140,10 @@ PyTraceBack_Here(PyFrameObject *frame)
 {
 //	jputs(__FUNCTION__);
 	PyThreadState *tstate = PyThreadState_GET();
-	PyTracebackObject *oldtb = (PyTracebackObject *) tstate->curexc_traceback;
+	PyTracebackObject *tb, *oldtb = (PyTracebackObject *) tstate->curexc_traceback;
+	jobject new_tb;
 	env(-1);
-	jobject new_tb = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_PyTraceBack_Here,
+	new_tb = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_PyTraceBack_Here,
 			JyNI_JythonPyObject_FromPyObject(frame), TS_GET_JY(tstate));
 	if ((*env)->IsSameObject(env, new_tb, NULL))
 	{
@@ -150,7 +151,7 @@ PyTraceBack_Here(PyFrameObject *frame)
 			(*env)->ExceptionDescribe(env);
 	}
 //	PyTracebackObject *tb = newtracebackobject(oldtb, frame);
-	PyTracebackObject* tb = (PyTracebackObject*) JyNI_PyObject_FromJythonPyObject(new_tb);
+	tb = (PyTracebackObject*) JyNI_PyObject_FromJythonPyObject(new_tb);
 	if (tb == NULL)
 		return -1;
 	tstate->curexc_traceback = (PyObject *)tb;
