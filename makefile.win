@@ -65,7 +65,7 @@ INCLUDES = /I $(PYTHON_HOME)\include /I $(VC_Python)\VC\Include /I $(VC_Python)\
 #LIBS = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\libcmt.lib $(VC_Python)\VC\lib\OLDNAMES.lib $(VC_Python)\WinSDK\lib\Kernel32.lib
 LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\amd64\libcmt.lib $(VC_Python)\VC\lib\amd64\OLDNAMES.lib $(VC_Python)\WinSDK\lib\x64\Kernel32.lib
 
-CFLAGS = /w $(INCLUDES)
+CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
 JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
 
