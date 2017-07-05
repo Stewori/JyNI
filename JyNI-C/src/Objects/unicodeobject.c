@@ -430,6 +430,7 @@ void unicode_dealloc(register PyUnicodeObject *unicode)
 	JyNIDebugOp(JY_NATIVE_FINALIZE, unicode, -1);
 	if (PyUnicode_CheckExact(unicode) &&
 		numfree < PyUnicode_MAXFREELIST) {
+		JyObject* jy;
 		/* Keep-Alive optimization */
 		if (unicode->length >= KEEPALIVE_SIZE_LIMIT) {
 			//PyObject_DEL(unicode->str);
@@ -445,7 +446,7 @@ void unicode_dealloc(register PyUnicodeObject *unicode)
 		free_list = unicode;
 		numfree++;
 		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, unicode, -1);
-		JyObject* jy = AS_JY_NO_GC(unicode);
+		jy = AS_JY_NO_GC(unicode);
 		JyNI_CleanUp_JyObject(jy);
 	}
 	else {
@@ -6354,25 +6355,27 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 	*/
 	if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError))
 		return NULL;
-	PyErr_Clear();
-	const char *text = (op == Py_EQ) ?
-	   "Unicode equal comparison "
-	   "failed to convert both arguments to Unicode - "
-	   "interpreting them as being unequal" :
-	   "Unicode unequal comparison "
-	   "failed to convert both arguments to Unicode - "
-	   "interpreting them as being unequal";
-	env(NULL);
-	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_raiseUnicodeWarning, (*env)->NewStringUTF(env, text));
-	if ((*env)->ExceptionCheck(env))
-	{
-		(*env)->ExceptionClear(env);
-		return NULL;
+	else {
+		const char *text = (op == Py_EQ) ?
+		   "Unicode equal comparison "
+		   "failed to convert both arguments to Unicode - "
+		   "interpreting them as being unequal" :
+		   "Unicode unequal comparison "
+		   "failed to convert both arguments to Unicode - "
+		   "interpreting them as being unequal";
+		env(NULL);
+		PyErr_Clear();
+		(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_raiseUnicodeWarning, (*env)->NewStringUTF(env, text));
+		if ((*env)->ExceptionCheck(env))
+		{
+			(*env)->ExceptionClear(env);
+			return NULL;
+		}
+		if (PyErr_Warn(PyExc_UnicodeWarning, text) < 0)
+			return NULL;
+		result = (op == Py_NE);
+		return PyBool_FromLong(result);
 	}
-	if (PyErr_Warn(PyExc_UnicodeWarning, text) < 0)
-		return NULL;
-	result = (op == Py_NE);
-	return PyBool_FromLong(result);
 }
 
 int PyUnicode_Contains(PyObject *container,

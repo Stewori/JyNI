@@ -242,30 +242,31 @@ PyBuffer_New(Py_ssize_t size)
 	if (sizeof(*b) > PY_SSIZE_T_MAX - size) {
 		/* unlikely */
 		return PyErr_NoMemory();
+	} else {
+		/* Inline PyObject_New */
+	//	o = (PyObject *)PyObject_MALLOC(sizeof(*b) + size);
+	//	if ( o == NULL )
+	//		return PyErr_NoMemory();
+		JyObject* jy = PyObject_RawMalloc(sizeof(*b) + size + sizeof(JyObject));
+		if ( jy == NULL )
+			return PyErr_NoMemory();
+		jy->attr = NULL;
+		jy->jy = NULL;
+		jy->flags = JY_CPEER_FLAG_MASK;
+
+		o = FROM_JY_NO_GC(jy);
+		b = (PyBufferObject *) PyObject_INIT(o, &PyBuffer_Type);
+		JyNIDebug(JY_NATIVE_ALLOC, o, jy, sizeof(*b) + size + sizeof(JyObject), PyBuffer_Type.tp_name);
+
+		b->b_base = NULL;
+		b->b_ptr = (void *)(b + 1);
+		b->b_size = size;
+		b->b_offset = 0;
+		b->b_readonly = 0;
+		b->b_hash = -1;
+
+		return o;
 	}
-	/* Inline PyObject_New */
-//	o = (PyObject *)PyObject_MALLOC(sizeof(*b) + size);
-//	if ( o == NULL )
-//		return PyErr_NoMemory();
-	JyObject* jy = PyObject_RawMalloc(sizeof(*b) + size + sizeof(JyObject));
-	if ( jy == NULL )
-		return PyErr_NoMemory();
-	jy->attr = NULL;
-	jy->jy = NULL;
-	jy->flags = JY_CPEER_FLAG_MASK;
-
-	o = FROM_JY_NO_GC(jy);
-	b = (PyBufferObject *) PyObject_INIT(o, &PyBuffer_Type);
-	JyNIDebug(JY_NATIVE_ALLOC, o, jy, sizeof(*b) + size + sizeof(JyObject), PyBuffer_Type.tp_name);
-
-	b->b_base = NULL;
-	b->b_ptr = (void *)(b + 1);
-	b->b_size = size;
-	b->b_offset = 0;
-	b->b_readonly = 0;
-	b->b_hash = -1;
-
-	return o;
 }
 
 /* Methods */

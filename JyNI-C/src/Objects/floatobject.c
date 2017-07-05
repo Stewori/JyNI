@@ -2306,11 +2306,10 @@ PyFloat_Fini(void)
 	PyFloatBlock *list;
 	int i;
 	int u;                      /* total unfreed floats per block */
-
-	u = PyFloat_ClearFreeList();
-
+	jint Py_VerboseFlag;
 	env();
-	jint Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
+	u = PyFloat_ClearFreeList();
+	Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
 				JyNI_getDLVerbose);
 	if (!Py_VerboseFlag)
 		return;

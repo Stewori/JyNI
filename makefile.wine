@@ -74,7 +74,7 @@ CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
 JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
 
 #SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
-SOURCES = $(wildcard JyNI-C/src/Python/*.c) #$(wildcard JyNI-C/src/*.c) # gradually include more sources while C89 conversion proceeds...
+SOURCES = $(wildcard JyNI-C/src/Modules/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c)
 OBJECTS = $(SOURCES:.c=.obj)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 

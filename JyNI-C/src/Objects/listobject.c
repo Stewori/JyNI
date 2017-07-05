@@ -341,8 +341,8 @@ PyList_Append(PyObject *op, PyObject *newitem)
 static void
 list_dealloc(PyListObject *op)
 {
-	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	Py_ssize_t i;
+	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	_JyNI_GC_UNTRACK(op);
 	Py_TRASHCAN_SAFE_BEGIN(op)
 	if (op->ob_item != NULL) {
@@ -645,9 +645,10 @@ list_repeat(PyListObject *a, Py_ssize_t n)
 static int
 list_clear(PyListObject *a)
 {
-	JyNIDebugOp(JY_NATIVE_CLEAR, a, -1);
 	Py_ssize_t i;
-	PyObject **item = a->ob_item;
+	PyObject **item;
+	JyNIDebugOp(JY_NATIVE_CLEAR, a, -1);
+	item = a->ob_item;
 	if (item != NULL) {
 		/* Because XDECREF can recursively invoke operations on
 		   this list, we make it empty first. */
@@ -660,7 +661,7 @@ list_clear(PyListObject *a)
 		}
 		PyMem_FREE(item);
 	}
-	env(-1);
+//	env(-1);
 //	jputs(__FUNCTION__);
 //	jputsLong(updateClearJyGCHeadLinks(env, a, AS_JY_WITH_GC(a), 0));
 	/* Never fails; the return value can be ignored.

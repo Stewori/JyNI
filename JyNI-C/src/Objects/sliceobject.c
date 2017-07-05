@@ -90,15 +90,15 @@ PyObject _Py_EllipsisObject = {
 PyObject *
 PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 {
+	PySliceObject *obj = (PySliceObject*) _JyObject_New(&PySlice_Type, &builtinTypes[TME_INDEX_Slice]);
+	JyObject* jy = AS_JY_NO_GC(obj);
+	env(NULL);
 	if (step == NULL) step = Py_None;
 	Py_INCREF(step);
 	if (start == NULL) start = Py_None;
 	Py_INCREF(start);
 	if (stop == NULL) stop = Py_None;
 	Py_INCREF(stop);
-	env(NULL);
-	PySliceObject *obj = (PySliceObject*) _JyObject_New(&PySlice_Type, &builtinTypes[TME_INDEX_Slice]);
-	JyObject* jy = AS_JY_NO_GC(obj);
 	jy->jy = (*env)->NewObject(env, pySliceClass, pySlice_fromStartStopStepConstructor,
 			JyNI_JythonPyObject_FromPyObject(start),
 			JyNI_JythonPyObject_FromPyObject(stop),
@@ -185,11 +185,13 @@ int
 PySlice_GetIndicesEx(PySliceObject *r, Py_ssize_t length,
 					 Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step, Py_ssize_t *slicelength)
 {
+	jarray res;
+	jint* arr;
 	env(-1);
-	jarray res = (*env)->CallObjectMethod(env,
+	res = (*env)->CallObjectMethod(env,
 			JyNI_JythonPyObject_FromPyObject((PyObject*) r),
 			pySlice_indicesEx, (jint) length);
-	jint* arr = (*env)->GetIntArrayElements(env, res, NULL);
+	arr = (*env)->GetIntArrayElements(env, res, NULL);
 	if (arr == NULL)
 	{
 		//(*env)->ReleaseIntArrayElements(env, res, arr, JNI_ABORT);

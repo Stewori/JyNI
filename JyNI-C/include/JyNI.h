@@ -154,8 +154,10 @@
 //	strcpy(cstrName, utf_string); \
 //	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
+#define pyTuple2jArray_decl(javaDestName) \
+	jobject javaDestName = NULL
+
 #define pyTuple2jArray(pyTuple, javaElementType, javaDestName) \
-	jobject javaDestName = NULL; \
 	if (PyTuple_GET_SIZE(pyTuple)) \
 	{ \
 		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), javaElementType, NULL); \
@@ -164,8 +166,10 @@
 				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(pyTuple, i))); \
 	}
 
+#define pyStrTuple2jStrArray_decl(javaDestName) \
+	jobject javaDestName = NULL
+
 #define pyStrTuple2jStrArray(pyTuple, javaDestName) \
-	jobject javaDestName = NULL; \
 	if (PyTuple_GET_SIZE(pyTuple)) \
 	{ \
 		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), stringClass, NULL); \
@@ -175,8 +179,10 @@
 					((PyStringObject*) PyTuple_GET_ITEM(pyTuple, i))))); \
 	}
 
-#define pyTuple2jStrArray(pyTuple, javaDestName) \
-	jobject javaDestName = NULL; \
+#define pyTuple2jStrArray_decl(pyTuple, javaDestName) \
+	jobject javaDestName = NULL
+
+#define pyTuple2jStrArray(javaDestName) \
 	if (PyTuple_GET_SIZE(pyTuple)) \
 	{ \
 		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), stringClass, NULL); \
@@ -185,23 +191,29 @@
 				(*env)->NewStringUTF(env, PyString_AS_STRING(PyObject_Str(PyTuple_GET_ITEM(pyTuple, i))))); \
 	}
 
+#define jStringArray2pyTuple_decl(resultName) \
+	PyTupleObject* resultName
+
 #define jStringArray2pyTuple(jArray, resultName) \
-	Py_ssize_t jArraySize = 0; \
-	if (jArray) jArraySize = (*env)->GetArrayLength(env, jArray); \
-	PyTupleObject* resultName = PyTuple_New(jArraySize); \
-	if (jArraySize) \
 	{ \
-		Py_ssize_t i; \
-		char* utf_string; \
-		jobject jstr; \
-		for (i = 0; i < jArraySize; ++i) \
+		Py_ssize_t jArraySize = 0; \
+		VLA_DECL(char, cstr); \
+		if (jArray) jArraySize = (*env)->GetArrayLength(env, jArray); \
+		resultName = PyTuple_New(jArraySize); \
+		if (jArraySize) \
 		{ \
-			jstr = (*env)->GetObjectArrayElement(env, jArray, i); \
-			utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
-			char cstr[strlen(utf_string)+1]; \
-			strcpy(cstr, utf_string); \
-			(*env)->ReleaseStringUTFChars(env, jstr, utf_string); \
-			PyTuple_SET_ITEM(resultName, i, PyString_FromString(cstr)); \
+			Py_ssize_t i; \
+			char* utf_string; \
+			jobject jstr; \
+			for (i = 0; i < jArraySize; ++i) \
+			{ \
+				jstr = (*env)->GetObjectArrayElement(env, jArray, i); \
+				utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+				VLA(char, cstr, strlen(utf_string)+1); \
+				strcpy(cstr, utf_string); \
+				(*env)->ReleaseStringUTFChars(env, jstr, utf_string); \
+				PyTuple_SET_ITEM(resultName, i, PyString_FromString(cstr)); \
+			} \
 		} \
 	}
 

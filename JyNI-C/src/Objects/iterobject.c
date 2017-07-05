@@ -46,9 +46,9 @@ PySeqIter_New(PyObject *seq)
 {
 //	jputs(__FUNCTION__);
 //	jputs(Py_TYPE(seq)->tp_name);
-	env(NULL);
 	PyObject* it = _JyObject_New(&PySeqIter_Type, &builtinTypes[TME_INDEX_SeqIter]);
 	JyObject* jy = AS_JY_NO_GC(it);
+	env(NULL);
 	jy->jy = (*env)->NewObject(env, pySequenceIterClass, pySequenceIter_Constructor,
 			JyNI_JythonPyObject_FromPyObject(seq));
 	jy->flags |= JY_INITIALIZED_FLAG_MASK;
@@ -93,12 +93,13 @@ iter_iternext(PyObject *iterator)
 //	seqiterobject *it;
 //	PyObject *seq;
 //	PyObject *result;
-
 	assert(PySeqIter_Check(iterator));
-	env(NULL);
-	jobject obj = JyNI_JythonPyObject_FromPyObject(iterator);
-	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, obj,
-			pyObject___iternext__));
+	{
+		jobject obj = JyNI_JythonPyObject_FromPyObject(iterator);
+		env(NULL);
+		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, obj,
+				pyObject___iternext__));
+	}
 
 //	it = (seqiterobject *)iterator;
 //	seq = it->it_seq;
@@ -128,11 +129,12 @@ iter_iternext(PyObject *iterator)
 static PyObject *
 iter_len(seqiterobject *it)
 {
-	env(NULL);
-	jobject obj = JyNI_JythonPyObject_FromPyObject(it);
-	PyObject* seq = JyNI_PyObject_FromJythonPyObject(
-			(*env)->GetObjectField(env, obj, pySequenceIter_seqField));
 	Py_ssize_t seqsize, len;
+	PyObject* seq;
+	jobject obj = JyNI_JythonPyObject_FromPyObject(it);
+	env(NULL);
+	seq = JyNI_PyObject_FromJythonPyObject(
+			(*env)->GetObjectField(env, obj, pySequenceIter_seqField));
 
 //	if (it->it_seq) {
 	if (seq) {

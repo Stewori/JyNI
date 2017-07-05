@@ -82,31 +82,34 @@ extern const char *PyWin_DLLVersionString;
 PyObject *
 PySys_GetObject(char *name)
 {
-	JNIEnv *env;
-	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) {
-		return NULL; // JNI version not supported
-	}
-	jobject nameStr = (*env)->NewStringUTF(env, name);
-	PyObject* er = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getJyObjectByName, nameStr);
-	if (er != NULL)
-		return  er;
-	else
+//	JNIEnv *env;
+//	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) {
+//		return NULL; // JNI version not supported
+//	}
+	env(NULL);
 	{
-		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPyObjectByName, nameStr);
-		if (result == NULL)
-			return NULL;
+		jobject nameStr = (*env)->NewStringUTF(env, name);
+		PyObject* er = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getJyObjectByName, nameStr);
+		if (er != NULL)
+			return  er;
 		else
 		{
-			//puts("PySys_GetObject creates new object:");
-			//puts(name);
-			return JyNI_PyObject_FromJythonPyObject(result);
+			jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPyObjectByName, nameStr);
+			if (result == NULL)
+				return NULL;
+			else
+			{
+				//puts("PySys_GetObject creates new object:");
+				//puts(name);
+				return JyNI_PyObject_FromJythonPyObject(result);
+			}
 		}
+		/*PyThreadState *tstate = PyThreadState_GET();
+		PyObject *sd = tstate->interp->sysdict;
+		if (sd == NULL)
+			return NULL;
+		return PyDict_GetItemString(sd, name);*/
 	}
-	/*PyThreadState *tstate = PyThreadState_GET();
-	PyObject *sd = tstate->interp->sysdict;
-	if (sd == NULL)
-		return NULL;
-	return PyDict_GetItemString(sd, name);*/
 }
 /*
 FILE *
