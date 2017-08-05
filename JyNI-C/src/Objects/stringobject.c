@@ -914,9 +914,9 @@ PyString_AsStringAndSize(register PyObject *obj,
 #include "stringlib/stringdefs.h"
 #include "stringlib/fastsearch.h"
 
-//#include "stringlib/count.h"
+#include "stringlib/count.h"
 #include "stringlib/find.h"
-//#include "stringlib/partition.h"
+#include "stringlib/partition.h"
 #include "stringlib/split.h"
 
 #define _Py_InsertThousandsGrouping _PyString_InsertThousandsGrouping

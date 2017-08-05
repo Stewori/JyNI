@@ -2534,7 +2534,9 @@ inline void putsPy(PyObject* o)
 
 void jPrintCStackTrace()
 {
-
+#ifdef MS_WINDOWS
+	jputs("jPrintCStackTrace is not yet supported on Windows.");
+#else
 	void* buf[300];
 	int size;
 	char** funcs = backtrace_symbols(buf, size);
@@ -2546,6 +2548,7 @@ void jPrintCStackTrace()
 	for (i = 0; i < size; ++i)
 		jputs(funcs[i]);
 	free(funcs);
+#endif
 }
 
 /*

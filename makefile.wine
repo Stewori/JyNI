@@ -63,22 +63,22 @@ PLATFORM = win32
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
 
-JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
+JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
 #LIBS = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\libcmt.lib $(VC_Python)\VC\lib\OLDNAMES.lib $(VC_Python)\WinSDK\lib\Kernel32.lib
-LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\amd64\libcmt.lib $(VC_Python)\VC\lib\amd64\OLDNAMES.lib $(VC_Python)\WinSDK\lib\x64\Kernel32.lib
+LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib
 
 CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
 JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
 
 #SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
-SOURCES = $(wildcard JyNI-C/src/Modules/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c)
+SOURCES = $(wildcard JyNI-C/src/PC/*.c) $(wildcard JyNI-C/src/Modules/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c)
 OBJECTS = $(SOURCES:.c=.obj)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 
-all: $(OUTPUTDIR) libJyNI #libJyNI-Loader JyNI
+all: $(OUTPUTDIR) libJyNI #libJyNI-Loader #JyNI
 	@echo ''
 	@echo 'Build successful.'
 
@@ -86,7 +86,7 @@ $(OUTPUTDIR):
 	mkdir $(OUTPUTDIR)
 
 %.obj: %.c
-	$(CC) /c $(CFLAGS) $<
+	$(CC) /c /Fo./$@ $(CFLAGS) $<
 
 $(JYTHON):
 	@echo.
@@ -109,13 +109,17 @@ $(PYTHON_HOME):
 $(VC_Python):
 	ln -s $(VC_PYTHON_HOME_WINE) $(VC_Python)
 
-libJyNI: $(VC_Python) $(JAVA_HOME) $(PYTHON_HOME) $(OBJECTS)
-	@echo 'Linking is not yet implemented.'
-#$(CC) $(LDFLAGS) $(OBJECTS) -o $(OUTPUTDIR)/libJyNI.so
+JyNI-C/src/Python/dynload_win.c:
+	cp JyNI-C/src/Python/dynload_win._c JyNI-C/src/Python/dynload_win.c
 
-# Todo...
-#libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.o
-#	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
+libJyNI: $(VC_Python) $(JAVA_HOME) $(PYTHON_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
+#@echo 'Linking is not yet implemented.'
+#$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_win.obj -o $(OUTPUTDIR)/libJyNI.so
+
+#libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.obj
+#	@echo 'Linking loader is not yet implemented.' # Maybe not required for Windows
+	#$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -137,6 +141,7 @@ cleanJ:
 clean:
 	rm -rf $(JYNIBIN)
 	rm -f ./JyNI-C/src/Python/*.obj
+	rm -f ./JyNI-C/src/Python/dynload_win.c
 	rm -f ./JyNI-C/src/Objects/*.obj
 	rm -f ./JyNI-C/src/Modules/*.obj
 	rm -f ./JyNI-Loader/JyNILoader.obj

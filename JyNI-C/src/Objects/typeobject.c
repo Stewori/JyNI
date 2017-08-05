@@ -2125,7 +2125,7 @@ static PyGetSetDef subtype_getsets_weakref_only[] = {
 	{0}
 };
 
-/*
+
 static int
 valid_identifier(PyObject *s)
 {
@@ -2153,7 +2153,7 @@ valid_identifier(PyObject *s)
 	}
 	return 1;
 }
-*/
+
 #ifdef Py_USING_UNICODE
 /* Replace Unicode objects in slots. */
 

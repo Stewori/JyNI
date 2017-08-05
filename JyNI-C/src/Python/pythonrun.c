@@ -1737,7 +1737,7 @@ Py_FatalError(const char *msg)
 		/* Convert the message to wchar_t. This uses a simple one-to-one
 		conversion, assuming that the this error message actually uses ASCII
 		only. If this ceases to be true, we will have to convert. */
-		buffer = alloca( (len+1) * (sizeof *buffer));
+		buffer = _alloca( (len+1) * (sizeof *buffer));
 		for( i=0; i<=len; ++i)
 			buffer[i] = msg[i];
 		OutputDebugStringW(L"Fatal Python error: ");

@@ -59,11 +59,11 @@ PLATFORM = win32
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
 
-JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
-INCLUDES = /I $(PYTHON_HOME)\include /I $(VC_Python)\VC\Include /I $(VC_Python)\WinSDK\Include $(JYNI_INCLUDES)
+JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
+INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
 #LIBS = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\libcmt.lib $(VC_Python)\VC\lib\OLDNAMES.lib $(VC_Python)\WinSDK\lib\Kernel32.lib
-LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\amd64\libcmt.lib $(VC_Python)\VC\lib\amd64\OLDNAMES.lib $(VC_Python)\WinSDK\lib\x64\Kernel32.lib
+LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib
 
 CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
@@ -96,13 +96,11 @@ $(JYTHON):
 	@echo.
 	@false
 
-libJyNI: $(OBJECTS) #$(JAVA_HOME)
-	@echo Linking is not yet implemented.
-#$(CC) $(LDFLAGS) $(OBJECTS) -o $(OUTPUTDIR)/libJyNI.so
+JyNI-C/src/Python/dynload_win.c:
+	copy JyNI-C/src/Python/dynload_win._c JyNI-C/src/Python/dynload_win.c
 
-# Todo...
-#libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.o
-#	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
+libJyNI: $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -119,10 +117,15 @@ $(JYNIBIN)/JyNI: $(JYNIBIN)
 #	jar cvf $(OUTPUTDIR)/JyNI.jar -C $(JYNIBIN) .
 
 cleanJ:
-	rm -rf $(JYNIBIN)
+	del $(JYNIBIN)
 
 clean:
-	del ./JyNI-C/src/*.obj
-#
+	del $(JYNIBIN)
+	del ./JyNI-C/src/Python/*.obj
+	del ./JyNI-C/src/Python/dynload_win.c
+	del ./JyNI-C/src/Objects/*.obj
+	del ./JyNI-C/src/Modules/*.obj
+	del ./JyNI-Loader/JyNILoader.obj
+
 #.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
 .PHONY: all

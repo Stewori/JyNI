@@ -45,6 +45,8 @@ extern "C" {
 #define JyNI_JyNI_JYNI_GC_RESURRECTION_FLAG 2L
 #undef JyNI_JyNI_JYNI_GC_LAST_CONFIRMATION_FLAG
 #define JyNI_JyNI_JYNI_GC_LAST_CONFIRMATION_FLAG 4L
+#undef JyNI_JyNI_JYNI_GC_MAYBE_RESURRECT_FLAG
+#define JyNI_JyNI_JYNI_GC_MAYBE_RESURRECT_FLAG 8L
 /*
  * Class:     JyNI_JyNI
  * Method:    initJyNI
@@ -515,22 +517,6 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Long
  * Signature: (JJ)Lorg/python/core/PyObject;
  */
 JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Float
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    JyNI_PyNumber_Oct
- * Signature: (JJ)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Oct
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     JyNI_JyNI
- * Method:    JyNI_PyNumber_Hex
- * Signature: (JJ)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Hex
   (JNIEnv *, jclass, jlong, jlong);
 
 /*

@@ -1143,180 +1143,180 @@ MiddlingExtendsException(PyExc_EnvironmentError, OSError,
 /*
  *	WindowsError extends OSError
  */
-//#ifdef MS_WINDOWS
-//#include "errmap.h"
-//
-//static int
-//WindowsError_clear(PyWindowsErrorObject *self)
-//{
-////	Py_CLEAR(self->myerrno);
-////	Py_CLEAR(self->strerror);
-////	Py_CLEAR(self->filename);
-////	Py_CLEAR(self->winerror);
-//	return BaseException_clear((PyBaseExceptionObject *)self);
-//}
-//
-//static void
-//WindowsError_dealloc(PyWindowsErrorObject *self)
-//{
-//	_JyNI_GC_UNTRACK(self);
-//	WindowsError_clear(self);
-//	Py_TYPE(self)->tp_free((PyObject *)self);
-//}
+#ifdef MS_WINDOWS
+#include "errmap.h"
 
-//static int
-//WindowsError_traverse(PyWindowsErrorObject *self, visitproc visit, void *arg)
-//{
-//	Py_VISIT(self->myerrno);
-//	Py_VISIT(self->strerror);
-//	Py_VISIT(self->filename);
-//	Py_VISIT(self->winerror);
-//	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
-//}
-//
-//static int
-//WindowsError_init(PyWindowsErrorObject *self, PyObject *args, PyObject *kwds)
-//{
-//	PyObject *o_errcode = NULL;
-//	long errcode;
-//	long posix_errno;
-//
-//	if (EnvironmentError_init((PyEnvironmentErrorObject *)self, args, kwds)
-//			== -1)
-//		return -1;
-//
-//	if (self->myerrno == NULL)
-//		return 0;
-//
-//	/* Set errno to the POSIX errno, and winerror to the Win32
-//	   error code. */
-//	errcode = PyInt_AsLong(self->myerrno);
-//	if (errcode == -1 && PyErr_Occurred())
-//		return -1;
-//	posix_errno = winerror_to_errno(errcode);
-//
-//	Py_CLEAR(self->winerror);
-//	self->winerror = self->myerrno;
-//
-//	o_errcode = PyInt_FromLong(posix_errno);
-//	if (!o_errcode)
-//		return -1;
-//
-//	self->myerrno = o_errcode;
-//
-//	return 0;
-//}
-//
-//
-//static PyObject *
-//WindowsError_str(PyWindowsErrorObject *self)
-//{
-//	PyObject *rtnval = NULL;
-//
-//	if (self->filename) {
-//		PyObject *fmt;
-//		PyObject *repr;
-//		PyObject *tuple;
-//
-//		fmt = PyString_FromString("[Error %s] %s: %s");
-//		if (!fmt)
-//			return NULL;
-//
-//		repr = PyObject_Repr(self->filename);
-//		if (!repr) {
-//			Py_DECREF(fmt);
-//			return NULL;
-//		}
-//		tuple = PyTuple_New(3);
-//		if (!tuple) {
-//			Py_DECREF(repr);
-//			Py_DECREF(fmt);
-//			return NULL;
-//		}
-//
-//		if (self->winerror) {
-//			Py_INCREF(self->winerror);
-//			PyTuple_SET_ITEM(tuple, 0, self->winerror);
-//		}
-//		else {
-//			Py_INCREF(Py_None);
-//			PyTuple_SET_ITEM(tuple, 0, Py_None);
-//		}
-//		if (self->strerror) {
-//			Py_INCREF(self->strerror);
-//			PyTuple_SET_ITEM(tuple, 1, self->strerror);
-//		}
-//		else {
-//			Py_INCREF(Py_None);
-//			PyTuple_SET_ITEM(tuple, 1, Py_None);
-//		}
-//
-//		PyTuple_SET_ITEM(tuple, 2, repr);
-//
-//		rtnval = PyString_Format(fmt, tuple);
-//
-//		Py_DECREF(fmt);
-//		Py_DECREF(tuple);
-//	}
-//	else if (self->winerror && self->strerror) {
-//		PyObject *fmt;
-//		PyObject *tuple;
-//
-//		fmt = PyString_FromString("[Error %s] %s");
-//		if (!fmt)
-//			return NULL;
-//
-//		tuple = PyTuple_New(2);
-//		if (!tuple) {
-//			Py_DECREF(fmt);
-//			return NULL;
-//		}
-//
-//		if (self->winerror) {
-//			Py_INCREF(self->winerror);
-//			PyTuple_SET_ITEM(tuple, 0, self->winerror);
-//		}
-//		else {
-//			Py_INCREF(Py_None);
-//			PyTuple_SET_ITEM(tuple, 0, Py_None);
-//		}
-//		if (self->strerror) {
-//			Py_INCREF(self->strerror);
-//			PyTuple_SET_ITEM(tuple, 1, self->strerror);
-//		}
-//		else {
-//			Py_INCREF(Py_None);
-//			PyTuple_SET_ITEM(tuple, 1, Py_None);
-//		}
-//
-//		rtnval = PyString_Format(fmt, tuple);
-//
-//		Py_DECREF(fmt);
-//		Py_DECREF(tuple);
-//	}
-//	else
-//		rtnval = EnvironmentError_str((PyEnvironmentErrorObject *)self);
-//
-//	return rtnval;
-//}
-//
-//static PyMemberDef WindowsError_members[] = {
-//	{"errno", T_OBJECT, offsetof(PyWindowsErrorObject, myerrno), 0,
-//		PyDoc_STR("POSIX exception code")},
-//	{"strerror", T_OBJECT, offsetof(PyWindowsErrorObject, strerror), 0,
-//		PyDoc_STR("exception strerror")},
-//	{"filename", T_OBJECT, offsetof(PyWindowsErrorObject, filename), 0,
-//		PyDoc_STR("exception filename")},
-//	{"winerror", T_OBJECT, offsetof(PyWindowsErrorObject, winerror), 0,
-//		PyDoc_STR("Win32 exception code")},
-//	{NULL}  /* Sentinel */
-//};
-//
-//ComplexExtendsException(PyExc_OSError, WindowsError, WindowsError,
-//						WindowsError_dealloc, 0, WindowsError_members,
-//						WindowsError_str, "MS-Windows OS system call failed.");
-//
-//#endif /* MS_WINDOWS */
+static int
+WindowsError_clear(PyWindowsErrorObject *self)
+{
+	Py_CLEAR(self->myerrno);
+	Py_CLEAR(self->strerror);
+	Py_CLEAR(self->filename);
+	Py_CLEAR(self->winerror);
+	return BaseException_clear((PyBaseExceptionObject *)self);
+}
+
+static void
+WindowsError_dealloc(PyWindowsErrorObject *self)
+{
+	_JyNI_GC_UNTRACK(self);
+	WindowsError_clear(self);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+static int
+WindowsError_traverse(PyWindowsErrorObject *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->myerrno);
+	Py_VISIT(self->strerror);
+	Py_VISIT(self->filename);
+	Py_VISIT(self->winerror);
+	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
+}
+
+static int
+WindowsError_init(PyWindowsErrorObject *self, PyObject *args, PyObject *kwds)
+{
+	PyObject *o_errcode = NULL;
+	long errcode;
+	long posix_errno;
+
+	if (EnvironmentError_init((PyEnvironmentErrorObject *)self, args, kwds)
+			== -1)
+		return -1;
+
+	if (self->myerrno == NULL)
+		return 0;
+
+	/* Set errno to the POSIX errno, and winerror to the Win32
+	   error code. */
+	errcode = PyInt_AsLong(self->myerrno);
+	if (errcode == -1 && PyErr_Occurred())
+		return -1;
+	posix_errno = winerror_to_errno(errcode);
+
+	Py_CLEAR(self->winerror);
+	self->winerror = self->myerrno;
+
+	o_errcode = PyInt_FromLong(posix_errno);
+	if (!o_errcode)
+		return -1;
+
+	self->myerrno = o_errcode;
+
+	return 0;
+}
+
+
+static PyObject *
+WindowsError_str(PyWindowsErrorObject *self)
+{
+	PyObject *rtnval = NULL;
+
+	if (self->filename) {
+		PyObject *fmt;
+		PyObject *repr;
+		PyObject *tuple;
+
+		fmt = PyString_FromString("[Error %s] %s: %s");
+		if (!fmt)
+			return NULL;
+
+		repr = PyObject_Repr(self->filename);
+		if (!repr) {
+			Py_DECREF(fmt);
+			return NULL;
+		}
+		tuple = PyTuple_New(3);
+		if (!tuple) {
+			Py_DECREF(repr);
+			Py_DECREF(fmt);
+			return NULL;
+		}
+
+		if (self->winerror) {
+			Py_INCREF(self->winerror);
+			PyTuple_SET_ITEM(tuple, 0, self->winerror);
+		}
+		else {
+			Py_INCREF(Py_None);
+			PyTuple_SET_ITEM(tuple, 0, Py_None);
+		}
+		if (self->strerror) {
+			Py_INCREF(self->strerror);
+			PyTuple_SET_ITEM(tuple, 1, self->strerror);
+		}
+		else {
+			Py_INCREF(Py_None);
+			PyTuple_SET_ITEM(tuple, 1, Py_None);
+		}
+
+		PyTuple_SET_ITEM(tuple, 2, repr);
+
+		rtnval = PyString_Format(fmt, tuple);
+
+		Py_DECREF(fmt);
+		Py_DECREF(tuple);
+	}
+	else if (self->winerror && self->strerror) {
+		PyObject *fmt;
+		PyObject *tuple;
+
+		fmt = PyString_FromString("[Error %s] %s");
+		if (!fmt)
+			return NULL;
+
+		tuple = PyTuple_New(2);
+		if (!tuple) {
+			Py_DECREF(fmt);
+			return NULL;
+		}
+
+		if (self->winerror) {
+			Py_INCREF(self->winerror);
+			PyTuple_SET_ITEM(tuple, 0, self->winerror);
+		}
+		else {
+			Py_INCREF(Py_None);
+			PyTuple_SET_ITEM(tuple, 0, Py_None);
+		}
+		if (self->strerror) {
+			Py_INCREF(self->strerror);
+			PyTuple_SET_ITEM(tuple, 1, self->strerror);
+		}
+		else {
+			Py_INCREF(Py_None);
+			PyTuple_SET_ITEM(tuple, 1, Py_None);
+		}
+
+		rtnval = PyString_Format(fmt, tuple);
+
+		Py_DECREF(fmt);
+		Py_DECREF(tuple);
+	}
+	else
+		rtnval = EnvironmentError_str((PyEnvironmentErrorObject *)self);
+
+	return rtnval;
+}
+
+static PyMemberDef WindowsError_members[] = {
+	{"errno", T_OBJECT, offsetof(PyWindowsErrorObject, myerrno), 0,
+		PyDoc_STR("POSIX exception code")},
+	{"strerror", T_OBJECT, offsetof(PyWindowsErrorObject, strerror), 0,
+		PyDoc_STR("exception strerror")},
+	{"filename", T_OBJECT, offsetof(PyWindowsErrorObject, filename), 0,
+		PyDoc_STR("exception filename")},
+	{"winerror", T_OBJECT, offsetof(PyWindowsErrorObject, winerror), 0,
+		PyDoc_STR("Win32 exception code")},
+	{NULL}  /* Sentinel */
+};
+
+ComplexExtendsException(PyExc_OSError, WindowsError, WindowsError,
+						WindowsError_dealloc, 0, WindowsError_members,
+						WindowsError_str, "MS-Windows OS system call failed.");
+
+#endif /* MS_WINDOWS */
 
 
 /*

@@ -278,8 +278,8 @@ public class JyNI {
 	public static native PyObject JyNI_PyNumber_Int(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Long(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_Float(long o, long tstate);
-	public static native PyObject JyNI_PyNumber_Oct(long o, long tstate);
-	public static native PyObject JyNI_PyNumber_Hex(long o, long tstate);
+//	public static native PyObject JyNI_PyNumber_Oct(long o, long tstate);
+//	public static native PyObject JyNI_PyNumber_Hex(long o, long tstate);
 	public static native PyObject JyNI_PyNumber_InPlaceAdd(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_InPlaceSubtract(long o1, PyObject o2, long tstate);
 	public static native PyObject JyNI_PyNumber_InPlaceMultiply(long o1, PyObject o2, long tstate);
