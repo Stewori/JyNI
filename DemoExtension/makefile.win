@@ -34,10 +34,15 @@
 # Author: Stefan Richthofer
 #
 
-# These two lines must be configured by the user (for now):
-# (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+# PYTHON_HOME and VC_Python might need adjustment by the user:
 PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
-VC_Python = "C:\Users\Stefan\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0"
+
+# (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+# We set VC_Python to the default install location for a user-install.
+# This might need adjustment in some cases.
+SHELL = cmd
+$(eval USER = $(shell echo %username%))
+VC_Python = "C:\Users\$(USER)\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0"
 
 CC = $(VC_Python)\VC\bin\x86_amd64\cl
 LK = $(VC_Python)\VC\bin\x86_amd64\link
@@ -68,3 +73,4 @@ clean:
 	del *.obj
 
 .PHONY: demoExt clean all
+

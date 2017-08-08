@@ -53,11 +53,6 @@ JYTHON = ./jython.jar
 # for instance, if you extracted it to your home folder:
 # JYTHON = /home/your_name/jython.jar
 
-VCINSTALLDIR=$(VC_Python)\
-WindowsSdkDir=$(VC_Python)\WinSDK\
-VCINCLUDE=$(VCINSTALLDIR)Include $(WindowsSdkDir)Include
-LIB=$(VCINSTALLDIR)Lib;$(WindowsSdkDir)Lib
-
 PLATFORM = win32
 
 JYNI = ./JyNI-Java/src
@@ -77,7 +72,7 @@ SOURCES = $(wildcard JyNI-C/src/PC/*.c) $(wildcard JyNI-C/src/Modules/*.c) $(wil
 OBJECTS = $(SOURCES:.c=.obj)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 
-all: $(OUTPUTDIR) libJyNI #libJyNI-Loader #JyNI
+all: $(OUTPUTDIR) libJyNI JyNI
 	@echo ''
 	@echo 'Build successful.'
 
@@ -86,6 +81,9 @@ $(OUTPUTDIR):
 
 %.obj: %.c
 	$(CC) /c /Fo./$@ $(CFLAGS) $<
+
+JyNI-C/src/Python/dynload_win.obj:
+	$(CC) /c /Fo./JyNI-C/src/Python/dynload_win.obj $(CFLAGS) JyNI-C/src/Python/dynload/dynload_win.c
 
 $(JYTHON):
 	@echo.
@@ -108,17 +106,8 @@ $(PYTHON_HOME):
 $(VC_Python):
 	ln -s $(VC_PYTHON_HOME_WINE) $(VC_Python)
 
-JyNI-C/src/Python/dynload_win.c:
-	cp JyNI-C/src/Python/dynload_win._c JyNI-C/src/Python/dynload_win.c
-
 libJyNI: $(VC_Python) $(JAVA_HOME) $(PYTHON_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
 	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
-#@echo 'Linking is not yet implemented.'
-#$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_win.obj -o $(OUTPUTDIR)/libJyNI.so
-
-#libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.obj
-#	@echo 'Linking loader is not yet implemented.' # Maybe not required for Windows
-	#$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -150,3 +139,4 @@ clean:
 
 #.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
 .PHONY: all
+

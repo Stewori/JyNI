@@ -95,6 +95,9 @@ $(OUTPUTDIR)/JyNI.dll:
 %.obj: %.c
 	$(CC) /c /Fo./$@ $(CFLAGS) $<
 
+JyNI-C/src/Python/dynload_win.obj:
+	$(CC) /c /Fo./JyNI-C/src/Python/dynload_win.obj $(CFLAGS) JyNI-C/src/Python/dynload/dynload_win.c
+
 $(JYTHON):
 	@echo.
 	@echo ------------------------------------------------
@@ -107,11 +110,8 @@ $(JYTHON):
 	@echo.
 	@false
 
-JyNI-C/src/Python/dynload_win.c:
-	copy JyNI-C\src\Python\dynload_win._c JyNI-C\src\Python\dynload_win.c
-
 libJyNI: $(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
-	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll/python27.dll $(OBJECTS) $(LIBS64)
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll/python27.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
 	del $(OUTPUTDIR)\JyNI.dll\python27.lib
 	del $(OUTPUTDIR)\JyNI.dll\python27.exp
 # We delete JyNI.dll\python27.lib here, because in any case one should link against original python27.lib.
@@ -152,3 +152,4 @@ clean:
 
 #.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
 .PHONY: all
+

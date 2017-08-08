@@ -33,7 +33,6 @@
  *
  *  Created on: 14.03.2013, 00:49:46
  *	  Author: Stefan Richthofer
- *
  */
 
 #include <JyNI.h>
