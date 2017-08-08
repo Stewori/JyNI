@@ -183,7 +183,7 @@
 #include "dtoa_JyNI.h"
 
 /* _Py_Mangle is defined in compile.c */
-//PyAPI_FUNC(PyObject*) _Py_Mangle(PyObject *p, PyObject *name);
+PyAPI_FUNC(PyObject*) _Py_Mangle(PyObject *p, PyObject *name);
 
 /* PyArg_GetInt is deprecated and should not be used, use PyArg_Parse(). */
 //#define PyArg_GetInt(v, a)	PyArg_Parse((v), "i", (a))

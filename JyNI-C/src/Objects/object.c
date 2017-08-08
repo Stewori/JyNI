@@ -1177,10 +1177,14 @@ PyObject_RichCompareBool(PyObject *v, PyObject *w, int op)
 //  if a==b then hash(a)==hash(b)
 
 // All the utility functions (_Py_Hash*()) return "-1" to signify an error.
-/*
+
 long
 _Py_HashDouble(double v)
 {
+	jputs("JyNI warning: _Py_HashDouble not yet implemented.");
+	return -1;
+}
+/*
 	double intpart, fractpart;
 	int expo;
 	long hipart;

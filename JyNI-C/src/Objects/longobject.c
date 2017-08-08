@@ -4425,27 +4425,29 @@ static PyStructSequence_Desc long_info_desc = {
 PyObject *
 PyLong_GetInfo(void)
 {
-	PyObject* long_info;
-	int field = 0;
-	long_info = PyStructSequence_New(&Long_InfoType);
-	if (long_info == NULL)
-		return NULL;
-	PyStructSequence_SET_ITEM(long_info, field++,
-							  PyInt_FromLong(PyLong_SHIFT));
-	PyStructSequence_SET_ITEM(long_info, field++,
-							  PyInt_FromLong(sizeof(digit)));
-	if (PyErr_Occurred()) {
-		Py_CLEAR(long_info);
-		return NULL;
-	}
-	return long_info;
+	jputs("JyNI warning: PyLong_GetInfo not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject* long_info;
+//	int field = 0;
+//	long_info = PyStructSequence_New(&Long_InfoType);
+//	if (long_info == NULL)
+//		return NULL;
+//	PyStructSequence_SET_ITEM(long_info, field++,
+//							  PyInt_FromLong(PyLong_SHIFT));
+//	PyStructSequence_SET_ITEM(long_info, field++,
+//							  PyInt_FromLong(sizeof(digit)));
+//	if (PyErr_Occurred()) {
+//		Py_CLEAR(long_info);
+//		return NULL;
+//	}
+//	return long_info;
 }
 
 int
 _PyLong_Init(void)
 {
 	/* initialize long_info */
-	if (Long_InfoType.tp_name == 0)
-		PyStructSequence_InitType(&Long_InfoType, &long_info_desc);
+//	if (Long_InfoType.tp_name == 0)
+//		PyStructSequence_InitType(&Long_InfoType, &long_info_desc);
 	return 1;
 }

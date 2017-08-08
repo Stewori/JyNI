@@ -45,15 +45,15 @@ if os.name == 'java':
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join((systm, ver, 'intel'))
 	else:
-		buildf = '-'.join((systm, os.uname()[-1]))
+		buildf = '-'.join((systm, platform.uname()[-1]))
 else:
-	systm = os.uname()[0].lower()
+	systm = platform.uname()[0].lower()
 	if systm == 'darwin':
 		ver = platform.mac_ver()[0]
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join(('macosx', ver, 'intel'))
 	else:
-		buildf = '-'.join((systm, os.uname()[-1]))
+		buildf = '-'.join((systm, platform.uname()[-1]))
 
 
 #Since invalid paths do no harm, we add several possible paths here, where
@@ -69,6 +69,7 @@ sys.path.append('./DemoExtension/Release') #in case you run it from base dir
 #built with setup.py:
 sys.path.append('../../DemoExtension/build/lib.'+buildf+'-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.'+buildf+'-2.7') #in case you run it from base dir
+sys.path.append('./DemoExtension/build')
 
 import DemoExtension
 

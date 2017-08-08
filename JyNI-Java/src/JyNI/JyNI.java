@@ -108,6 +108,7 @@ public class JyNI {
 
 	static {
 		try {
+			//System.out.println("init JyNI.java...");
 			/* To make configuration easier, we not only search on the library-path for the libs,
 			 * but also on the classpath and in some additional typical places.
 			 * We currently don't look inside jar files.
@@ -116,12 +117,12 @@ public class JyNI {
 			String libpath = System.getProperty("java.library.path");
 //			System.out.println("lp: "+libpath);
 			String[] commonPositions = (libpath+File.pathSeparator+classpath).split(File.pathSeparator);
-			int idx;
+			int idx, pos;
 			for (int i = 0; i < commonPositions.length; ++i)
 			{
 				if (commonPositions[i].endsWith(".jar"))
 				{
-					idx = commonPositions[i].lastIndexOf('/');
+					idx = commonPositions[i].lastIndexOf(File.separator);
 					//System.out.println("com: "+commonPositions[i]);
 					if (idx > -1)
 						commonPositions[i] = commonPositions[i].substring(0, idx);
@@ -133,53 +134,59 @@ public class JyNI {
 			//these are relative paths to typical positions where IDEs place their build-results:
 			String[] loaderPositions = {".", "bin", "../JyNI-Loader/Release", "../JyNI-Loader/Debug"};
 			String[] libPositions = {".", "bin", "../JyNI-C/Release", "../JyNI-C/Debug"};
-			String loader = "libJyNI-Loader.so";
-			String lib = "libJyNI.so";
-			
-			boolean loaded = false;
+			String lib = System.mapLibraryName("JyNI");
+			boolean loaded;
+			String[] fileNames;
+			boolean dll = lib.endsWith(".dll");
+
 			String dir = System.getProperty("user.dir");
 			//System.out.println("user.dir: "+dir);
-			idx = dir.lastIndexOf('/');
+			idx = dir.lastIndexOf(File.separator);
 			if (idx >= 0) dir = dir.substring(0, idx);
-			else dir = System.getProperty("user.dir");
-			String[] fileNames = new String[commonPositions.length+loaderPositions.length];
-			int pos = 0;
-			for (int i = 0; i < commonPositions.length; ++i)
-			{
-				fileNames[pos++] = commonPositions[i]+"/"+loader;
-			}
-			for (int i = 0; i < loaderPositions.length; ++i)
-			{
-				fileNames[pos++] = dir+"/"+loaderPositions[i]+"/"+loader;
-			}
-			
-			
-			for (int i = 0; !loaded && i < fileNames.length; ++i)
-			{
-				File loaderFile = new File(fileNames[i]);
-				if (loaderFile.exists())
+			//else dir = System.getProperty("user.dir");
+
+			if (!dll) {
+				// We have to use JyNI-loader on POSIX to customize RTLD-flag.
+				String loader = System.mapLibraryName("JyNI-Loader");
+				loaded = false;
+				fileNames = new String[commonPositions.length+loaderPositions.length];
+				pos = 0;
+				for (int i = 0; i < commonPositions.length; ++i)
 				{
-					System.load(loaderFile.getAbsolutePath());
-					loaded = true;
-				} //else
-					//System.out.println("not found: "+loaderFile.getPath());
+					fileNames[pos++] = commonPositions[i]+File.separator+loader;
+				}
+				for (int i = 0; i < loaderPositions.length; ++i)
+				{
+					fileNames[pos++] = dir+File.separator+loaderPositions[i]+File.separator+loader;
+				}
+				
+				
+				for (int i = 0; !loaded && i < fileNames.length; ++i)
+				{
+					File loaderFile = new File(fileNames[i]);
+					if (loaderFile.exists())
+					{
+						System.load(loaderFile.getAbsolutePath());
+						loaded = true;
+					} //else
+						//System.out.println("not found: "+loaderFile.getPath());
+				}
+				if (!loaded)
+				{
+					System.err.print("Can't find library file: "+loader);
+					System.exit(1);
+				}
 			}
-			if (!loaded)
-			{
-				System.err.print("Can't find library file: "+loader);
-				System.exit(1);
-			}
-			
 			
 			fileNames = new String[commonPositions.length+libPositions.length];
 			pos = 0;
 			for (int i = 0; i < commonPositions.length; ++i)
 			{
-				fileNames[pos++] = commonPositions[i]+"/"+lib;
+				fileNames[pos++] = commonPositions[i]+File.separator+lib;
 			}
 			for (int i = 0; i < libPositions.length; ++i)
 			{
-				fileNames[pos++] = dir+"/"+libPositions[i]+"/"+lib;
+				fileNames[pos++] = dir+File.separator+libPositions[i]+File.separator+lib;
 			}
 			
 			loaded = false;
@@ -191,7 +198,20 @@ public class JyNI {
 					//System.out.println("initJyNI: "+fileNames[i]);
 					//nativeHandles = new IdentityHashMap<PyObject, Long>();
 					//cur_excLookup = new IdentityHashMap<ThreadState, PyException>(5);
-					initJyNI(libFile.getAbsolutePath());
+					if (dll) {
+						if (!libFile.isDirectory())
+						{
+							System.err.print("JyNI.dll must be a directory containing actual JyNI.dll as python27.dll: "
+									+libFile.getAbsolutePath());
+							System.exit(1);
+						}
+						//System.out.println("loading "+libFile.getAbsolutePath());
+						//System.load("D:\\workspace\\linux\\JyNI\\build\\python27.dll");
+						System.load(libFile.getAbsolutePath()+File.separator+System.mapLibraryName("python27"));
+						initJyNI(null);
+					} else {
+						initJyNI(libFile.getAbsolutePath());
+					}
 					//System.out.println("initJyNI done");
 					loaded = true;
 				}

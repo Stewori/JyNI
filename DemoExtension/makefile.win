@@ -36,23 +36,17 @@
 
 # These two lines must be configured by the user (for now):
 # (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
-VC_Python = "C:\Users\Stefan\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0"
 PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
+VC_Python = "C:\Users\Stefan\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0"
 
 CC = $(VC_Python)\VC\bin\x86_amd64\cl
 LK = $(VC_Python)\VC\bin\x86_amd64\link
 
 OUTPUTDIR = build
 
-VCINSTALLDIR=$(VC_Python)\
-WindowsSdkDir=$(VC_Python)\WinSDK\
-VCINCLUDE=$(VCINSTALLDIR)Include $(WindowsSdkDir)Include
-LIB=$(VCINSTALLDIR)Lib;$(WindowsSdkDir)Lib
+INCLUDES = /I $(PYTHON_HOME)/include /I $(VC_Python)/VC/Include /I $(VC_Python)/WinSDK/Include
 
-INCLUDES = /I $(PYTHON_HOME)\include /I $(VC_Python)\VC\Include /I $(VC_Python)\WinSDK\Include
-
-LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\amd64\libcmt.lib $(VC_Python)\VC\lib\amd64\OLDNAMES.lib $(VC_Python)\WinSDK\lib\x64\Kernel32.lib
-
+LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib
 CFLAGS = $(INCLUDES)
 
 SOURCES = DemoExtensionmodule.c
@@ -68,7 +62,7 @@ $(OUTPUTDIR):
 	$(CC) /c $(CFLAGS) $<
 
 demoExt: $(OBJECTS)
-	$(LK) /DLL /OUT:$(OUTPUTDIR)\DemoExtension.pyd $(OBJECTS) $(LIBS64)
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/DemoExtension.pyd $(OBJECTS) $(LIBS64)
 
 clean:
 	del *.obj

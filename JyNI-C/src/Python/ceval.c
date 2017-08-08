@@ -322,15 +322,18 @@ PyEval_ReleaseLock(void)
 //		Py_FatalError("PyEval_ReleaseThread: wrong thread state");
 //	PyThread_release_lock(interpreter_lock);
 //}
-//
-///* This function is called from PyOS_AfterFork to ensure that newly
-//   created child processes don't hold locks referring to threads which
-//   are not running in the child process.  (This could also be done using
-//   pthread_atfork mechanism, at least for the pthreads implementation.) */
-//
-//void
-//PyEval_ReInitThreads(void)
-//{
+
+/* This function is called from PyOS_AfterFork to ensure that newly
+   created child processes don't hold locks referring to threads which
+   are not running in the child process.  (This could also be done using
+   pthread_atfork mechanism, at least for the pthreads implementation.) */
+
+void
+PyEval_ReInitThreads(void)
+{
+	jputs("JyNI warning: PyEval_ReInitThreads not yet implemented.");
+}
+
 //	PyObject *threading, *result;
 //	PyThreadState *tstate;
 //
@@ -435,10 +438,12 @@ PyEval_RestoreThread(PyThreadState *tstate)
 //static int pendinglast = 0;
 //static volatile int pendingcalls_to_do = 1; /* trigger initialization of lock */
 //static char pendingbusy = 0;
-//
-//int
-//Py_AddPendingCall(int (*func)(void *), void *arg)
-//{
+
+int
+Py_AddPendingCall(int (*func)(void *), void *arg)
+{
+	jputs("JyNI warning: Py_AddPendingCall not yet implemented.");
+}
 //	int i, j, result=0;
 //	PyThread_type_lock lock = pending_lock;
 //

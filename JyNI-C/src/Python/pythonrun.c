@@ -1827,15 +1827,15 @@ Py_FatalError(const char *msg)
 //	fflush(stdout);
 //	fflush(stderr);
 //}
-//
-//void
-//Py_Exit(int sts)
-//{
+
+void
+Py_Exit(int sts)
+{
+	jputs("JyNI warning: Py_Exit not yet implemented.");
 //	Py_Finalize();
-//
 //	exit(sts);
-//}
-//
+}
+
 //static void
 //initsigs(void)
 //{

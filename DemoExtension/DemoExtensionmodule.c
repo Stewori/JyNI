@@ -48,6 +48,7 @@ hello_world(PyObject *self, PyObject *args)
 	//If nothing shall be returned, do:
 	//Py_INCREF(Py_None);
 	//return Py_None;
+	//PyThreadState_Get();
 
 	Py_RETURN_NONE;
 }
@@ -516,6 +517,7 @@ PyMethodDef DemoExtensionMethods[] = {
 PyMODINIT_FUNC
 initDemoExtension(void)
 {
+	//puts("initDemoExtension...");
 	//PyErr_Format(PyExc_ImportError, "test-error");
 	(void)Py_InitModule3("DemoExtension", DemoExtensionMethods, "This is a pure demo extension.");
 }

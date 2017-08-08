@@ -462,11 +462,13 @@ int PyObject_AsWriteBuffer(PyObject *obj,
 //	}
 //	return 1;
 //}
-//
-//int
-//PyBuffer_IsContiguous(Py_buffer *view, char fort)
-//{
-//
+
+int
+PyBuffer_IsContiguous(Py_buffer *view, char fort)
+{
+	jputs("JyNI warning: PyBuffer_IsContiguous not yet implemented.");
+	return -1;
+}
 //	if (view->suboffsets != NULL) return 0;
 //
 //	if (fort == 'C')
@@ -728,11 +730,14 @@ int PyObject_AsWriteBuffer(PyObject *obj,
 //	}
 //	return;
 //}
-//
-//int
-//PyBuffer_FillInfo(Py_buffer *view, PyObject *obj, void *buf, Py_ssize_t len,
-//			  int readonly, int flags)
-//{
+
+int
+PyBuffer_FillInfo(Py_buffer *view, PyObject *obj, void *buf, Py_ssize_t len,
+			  int readonly, int flags)
+{
+	jputs("JyNI warning: PyBuffer_FillInfo not yet implemented.");
+	return -1;
+}
 //	if (view == NULL) return 0;
 //	if (((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) &&
 //		(readonly == 1)) {
@@ -762,173 +767,175 @@ int PyObject_AsWriteBuffer(PyObject *obj,
 //	view->internal = NULL;
 //	return 0;
 //}
-//
-//void
-//PyBuffer_Release(Py_buffer *view)
-//{
+
+void
+PyBuffer_Release(Py_buffer *view)
+{
+	jputs("JyNI warning: PyBuffer_Release not yet implemented.");
+}
 //	PyObject *obj = view->obj;
 //	if (obj && Py_TYPE(obj)->tp_as_buffer && Py_TYPE(obj)->tp_as_buffer->bf_releasebuffer)
 //		Py_TYPE(obj)->tp_as_buffer->bf_releasebuffer(obj, view);
 //	Py_XDECREF(obj);
 //	view->obj = NULL;
 //}
-//
-//PyObject *
-//PyObject_Format(PyObject* obj, PyObject *format_spec)
-//{
-//	PyObject *empty = NULL;
-//	PyObject *result = NULL;
-//#ifdef Py_USING_UNICODE
-//	int spec_is_unicode;
-//	int result_is_unicode;
-//#endif
-//
-//	/* If no format_spec is provided, use an empty string */
-//	if (format_spec == NULL) {
-//		empty = PyString_FromStringAndSize(NULL, 0);
-//		format_spec = empty;
-//	}
-//
-//	/* Check the format_spec type, and make sure it's str or unicode */
-//#ifdef Py_USING_UNICODE
-//	if (PyUnicode_Check(format_spec))
-//		spec_is_unicode = 1;
-//	else if (PyString_Check(format_spec))
-//		spec_is_unicode = 0;
-//	else {
-//#else
-//	if (!PyString_Check(format_spec)) {
-//#endif
-//		PyErr_Format(PyExc_TypeError,
-//					 "format expects arg 2 to be string "
-//					 "or unicode, not %.100s", Py_TYPE(format_spec)->tp_name);
-//		goto done;
-//	}
-//
-//	/* Check for a __format__ method and call it. */
-//	if (PyInstance_Check(obj)) {
-//		/* We're an instance of a classic class */
-//		PyObject *bound_method = PyObject_GetAttrString(obj, "__format__");
-//		if (bound_method != NULL) {
-//			result = PyObject_CallFunctionObjArgs(bound_method,
-//												  format_spec,
-//												  NULL);
-//			Py_DECREF(bound_method);
-//		} else {
-//			PyObject *self_as_str = NULL;
-//			PyObject *format_method = NULL;
-//			Py_ssize_t format_len;
-//
-//			PyErr_Clear();
-//			/* Per the PEP, convert to str (or unicode,
-//			   depending on the type of the format
-//			   specifier).  For new-style classes, this
-//			   logic is done by object.__format__(). */
-//#ifdef Py_USING_UNICODE
-//			if (spec_is_unicode) {
-//				format_len = PyUnicode_GET_SIZE(format_spec);
-//				self_as_str = PyObject_Unicode(obj);
-//			} else
-//#endif
-//			{
-//				format_len = PyString_GET_SIZE(format_spec);
-//				self_as_str = PyObject_Str(obj);
-//			}
-//			if (self_as_str == NULL)
-//				goto done1;
-//
-//			if (format_len > 0) {
-//				/* See the almost identical code in
-//				   typeobject.c for new-style
-//				   classes. */
-//				if (PyErr_WarnEx(
-//					PyExc_PendingDeprecationWarning,
-//					"object.__format__ with a non-empty "
-//					"format string is deprecated", 1)
-//					 < 0) {
-//					goto done1;
-//				}
-//				/* Eventually this will become an
-//				   error:
-//				PyErr_Format(PyExc_TypeError,
-//				   "non-empty format string passed to "
-//				   "object.__format__");
-//				goto done1;
-//				*/
-//			}
-//
-//			/* Then call str.__format__ on that result */
-//			format_method = PyObject_GetAttrString(self_as_str, "__format__");
-//			if (format_method == NULL) {
-//				goto done1;
-//			}
-//			result = PyObject_CallFunctionObjArgs(format_method,
-//												  format_spec,
-//												  NULL);
-//done1:
-//			Py_XDECREF(self_as_str);
-//			Py_XDECREF(format_method);
-//			if (result == NULL)
-//				goto done;
-//		}
-//	} else {
-//		/* Not an instance of a classic class, use the code
-//		   from py3k */
-//		static PyObject *format_cache = NULL;
-//
-//		/* Find the (unbound!) __format__ method (a borrowed
-//		   reference) */
-//		PyObject *method = _PyObject_LookupSpecial(obj, "__format__",
-//												   &format_cache);
-//		if (method == NULL) {
-//			if (!PyErr_Occurred())
-//				PyErr_Format(PyExc_TypeError,
-//							 "Type %.100s doesn't define __format__",
-//							 Py_TYPE(obj)->tp_name);
-//			goto done;
-//		}
-//		/* And call it. */
-//		result = PyObject_CallFunctionObjArgs(method, format_spec, NULL);
-//		Py_DECREF(method);
-//	}
-//
-//	if (result == NULL)
-//		goto done;
-//
-//	/* Check the result type, and make sure it's str or unicode */
-//#ifdef Py_USING_UNICODE
-//	if (PyUnicode_Check(result))
-//		result_is_unicode = 1;
-//	else if (PyString_Check(result))
-//		result_is_unicode = 0;
-//	else {
-//#else
-//	if (!PyString_Check(result)) {
-//#endif
-//		PyErr_Format(PyExc_TypeError,
-//					 "%.100s.__format__ must return string or "
-//					 "unicode, not %.100s", Py_TYPE(obj)->tp_name,
-//					 Py_TYPE(result)->tp_name);
-//		Py_DECREF(result);
-//		result = NULL;
-//		goto done;
-//	}
-//
-//	/* Convert to unicode, if needed.  Required if spec is unicode
-//	   and result is str */
-//#ifdef Py_USING_UNICODE
-//	if (spec_is_unicode && !result_is_unicode) {
-//		PyObject *tmp = PyObject_Unicode(result);
-//		/* This logic works whether or not tmp is NULL */
-//		Py_DECREF(result);
-//		result = tmp;
-//	}
-//#endif
-//
-//done:
-//	Py_XDECREF(empty);
-//	return result;
-//}
+
+PyObject *
+PyObject_Format(PyObject* obj, PyObject *format_spec)
+{
+	PyObject *empty = NULL;
+	PyObject *result = NULL;
+#ifdef Py_USING_UNICODE
+	int spec_is_unicode;
+	int result_is_unicode;
+#endif
+
+	/* If no format_spec is provided, use an empty string */
+	if (format_spec == NULL) {
+		empty = PyString_FromStringAndSize(NULL, 0);
+		format_spec = empty;
+	}
+
+	/* Check the format_spec type, and make sure it's str or unicode */
+#ifdef Py_USING_UNICODE
+	if (PyUnicode_Check(format_spec))
+		spec_is_unicode = 1;
+	else if (PyString_Check(format_spec))
+		spec_is_unicode = 0;
+	else {
+#else
+	if (!PyString_Check(format_spec)) {
+#endif
+		PyErr_Format(PyExc_TypeError,
+					 "format expects arg 2 to be string "
+					 "or unicode, not %.100s", Py_TYPE(format_spec)->tp_name);
+		goto done;
+	}
+
+	/* Check for a __format__ method and call it. */
+	if (PyInstance_Check(obj)) {
+		/* We're an instance of a classic class */
+		PyObject *bound_method = PyObject_GetAttrString(obj, "__format__");
+		if (bound_method != NULL) {
+			result = PyObject_CallFunctionObjArgs(bound_method,
+												  format_spec,
+												  NULL);
+			Py_DECREF(bound_method);
+		} else {
+			PyObject *self_as_str = NULL;
+			PyObject *format_method = NULL;
+			Py_ssize_t format_len;
+
+			PyErr_Clear();
+			/* Per the PEP, convert to str (or unicode,
+			   depending on the type of the format
+			   specifier).  For new-style classes, this
+			   logic is done by object.__format__(). */
+#ifdef Py_USING_UNICODE
+			if (spec_is_unicode) {
+				format_len = PyUnicode_GET_SIZE(format_spec);
+				self_as_str = PyObject_Unicode(obj);
+			} else
+#endif
+			{
+				format_len = PyString_GET_SIZE(format_spec);
+				self_as_str = PyObject_Str(obj);
+			}
+			if (self_as_str == NULL)
+				goto done1;
+
+			if (format_len > 0) {
+				/* See the almost identical code in
+				   typeobject.c for new-style
+				   classes. */
+				if (PyErr_WarnEx(
+					PyExc_PendingDeprecationWarning,
+					"object.__format__ with a non-empty "
+					"format string is deprecated", 1)
+					 < 0) {
+					goto done1;
+				}
+				/* Eventually this will become an
+				   error:
+				PyErr_Format(PyExc_TypeError,
+				   "non-empty format string passed to "
+				   "object.__format__");
+				goto done1;
+				*/
+			}
+
+			/* Then call str.__format__ on that result */
+			format_method = PyObject_GetAttrString(self_as_str, "__format__");
+			if (format_method == NULL) {
+				goto done1;
+			}
+			result = PyObject_CallFunctionObjArgs(format_method,
+												  format_spec,
+												  NULL);
+done1:
+			Py_XDECREF(self_as_str);
+			Py_XDECREF(format_method);
+			if (result == NULL)
+				goto done;
+		}
+	} else {
+		/* Not an instance of a classic class, use the code
+		   from py3k */
+		static PyObject *format_cache = NULL;
+
+		/* Find the (unbound!) __format__ method (a borrowed
+		   reference) */
+		PyObject *method = _PyObject_LookupSpecial(obj, "__format__",
+												   &format_cache);
+		if (method == NULL) {
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_TypeError,
+							 "Type %.100s doesn't define __format__",
+							 Py_TYPE(obj)->tp_name);
+			goto done;
+		}
+		/* And call it. */
+		result = PyObject_CallFunctionObjArgs(method, format_spec, NULL);
+		Py_DECREF(method);
+	}
+
+	if (result == NULL)
+		goto done;
+
+	/* Check the result type, and make sure it's str or unicode */
+#ifdef Py_USING_UNICODE
+	if (PyUnicode_Check(result))
+		result_is_unicode = 1;
+	else if (PyString_Check(result))
+		result_is_unicode = 0;
+	else {
+#else
+	if (!PyString_Check(result)) {
+#endif
+		PyErr_Format(PyExc_TypeError,
+					 "%.100s.__format__ must return string or "
+					 "unicode, not %.100s", Py_TYPE(obj)->tp_name,
+					 Py_TYPE(result)->tp_name);
+		Py_DECREF(result);
+		result = NULL;
+		goto done;
+	}
+
+	/* Convert to unicode, if needed.  Required if spec is unicode
+	   and result is str */
+#ifdef Py_USING_UNICODE
+	if (spec_is_unicode && !result_is_unicode) {
+		PyObject *tmp = PyObject_Unicode(result);
+		/* This logic works whether or not tmp is NULL */
+		Py_DECREF(result);
+		result = tmp;
+	}
+#endif
+
+done:
+	Py_XDECREF(empty);
+	return result;
+}
 
 /* Operations on numbers */
 
@@ -1625,48 +1632,48 @@ PyNumber_AsSsize_t(PyObject *item, PyObject *err)
 }
 
 
-//PyObject *
-//_PyNumber_ConvertIntegralToInt(PyObject *integral, const char* error_format)
-//{
-//	const char *type_name;
-//	static PyObject *int_name = NULL;
-//	if (int_name == NULL) {
-//		int_name = PyString_InternFromString("__int__");
-//		if (int_name == NULL)
-//			return NULL;
-//	}
-//
-//	if (integral && (!PyInt_Check(integral) &&
-//					 !PyLong_Check(integral))) {
-//		/* Don't go through tp_as_number->nb_int to avoid
-//		   hitting the classic class fallback to __trunc__. */
-//		PyObject *int_func = PyObject_GetAttr(integral, int_name);
-//		if (int_func == NULL) {
-//			PyErr_Clear(); /* Raise a different error. */
-//			goto non_integral_error;
-//		}
-//		Py_DECREF(integral);
-//		integral = PyEval_CallObject(int_func, NULL);
-//		Py_DECREF(int_func);
-//		if (integral && (!PyInt_Check(integral) &&
-//						  !PyLong_Check(integral))) {
-//			goto non_integral_error;
-//		}
-//	}
-//	return integral;
-//
-//non_integral_error:
-//	if (PyInstance_Check(integral)) {
-//		type_name = PyString_AS_STRING(((PyInstanceObject *)integral)
-//									   ->in_class->cl_name);
-//	}
-//	else {
-//		type_name = integral->ob_type->tp_name;
-//	}
-//	PyErr_Format(PyExc_TypeError, error_format, type_name);
-//	Py_DECREF(integral);
-//	return NULL;
-//}
+PyObject *
+_PyNumber_ConvertIntegralToInt(PyObject *integral, const char* error_format)
+{
+	const char *type_name;
+	static PyObject *int_name = NULL;
+	if (int_name == NULL) {
+		int_name = PyString_InternFromString("__int__");
+		if (int_name == NULL)
+			return NULL;
+	}
+
+	if (integral && (!PyInt_Check(integral) &&
+					 !PyLong_Check(integral))) {
+		/* Don't go through tp_as_number->nb_int to avoid
+		   hitting the classic class fallback to __trunc__. */
+		PyObject *int_func = PyObject_GetAttr(integral, int_name);
+		if (int_func == NULL) {
+			PyErr_Clear(); /* Raise a different error. */
+			goto non_integral_error;
+		}
+		Py_DECREF(integral);
+		integral = PyEval_CallObject(int_func, NULL);
+		Py_DECREF(int_func);
+		if (integral && (!PyInt_Check(integral) &&
+						  !PyLong_Check(integral))) {
+			goto non_integral_error;
+		}
+	}
+	return integral;
+
+non_integral_error:
+	if (PyInstance_Check(integral)) {
+		type_name = PyString_AS_STRING(((PyInstanceObject *)integral)
+									   ->in_class->cl_name);
+	}
+	else {
+		type_name = integral->ob_type->tp_name;
+	}
+	PyErr_Format(PyExc_TypeError, error_format, type_name);
+	Py_DECREF(integral);
+	return NULL;
+}
 
 
 PyObject *
@@ -1977,9 +1984,12 @@ PySequence_Repeat(PyObject *o, Py_ssize_t count)
 	return type_error("'%.200s' object can't be repeated", o);
 }
 
-//PyObject *
-//PySequence_InPlaceConcat(PyObject *s, PyObject *o)
-//{
+PyObject *
+PySequence_InPlaceConcat(PyObject *s, PyObject *o)
+{
+	jputs("JyNI warning: PySequence_InPlaceConcat not yet implemented.");
+	return Py_NotImplemented;
+}
 //	PySequenceMethods *m;
 //
 //	if (s == NULL || o == NULL)
@@ -2000,10 +2010,13 @@ PySequence_Repeat(PyObject *o, Py_ssize_t count)
 //	}
 //	return type_error("'%.200s' object can't be concatenated", s);
 //}
-//
-//PyObject *
-//PySequence_InPlaceRepeat(PyObject *o, Py_ssize_t count)
-//{
+
+PyObject *
+PySequence_InPlaceRepeat(PyObject *o, Py_ssize_t count)
+{
+	jputs("JyNI warning: PySequence_InPlaceRepeat not yet implemented.");
+	return Py_NotImplemented;
+}
 //	PySequenceMethods *m;
 //
 //	if (o == NULL)
@@ -2341,15 +2354,18 @@ PySequence_Fast(PyObject *v, const char *m)
 	return v;
 }
 
-///* Iterate over seq.  Result depends on the operation:
-//   PY_ITERSEARCH_COUNT:  -1 if error, else # of times obj appears in seq.
-//   PY_ITERSEARCH_INDEX:  0-based index of first occurrence of obj in seq;
-//	set ValueError and return -1 if none found; also return -1 on error.
-//   Py_ITERSEARCH_CONTAINS:  return 1 if obj in seq, else 0; -1 on error.
-//*/
-//Py_ssize_t
-//_PySequence_IterSearch(PyObject *seq, PyObject *obj, int operation)
-//{
+/* Iterate over seq.  Result depends on the operation:
+   PY_ITERSEARCH_COUNT:  -1 if error, else # of times obj appears in seq.
+   PY_ITERSEARCH_INDEX:  0-based index of first occurrence of obj in seq;
+	set ValueError and return -1 if none found; also return -1 on error.
+   Py_ITERSEARCH_CONTAINS:  return 1 if obj in seq, else 0; -1 on error.
+*/
+Py_ssize_t
+_PySequence_IterSearch(PyObject *seq, PyObject *obj, int operation)
+{
+	jputs("JyNI warning: _PySequence_IterSearch not yet implemented.");
+	return -1;
+}
 //	Py_ssize_t n;
 //	int wrapped;  /* for PY_ITERSEARCH_INDEX, true iff n wrapped around */
 //	PyObject *it;  /* iter(seq) */

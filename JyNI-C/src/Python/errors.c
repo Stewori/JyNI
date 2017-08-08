@@ -433,6 +433,26 @@ PyErr_Clear(void)
 	PyErr_Restore(NULL, NULL, NULL);
 }
 
+/* Restore previously fetched exception if an exception is not set,
+   otherwise drop previously fetched exception.
+   Like _PyErr_ChainExceptions() in Python 3, but doesn't set the context.
+ */
+void
+_PyErr_ReplaceException(PyObject *exc, PyObject *val, PyObject *tb)
+{
+    if (exc == NULL)
+        return;
+
+    if (PyErr_Occurred()) {
+        Py_DECREF(exc);
+        Py_XDECREF(val);
+        Py_XDECREF(tb);
+    }
+    else {
+        PyErr_Restore(exc, val, tb);
+    }
+}
+
 /* Convenience functions to set a type error exception and return 0 */
 
 int
@@ -583,119 +603,120 @@ PyErr_SetFromErrno(PyObject *exc)
 	return PyErr_SetFromErrnoWithFilenameObject(exc, NULL);
 }
 
-//#ifdef MS_WINDOWS
-///* Windows specific error code handling */
-//PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
-//	PyObject *exc,
-//	int ierr,
-//	PyObject *filenameObject)
-//{
-//	int len;
-//	char *s;
-//	char *s_buf = NULL; /* Free via LocalFree */
-//	char s_small_buf[28]; /* Room for "Windows Error 0xFFFFFFFF" */
-//	PyObject *v;
-//	DWORD err = (DWORD)ierr;
-//	if (err==0) err = GetLastError();
-//	len = FormatMessage(
-//		/* Error API error */
-//		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-//		FORMAT_MESSAGE_FROM_SYSTEM |
-//		FORMAT_MESSAGE_IGNORE_INSERTS,
-//		NULL,		   /* no message source */
-//		err,
-//		MAKELANGID(LANG_NEUTRAL,
-//		SUBLANG_DEFAULT), /* Default language */
-//		(LPTSTR) &s_buf,
-//		0,			  /* size not used */
-//		NULL);		  /* no args */
-//	if (len==0) {
-//		/* Only seen this in out of mem situations */
-//		sprintf(s_small_buf, "Windows Error 0x%X", err);
-//		s = s_small_buf;
-//		s_buf = NULL;
-//	} else {
-//		s = s_buf;
-//		/* remove trailing cr/lf and dots */
-//		while (len > 0 && (s[len-1] <= ' ' || s[len-1] == '.'))
-//			s[--len] = '\0';
-//	}
-//	if (filenameObject != NULL)
-//		v = Py_BuildValue("(isO)", err, s, filenameObject);
-//	else
-//		v = Py_BuildValue("(is)", err, s);
-//	if (v != NULL) {
-//		PyErr_SetObject(exc, v);
-//		Py_DECREF(v);
-//	}
-//	LocalFree(s_buf);
-//	return NULL;
-//}
-//
-//PyObject *PyErr_SetExcFromWindowsErrWithFilename(
-//	PyObject *exc,
-//	int ierr,
-//	const char *filename)
-//{
-//	PyObject *name = filename ? PyString_FromString(filename) : NULL;
-//	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
-//																 ierr,
-//																 name);
-//	Py_XDECREF(name);
-//	return ret;
-//}
-//
-//PyObject *PyErr_SetExcFromWindowsErrWithUnicodeFilename(
-//	PyObject *exc,
-//	int ierr,
-//	const Py_UNICODE *filename)
-//{
-//	PyObject *name = filename ?
-//					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
-//			 NULL;
-//	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
-//																 ierr,
-//																 name);
-//	Py_XDECREF(name);
-//	return ret;
-//}
-//
-//PyObject *PyErr_SetExcFromWindowsErr(PyObject *exc, int ierr)
-//{
-//	return PyErr_SetExcFromWindowsErrWithFilename(exc, ierr, NULL);
-//}
-//
-//PyObject *PyErr_SetFromWindowsErr(int ierr)
-//{
-//	return PyErr_SetExcFromWindowsErrWithFilename(PyExc_WindowsError,
-//												  ierr, NULL);
-//}
-//PyObject *PyErr_SetFromWindowsErrWithFilename(
-//	int ierr,
-//	const char *filename)
-//{
-//	PyObject *name = filename ? PyString_FromString(filename) : NULL;
-//	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
-//												  PyExc_WindowsError,
-//												  ierr, name);
-//	Py_XDECREF(name);
-//	return result;
-//}
-//
-//PyObject *PyErr_SetFromWindowsErrWithUnicodeFilename(
-//	int ierr,
-//	const Py_UNICODE *filename)
-//{
-//	PyObject *name = filename ?
-//					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
-//			 NULL;
-//	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
-//												  PyExc_WindowsError,
-//												  ierr, name);
-//	Py_XDECREF(name);
-//	return result;
-//}
-//#endif /* MS_WINDOWS */
+#ifdef MS_WINDOWS
+/* Windows specific error code handling */
+PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
+	PyObject *exc,
+	int ierr,
+	PyObject *filenameObject)
+{
+	int len;
+	char *s;
+	char *s_buf = NULL; /* Free via LocalFree */
+	char s_small_buf[28]; /* Room for "Windows Error 0xFFFFFFFF" */
+	PyObject *v;
+	DWORD err = (DWORD)ierr;
+	if (err==0) err = GetLastError();
+	len = FormatMessage(
+		/* Error API error */
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,		   /* no message source */
+		err,
+		MAKELANGID(LANG_NEUTRAL,
+		SUBLANG_DEFAULT), /* Default language */
+		(LPTSTR) &s_buf,
+		0,			  /* size not used */
+		NULL);		  /* no args */
+	if (len==0) {
+		/* Only seen this in out of mem situations */
+		sprintf(s_small_buf, "Windows Error 0x%X", err);
+		s = s_small_buf;
+		s_buf = NULL;
+	} else {
+		s = s_buf;
+		/* remove trailing cr/lf and dots */
+		while (len > 0 && (s[len-1] <= ' ' || s[len-1] == '.'))
+			s[--len] = '\0';
+	}
+	if (filenameObject != NULL)
+		v = Py_BuildValue("(isO)", err, s, filenameObject);
+	else
+		v = Py_BuildValue("(is)", err, s);
+	if (v != NULL) {
+		PyErr_SetObject(exc, v);
+		Py_DECREF(v);
+	}
+	LocalFree(s_buf);
+	return NULL;
+}
+
+PyObject *PyErr_SetExcFromWindowsErrWithFilename(
+	PyObject *exc,
+	int ierr,
+	const char *filename)
+{
+	PyObject *name = filename ? PyString_FromString(filename) : NULL;
+	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
+																 ierr,
+																 name);
+	Py_XDECREF(name);
+	return ret;
+}
+
+PyObject *PyErr_SetExcFromWindowsErrWithUnicodeFilename(
+	PyObject *exc,
+	int ierr,
+	const Py_UNICODE *filename)
+{
+	PyObject *name = filename ?
+					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
+			 NULL;
+	PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObject(exc,
+																 ierr,
+																 name);
+	Py_XDECREF(name);
+	return ret;
+}
+
+PyObject *PyErr_SetExcFromWindowsErr(PyObject *exc, int ierr)
+{
+	return PyErr_SetExcFromWindowsErrWithFilename(exc, ierr, NULL);
+}
+
+PyObject *PyErr_SetFromWindowsErr(int ierr)
+{
+	return PyErr_SetExcFromWindowsErrWithFilename(PyExc_WindowsError,
+												  ierr, NULL);
+}
+
+PyObject *PyErr_SetFromWindowsErrWithFilename(
+	int ierr,
+	const char *filename)
+{
+	PyObject *name = filename ? PyString_FromString(filename) : NULL;
+	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
+												  PyExc_WindowsError,
+												  ierr, name);
+	Py_XDECREF(name);
+	return result;
+}
+
+PyObject *PyErr_SetFromWindowsErrWithUnicodeFilename(
+	int ierr,
+	const Py_UNICODE *filename)
+{
+	PyObject *name = filename ?
+					 PyUnicode_FromUnicode(filename, wcslen(filename)) :
+			 NULL;
+	PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObject(
+												  PyExc_WindowsError,
+												  ierr, name);
+	Py_XDECREF(name);
+	return result;
+}
+#endif /* MS_WINDOWS */
 
 void
 _PyErr_BadInternalCall(char *filename, int lineno)

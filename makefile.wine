@@ -66,8 +66,7 @@ JYNIBIN = ./JyNI-Java/bin
 JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
-#LIBS = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)\VC\lib\libcmt.lib $(VC_Python)\VC\lib\OLDNAMES.lib $(VC_Python)\WinSDK\lib\Kernel32.lib
-LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib
+LIBS64 = $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib
 
 CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.

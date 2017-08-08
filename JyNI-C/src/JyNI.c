@@ -33,6 +33,7 @@
  *
  *  Created on: 14.03.2013, 00:49:46
  *	  Author: Stefan Richthofer
+ *
  */
 
 #include <JyNI.h>
@@ -44,6 +45,11 @@
 #include "importdl.h"
 //#include <dlfcn.h>
 //#include "stringlib/string_format.h"
+
+#ifdef MS_WINDOWS
+#include <windows.h>
+#include <DbgHelp.h>
+#endif
 
 const char* excPrefix = "exceptions.";
 //jlong JyNIDebugMode = 0;
@@ -88,9 +94,11 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 	VLA_DECL(char, mPath);
 
 //	jputs("JyNI_loadModule...");
-//	JyNI_jprintJ(moduleName);
 //	jputsLong(tstate);
+	//JyNI_jprintJ(moduleName);
+//	jputsLong(_PyThreadState_Current);
 	RE_ENTER_JyNI
+//	jputsLong(_PyThreadState_Current);
 	if (PyErr_Occurred()) jputs("PyErrOccured01 (beginning of JyNI_loadModule)");//this should never happen!
 	utf_string = (*env)->GetStringUTFChars(env, moduleName, NULL);
 	//"+1" for 0-termination:
@@ -109,7 +117,6 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 		if (fp == NULL)
 			//PyErr_SetFromErrno(PyExc_IOError);
 			jputs("some error happened opening the file");
-
 		er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
 		if (fclose(fp)) jputs("Some error occurred on file close");
 	} else
@@ -117,6 +124,7 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 		er = _PyImport_LoadDynamicModuleJy(mName, NULL, NULL);
 
 	RE_LEAVE_JyNI
+//	jputs("JyNI_loadModule done");
 	return er;
 }
 
@@ -2535,7 +2543,36 @@ inline void putsPy(PyObject* o)
 void jPrintCStackTrace()
 {
 #ifdef MS_WINDOWS
-	jputs("jPrintCStackTrace is not yet supported on Windows.");
+	// jputs("jPrintCStackTrace is not yet supported on Windows.");
+	HANDLE process;
+	SYMBOL_INFO *symbol;
+	WORD numberOfFrames;
+    void *stack[255];
+    int i;
+    puts("jPrintCStackTrace windows...");
+    process = GetCurrentProcess();
+    SymInitialize(process, NULL, TRUE);
+    numberOfFrames = CaptureStackBackTrace(0, 255, stack, NULL);
+    symbol = (SYMBOL_INFO *)malloc(sizeof(SYMBOL_INFO)+(255 - 1) * sizeof(TCHAR));
+    symbol->MaxNameLen = 255;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    //DWORD displacement;
+    //IMAGEHLP_LINE64 *line = (IMAGEHLP_LINE64 *)malloc(sizeof(IMAGEHLP_LINE64));
+    //line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+    for (i = 0; i < numberOfFrames; i++)
+    {
+        DWORD64 address = (DWORD64)(stack[i]);
+        SymFromAddr(process, address, NULL, symbol);
+        puts(symbol->Name);
+        /*if (SymGetLineFromAddr64(process, address, &displacement, line))
+        {
+            printf("\tat %s in %s: line: %lu: address: 0x%0X\n", symbol->Name, line->FileName, line->LineNumber, symbol->Address);
+        } else
+        {
+            printf("\tSymGetLineFromAddr64 returned error code %lu.\n", GetLastError());
+            printf("\tat %s, address 0x%0X.\n", symbol->Name, symbol->Address);
+        }*/
+    }
 #else
 	void* buf[300];
 	int size;

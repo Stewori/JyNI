@@ -63,13 +63,12 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-//	jputs("Py_InitModule4 called with name:");
-//	jputs(name);
-
 	//PyObject *m, *d, *v, *n;
 	jobject m, d;
 	PyObject *v, *n;
 	PyMethodDef *ml;
+//	jputs("Py_InitModule4 called with name:");
+//	jputs(name);
 	//PyInterpreterState *interp = PyThreadState_Get()->interp;
 	//if (interp->modules == NULL)
 	//	Py_FatalError("Python import machinery not initialized");
