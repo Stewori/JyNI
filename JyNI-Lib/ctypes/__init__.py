@@ -155,7 +155,6 @@ def CFUNCTYPE(restype, *argtypes, **kw):
         return CFunctionType
 
 if _os.name in ("nt", "ce"):
-    print 158
     from _ctypes import LoadLibrary as _dlopen
     from _ctypes import FUNCFLAG_STDCALL as _FUNCFLAG_STDCALL
     if _os.name == "ce":

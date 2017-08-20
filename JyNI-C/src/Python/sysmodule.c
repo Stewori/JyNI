@@ -1520,7 +1520,7 @@ _PySys_Init(void)
 	}
 	*/
 #ifdef MS_COREDLL
-	printf("JyNI_init %lld  %s\n", PyWin_DLLhModule, PyWin_DLLVersionString);
+//	printf("JyNI_init %lld  %s\n", PyWin_DLLhModule, PyWin_DLLVersionString);
 	SET_SYS_FROM_STRING("dllhandle",
 						PyLong_FromVoidPtr(PyWin_DLLhModule));
 	SET_SYS_FROM_STRING("winver",
@@ -1807,7 +1807,9 @@ mywrite(char *name, FILE *fp, const char *format, va_list va)
 	PyObject *error_type, *error_value, *error_traceback;
 	PyErr_Fetch(&error_type, &error_value, &error_traceback);
 	file = PySys_GetObject(name);
-	if (file == NULL)// || PyFile_AsFile(file) == fp)  <-No way to get the std-FILE pointer from the JVM (?)
+	if (file == NULL)// || PyFile_AsFile(file) == fp)
+		// <- No way to get the std-FILE pointer from the JVM
+		// Edit: Yes, there is (?)! see https://github.com/Stewori/JyNI/issues/11
 		vfprintf(fp, format, va);
 	else {
 		char buffer[1001];
