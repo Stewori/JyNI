@@ -196,6 +196,7 @@ extern jmethodID JyNI_getDLOpenFlags;
 extern jmethodID JyNI_getDLVerbose;
 extern jmethodID JyNI_getJyObjectByName;
 extern jmethodID JyNI_getPyObjectByName;
+extern jmethodID JyNI_setPyObjectByName;
 extern jmethodID JyNI__PyImport_FindExtension;
 extern jmethodID JyNI_getPyType;
 extern jmethodID JyNI_getNativeAvailableKeysAndValues;

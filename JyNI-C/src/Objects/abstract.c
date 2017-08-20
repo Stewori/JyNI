@@ -407,11 +407,12 @@ int PyObject_AsWriteBuffer(PyObject *obj,
 	return 0;
 }
 
-///* Buffer C-API for Python 3.0 */
-//
-//int
-//PyObject_GetBuffer(PyObject *obj, Py_buffer *view, int flags)
-//{
+/* Buffer C-API for Python 3.0 */
+
+int
+PyObject_GetBuffer(PyObject *obj, Py_buffer *view, int flags)
+{
+	jputs("JyNI warning: PyObject_GetBuffer not yet implemented.");
 //	if (!PyObject_CheckBuffer(obj)) {
 //		PyErr_Format(PyExc_TypeError,
 //					 "'%100s' does not have the buffer interface",
@@ -419,8 +420,8 @@ int PyObject_AsWriteBuffer(PyObject *obj,
 //		return -1;
 //	}
 //	return (*(obj->ob_type->tp_as_buffer->bf_getbuffer))(obj, view, flags);
-//}
-//
+}
+
 //static int
 //_IsFortranContiguous(Py_buffer *view)
 //{

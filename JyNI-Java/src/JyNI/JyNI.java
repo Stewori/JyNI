@@ -396,6 +396,23 @@ public class JyNI {
 		return lookupNativeHandle(obj);
 	}
 
+	public static void setPyObjectByName(String name, PyObject value)
+	{
+		//todo: Check, whether this does what it is supposed to
+		System.out.println("JyNI: Setting Object by name: "+name);//+" value: "+value);
+		try {
+			Py.getThreadState().getSystemState().__setattr__(name.intern(), value);
+		} catch (Exception e1)
+		{
+			try {
+				Py.getSystemState().__setattr__(name.intern(), value);
+			} catch (Exception e2)
+			{
+				return;
+			}
+		}
+	}
+
 	public static int getDLVerbose()
 	{
 		//current hard-coded Debug:

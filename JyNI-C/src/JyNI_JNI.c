@@ -84,6 +84,7 @@ jmethodID JyNI_clearNativeHandle;
 jmethodID JyNI_getDLOpenFlags;
 jmethodID JyNI_getJyObjectByName;
 jmethodID JyNI_getPyObjectByName;
+jmethodID JyNI_setPyObjectByName;
 jmethodID JyNI_getPyType;
 jmethodID JyNI_getNativeAvailableKeysAndValues;
 jmethodID JyNI_exceptionByName;
@@ -752,6 +753,7 @@ inline jint initJyNI(JNIEnv *env)
 	JNI_METH_STATIC(JyNI, getDLVerbose, int)
 	JNI_METH_STATIC(JyNI, getJyObjectByName, long, string)
 	JNI_METH_STATIC(JyNI, getPyObjectByName, pyObject, string)
+	JNI_METH_STATIC(JyNI, setPyObjectByName, void, string, pyObject)
 	JNI_METH_STATIC(JyNI, _PyImport_FindExtension, pyObject, string, string)
 	JNI_METH_STATIC(JyNI, getNativeAvailableKeysAndValues, long array, pyDict)
 	JNI_METH_STATIC(JyNI, getPyDictionary_Next, JyNIDictNextResult, pyDict, int)
@@ -1424,6 +1426,7 @@ jint JyNI_init(JavaVM *jvm)
 	patchJythonStructModule(env);
 
 	//init native objects where necessary:
+	_PySys_Init();
 	PyEval_InitThreads();
 	_PyInt_Init();
 	PyType_Ready(&PyBool_Type);

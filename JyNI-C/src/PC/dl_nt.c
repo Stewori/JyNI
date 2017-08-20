@@ -93,6 +93,8 @@ BOOL    WINAPI  DllMain (HANDLE hInst,
                 if ((*pfnGetCurrentActCtx)(&PyWin_DLLhActivationContext))
                     if (!(*pfnAddRefActCtx)(PyWin_DLLhActivationContext))
                         OutputDebugString("Python failed to load the default activation context\n");
+//            puts("setting PyWin_DLLhModule...");
+//            puts(PyWin_DLLVersionString);
             break;
 
         case DLL_PROCESS_DETACH:

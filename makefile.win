@@ -59,6 +59,7 @@ VC_Python = "C:\Users\$(USER)\AppData\Local\Programs\Common\Microsoft\Visual C++
 
 CC = $(VC_Python)\VC\bin\x86_amd64\cl
 LK = $(VC_Python)\VC\bin\x86_amd64\link
+MT = $(VC_Python)\WinSDK\Bin\x64\mt
 JC = javac
 JAVA = java
 OUTPUTDIR = build
@@ -72,9 +73,11 @@ JYNIBIN2 = JyNI-Java\\bin
 JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
-LIBS64 = $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib $(VC_Python)/WinSDK/lib/x64/Dbghelp.lib
+LIBS64 = $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib $(VC_Python)/WinSDK/lib/x64/Dbghelp.lib
+LIBS_CTYPES = $(VC_Python)/WinSDK/Lib/x64/ole32.lib $(VC_Python)/WinSDK/Lib/x64/OLEAUT32.lib
 
-CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
+
+CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE /MD
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
 JFLAGS= -cp $(JYTHON);$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
 
@@ -112,6 +115,7 @@ $(JYTHON):
 
 libJyNI: $(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
 	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll/python27.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
+	$(MT) -manifest JyNI-C/python27.dll.manifest -outputresource:$(OUTPUTDIR)/JyNI.dll/python27.dll;2
 	del $(OUTPUTDIR)\JyNI.dll\python27.lib
 	del $(OUTPUTDIR)\JyNI.dll\python27.exp
 # We delete JyNI.dll\python27.lib here, because in any case one should link against original python27.lib.

@@ -202,7 +202,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 		/* restore old error mode settings */
 		SetErrorMode(old_mode);
 
-		if (hDLL==NULL){
+		if (hDLL==NULL) {
 			char errBuf[256];
 			unsigned int errorCode;
 
@@ -210,6 +210,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
 			char theInfo[256]; /* Pointer to error text
 			                      from system */
 			int theLength; /* Length of error text */
+//			puts("some error occurred: dynload_win");
 
 			errorCode = GetLastError();
 
