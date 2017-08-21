@@ -35,8 +35,9 @@
 # These variables might need adjustment by the user:
 # PYTHON_HOME, JYTHON, JAVA_HOME, VC_Python, JAVA, JC
 
-PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
+# PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
 # With Python 2.7: python -c "import os, sys; print os.path.dirname(sys.executable)"
+PYTHON_HOME = $(shell python JyNI-Lib\python_home_winreg.py)
 
 # Adjust the following line to point to Jython >=2.7.1
 JYTHON = jython.jar
@@ -49,12 +50,12 @@ SHELL = cmd
 # By default it will be guessed via "where javac", see lower line.
 # Note that predefined JAVA_HOME might not be quoted, which is required for whitespaces.
 # JAVA_HOME = "C:\Program Files\Java\jdk1.8.0_121"
-$(eval JAVA_HOME = $(subst \bin\javac.exe,, "$(shell where javac)"))
+JAVA_HOME = $(subst \bin\javac.exe,, "$(shell where javac)")
 
 # (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
 # We set VC_Python to the default install location for a user-install.
 # This might need adjustment in some cases.
-$(eval USER = $(shell echo %username%))
+USER = $(shell echo %username%)
 VC_Python = "C:\Users\$(USER)\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0"
 
 CC = $(VC_Python)\VC\bin\x86_amd64\cl
