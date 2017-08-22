@@ -1128,6 +1128,6 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
 
 //extern jlong JyNIDebugMode;
 
-PyObject* PyMemoryView_FromObject(PyObject *base);
+PyAPI_FUNC(PyObject*) PyMemoryView_FromObject(PyObject *base);
 
 #endif /* JYNI_H_ */

@@ -2596,7 +2596,7 @@ PyObject *
 PyMemoryView_FromObject(PyObject *base)
 {
 	//puts(__FUNCTION__);
-	//jputs("JyNI-Warning: PyMemoryView_FromObject is not implemented!");
+	//jputs("JyNI warning: PyMemoryView_FromObject not yet implemented.");
 	return NULL;
 //    PyMemoryViewObject *mview;
 //    Py_buffer view;

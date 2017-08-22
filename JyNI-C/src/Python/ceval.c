@@ -47,7 +47,7 @@
 #include "JyNI.h"
 #include "code_JyNI.h"
 #include "frameobject_JyNI.h"
-//#include "eval.h"
+#include "eval.h"
 //#include "opcode.h"
 //#include "structmember_JyNI.h"
 //
@@ -728,10 +728,13 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //	   PyEval_EvalFrameEx() */
 //	return PyEval_EvalFrameEx(f, 0);
 //}
-//
-//PyObject *
-//PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
-//{
+
+PyObject *
+PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
+{
+	jputs("JyNI warning: PyEval_EvalFrameEx not yet implemented.");
+	return NULL;
+}
 //#ifdef DYNAMIC_EXECUTION_PROFILE
 //  #undef USE_COMPUTED_GOTOS
 //#endif
@@ -3380,16 +3383,19 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //
 //	return retval;
 //}
-//
-///* This is gonna seem *real weird*, but if you put some other code between
-//   PyEval_EvalFrame() and PyEval_EvalCodeEx() you will need to adjust
-//   the test in the if statements in Misc/gdbinit (pystack and pystackv). */
-//
-//PyObject *
-//PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
-//		   PyObject **args, int argcount, PyObject **kws, int kwcount,
-//		   PyObject **defs, int defcount, PyObject *closure)
-//{
+
+/* This is gonna seem *real weird*, but if you put some other code between
+   PyEval_EvalFrame() and PyEval_EvalCodeEx() you will need to adjust
+   the test in the if statements in Misc/gdbinit (pystack and pystackv). */
+
+PyObject *
+PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
+		   PyObject **args, int argcount, PyObject **kws, int kwcount,
+		   PyObject **defs, int defcount, PyObject *closure)
+{
+	jputs("JyNI warning: PyEval_EvalCodeEx not yet implemented.");
+	return NULL;
+}
 //	register PyFrameObject *f;
 //	register PyObject *retval = NULL;
 //	register PyObject **fastlocals, **freevars;

@@ -103,7 +103,7 @@
 extern "C" {
 #endif
 
-/*
+
 //Providing the following method via JyNI would be very hard or impossible.
 //However, we could create a FILE-Pointer to the same file and also adjust
 //io mode and seek-position to the values of the given PyFile.
@@ -112,6 +112,10 @@ extern "C" {
 FILE *
 PyFile_AsFile(PyObject *f)
 {
+	jputs("JyNI warning: PyFile_AsFile not yet implemented.");
+	return NULL;
+}
+/*
     if (f == NULL || !PyFile_Check(f))
         return NULL;
     else
@@ -2672,7 +2676,7 @@ PyFile_WriteString(const char *s, PyObject *f)
     else
         return -1;*/
 }
-/*
+
 // Try to get a file-descriptor from a Python object.  If the object
 // is an integer or long integer, its value is returned.  If not, the
 // object's fileno() method is called if it exists; the method must return
@@ -2682,6 +2686,11 @@ PyFile_WriteString(const char *s, PyObject *f)
 
 int PyObject_AsFileDescriptor(PyObject *o)
 {
+	jputs("JyNI warning: PyObject_AsFileDescriptor not yet implemented.");
+	return -1;
+}
+
+/*
     int fd;
     PyObject *meth;
 
