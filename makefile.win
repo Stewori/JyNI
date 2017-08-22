@@ -37,7 +37,7 @@
 
 # PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
 # With Python 2.7: python -c "import os, sys; print os.path.dirname(sys.executable)"
-PYTHON_HOME = $(shell python JyNI-Lib\python_home_winreg.py)
+PYTHON_HOME = "$(shell python JyNI-Lib\python_home_winreg.py)"
 
 # Adjust the following line to point to Jython >=2.7.1
 JYTHON = jython.jar
@@ -147,6 +147,7 @@ cleanJ:
 	RD /S /Q $(JYNIBIN)
 
 clean:
+	del JyNI-C\src\*.obj
 	del JyNI-C\src\Python\*.obj
 	del JyNI-C\src\Python\dynload_win.c
 	del JyNI-C\src\Objects\*.obj

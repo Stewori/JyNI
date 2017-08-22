@@ -169,7 +169,7 @@
 #include "pythonrun_JyNI.h"
 #include "ceval_JyNI.h"
 #include "sysmodule_JyNI.h"
-//#include "intrcheck_JyNI.h"
+#include "intrcheck_JyNI.h"
 #include "import_JyNI.h"
 
 #include "abstract_JyNI.h"
@@ -179,7 +179,7 @@
 
 #include "pyctype_JyNI.h"
 #include "pystrtod_JyNI.h"
-//#include "pystrcmp_JyNI.h"
+#include "pystrcmp_JyNI.h"
 #include "dtoa_JyNI.h"
 
 /* _Py_Mangle is defined in compile.c */
