@@ -120,12 +120,12 @@ extern "C" {
 //
 ///* See _PyImport_FixupExtension() below */
 //static PyObject *extensions = NULL;
-//
-///* This table is defined in config.c: */
-//extern struct _inittab _PyImport_Inittab[];
-//
-//struct _inittab *PyImport_Inittab = _PyImport_Inittab;
-//
+
+/* This table is defined in config.c: */
+extern struct _inittab _PyImport_Inittab[];
+
+struct _inittab *PyImport_Inittab = _PyImport_Inittab;
+
 ///* these tables define the module suffixes that Python recognizes */
 //struct filedescr * _PyImport_Filetab = NULL;
 //
@@ -596,21 +596,21 @@ PyImport_GetModuleDict(void)
 //}
 
 
-/* Magic for extension modules (built-in as well as dynamically
-   loaded).  To prevent initializing an extension module more than
-   once, we keep a static dictionary 'extensions' keyed by module name
-   (for built-in modules) or by filename (for dynamically loaded
-   modules), containing these modules.  A copy of the module's
-   dictionary is stored by calling _PyImport_FixupExtension()
-   immediately after the module initialization function succeeds.  A
-   copy can be retrieved from there by calling
-   _PyImport_FindExtension(). */
-
-PyObject *
-_PyImport_FixupExtension(char *name, char *filename)
-{
-	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNI__PyImport_FindExtension));
+///* Magic for extension modules (built-in as well as dynamically
+//   loaded).  To prevent initializing an extension module more than
+//   once, we keep a static dictionary 'extensions' keyed by module name
+//   (for built-in modules) or by filename (for dynamically loaded
+//   modules), containing these modules.  A copy of the module's
+//   dictionary is stored by calling _PyImport_FixupExtension()
+//   immediately after the module initialization function succeeds.  A
+//   copy can be retrieved from there by calling
+//   _PyImport_FindExtension(). */
+//
+//PyObject *
+//_PyImport_FixupExtension(char *name, char *filename)
+//{
+//	env(NULL);
+//	return JyNI_PyObject_FromJythonPyObject((*env)->CallStaticObjectMethod(env, JyNIClass, JyNI__PyImport_FindExtension));
 //	PyObject *modules, *mod, *dict, *copy;
 //	if (extensions == NULL) {
 //		extensions = PyDict_New();
@@ -633,7 +633,7 @@ _PyImport_FixupExtension(char *name, char *filename)
 //	PyDict_SetItemString(extensions, filename, copy);
 //	Py_DECREF(copy);
 //	return copy;
-}
+//}
 
 //PyObject *
 //_PyImport_FindExtension(char *name, char *filename)
@@ -1226,26 +1226,26 @@ PyImport_AddModule(const char *name)
 //	Py_XDECREF(file);
 //	return m;
 //}
-//
-//
-///* Helper to test for built-in module */
-//
-//static int
-//is_builtin(char *name)
-//{
-//	int i;
-//	for (i = 0; PyImport_Inittab[i].name != NULL; i++) {
-//		if (strcmp(name, PyImport_Inittab[i].name) == 0) {
-//			if (PyImport_Inittab[i].initfunc == NULL)
-//				return -1;
-//			else
-//				return 1;
-//		}
-//	}
-//	return 0;
-//}
-//
-//
+
+
+/* Helper to test for built-in module */
+
+static int
+is_builtin(char *name)
+{
+	int i;
+	for (i = 0; PyImport_Inittab[i].name != NULL; i++) {
+		if (strcmp(name, PyImport_Inittab[i].name) == 0) {
+			if (PyImport_Inittab[i].initfunc == NULL)
+				return -1;
+			else
+				return 1;
+		}
+	}
+	return 0;
+}
+
+
 ///* Return an importer object for a sys.path/pkg.__path__ item 'p',
 //   possibly by fetching it from the path_importer_cache dict. If it
 //   wasn't yet cached, traverse path_hooks until a hook is found
@@ -1923,10 +1923,51 @@ PyImport_AddModule(const char *name)
 //#endif /*RISCOS*/
 //
 //#endif /* HAVE_STAT */
-//
-//
-//static int init_builtin(char *); /* Forward */
-//
+
+
+static int init_builtin(char *); /* Forward */
+
+jobject _PyImport_LoadBuiltinModuleJy(char *name)
+{
+	//PyObject *m;
+
+	int ret = init_builtin(name);
+	if (ret != 1) {
+		if (ret == 0) {
+			PyErr_Format(PyExc_ImportError,
+					"no native builtin module named %s", name);
+		}
+		return NULL;
+	}
+	if (PyErr_Occurred())
+	{
+//		jputs("PyErrOccured02");
+//		PyThreadState *tstate = PyThreadState_GET();
+//		jputs(((PyStringObject*) tstate->curexc_value)->ob_sval);
+		return NULL;
+	} else
+	{ // env-area
+		jobject m;
+		env(NULL);
+		m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_GetModule, (*env)->NewStringUTF(env, name));
+		if (m == NULL) {
+			PyErr_SetString(PyExc_SystemError,
+							"native builtin module not initialized properly");
+			return NULL;
+		}
+
+		//if (_PyImport_FixupExtension(name, pathname) == NULL)
+		//	return NULL;
+		//if (Py_VerboseFlag)
+		if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_getDLVerbose))
+			PySys_WriteStderr(
+				"import %s # loaded as native builtin\n",
+				name);
+		//Py_INCREF(m);
+		return m;
+	}
+}
+
 ///* Load an external module using the default search path and return
 //   its module object WITH INCREMENTED REFERENCE COUNT */
 //
@@ -2021,42 +2062,43 @@ PyImport_AddModule(const char *name)
 //
 //	return m;
 //}
-//
-//
-///* Initialize a built-in module.
-//   Return 1 for success, 0 if the module is not found, and -1 with
-//   an exception set if the initialization failed. */
-//
-//static int
-//init_builtin(char *name)
-//{
-//	struct _inittab *p;
-//
+
+
+/* Initialize a built-in module.
+   Return 1 for success, 0 if the module is not found, and -1 with
+   an exception set if the initialization failed. */
+
+int
+init_builtin(char *name)
+{
+	struct _inittab *p;
+// JyNI-note: Something equal to _PyImport_FindExtension and _PyImport_FixupExtension
+//            is done on Java side, so we leave it out here.
 //	if (_PyImport_FindExtension(name, name) != NULL)
 //		return 1;
-//
-//	for (p = PyImport_Inittab; p->name != NULL; p++) {
-//		if (strcmp(name, p->name) == 0) {
-//			if (p->initfunc == NULL) {
-//				PyErr_Format(PyExc_ImportError,
-//					"Cannot re-init internal module %.200s",
-//					name);
-//				return -1;
-//			}
-//			if (Py_VerboseFlag)
-//				PySys_WriteStderr("import %s # builtin\n", name);
-//			(*p->initfunc)();
-//			if (PyErr_Occurred())
-//				return -1;
+
+	for (p = PyImport_Inittab; p->name != NULL; p++) {
+		if (strcmp(name, p->name) == 0) {
+			if (p->initfunc == NULL) {
+				PyErr_Format(PyExc_ImportError,
+					"Cannot re-init internal module %.200s",
+					name);
+				return -1;
+			}
+			if (Py_VerboseFlag)
+				PySys_WriteStderr("import %s # builtin\n", name);
+			(*p->initfunc)();
+			if (PyErr_Occurred())
+				return -1;
 //			if (_PyImport_FixupExtension(name, name) == NULL)
 //				return -1;
-//			return 1;
-//		}
-//	}
-//	return 0;
-//}
-//
-//
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
 ///* Frozen modules */
 //
 //static struct _frozen *

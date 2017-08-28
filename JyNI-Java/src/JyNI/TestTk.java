@@ -84,6 +84,7 @@ public class TestTk {
 	public static void main(String[] args) {
 
 		PySystemState pystate = Py.getSystemState();
+		// ToDo: Make this Windows compliant.
 		pystate.path.add("/usr/lib/python2.7/lib-dynload");
 		pystate.path.add("/usr/lib/python2.7/lib-tk");
 

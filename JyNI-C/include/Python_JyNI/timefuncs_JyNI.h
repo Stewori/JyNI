@@ -1,4 +1,7 @@
-/*
+/* This File is based on timefuncs.h from CPython 2.7.13 release.
+ * It has been modified to suit JyNI needs.
+ *
+ *
  * Copyright of JyNI:
  * Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
  * All rights reserved.
@@ -8,7 +11,6 @@
  * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
  * 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
  * Python Software Foundation.
- * All rights reserved.
  *
  *
  * This file is part of JyNI.
@@ -27,26 +29,28 @@
  * License along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*  timefuncs.h
+ */
 
-package JyNI;
+/* Utility function related to timemodule.c. */
 
-import org.python.core.PyModule;
+#ifndef TIMEFUNCS_H
+#define TIMEFUNCS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-public class JyNIModuleInfo {
-	PyModule module;
-	String name;
+/* Cast double x to time_t, but raise ValueError if x is too large
+ * to fit in a time_t.  ValueError is set on return iff the return
+ * value is (time_t)-1 and PyErr_Occurred().
+ */
+PyAPI_FUNC(time_t) _PyTime_DoubleToTimet(double x);
 
-	/**
-	 * path == null means that the module is linked into the JyNI dynamic library.
-	 * It is a valid value for JyNI.loadModule, telling JyNI to init the module
-	 * code internally.
-	 */
-	String path;
+/* Get the current time since the epoch in seconds */
+//PyAPI_FUNC(double) _PyTime_FloatTime(void);
 
-	public JyNIModuleInfo(String name, String path, PyModule module)
-	{
-		this.name = name;
-		this.path = path;
-		this.module = module;
-	}
+
+#ifdef __cplusplus
 }
+#endif
+#endif  /* TIMEFUNCS_H */

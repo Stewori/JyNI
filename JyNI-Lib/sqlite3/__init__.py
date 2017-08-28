@@ -56,10 +56,12 @@
 
 # JyNI-adjustment:
 # Usually Jython does not have lib-dynload on its path, so ensure it here
-lib_dynload = '/usr/lib/python2.7/lib-dynload'
-#lib_dynload = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
-import sys
-if not lib_dynload in sys.path:
-    sys.path.append(lib_dynload)
+import config_path
+config_path.auto_config()
+# lib_dynload = '/usr/lib/python2.7/lib-dynload'
+# #lib_dynload = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
+# import sys
+# if not lib_dynload in sys.path:
+#     sys.path.append(lib_dynload)
 
 from dbapi2 import *

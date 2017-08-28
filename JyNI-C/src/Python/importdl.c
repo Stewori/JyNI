@@ -137,6 +137,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 		//if (PyModule_AddStringConstant(m, "__file__", pathname) < 0)
 		//puts("adding filename...");
 		// Todo: If pathname is NULL set __file__ to PyNone or something.
+		// Note: CPython simply raises AttributeError: 'module' object has no attribute '__file__'
 		if (pathname && PyModule_AddStringConstantJy(m, "__file__", pathname) < 0)
 			PyErr_Clear(); // Not important enough to report
 		//puts("filename added:");

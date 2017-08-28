@@ -6,15 +6,15 @@ key2 = "SOFTWARE\\Wow6432Node\\Python\\PythonCore\\2.7\\InstallPath"
 def python_home():
 	try:
 		return QueryValue(HKEY_LOCAL_MACHINE, key2)
-	except WindowsError:
+	except:
 		pass
 	try:
 		return QueryValue(HKEY_LOCAL_MACHINE, key1)
-	except WindowsError:
+	except:
 		pass
 	try:
 		return QueryValue(HKEY_CURRENT_USER, key1)
-	except WindowsError:
+	except:
 		pass
 
 if __name__ == '__main__':

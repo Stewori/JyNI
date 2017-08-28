@@ -33,7 +33,6 @@ Created on 01.05.2016
 '''
 
 import sys
-sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
 
 import ctypes
 import unittest

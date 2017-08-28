@@ -74,7 +74,7 @@ JYNIBIN2 = JyNI-Java\\bin
 JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
-LIBS64 = $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib $(VC_Python)/WinSDK/lib/x64/Dbghelp.lib
+LIBS64 = $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib $(VC_Python)/WinSDK/lib/x64/Dbghelp.lib $(VC_Python)/WinSDK/lib/x64/AdvAPI32.lib
 LIBS_CTYPES = $(VC_Python)/WinSDK/Lib/x64/ole32.lib $(VC_Python)/WinSDK/Lib/x64/OLEAUT32.lib
 
 
@@ -121,7 +121,6 @@ libJyNI: $(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
 	del $(OUTPUTDIR)\JyNI.dll\python27.exp
 # We delete JyNI.dll\python27.lib here, because in any case one should link against original python27.lib.
 # So this is a useless file and we avoid confusion and invalid linking.
-# JyNI-C/src/Python/dynload_win.obj
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -134,6 +133,7 @@ $(JYNIBIN)/JyNI: $(JYNIBIN)
 	$(JC) $(JFLAGS) $(JSOURCES)
 
 $(JYNIBIN)/Lib: $(JYTHON) $(JYNIBIN)
+	copy JyNI-Lib\*.py $(JYNIBIN)
 	copy JyNI-Lib\ctypes\*.py $(JYNIBIN)\ctypes
 	copy JyNI-Lib\ctypes\macholib\*.py $(JYNIBIN)\ctypes\macholib
 	copy JyNI-Lib\sqlite3\*.py $(JYNIBIN)\sqlite3

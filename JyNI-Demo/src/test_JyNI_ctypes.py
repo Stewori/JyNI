@@ -32,18 +32,18 @@ Created on 09.02.2016
 @author: Stefan Richthofer
 '''
 
-import sys
-
-sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
-
+import os, sys
 
 import unittest
 import platform
 from ctypes import *
 
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
+isWin = os.name in ("nt", "ce") or os.name == 'java' and os._name in ("nt", "ce")
 if isMac:
 	libc = CDLL('libc.dylib')
+elif isWin:
+	libc = cdll.msvcrt
 else:
 	libc = CDLL('libc.so.6')
 

@@ -1232,11 +1232,40 @@ public class JyNI {
 		return PyClass.classobj___new__(name, bases, dict);
 	}
 
-	public static boolean isLibraryFileAvailable(String libname) {
+	public static boolean isLibraryAvailable(String libname) {
 		if (JyNIInitializer.importer == null) return false;
 		if (JyNIImporter.dynModules.containsKey(libname))
 			// Must be checked here to account for statically linked libs
 			return true;
+		String suf = "."+JyNIImporter.getSystemDependentDynamicLibraryExtension();
+		for (String s : JyNIInitializer.importer.libPaths)
+		{
+			File fl = new File(s);
+			String[] ch = fl.list();
+			if (ch != null)
+			{
+				for (String m : ch)
+				{
+					if (m.startsWith(libname+".") && m.endsWith(suf))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public static boolean isLibraryBuiltin(String libname) {
+		if (JyNIInitializer.importer == null) return false;
+		if (JyNIImporter.dynModules.containsKey(libname))
+			return JyNIImporter.dynModules.get(libname).path == null;
+		return JyNIImporter.builtinlist.contains(libname);
+	}
+
+	public static boolean isLibraryFileAvailable(String libname) {
+		if (JyNIInitializer.importer == null) return false;
+		if (JyNIImporter.dynModules.containsKey(libname))
+			// Must be checked here to account for statically linked libs
+			return JyNIImporter.dynModules.get(libname).path != null;
 		String suf = "."+JyNIImporter.getSystemDependentDynamicLibraryExtension();
 		for (String s : JyNIInitializer.importer.libPaths)
 		{

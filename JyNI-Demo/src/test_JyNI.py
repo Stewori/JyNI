@@ -47,6 +47,8 @@ if os.name == 'java':
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join((systm, ver, 'intel'))
 	else:
+		if systm.startswith('win'):
+			systm = 'win'
 		buildf = '-'.join((systm, os.uname()[-1]))
 else:
 	systm = os.uname()[0].lower()
@@ -56,7 +58,6 @@ else:
 		buildf = '-'.join(('macosx', ver, 'intel'))
 	else:
 		buildf = '-'.join((systm, os.uname()[-1]))
-
 
 #Since invalid paths do no harm, we add several possible paths here, where
 #DemoExtension.so could be located in various build scenarios. If you use different
@@ -87,13 +88,13 @@ datetime_path = '/usr/lib/python2.7/lib-dynload'
 
 sys.path.insert(0, datetime_path)
 
-def hasNativeDatetime():
-	if os.name == 'java':
-		from JyNI import JyNI
-		return JyNI.isLibraryFileAvailable('datetime')
-	else:
-		# Let's assume native datetime is trivially available for non-Java case:
-		return True
+# def hasNativeDatetime():
+# 	if os.name == 'java':
+# 		from JyNI import JyNI
+# 		return JyNI.isLibraryFileAvailable('datetime')
+# 	else:
+# 		# Let's assume native datetime is trivially available for non-Java case:
+# 		return True
 
 import DemoExtension
 import datetime
@@ -248,8 +249,8 @@ class TestJyNI(unittest.TestCase):
 # 		self.assertTrue(DemoExtension.newstyleCheckSubtype(nobj, strType))
 # 		self.assertFalse(DemoExtension.newstyleCheckSubtype(nobj, intType))
 
-	@unittest.skipUnless(hasNativeDatetime(),
-		'datetime.so not found (probably part of libpython2.7.so)')
+# 	@unittest.skipUnless(hasNativeDatetime(),
+# 		'datetime.so not found (probably part of libpython2.7.so)')
 	def test_datetime(self):
 		self.assertEqual(datetime.__doc__, "Fast implementation of the datetime type.")
 		self.assertEqual(datetime.__name__, "datetime")

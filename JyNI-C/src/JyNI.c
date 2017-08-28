@@ -118,9 +118,11 @@ jobject JyNI_loadModule(JNIEnv *env, jclass class, jstring moduleName, jstring m
 			jputs("some error happened opening the file");
 		er = _PyImport_LoadDynamicModuleJy(mName, mPath, fp);
 		if (fclose(fp)) jputs("Some error occurred on file close");
-	} else
+	} else {
 		// Attempt to load a module statically linked into JyNI.so:
-		er = _PyImport_LoadDynamicModuleJy(mName, NULL, NULL);
+		//er = _PyImport_LoadDynamicModuleJy(mName, NULL, NULL);
+		er = _PyImport_LoadBuiltinModuleJy(mName);
+	}
 
 	RE_LEAVE_JyNI
 //	jputs("JyNI_loadModule done");
@@ -171,7 +173,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	jobject er;
 	PyObject* peer = (PyObject*) peerHandle;
 
-//	puts(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 //	jputsLong(peerHandle);
@@ -183,21 +185,31 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	jputs("JyNI_call error before call?");
 //	jputsLong(PyErr_Occurred());
 	if (peer->ob_type->tp_call) {
-		PyObject* jargs = JyNI_PyObject_FromJythonPyObject(args);
+		PyObject *jargs, *jkw, *jres;
+//		jputsLong(__LINE__);
+//		if (Py_TYPE(peer) == &PyCFunction_Type) {
+//			jputsLong(__LINE__);
+////			jputsLong(((PyCFunctionObject*) peer)->m_ml);
+////			jputsLong(((PyCFunctionObject*) peer)->m_self);
+//			jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
+//		} else if (Py_TYPE(peer) == &PyType_Type) {
+//			jputs(((PyTypeObject*) peer)->tp_name);
+//			// ToDo: If this prints exceptions.WindowsError, it will crash the JVM.
+//		} else {
+//			jputsLong(__LINE__);
+//			jputs(Py_TYPE(peer)->tp_name);
+//		}
+//		jputsLong(__LINE__);
+		jargs = JyNI_PyObject_FromJythonPyObject(args);
 //		if (jdbg) {
 //			jputsLong(jargs);
 //			jputsLong(PyTuple_GET_SIZE(jargs));
 //			jputsLong(PyTuple_GET_ITEM(jargs, 0));
 //		}
-//		if (Py_TYPE(peer) == &PyCFunction_Type) {
-//			jputsLong(((PyCFunctionObject*) peer)->m_ml);
-//			jputsLong(((PyCFunctionObject*) peer)->m_self);
-////			jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
-//		}
-		PyObject* jkw = JyNI_PyObject_FromJythonPyObject(kw);
+		jkw = JyNI_PyObject_FromJythonPyObject(kw);
 //		jputs("before call");
 //		jputsPy(peer);
-		PyObject* jres = peer->ob_type->tp_call(peer, jargs, jkw);
+		jres = peer->ob_type->tp_call(peer, jargs, jkw);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
 		Py_XDECREF(jargs);
 		Py_XDECREF(jkw);

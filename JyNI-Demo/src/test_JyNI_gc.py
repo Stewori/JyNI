@@ -45,6 +45,8 @@ if os.name == 'java':
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join((systm, ver, 'intel'))
 	else:
+		if systm.startswith('win'):
+			systm = 'win'
 		buildf = '-'.join((systm, os.uname()[-1]))
 else:
 	systm = os.uname()[0].lower()
@@ -54,7 +56,6 @@ else:
 		buildf = '-'.join(('macosx', ver, 'intel'))
 	else:
 		buildf = '-'.join((systm, os.uname()[-1]))
-
 
 #Since invalid paths do no harm, we add several possible paths here, where
 #DemoExtension.so could be located in various build scenarios. If you use different
@@ -69,8 +70,6 @@ sys.path.append('./DemoExtension/Release') #in case you run it from base dir
 #built with setup.py:
 sys.path.append('../../DemoExtension/build/lib.'+buildf+'-2.7') #in case you run it from src dir
 sys.path.append('./DemoExtension/build/lib.'+buildf+'-2.7') #in case you run it from base dir
-
-sys.path.insert(0, '/usr/lib/python2.7/lib-dynload')
 
 import DemoExtension
 import unittest
