@@ -77,6 +77,9 @@ $(OUTPUTDIR):
 .o:
 	$(CC) $(CFLAGS) $< -o $@
 
+JyNI-C/src/Python/dynload_shlib.o:
+	$(CC) $(CFLAGS) JyNI-C/src/Python/dynload/dynload_shlib.c -o JyNI-C/src/Python/dynload_shlib.o
+
 $(JYTHON):
 	@echo ''
 	@echo '------------------------------------------------'
@@ -106,10 +109,10 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
 endif
 
-libJyNI: $(JAVA_HOME) $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $(OUTPUTDIR)/libJyNI.so
+libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
+	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
 
-libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.o
+libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
 $(JYNIBIN):

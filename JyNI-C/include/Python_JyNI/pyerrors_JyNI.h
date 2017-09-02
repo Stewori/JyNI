@@ -125,6 +125,7 @@ PyAPI_FUNC(void) PyErr_Restore(PyObject *, PyObject *, PyObject *);
 PyAPI_FUNC(int) PyErr_GivenExceptionMatches(PyObject *, PyObject *);
 PyAPI_FUNC(int) PyErr_ExceptionMatches(PyObject *);
 PyAPI_FUNC(void) PyErr_NormalizeException(PyObject**, PyObject**, PyObject**);
+PyAPI_FUNC(void) _PyErr_ReplaceException(PyObject *, PyObject *, PyObject *);
 
 //#define PyExceptionClass_Check2(x)                                       \
 //		(PyClass_Check((x)) || (                        \

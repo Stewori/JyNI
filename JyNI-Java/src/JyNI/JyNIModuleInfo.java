@@ -35,6 +35,12 @@ import org.python.core.PyModule;
 public class JyNIModuleInfo {
 	PyModule module;
 	String name;
+
+	/**
+	 * path == null means that the module is linked into the JyNI dynamic library.
+	 * It is a valid value for JyNI.loadModule, telling JyNI to init the module
+	 * code internally.
+	 */
 	String path;
 
 	public JyNIModuleInfo(String name, String path, PyModule module)

@@ -82,31 +82,34 @@ extern const char *PyWin_DLLVersionString;
 PyObject *
 PySys_GetObject(char *name)
 {
-	JNIEnv *env;
-	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) {
-		return NULL; // JNI version not supported
-	}
-	jobject nameStr = (*env)->NewStringUTF(env, name);
-	PyObject* er = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getJyObjectByName, nameStr);
-	if (er != NULL)
-		return  er;
-	else
+//	JNIEnv *env;
+//	if ((*java)->GetEnv(java, (void **)&env, JNI_VERSION_1_2)) {
+//		return NULL; // JNI version not supported
+//	}
+	env(NULL);
 	{
-		jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPyObjectByName, nameStr);
-		if (result == NULL)
-			return NULL;
+		jobject nameStr = (*env)->NewStringUTF(env, name);
+		PyObject* er = (PyObject*) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getJyObjectByName, nameStr);
+		if (er != NULL)
+			return  er;
 		else
 		{
-			//puts("PySys_GetObject creates new object:");
-			//puts(name);
-			return JyNI_PyObject_FromJythonPyObject(result);
+			jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getPyObjectByName, nameStr);
+			if (result == NULL)
+				return NULL;
+			else
+			{
+				//puts("PySys_GetObject creates new object:");
+				//puts(name);
+				return JyNI_PyObject_FromJythonPyObject(result);
+			}
 		}
+		/*PyThreadState *tstate = PyThreadState_GET();
+		PyObject *sd = tstate->interp->sysdict;
+		if (sd == NULL)
+			return NULL;
+		return PyDict_GetItemString(sd, name);*/
 	}
-	/*PyThreadState *tstate = PyThreadState_GET();
-	PyObject *sd = tstate->interp->sysdict;
-	if (sd == NULL)
-		return NULL;
-	return PyDict_GetItemString(sd, name);*/
 }
 /*
 FILE *
@@ -1387,10 +1390,14 @@ make_version_info(void)
 	}
 	return version_info;
 }
+*/
 
 PyObject *
 _PySys_Init(void)
 {
+	PyObject *v;
+	env(NULL);
+	/*
 	PyObject *m, *v, *sysdict;
 	PyObject *sysin, *sysout, *syserr;
 	char *s;
@@ -1399,12 +1406,15 @@ _PySys_Init(void)
 	if (m == NULL)
 		return NULL;
 	sysdict = PyModule_GetDict(m);
-#define SET_SYS_FROM_STRING(key, value)				 \
-	v = value;										  \
-	if (v != NULL)									  \
-		PyDict_SetItemString(sysdict, key, v);		  \
+	*/
+#define SET_SYS_FROM_STRING(key, value)                                               \
+	v = value;                                                                        \
+	if (v != NULL)                                                                    \
+		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_setPyObjectByName,          \
+				(*env)->NewStringUTF(env, key), JyNI_JythonPyObject_FromPyObject(v)); \
 	Py_XDECREF(v)
-
+//		PyDict_SetItemString(sysdict, key, v);
+/*
 	// Check that stdin is not a directory
 	//Using shell redirection, you can redirect stdin to a directory,
 	//crashing the Python interpreter. Catch this common mistake here
@@ -1508,12 +1518,16 @@ _PySys_Init(void)
 		SET_SYS_FROM_STRING("byteorder",
 							PyString_FromString(value));
 	}
+	*/
 #ifdef MS_COREDLL
+//	printf("JyNI_init %lld  %s\n", PyWin_DLLhModule, PyWin_DLLVersionString);
 	SET_SYS_FROM_STRING("dllhandle",
 						PyLong_FromVoidPtr(PyWin_DLLhModule));
 	SET_SYS_FROM_STRING("winver",
 						PyString_FromString(PyWin_DLLVersionString));
 #endif
+	return Py_None;
+	/*
 	if (warnoptions == NULL) {
 		warnoptions = PyList_New(0);
 	}
@@ -1562,9 +1576,10 @@ _PySys_Init(void)
 #undef SET_SYS_FROM_STRING
 	if (PyErr_Occurred())
 		return NULL;
-	return m;
+	return m; */
 }
 
+/*
 static PyObject *
 makepathobject(char *path, int delim)
 {
@@ -1792,7 +1807,9 @@ mywrite(char *name, FILE *fp, const char *format, va_list va)
 	PyObject *error_type, *error_value, *error_traceback;
 	PyErr_Fetch(&error_type, &error_value, &error_traceback);
 	file = PySys_GetObject(name);
-	if (file == NULL)// || PyFile_AsFile(file) == fp)  <-No way to get the std-FILE pointer from the JVM
+	if (file == NULL)// || PyFile_AsFile(file) == fp)
+		// <- No way to get the std-FILE pointer from the JVM
+		// Edit: Yes, there is (?)! see https://github.com/Stewori/JyNI/issues/11
 		vfprintf(fp, format, va);
 	else {
 		char buffer[1001];

@@ -143,15 +143,17 @@ static inline ssize_t getPos(void* ptr)
 //	printf("%i %i\n", pos, ptrTable[pos].ptr);
 	if (ptrTable[pos].ptr == ptr) return pos;
 	if (!ptrTable[pos].ptr) return ~pos;
-	int rehash = 1;
-	pos = rehash_func(ptr, rehash, pos);
-	while (ptrTable[pos].ptr != ptr)
-	{
-		if (!ptrTable[pos].ptr) return ~pos;
-		if (++rehash > maxRehash) return ~tableCapacity;
+	else {
+		int rehash = 1;
 		pos = rehash_func(ptr, rehash, pos);
+		while (ptrTable[pos].ptr != ptr)
+		{
+			if (!ptrTable[pos].ptr) return ~pos;
+			if (++rehash > maxRehash) return ~tableCapacity;
+			pos = rehash_func(ptr, rehash, pos);
+		}
+		return pos;
 	}
-	return pos;
 }
 
 /*
@@ -164,18 +166,20 @@ static inline ssize_t getPosForInsert0(void* ptr)
 //	printf("%i %i\n", pos, ptrTable[pos].ptr);
 	if (ptrTable[pos].ptr == ptr) return pos;
 	if (!ptrTable[pos].ptr) return ~pos;
-	int rehash = 1;
-	++collisions;
-	pos = rehash_func(ptr, rehash, pos);
-	while (ptrTable[pos].ptr != ptr)
-	{
-		if (!ptrTable[pos].ptr) return ~pos;
-		if (++rehash > maxRehash) return ~tableCapacity;
+	else {
+		int rehash = 1;
 		++collisions;
-		//printf("rehash0 %i over %i\n", ptr, ptrTable[pos].ptr);
 		pos = rehash_func(ptr, rehash, pos);
+		while (ptrTable[pos].ptr != ptr)
+		{
+			if (!ptrTable[pos].ptr) return ~pos;
+			if (++rehash > maxRehash) return ~tableCapacity;
+			++collisions;
+			//printf("rehash0 %i over %i\n", ptr, ptrTable[pos].ptr);
+			pos = rehash_func(ptr, rehash, pos);
+		}
+		return pos;
 	}
-	return pos;
 }
 
 static inline ssize_t getPosForInsert(void* ptr)
@@ -185,21 +189,26 @@ static inline ssize_t getPosForInsert(void* ptr)
 //	printf("%i %i\n", pos, pos);
 	if (ptrTable[pos].ptr == ptr) return pos;
 	else if (!ptrTable[pos].ptr) return ~pos;
-	else if (ptrTable[pos].ptr == delDummy && freePos == -1) freePos = pos;
-	int rehash = 1;
-	++collisions;
-	//printf("rehash %i over %i\n", ptr, ptrTable[pos].ptr);
-	pos = rehash_func(ptr, rehash, pos);
-	while (ptrTable[pos].ptr != ptr)
+	else if (ptrTable[pos].ptr == delDummy && freePos == -1) {
+		freePos = pos;
+	}
+
 	{
-		if (!ptrTable[pos].ptr) return freePos != -1 ? (--delDummies, ~freePos) : ~pos;
-		else if (ptrTable[pos].ptr == delDummy && freePos == -1) freePos = pos;
-		if (++rehash > maxRehash) return freePos != -1 ? (--delDummies, ~freePos) : ~tableCapacity;
+		int rehash = 1;
 		++collisions;
 		//printf("rehash %i over %i\n", ptr, ptrTable[pos].ptr);
 		pos = rehash_func(ptr, rehash, pos);
+		while (ptrTable[pos].ptr != ptr)
+		{
+			if (!ptrTable[pos].ptr) return freePos != -1 ? (--delDummies, ~freePos) : ~pos;
+			else if (ptrTable[pos].ptr == delDummy && freePos == -1) freePos = pos;
+			if (++rehash > maxRehash) return freePos != -1 ? (--delDummies, ~freePos) : ~tableCapacity;
+			++collisions;
+			//printf("rehash %i over %i\n", ptr, ptrTable[pos].ptr);
+			pos = rehash_func(ptr, rehash, pos);
+		}
+		return pos;
 	}
-	return pos;
 }
 
 inline static void resize_ptrTable(size_t newSize);

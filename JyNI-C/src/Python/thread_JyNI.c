@@ -37,54 +37,56 @@
 #include <JyNI.h>
 #include <pythread_JyNI.h>
 
-//PyAPI_FUNC(void) PyThread_init_thread(void);
-static void PyThread__init_thread(void)
+void PyThread__init_thread(void)
 {
 
 }
 
-//PyAPI_FUNC(long) PyThread_start_new_thread(void (*)(void *), void *)
+//long) PyThread_start_new_thread(void (*)(void *), void *)
 long PyThread_start_new_thread(void (*func) (void *), void *arg)
 {
-	//todo: Implement
+	jputs("JyNI warning: PyThread_start_new_thread not yet implemented.");
 	return 0;
 }
 
-PyAPI_FUNC(void) PyThread_exit_thread(void)
+void PyThread_exit_thread(void)
 {
-	//todo: Implement
+	jputs("JyNI warning: PyThread_exit_thread not yet implemented.");
 }
 
-PyAPI_FUNC(long) PyThread_get_thread_ident(void)
-//long PyThread_get_thread_ident(void)
+long PyThread_get_thread_ident(void)
 {
 	env(0);
 	return (long) (*env)->CallStaticLongMethod(env, JyNIClass, JyNI_getCurrentThreadID);
 }
 
-PyAPI_FUNC(PyThread_type_lock) PyThread_allocate_lock(void)
-//PyThread_type_lock PyThread_allocate_lock(void)
+PyThread_type_lock PyThread_allocate_lock(void)
 {
 	env(NULL);
 	return (PyThread_type_lock) (*env)->NewGlobalRef(env, (*env)->NewObject(env, JyLockClass, JyLock_Constructor));
 }
 
-PyAPI_FUNC(void) PyThread_free_lock(PyThread_type_lock lock)
+void PyThread_free_lock(PyThread_type_lock lock)
 {
 	env();
 	(*env)->DeleteGlobalRef(env, (jobject) lock);
 }
 
-PyAPI_FUNC(int) PyThread_acquire_lock(PyThread_type_lock lock, int waitflag)
+int PyThread_acquire_lock(PyThread_type_lock lock, int waitflag)
 {
 	env(0);
 	return (*env)->CallBooleanMethod(env, (jobject) lock, JyLock_acquire, waitflag);//waitflag == WAIT_LOCK);
 }
 
-PyAPI_FUNC(void) PyThread_release_lock(PyThread_type_lock lock)
+void PyThread_release_lock(PyThread_type_lock lock)
 {
 	env();
 	(*env)->CallVoidMethod(env, (jobject) lock, JyLock_release);
 	if ((*env)->ExceptionOccurred(env))
 		(*env)->ExceptionClear(env); //this means, lock was already released, but we don't mind this
+}
+
+void PyThread_ReInitTLS(void)
+{
+	jputs("JyNI warning: PyThread_ReInitTLS not yet implemented.");
 }

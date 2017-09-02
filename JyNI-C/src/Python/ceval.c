@@ -47,7 +47,7 @@
 #include "JyNI.h"
 #include "code_JyNI.h"
 #include "frameobject_JyNI.h"
-//#include "eval.h"
+#include "eval.h"
 //#include "opcode.h"
 //#include "structmember_JyNI.h"
 //
@@ -322,15 +322,18 @@ PyEval_ReleaseLock(void)
 //		Py_FatalError("PyEval_ReleaseThread: wrong thread state");
 //	PyThread_release_lock(interpreter_lock);
 //}
-//
-///* This function is called from PyOS_AfterFork to ensure that newly
-//   created child processes don't hold locks referring to threads which
-//   are not running in the child process.  (This could also be done using
-//   pthread_atfork mechanism, at least for the pthreads implementation.) */
-//
-//void
-//PyEval_ReInitThreads(void)
-//{
+
+/* This function is called from PyOS_AfterFork to ensure that newly
+   created child processes don't hold locks referring to threads which
+   are not running in the child process.  (This could also be done using
+   pthread_atfork mechanism, at least for the pthreads implementation.) */
+
+void
+PyEval_ReInitThreads(void)
+{
+	jputs("JyNI warning: PyEval_ReInitThreads not yet implemented.");
+}
+
 //	PyObject *threading, *result;
 //	PyThreadState *tstate;
 //
@@ -435,10 +438,12 @@ PyEval_RestoreThread(PyThreadState *tstate)
 //static int pendinglast = 0;
 //static volatile int pendingcalls_to_do = 1; /* trigger initialization of lock */
 //static char pendingbusy = 0;
-//
-//int
-//Py_AddPendingCall(int (*func)(void *), void *arg)
-//{
+
+int
+Py_AddPendingCall(int (*func)(void *), void *arg)
+{
+	jputs("JyNI warning: Py_AddPendingCall not yet implemented.");
+}
 //	int i, j, result=0;
 //	PyThread_type_lock lock = pending_lock;
 //
@@ -642,9 +647,9 @@ Py_SetRecursionLimitNative(int new_limit)
 void
 Py_SetRecursionLimit(int new_limit)
 {
+	env();
 	Py_SetRecursionLimitNative(new_limit);
 	/* set Jython's recursion limit here too: */
-	env();
 	(*env)->CallStaticIntMethod(env, JyTStateClass,
 				JyTState_setRecursionLimit, new_limit);
 	(*env)->SetStaticIntField(env, JyTStateClass,
@@ -723,10 +728,13 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //	   PyEval_EvalFrameEx() */
 //	return PyEval_EvalFrameEx(f, 0);
 //}
-//
-//PyObject *
-//PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
-//{
+
+PyObject *
+PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
+{
+	jputs("JyNI warning: PyEval_EvalFrameEx not yet implemented.");
+	return NULL;
+}
 //#ifdef DYNAMIC_EXECUTION_PROFILE
 //  #undef USE_COMPUTED_GOTOS
 //#endif
@@ -3375,16 +3383,19 @@ volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
 //
 //	return retval;
 //}
-//
-///* This is gonna seem *real weird*, but if you put some other code between
-//   PyEval_EvalFrame() and PyEval_EvalCodeEx() you will need to adjust
-//   the test in the if statements in Misc/gdbinit (pystack and pystackv). */
-//
-//PyObject *
-//PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
-//		   PyObject **args, int argcount, PyObject **kws, int kwcount,
-//		   PyObject **defs, int defcount, PyObject *closure)
-//{
+
+/* This is gonna seem *real weird*, but if you put some other code between
+   PyEval_EvalFrame() and PyEval_EvalCodeEx() you will need to adjust
+   the test in the if statements in Misc/gdbinit (pystack and pystackv). */
+
+PyObject *
+PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
+		   PyObject **args, int argcount, PyObject **kws, int kwcount,
+		   PyObject **defs, int defcount, PyObject *closure)
+{
+	jputs("JyNI warning: PyEval_EvalCodeEx not yet implemented.");
+	return NULL;
+}
 //	register PyFrameObject *f;
 //	register PyObject *retval = NULL;
 //	register PyObject **fastlocals, **freevars;

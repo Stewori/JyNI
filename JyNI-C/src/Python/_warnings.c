@@ -743,13 +743,14 @@ PyErr_WarnEx(PyObject *category, const char *text, Py_ssize_t stack_level)
 {
 //	jputs(__FUNCTION__);
 //	jPrintCStackTrace();
+	jstring message;
 	env(-1);
 //	if ((*env)->ExceptionCheck(env)) {
 //		jputs(__FUNCTION__);
 //		jputs("Exception before");
 //		(*env)->ExceptionDescribe(env);
 //	}
-	jstring message = (*env)->NewStringUTF(env, text);
+	message = (*env)->NewStringUTF(env, text);
 	if (message == NULL) return -1;
 	if (category == NULL) category = PyExc_RuntimeWarning;
 	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_warningStck,
@@ -796,8 +797,9 @@ PyErr_WarnExplicit(PyObject *category, const char *text,
 				   const char *filename_str, int lineno,
 				   const char *module_str, PyObject *registry)
 {
+	jstring message;
 	env(-1);
-	jstring message = (*env)->NewStringUTF(env, text);
+	message = (*env)->NewStringUTF(env, text);
 	if (message == NULL) return -1;
 	if (category == NULL) category = PyExc_RuntimeWarning;
 	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_explicitWarning,

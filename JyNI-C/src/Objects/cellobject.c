@@ -66,25 +66,27 @@ PyCell_Get(PyObject *op)
 int
 PyCell_Set(PyObject *op, PyObject *obj)
 {
-	PyObject* oldobj;
 	if (!PyCell_Check(op)) {
 		PyErr_BadInternalCall();
 		return -1;
+	} else {
+		PyObject* oldobj;
+		JyObject* jy;
+		oldobj = PyCell_GET(op);
+		Py_XINCREF(obj);
+		PyCell_SET(op, obj);
+		updateJyGCHeadLink(op, AS_JY_WITH_GC(op), 0,
+					obj, obj ? AS_JY(obj) : NULL);
+		Py_XDECREF(oldobj);
+		jy = AS_JY_WITH_GC(op);
+		if (JyObject_IS_INITIALIZED(jy))
+		{
+			env(-1);
+			(*env)->SetObjectField(env, jy->jy, pyCell_ob_refField,
+						JyNI_JythonPyObject_FromPyObject(obj));
+		}
+		return 0;
 	}
-	oldobj = PyCell_GET(op);
-	Py_XINCREF(obj);
-	PyCell_SET(op, obj);
-	updateJyGCHeadLink(op, AS_JY_WITH_GC(op), 0,
-				obj, obj ? AS_JY(obj) : NULL);
-	Py_XDECREF(oldobj);
-	JyObject* jy = AS_JY_WITH_GC(op);
-	if (JyObject_IS_INITIALIZED(jy))
-	{
-		env(-1);
-		(*env)->SetObjectField(env, jy->jy, pyCell_ob_refField,
-					JyNI_JythonPyObject_FromPyObject(obj));
-	}
-	return 0;
 }
 
 static void

@@ -108,7 +108,7 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 		!PyObject_CheckReadBuffer(code)) {
 		PyErr_BadInternalCall();
 		return NULL;
-	}
+	} else {
 
 	// JyNI-note: Maybe include this interning...
 	//	intern_strings(names);
@@ -125,37 +125,49 @@ PyCode_New(int argcount, int nlocals, int stacksize, int flags,
 	//		PyString_InternInPlace(&PyTuple_GET_ITEM(consts, i));
 	//	}
 
-	env(NULL);
-	//Try to get code from a buffer into a jstring...
-	char* code_cstr;
-	Py_ssize_t i;
-	jstring code_jstr;
-	if (PyObject_AsCharBuffer(code, &code_cstr, &i) == 0)
-	{
-		char code_cstr0[i+1]; //code_cstr might not be null-terminated
-		strcpy(code_cstr0, code_cstr);
-		code_jstr = (*env)->NewStringUTF(env, code_cstr0);
-	} else
-	{
-		PyErr_BadInternalCall();
-		return NULL;
+		char* code_cstr;
+		Py_ssize_t i;
+		jstring code_jstr;
+		env(NULL);
+		//Try to get code from a buffer into a jstring...
+
+		if (PyObject_AsCharBuffer(code, &code_cstr, &i) == 0)
+		{
+			//char code_cstr0[i+1]; //code_cstr might not be null-terminated
+			VLA_DECL(char, code_cstr0);
+			VLA(char, code_cstr0, i+1);
+			strcpy(code_cstr0, code_cstr);
+			code_jstr = (*env)->NewStringUTF(env, code_cstr0);
+		} else
+		{
+			PyErr_BadInternalCall();
+			return NULL;
+		}
+
+		{
+			jstring jFilename = (*env)->NewStringUTF(env, PyString_AS_STRING(filename));
+			jstring jName = (*env)->NewStringUTF(env, PyString_AS_STRING(name));
+			jstring jLnotab = (*env)->NewStringUTF(env, PyString_AS_STRING(lnotab));
+			jobject result;
+			pyTuple2jArray_decl(jConsts);
+			pyStrTuple2jStrArray_decl(jNames);
+			pyStrTuple2jStrArray_decl(jVarnames);
+			pyStrTuple2jStrArray_decl(jFreevars);
+			pyStrTuple2jStrArray_decl(jCellvars);
+
+			pyTuple2jArray(consts, pyObjectClass, jConsts);
+			pyStrTuple2jStrArray(names, jNames);
+			pyStrTuple2jStrArray(varnames, jVarnames);
+			pyStrTuple2jStrArray(freevars, jFreevars);
+			pyStrTuple2jStrArray(cellvars, jCellvars);
+
+			result = (*env)->NewObject(env, pyBytecodeClass, pyBytecode_Constructor,
+				argcount, nlocals, stacksize, flags, code_jstr, jConsts, jNames, jVarnames,
+				jFilename, jName, firstlineno, jLnotab, jCellvars, jFreevars);
+
+			return (PyCodeObject*) JyNI_PyObject_FromJythonPyObject(result);
+		}
 	}
-
-	pyTuple2jArray(consts, pyObjectClass, jConsts);
-	pyStrTuple2jStrArray(names, jNames);
-	pyStrTuple2jStrArray(varnames, jVarnames);
-	pyStrTuple2jStrArray(freevars, jFreevars);
-	pyStrTuple2jStrArray(cellvars, jCellvars);
-
-	jstring jFilename = (*env)->NewStringUTF(env, PyString_AS_STRING(filename));
-	jstring jName = (*env)->NewStringUTF(env, PyString_AS_STRING(name));
-	jstring jLnotab = (*env)->NewStringUTF(env, PyString_AS_STRING(lnotab));
-
-	jobject result = (*env)->NewObject(env, pyBytecodeClass, pyBytecode_Constructor,
-		argcount, nlocals, stacksize, flags, code_jstr, jConsts, jNames, jVarnames,
-		jFilename, jName, firstlineno, jLnotab, jCellvars, jFreevars);
-
-	return (PyCodeObject*) JyNI_PyObject_FromJythonPyObject(result);
 
 //	co = PyObject_NEW(PyCodeObject, &PyCode_Type);
 //	if (co != NULL) {
@@ -240,28 +252,25 @@ failed:
 
 PyObject* PyCode_Get_co_argcount(PyObject* code)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jint argcount = (*env)->GetIntField(env, jCode, pyBaseCode_co_argcountField);
-	return PyInt_FromLong(argcount);
+	env(NULL);
+	return PyInt_FromLong((*env)->GetIntField(env, jCode, pyBaseCode_co_argcountField));
 }
 
 PyObject* PyCode_Get_co_nlocals(PyObject* code)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jint nlocals = (*env)->GetIntField(env, jCode, pyBaseCode_co_nlocalsField);
-	return PyInt_FromLong(nlocals);
+	env(NULL);
+	return PyInt_FromLong((*env)->GetIntField(env, jCode, pyBaseCode_co_nlocalsField));
 }
 
 PyObject* PyCode_Get_co_stacksize(PyObject* code)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
+	env(NULL);
 	if ((*env)->IsInstanceOf(env, jCode, pyBytecodeClass))
 	{
-		jint stacksize = (*env)->GetIntField(env, jCode, pyBytecode_co_stacksizeField);
-		return PyInt_FromLong(stacksize);
+		return PyInt_FromLong((*env)->GetIntField(env, jCode, pyBytecode_co_stacksizeField));
 	} else
 	{
 		return NULL;
@@ -270,29 +279,29 @@ PyObject* PyCode_Get_co_stacksize(PyObject* code)
 
 PyObject* PyCode_Get_co_flags(PyObject* code)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jint flags = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_flags, jCode);
-	return PyInt_FromLong(flags);
+	env(NULL);
+	return PyInt_FromLong((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_flags, jCode));
 }
 
 PyObject* PyCode_Get_co_code(PyObject* code)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject result = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_code, jCode);
-	return JyNI_PyObject_FromJythonPyObject(result);
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject(
+			(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_code, jCode));
 }
 
 PyObject* PyCode_Get_co_consts(PyObject* code)
 {
+	jobject jCode = JyNI_JythonPyObject_FromPyObject(code), jArray;
+	Py_ssize_t size = 0, i;
+	PyTupleObject* result;
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jArray = (*env)->GetObjectField(env, jCode, pyBytecode_co_constsField);
-	Py_ssize_t size = 0;
+	jArray = (*env)->GetObjectField(env, jCode, pyBytecode_co_constsField);
+
 	if (jArray) size = (*env)->GetArrayLength(env, jArray);
-	PyTupleObject* result = PyTuple_New(size);
-	Py_ssize_t i;
+	result = PyTuple_New(size);
 	for (i = 0; i < size; ++i)
 		PyTuple_SET_ITEM(result, i, JyNI_PyObject_FromJythonPyObject(
 			(*env)->GetObjectArrayElement(env, jArray, i)));
@@ -301,9 +310,10 @@ PyObject* PyCode_Get_co_consts(PyObject* code)
 
 PyObject* PyCode_Get_co_names(PyObject* code)
 {
+	jobject jCode = JyNI_JythonPyObject_FromPyObject(code), jArray;
+	jStringArray2pyTuple_decl(result);
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jArray = (*env)->GetObjectField(env, jCode, pyBytecode_co_constsField);
+	jArray = (*env)->GetObjectField(env, jCode, pyBytecode_co_constsField);
 	jStringArray2pyTuple(jArray, result);
 //	Py_ssize_t size = 0;
 //	if (jArray) size = (*env)->GetArrayLength(env, jArray);
@@ -328,10 +338,10 @@ PyObject* PyCode_Get_co_names(PyObject* code)
 
 PyObject* PyCode_Get_co_varnames(PyObject* code)
 {
+	jobject jCode = JyNI_JythonPyObject_FromPyObject(code), jArray;
+	jStringArray2pyTuple_decl(result);
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jArray = (*env)->GetObjectField(env, jCode, pyBaseCode_co_varnamesField);
-
+	(*env)->GetObjectField(env, jCode, pyBaseCode_co_varnamesField);
 	jStringArray2pyTuple(jArray, result);
 //	Py_ssize_t size = 0;
 //	if (jArray) size = (*env)->GetArrayLength(env, jArray);
@@ -356,9 +366,10 @@ PyObject* PyCode_Get_co_varnames(PyObject* code)
 
 PyObject* PyCode_Get_co_freevars(PyObject* code)
 {
+	jobject jCode = JyNI_JythonPyObject_FromPyObject(code), jArray;
+	jStringArray2pyTuple_decl(result);
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jArray = (*env)->GetObjectField(env, jCode, pyBaseCode_co_freevarsField);
+	jArray = (*env)->GetObjectField(env, jCode, pyBaseCode_co_freevarsField);
 	jStringArray2pyTuple(jArray, result);
 //	Py_ssize_t size = (*env)->GetArrayLength(env, jArray);
 //	PyTupleObject* result = PyTuple_New(size);
@@ -379,9 +390,10 @@ PyObject* PyCode_Get_co_freevars(PyObject* code)
 
 PyObject* PyCode_Get_co_cellvars(PyObject* code)
 {
+	jobject jCode = JyNI_JythonPyObject_FromPyObject(code), jArray;
+	jStringArray2pyTuple_decl(result);
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jArray = (*env)->GetObjectField(env, jCode, pyBaseCode_co_cellvarsField);
+	jArray = (*env)->GetObjectField(env, jCode, pyBaseCode_co_cellvarsField);
 	jStringArray2pyTuple(jArray, result);
 //	Py_ssize_t size = (*env)->GetArrayLength(env, jArray);
 //	PyTupleObject* result = PyTuple_New(size);
@@ -402,38 +414,43 @@ PyObject* PyCode_Get_co_cellvars(PyObject* code)
 
 PyObject* PyCode_Get_co_filename(PyObject* code)
 {
+	jobject jtmp;
+	cstr_decl(cstr);
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jstr = (*env)->GetObjectField(env, jCode, pyBaseCode_co_filenameField);
-	cstr_from_jstring(cstr, jstr);
+	jtmp = JyNI_JythonPyObject_FromPyObject(code);
+	jtmp = (*env)->GetObjectField(env, jtmp, pyBaseCode_co_filenameField);
+	cstr_from_jstring(cstr, jtmp);
 	return PyString_FromString(cstr);
 }
 
 PyObject* PyCode_Get_co_name(PyObject* code)
 {
+	jobject jtmp;
+	cstr_decl(cstr);
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jobject jstr = (*env)->GetObjectField(env, jCode, pyCode_co_nameField);
-	cstr_from_jstring(cstr, jstr);
+	jtmp = JyNI_JythonPyObject_FromPyObject(code);
+	jtmp = (*env)->GetObjectField(env, jtmp, pyCode_co_nameField);
+	cstr_from_jstring(cstr, jtmp);
 	return PyString_FromString(cstr);
 }
 
 PyObject* PyCode_Get_co_firstlineno(PyObject* code)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	jint firstlineno = (*env)->GetIntField(env, jCode, pyBaseCode_co_firstlinenoField);
-	return PyInt_FromLong(firstlineno);
+	env(NULL);
+	return PyInt_FromLong((*env)->GetIntField(env, jCode, pyBaseCode_co_firstlinenoField));
 }
 
 PyObject* PyCode_Get_co_lnotab(PyObject* code)
 {
+	jobject jtmp;
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(code);
-	if ((*env)->IsInstanceOf(env, jCode, pyBytecodeClass))
+	jtmp = JyNI_JythonPyObject_FromPyObject(code);
+	if ((*env)->IsInstanceOf(env, jtmp, pyBytecodeClass))
 	{
-		jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
-		cstr_from_jstring(cstr, jstr);
+		cstr_decl(cstr);
+		jtmp = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jtmp);
+		cstr_from_jstring(cstr, jtmp);
 		return PyString_FromString(cstr);
 	} else
 	{
@@ -630,10 +647,9 @@ code_dealloc(PyCodeObject *co)
 static PyObject *
 code_repr(PyCodeObject *co)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(co);
-	jobject repr_str = (*env)->CallObjectMethod(env, jCode, pyObject___repr__);
-	return JyNI_PyObject_FromJythonPyObject(repr_str);
+	env(NULL);
+	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, jCode, pyObject___repr__));
 
 //	char buf[500];
 //	int lineno = -1;
@@ -655,9 +671,9 @@ code_repr(PyCodeObject *co)
 static int
 code_compare(PyCodeObject *co, PyCodeObject *cp)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(co);
 	jobject cmpCode = JyNI_JythonPyObject_FromPyObject(cp);
+	env(NULL);
 	return (*env)->CallObjectMethod(env, jCode, pyObject___cmp__, cmpCode);
 //	int cmp;
 //	cmp = PyObject_Compare(co->co_name, cp->co_name);
@@ -762,8 +778,8 @@ code_compare(PyCodeObject *co, PyCodeObject *cp)
 static long
 code_hash(PyCodeObject *co)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(co);
+	env(NULL);
 	return (*env)->CallObjectMethod(env, jCode, object_hashCode);
 //	long h, h0, h1, h2, h3, h4, h5, h6;
 //	h0 = PyObject_Hash(co->co_name);
@@ -836,30 +852,34 @@ PyTypeObject PyCode_Type = {
 int
 PyCode_Addr2Line(PyCodeObject *co, int addrq)
 {
-	env(NULL);
 	jobject jCode = JyNI_JythonPyObject_FromPyObject(co);
-	if (!(*env)->IsInstanceOf(env, jCode, pyBytecodeClass)) return -1;
-	int line = (*env)->GetIntField(env, jCode, pyBaseCode_co_firstlinenoField);
-	jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
-
-	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL);
-	int size = strlen(utf_string);
-	char cstr[size+1];
-	strcpy(cstr, utf_string);
-	(*env)->ReleaseStringUTFChars(env, jstr, utf_string);
-
-//	int size = PyString_Size(co->co_lnotab) / 2;
-	size = size/2;
-	unsigned char *p = (unsigned char*) cstr;//PyString_AsString(co->co_lnotab);
-	//int line = co->co_firstlineno;
-	int addr = 0;
-	while (--size >= 0) {
-		addr += *p++;
-		if (addr > addrq)
-			break;
-		line += *p++;
+	env(NULL);
+	if (!(*env)->IsInstanceOf(env, jCode, pyBytecodeClass)) {
+		return -1;
+	} else {
+		int line = (*env)->GetIntField(env, jCode, pyBaseCode_co_firstlinenoField);
+		jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
+		char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL);
+		int size = strlen(utf_string);
+		int addr = 0;
+		unsigned char *p;
+		//char cstr[size+1];
+		VLA_DECL(char, cstr);
+		VLA(char, cstr, size+1);
+		strcpy(cstr, utf_string);
+		(*env)->ReleaseStringUTFChars(env, jstr, utf_string);
+		p = (unsigned char*) cstr;
+	//	int size = PyString_Size(co->co_lnotab) / 2;
+		size = size/2;
+		//int line = co->co_firstlineno;
+		while (--size >= 0) {
+			addr += *p++;
+			if (addr > addrq)
+				break;
+			line += *p++;
+		}
+		return line;
 	}
-	return line;
 }
 
 /* Update *bounds to describe the first and one-past-the-last instructions in
@@ -867,60 +887,65 @@ PyCode_Addr2Line(PyCodeObject *co, int addrq)
 int
 _PyCode_CheckLineNumber(PyCodeObject* co, int lasti, PyAddrPair *bounds)
 {
-	int size, addr, line;
+	int size, addr;//, line;
 	unsigned char* p;
+	jobject jCode = JyNI_JythonPyObject_FromPyObject(co);
 
 	env(NULL);
-	jobject jCode = JyNI_JythonPyObject_FromPyObject(co);
-	if (!(*env)->IsInstanceOf(env, jCode, pyBytecodeClass)) return -1;
-	line = (*env)->GetIntField(env, jCode, pyBaseCode_co_firstlinenoField);
-	jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
+	if (!(*env)->IsInstanceOf(env, jCode, pyBytecodeClass)) {
+		return -1;
+	} else {
+		int line = (*env)->GetIntField(env, jCode, pyBaseCode_co_firstlinenoField);
+		jobject jstr = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_pyCode_co_lnotab, jCode);
 
-	char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL);
-	size = strlen(utf_string);
-	char cstr[size+1];
-	strcpy(cstr, utf_string);
-	(*env)->ReleaseStringUTFChars(env, jstr, utf_string);
+		char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL);
+		VLA_DECL(char, cstr);
+		size = strlen(utf_string);
+		//char cstr[size+1];
+		VLA(char, cstr, size+1);
+		strcpy(cstr, utf_string);
+		(*env)->ReleaseStringUTFChars(env, jstr, utf_string);
 
 
-	p = (unsigned char*) cstr;//PyString_AS_STRING(co->co_lnotab);
-	size = size/2;//PyString_GET_SIZE(co->co_lnotab) / 2;
+		p = (unsigned char*) cstr;//PyString_AS_STRING(co->co_lnotab);
+		size = size/2;//PyString_GET_SIZE(co->co_lnotab) / 2;
 
-	addr = 0;
-	//line = co->co_firstlineno;
-	assert(line > 0);
+		addr = 0;
+		//line = co->co_firstlineno;
+		assert(line > 0);
 
-	/* possible optimization: if f->f_lasti == instr_ub
-	   (likely to be a common case) then we already know
-	   instr_lb -- if we stored the matching value of p
-	   somwhere we could skip the first while loop. */
+		/* possible optimization: if f->f_lasti == instr_ub
+		   (likely to be a common case) then we already know
+		   instr_lb -- if we stored the matching value of p
+		   somwhere we could skip the first while loop. */
 
-	/* See lnotab_notes.txt for the description of
-	   co_lnotab.  A point to remember: increments to p
-	   come in (addr, line) pairs. */
+		/* See lnotab_notes.txt for the description of
+		   co_lnotab.  A point to remember: increments to p
+		   come in (addr, line) pairs. */
 
-	bounds->ap_lower = 0;
-	while (size > 0) {
-		if (addr + *p > lasti)
-			break;
-		addr += *p++;
-		if (*p)
-			bounds->ap_lower = addr;
-		line += *p++;
-		--size;
-	}
-
-	if (size > 0) {
-		while (--size >= 0) {
-			addr += *p++;
-			if (*p++)
+		bounds->ap_lower = 0;
+		while (size > 0) {
+			if (addr + *p > lasti)
 				break;
+			addr += *p++;
+			if (*p)
+				bounds->ap_lower = addr;
+			line += *p++;
+			--size;
 		}
-		bounds->ap_upper = addr;
-	}
-	else {
-		bounds->ap_upper = INT_MAX;
-	}
 
-	return line;
+		if (size > 0) {
+			while (--size >= 0) {
+				addr += *p++;
+				if (*p++)
+					break;
+			}
+			bounds->ap_upper = addr;
+		}
+		else {
+			bounds->ap_upper = INT_MAX;
+		}
+
+		return line;
+	}
 }

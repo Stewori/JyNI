@@ -1,0 +1,142 @@
+#  Copyright of JyNI:
+#  Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
+#  All rights reserved.
+#
+#
+#  Copyright of Python and Jython:
+#  Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+#  2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
+#  Python Software Foundation.
+#  All rights reserved.
+#
+#
+#  This file is part of JyNI.
+#
+#  JyNI is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation, either version 3 of
+#  the License, or (at your option) any later version.
+#
+#  JyNI is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+#
+# makefile for JyNI on Wine
+#
+# Author: Stefan Richthofer
+#
+
+# These lines must be configured by the user specifically for current wine setup:
+# (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+VC_PYTHON_HOME_WINE = "/windows/Users/Stefan/AppData/Local/Programs/Common/Microsoft/Visual C++ for Python/9.0"
+PYTHON_HOME_WINE = "/windows/Program Files/Python/Python2.7.13"
+JAVA_HOME_WINE = "/windows/Program Files/Java/jdk1.8.0_121"
+
+PYTHON_HOME = ./Python_wine
+VC_Python = ./VCPython_wine
+JAVA_HOME = ./Java_wine
+
+CC = wine $(VC_Python)/VC/bin/x86_amd64/cl
+LK = wine $(VC_Python)/VC/bin/x86_amd64/link
+JC = javac
+JAVA = java
+OUTPUTDIR = build
+
+# Adjust the following line to point to Jython 2.7
+JYTHON = ./jython.jar
+# for instance, if you extracted it to your home folder:
+# JYTHON = /home/your_name/jython.jar
+
+PLATFORM = win32
+
+JYNI = ./JyNI-Java/src
+JYNIBIN = ./JyNI-Java/bin
+
+JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
+INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
+
+LIBS64 = $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib
+
+CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
+# You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
+JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
+
+#SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
+SOURCES = $(wildcard JyNI-C/src/PC/*.c) $(wildcard JyNI-C/src/Modules/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c)
+OBJECTS = $(SOURCES:.c=.obj)
+JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
+
+all: $(OUTPUTDIR) libJyNI JyNI
+	@echo ''
+	@echo 'Build successful.'
+
+$(OUTPUTDIR):
+	mkdir $(OUTPUTDIR)
+
+%.obj: %.c
+	$(CC) /c /Fo./$@ $(CFLAGS) $<
+
+JyNI-C/src/Python/dynload_win.obj:
+	$(CC) /c /Fo./JyNI-C/src/Python/dynload_win.obj $(CFLAGS) JyNI-C/src/Python/dynload/dynload_win.c
+
+$(JYTHON):
+	@echo.
+	@echo ------------------------------------------------
+	@echo Fatal error: Could not find jython.jar.
+	@echo Either put jython.jar into the JyNI base folder,
+	@echo or adjust the JYTHON-variable at the top of
+	@echo makefile to point to your installed jython.jar.
+	@echo Be sure to use Jython 2.7.1 or newer.
+	@echo ------------------------------------------------
+	@echo.
+	@false
+
+$(JAVA_HOME): $(JYTHON)
+	ln -s $(JAVA_HOME_WINE) $(JAVA_HOME)
+
+$(PYTHON_HOME):
+	ln -s $(PYTHON_HOME_WINE) $(PYTHON_HOME)
+
+$(VC_Python):
+	ln -s $(VC_PYTHON_HOME_WINE) $(VC_Python)
+
+libJyNI: $(VC_Python) $(JAVA_HOME) $(PYTHON_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
+
+$(JYNIBIN):
+	mkdir $(JYNIBIN)
+
+$(JYNIBIN)/JyNI: $(JYNIBIN)
+	$(JC) $(JFLAGS) $(JSOURCES)
+
+$(JYNIBIN)/Lib: $(JYTHON) $(JYNIBIN)
+	cp -r JyNI-Lib/* $(JYNIBIN)
+	$(JAVA) -cp $(JYTHON) org.python.util.jython -c "import compileall; compileall.compile_dir('$(JYNIBIN)')"
+
+JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
+	cp -r JyNI-Java/META-INF $(JYNIBIN)
+	jar cvf $(OUTPUTDIR)/JyNI.jar -C $(JYNIBIN) .
+
+cleanJ:
+	rm -rf $(JYNIBIN)
+
+clean:
+	rm -rf $(JYNIBIN)
+	rm -f ./JyNI-C/src/Python/*.obj
+	rm -f ./JyNI-C/src/Python/dynload_win.c
+	rm -f ./JyNI-C/src/Objects/*.obj
+	rm -f ./JyNI-C/src/Modules/*.obj
+	rm -f ./JyNI-Loader/JyNILoader.obj
+	rm $(VC_Python)
+	rm $(JAVA_HOME)
+	rm $(PYTHON_HOME)
+
+#.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
+.PHONY: all
+

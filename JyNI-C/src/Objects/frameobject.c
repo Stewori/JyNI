@@ -480,8 +480,9 @@
 static void
 frame_dealloc(PyFrameObject *f)
 {
+	JyObject* jy;
 	JyNIDebugOp(JY_NATIVE_FINALIZE, f, -1);
-	JyObject* jy = AS_JY_NO_GC(f);
+	jy = AS_JY_NO_GC(f);
 	JyNI_CleanUp_JyObject(jy);
 	PyObject_RawFree(jy);
 //	PyObject **p, **valuestack;
@@ -694,17 +695,17 @@ PyFrameObject *
 PyFrame_New(PyThreadState *tstate, PyCodeObject *code, PyObject *globals,
 			PyObject *locals)
 {
+	jobject builtins = NULL, back = NULL, f;
 //	puts(__FUNCTION__);
 	env(NULL);
-	jobject builtins = NULL;
-	jobject back = NULL;
+
 	if (tstate)
 	{
 		jobject jts = TS_GET_JY(tstate);
 		back = (*env)->GetObjectField(env, jts, pyThreadState_frameField);
 		builtins = (*env)->GetObjectField(env, back, pyFrame_f_builtinsField);
 	}
-	jobject f = (*env)->NewObject(env, pyFrameClass, pyFrame_Constructor,
+	f = (*env)->NewObject(env, pyFrameClass, pyFrame_Constructor,
 			JyNI_JythonPyObject_FromPyObject(code),
 			JyNI_JythonPyObject_FromPyObject(locals),
 			JyNI_JythonPyObject_FromPyObject(globals),

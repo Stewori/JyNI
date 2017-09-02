@@ -101,11 +101,7 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 	//jputs("dyn load func is not NULL");
 	oldcontext = _Py_PackageContext;
 	_Py_PackageContext = packagecontext;
-//	jputs("run dyn load func...");
-//	jputs(name);
 	(*p)();
-//	jputs("run dyn load func done");
-//	jputs(name);
 	_Py_PackageContext = oldcontext;
 	if (PyErr_Occurred())
 	{
@@ -125,38 +121,41 @@ jobject _PyImport_LoadDynamicModuleJy(char *name, char *pathname, FILE *fp)
 			pyDictGet_PyObject,
 			mName
 		);*/
-	env(NULL);
-	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_GetModule, (*env)->NewStringUTF(env, name));
-	//puts("retrieved module");
-	if (m == NULL) {
-		//puts("m = NULL");
-		PyErr_SetString(PyExc_SystemError,
-						"dynamic module not initialized properly");
-		return NULL;
+	{ // env-area
+		env(NULL);
+		m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_GetModule, (*env)->NewStringUTF(env, name));
+		//puts("retrieved module");
+		if (m == NULL) {
+			//puts("m = NULL");
+			PyErr_SetString(PyExc_SystemError,
+							"dynamic module not initialized properly");
+			return NULL;
+		}
+		//puts("name:");
+		//puts(PyModule_GetName(JyNI_PyObject_FromJythonPyObject(m)));
+		// Remember the filename as the __file__ attribute
+		//if (PyModule_AddStringConstant(m, "__file__", pathname) < 0)
+		//puts("adding filename...");
+		// Todo: If pathname is NULL set __file__ to PyNone or something.
+		// Note: CPython simply raises AttributeError: 'module' object has no attribute '__file__'
+		if (pathname && PyModule_AddStringConstantJy(m, "__file__", pathname) < 0)
+			PyErr_Clear(); // Not important enough to report
+		//puts("filename added:");
+		//puts(PyModule_GetFilename(JyNI_PyObject_FromJythonPyObject(m)));
+		//provide FixupExtension later...
+		//if (_PyImport_FixupExtension(name, pathname) == NULL)
+		//	return NULL;
+		//if (Py_VerboseFlag)
+		if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_getDLVerbose))
+			PySys_WriteStderr(
+				"import %s # dynamically loaded from %s\n",
+				name, pathname);
+		//Py_INCREF(m);
+		//jputs("module loaded:");
+		//jputs(name);
+		//jputsLong(m);
+		return m;
 	}
-	//puts("name:");
-	//puts(PyModule_GetName(JyNI_PyObject_FromJythonPyObject(m)));
-	// Remember the filename as the __file__ attribute
-	//if (PyModule_AddStringConstant(m, "__file__", pathname) < 0)
-	//puts("adding filename...");
-	// Todo: If pathname is NULL set __file__ to PyNone or something.
-	if (pathname && PyModule_AddStringConstantJy(m, "__file__", pathname) < 0)
-		PyErr_Clear(); // Not important enough to report
-	//puts("filename added:");
-	//puts(PyModule_GetFilename(JyNI_PyObject_FromJythonPyObject(m)));
-	//provide FixupExtension later...
-	//if (_PyImport_FixupExtension(name, pathname) == NULL)
-	//	return NULL;
-	//if (Py_VerboseFlag)
-	if ((*env)->CallStaticIntMethod(env, JyNIClass, JyNI_getDLVerbose))
-		PySys_WriteStderr(
-			"import %s # dynamically loaded from %s\n",
-			name, pathname);
-	//Py_INCREF(m);
-	//jputs("module loaded:");
-	//jputs(name);
-	//jputsLong(m);
-	return m;
 }
 
 //#endif // HAVE_DYNAMIC_LOADING

@@ -681,9 +681,10 @@ PyGILState_Ensure(void)
 void
 PyGILState_Release(PyGILState_STATE oldstate)
 {
+	PyThreadState *tcur;
 	env();
-//	PyThreadState *tcur = (PyThreadState*) PyThread_get_key_value(autoTLSkey);
-	PyThreadState *tcur = (PyThreadState*) (*env)->CallStaticLongMethod(env,
+//	tcur = (PyThreadState*) PyThread_get_key_value(autoTLSkey);
+	tcur = (PyThreadState*) (*env)->CallStaticLongMethod(env,
 			JyTStateClass, JyTState_prepareNativeThreadState);
 
 	if (!tcur->JyNI_gilstate_counter) {
@@ -707,9 +708,10 @@ PyGILState_Release(PyGILState_STATE oldstate)
 	 * clear it while the GIL is held, as destructors may run.
 	 */
 	if (tcur->JyNI_gilstate_counter == 0) {
+		int detach;
 		/* can't have been locked when we created it */
 		assert(oldstate == PyGILState_UNLOCKED);
-		int detach = tcur->JyNI_natively_attached;
+		detach = tcur->JyNI_natively_attached;
 		PyThreadState_Clear(tcur);
 		/* Delete the thread-state.  Note this releases the GIL too!
 		 * It's vital that the GIL be held here, to avoid shutdown

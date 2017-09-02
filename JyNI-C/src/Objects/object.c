@@ -482,13 +482,14 @@ PyObject_Repr(PyObject *v)
 
 	if (v == NULL)
 		return PyString_FromString("<NULL>");
-
-	jobject delegate = JyNI_GetJythonDelegate(v);
-	if (delegate)
-	{
-		//jputs("PyObject_Repr delegate");
-		env(NULL);
-		return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObject___repr__));
+	else {
+		jobject delegate = JyNI_GetJythonDelegate(v);
+		if (delegate)
+		{
+			//jputs("PyObject_Repr delegate");
+			env(NULL);
+			return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, delegate, pyObject___repr__));
+		}
 	}
 
 	if (Py_TYPE(v)->tp_repr == NULL)
@@ -536,17 +537,18 @@ _PyObject_Str(PyObject *v)
 	if (PyString_CheckExact(v)) {
 		Py_INCREF(v);
 		return v;
-	}
-	jobject delegate = JyNI_GetJythonDelegate(v);
-	if (delegate)
-	{
-//		jputs("delegate... _PyObject_Str");
-		env(NULL);
-		jobject er;
-		Py_BEGIN_ALLOW_THREADS
-		er = (*env)->CallObjectMethod(env, delegate, pyObject___str__);
-		Py_END_ALLOW_THREADS
-		return JyNI_PyObject_FromJythonPyObject(er);
+	} else {
+		jobject delegate = JyNI_GetJythonDelegate(v);
+		if (delegate)
+		{
+	//		jputs("delegate... _PyObject_Str");
+			jobject er;
+			env(NULL);
+			Py_BEGIN_ALLOW_THREADS
+			er = (*env)->CallObjectMethod(env, delegate, pyObject___str__);
+			Py_END_ALLOW_THREADS
+			return JyNI_PyObject_FromJythonPyObject(er);
+		}
 	}
 //	jputs("no delegate... _PyObject_Str");
 #ifdef Py_USING_UNICODE
@@ -995,20 +997,22 @@ PyObject_Compare(PyObject *v, PyObject *w)
 	}
 	if (v == w)
 		return 0;
-
-	jobject delegate = JyNI_GetJythonDelegate(v);
-	if (delegate)
-	{
-		env(-1);
-		jint result = (*env)->CallIntMethod(env,
-				JyNI_JythonPyObject_FromPyObject(v),
-				pyObject__cmp,
-				JyNI_JythonPyObject_FromPyObject(w));
-		if ((*env)->ExceptionCheck(env)) {
-			(*env)->ExceptionClear(env);
-			return -1;
+	else {
+		jobject delegate = JyNI_GetJythonDelegate(v);
+		if (delegate)
+		{
+			jint result;
+			env(-1);
+			result = (*env)->CallIntMethod(env,
+					JyNI_JythonPyObject_FromPyObject(v),
+					pyObject__cmp,
+					JyNI_JythonPyObject_FromPyObject(w));
+			if ((*env)->ExceptionCheck(env)) {
+				(*env)->ExceptionClear(env);
+				return -1;
+			}
+			return result;
 		}
-		return result;
 	}
 	return _PyObject_Compare(v, w);
 }
@@ -1018,9 +1022,11 @@ _PyObject_Compare(PyObject *v, PyObject *w)
 {
 	if (Py_EnterRecursiveCall(" in cmp"))
 		return -1;
-	int result = do_cmp(v, w);
-	Py_LeaveRecursiveCall();
-	return result < 0 ? -1 : result;
+	else {
+		int result = do_cmp(v, w);
+		Py_LeaveRecursiveCall();
+		return result < 0 ? -1 : result;
+	}
 }
 
 // Return (new reference to) Py_True or Py_False.
@@ -1171,10 +1177,14 @@ PyObject_RichCompareBool(PyObject *v, PyObject *w, int op)
 //  if a==b then hash(a)==hash(b)
 
 // All the utility functions (_Py_Hash*()) return "-1" to signify an error.
-/*
+
 long
 _Py_HashDouble(double v)
 {
+	jputs("JyNI warning: _Py_HashDouble not yet implemented.");
+	return -1;
+}
+/*
 	double intpart, fractpart;
 	int expo;
 	long hipart;
@@ -1293,32 +1303,34 @@ PyObject_GetAttrString(PyObject *v, const char *name)
 	if (delegate)
 	{
 //		if (dbg) jputs("delegate GetAttrString");
+		jobject jres;
 		env(NULL);
-		jobject jres = (*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
+		jres = (*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
 				(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), string_intern));
 //		JyNI_jprintJ(jres);
 		return JyNI_PyObject_FromJythonPyObject(jres);
-	}
-//	if (dbg) jputs("no delegate GetAttrString");
+	} else {
+	//	if (dbg) jputs("no delegate GetAttrString");
 
-	PyObject *w, *res;
+		PyObject *w, *res;
 
-	if (Py_TYPE(v)->tp_getattr != NULL)
-	{
-//		jputs("Use type's own getattr");
-		return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
+		if (Py_TYPE(v)->tp_getattr != NULL)
+		{
+	//		jputs("Use type's own getattr");
+			return (*Py_TYPE(v)->tp_getattr)(v, (char*)name);
+		}
+	//	jputs("tp_getattr is NULL");
+		w = PyString_InternFromString(name);
+		if (w == NULL)
+			return NULL;
+	//	jputs("try PyString-version");
+		res = PyObject_GetAttr(v, w);
+	//	jputs("PyString-version done. w:");
+	//	jputsLong(w);
+	//	jputsLong(res);
+		Py_XDECREF(w);
+		return res;
 	}
-//	jputs("tp_getattr is NULL");
-	w = PyString_InternFromString(name);
-	if (w == NULL)
-		return NULL;
-//	jputs("try PyString-version");
-	res = PyObject_GetAttr(v, w);
-//	jputs("PyString-version done. w:");
-//	jputsLong(w);
-//	jputsLong(res);
-	Py_XDECREF(w);
-	return res;
 }
 
 int
@@ -1361,18 +1373,19 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 			return -1;
 		} else
 			return 0;
-	}
-	PyObject *s;
-	int res;
+	} else {
+		PyObject *s;
+		int res;
 
-	if (Py_TYPE(v)->tp_setattr != NULL)
-		return (*Py_TYPE(v)->tp_setattr)(v, (char*)name, w);
-	s = PyString_InternFromString(name);
-	if (s == NULL)
-		return -1;
-	res = PyObject_SetAttr(v, s, w);
-	Py_XDECREF(s);
-	return res;
+		if (Py_TYPE(v)->tp_setattr != NULL)
+			return (*Py_TYPE(v)->tp_setattr)(v, (char*)name, w);
+		s = PyString_InternFromString(name);
+		if (s == NULL)
+			return -1;
+		res = PyObject_SetAttr(v, s, w);
+		Py_XDECREF(s);
+		return res;
+	}
 }
 
 PyObject *
@@ -1398,38 +1411,42 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 					"attribute name must be string, not '%.200s'",
 					Py_TYPE(name)->tp_name);
 		return NULL;
+	} else {
+		jobject delegate = JyNI_GetJythonDelegate(v);
+		if (delegate)
+		{
+			env(NULL);
+			return JyNI_PyObject_FromJythonPyObject(
+				(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
+					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
+		}
 	}
-	jobject delegate = JyNI_GetJythonDelegate(v);
-	if (delegate)
+
 	{
-		env(NULL);
-		return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
-				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
+	//	jputs("no delegate in PyString-version");
+		PyTypeObject *tp = Py_TYPE(v);
+	//	jputs(tp->tp_name);
+		if (tp->tp_getattro != NULL)
+		{
+	//		jputs("tp_getattro not NULL");
+			return (*tp->tp_getattro)(v, name);
+		}
+		if (tp->tp_getattr != NULL) {
+	//		jputs("tp_getattr not NULL");
+			return (*tp->tp_getattr)(v, PyString_AS_STRING(name));
+		}
+	//	jputsLong(__LINE__);
+	//	jputsPy(tp);
+	//	jputsPy(v);
+	//	PyObject *clsname = PyObject_GetAttrString(tp, "__name__");
+	//	jputsPy(clsname);
+	//	clsname = PyObject_GetAttrString(v, "__name__");
+	//	jputsPy(clsname);
+		PyErr_Format(PyExc_AttributeError,
+				"'%.50s' object has no attribute '%.400s'",
+				tp->tp_name, PyString_AS_STRING(name));
+		return NULL;
 	}
-//	jputs("no delegate in PyString-version");
-	PyTypeObject *tp = Py_TYPE(v);
-//	jputs(tp->tp_name);
-	if (tp->tp_getattro != NULL)
-	{
-//		jputs("tp_getattro not NULL");
-		return (*tp->tp_getattro)(v, name);
-	}
-	if (tp->tp_getattr != NULL) {
-//		jputs("tp_getattr not NULL");
-		return (*tp->tp_getattr)(v, PyString_AS_STRING(name));
-	}
-//	jputsLong(__LINE__);
-//	jputsPy(tp);
-//	jputsPy(v);
-//	PyObject *clsname = PyObject_GetAttrString(tp, "__name__");
-//	jputsPy(clsname);
-//	clsname = PyObject_GetAttrString(v, "__name__");
-//	jputsPy(clsname);
-	PyErr_Format(PyExc_AttributeError,
-			"'%.50s' object has no attribute '%.400s'",
-			tp->tp_name, PyString_AS_STRING(name));
-	return NULL;
 }
 
 int
@@ -1613,17 +1630,19 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict)
 	else
 		Py_INCREF(name);
 
-	jobject delegate = JyNI_GetJythonDelegate(obj);
-	if (delegate)
 	{
-//		if (dbg) puts("delegate");
+		jobject delegate = JyNI_GetJythonDelegate(obj);
+		if (delegate)
+		{
+	//		if (dbg) puts("delegate");
 
-//		jputsLong(__LINE__);
-		env(NULL);
-		res = JyNI_PyObject_FromJythonPyObject(
-				(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
-				JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
-		goto done;
+	//		jputsLong(__LINE__);
+			env(NULL);
+			res = JyNI_PyObject_FromJythonPyObject(
+					(*env)->CallObjectMethod(env, delegate, pyObject___findattr__,
+					JyNI_interned_jstring_FromPyStringObject(env, (PyStringObject*) name)));
+			goto done;
+		}
 	}
 //	puts("no delegate");
 	if (tp->tp_dict == NULL) {
@@ -1727,9 +1746,10 @@ PyObject_GenericGetAttr(PyObject *obj, PyObject *name)
 {
 //	puts(__FUNCTION__);
 //	if (name) puts(PyString_AS_STRING(name));
-	PyObject* er = _PyObject_GenericGetAttrWithDict(obj, name, NULL);
+//	Py/Object* er =
+	return _PyObject_GenericGetAttrWithDict(obj, name, NULL);
 //	puts("PyObject_GenericGetAttr done");
-	return er;
+	//return er;
 }
 
 int
@@ -1783,78 +1803,81 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
 		} else
 			Py_INCREF(name);
 	}
-//	jputsLong(__LINE__);
-	PyTypeObject *tp = Py_TYPE(obj);
-	PyObject *descr;
-	descrsetfunc f;
-	PyObject **dictptr;
-	int res = -1;
 
-	if (tp->tp_dict == NULL) {
-		if (PyType_Ready(tp) < 0)
-				goto done;
-	}
+	{
+	//	jputsLong(__LINE__);
+		PyTypeObject *tp = Py_TYPE(obj);
+		PyObject *descr;
+		descrsetfunc f;
+		PyObject **dictptr;
+		int res = -1;
 
-	descr = _PyType_Lookup(tp, name);
-	//printf("descr: %d\n", descr);
-	f = NULL;
-	if (descr != NULL &&
-		PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
-		//printf("%d\n", __LINE__);
-		f = descr->ob_type->tp_descr_set;
-		if (f != NULL && PyDescr_IsData(descr)) {
-				res = f(descr, obj, value);
-				goto done;
-		}
-	}
-
-	if (dict == NULL) {
-		dictptr = _PyObject_GetDictPtr(obj);
-		if (dictptr != NULL) {
-			dict = *dictptr;
-			if (dict == NULL && value != NULL) {
-				dict = PyDict_New();
-//				jputsLong(__LINE__);
-//				jputsLong(dict);
-				if (dict == NULL)
+		if (tp->tp_dict == NULL) {
+			if (PyType_Ready(tp) < 0)
 					goto done;
-				*dictptr = dict;
-				updateJyGCHeadLinks(obj, AS_JY(obj));
+		}
+
+		descr = _PyType_Lookup(tp, name);
+		//printf("descr: %d\n", descr);
+		f = NULL;
+		if (descr != NULL &&
+			PyType_HasFeature(descr->ob_type, Py_TPFLAGS_HAVE_CLASS)) {
+			//printf("%d\n", __LINE__);
+			f = descr->ob_type->tp_descr_set;
+			if (f != NULL && PyDescr_IsData(descr)) {
+					res = f(descr, obj, value);
+					goto done;
 			}
 		}
-	}
-	if (dict != NULL) {
-		Py_INCREF(dict);
-		if (value == NULL)
-			res = PyDict_DelItem(dict, name);
-		else {
-//			jputsLong(__LINE__);
-			//printf("%d\n", __LINE__);
-			res = PyDict_SetItem(dict, name, value);
+
+		if (dict == NULL) {
+			dictptr = _PyObject_GetDictPtr(obj);
+			if (dictptr != NULL) {
+				dict = *dictptr;
+				if (dict == NULL && value != NULL) {
+					dict = PyDict_New();
+	//				jputsLong(__LINE__);
+	//				jputsLong(dict);
+					if (dict == NULL)
+						goto done;
+					*dictptr = dict;
+					updateJyGCHeadLinks(obj, AS_JY(obj));
+				}
+			}
 		}
-//		if (res < 0 && PyErr_ExceptionMatches(PyExc_KeyError))
-//			PyErr_SetObject(PyExc_AttributeError, name);
-		Py_DECREF(dict);
-		//printf("%d\n", __LINE__);
-		goto done;
-	}
-	if (f != NULL) {
-		res = f(descr, obj, value);
-		goto done;
-	}
-	if (descr == NULL) {
+		if (dict != NULL) {
+			Py_INCREF(dict);
+			if (value == NULL)
+				res = PyDict_DelItem(dict, name);
+			else {
+	//			jputsLong(__LINE__);
+				//printf("%d\n", __LINE__);
+				res = PyDict_SetItem(dict, name, value);
+			}
+	//		if (res < 0 && PyErr_ExceptionMatches(PyExc_KeyError))
+	//			PyErr_SetObject(PyExc_AttributeError, name);
+			Py_DECREF(dict);
+			//printf("%d\n", __LINE__);
+			goto done;
+		}
+		if (f != NULL) {
+			res = f(descr, obj, value);
+			goto done;
+		}
+		if (descr == NULL) {
+			PyErr_Format(PyExc_AttributeError,
+								"'%.100s' object has no attribute '%.200s'",
+								tp->tp_name, PyString_AS_STRING(name));
+			goto done;
+		}
 		PyErr_Format(PyExc_AttributeError,
-							"'%.100s' object has no attribute '%.200s'",
-							tp->tp_name, PyString_AS_STRING(name));
-		goto done;
+						"'%.50s' object attribute '%.400s' is read-only",
+						tp->tp_name, PyString_AS_STRING(name));
+	  done:
+		Py_DECREF(name);
+	//	jputsLong(__LINE__);
+		return res;
 	}
-	PyErr_Format(PyExc_AttributeError,
-					"'%.50s' object attribute '%.400s' is read-only",
-					tp->tp_name, PyString_AS_STRING(name));
-  done:
-	Py_DECREF(name);
-//	jputsLong(__LINE__);
-	return res;
 }
 
 int
@@ -1873,33 +1896,34 @@ PyObject_IsTrue(PyObject *v)
 {
 	if (v == Py_True)
 		return 1;
-	if (v == Py_False)
+	else if (v == Py_False)
 		return 0;
-	if (v == Py_None)
+	else if (v == Py_None)
 		return 0;
+	else {
+		jobject delegate = JyNI_GetJythonDelegate(v);
+		if (delegate)
+		{
+			env(-1);
+			return (*env)->CallBooleanMethod(env, delegate, pyObject___nonzero__);
+		} else
+		{
 
-	jobject delegate = JyNI_GetJythonDelegate(v);
-	if (delegate)
-	{
-		env(-1);
-		return (*env)->CallBooleanMethod(env, delegate, pyObject___nonzero__);
-	} else
-	{
-
-		Py_ssize_t res;
-		if (v->ob_type->tp_as_number != NULL &&
-					v->ob_type->tp_as_number->nb_nonzero != NULL)
-			res = (*v->ob_type->tp_as_number->nb_nonzero)(v);
-		else if (v->ob_type->tp_as_mapping != NULL &&
-					v->ob_type->tp_as_mapping->mp_length != NULL)
-			res = (*v->ob_type->tp_as_mapping->mp_length)(v);
-		else if (v->ob_type->tp_as_sequence != NULL &&
-					v->ob_type->tp_as_sequence->sq_length != NULL)
-			res = (*v->ob_type->tp_as_sequence->sq_length)(v);
-		else
-			return 1;
-		// if it is negative, it should be either -1 or -2
-		return (res > 0) ? 1 : Py_SAFE_DOWNCAST(res, Py_ssize_t, int);
+			Py_ssize_t res;
+			if (v->ob_type->tp_as_number != NULL &&
+						v->ob_type->tp_as_number->nb_nonzero != NULL)
+				res = (*v->ob_type->tp_as_number->nb_nonzero)(v);
+			else if (v->ob_type->tp_as_mapping != NULL &&
+						v->ob_type->tp_as_mapping->mp_length != NULL)
+				res = (*v->ob_type->tp_as_mapping->mp_length)(v);
+			else if (v->ob_type->tp_as_sequence != NULL &&
+						v->ob_type->tp_as_sequence->sq_length != NULL)
+				res = (*v->ob_type->tp_as_sequence->sq_length)(v);
+			else
+				return 1;
+			// if it is negative, it should be either -1 or -2
+			return (res > 0) ? 1 : Py_SAFE_DOWNCAST(res, Py_ssize_t, int);
+		}
 	}
 }
 
@@ -2684,8 +2708,8 @@ PyMem_Free(void *p)
 {
 	if (p)
 	{
-		ptrCount--;
 		void* ptr = AS_JY_NO_GC(p);
+		ptrCount--;
 		PyMem_FREE(ptr);
 		notifyFree(ptr);
 	}
@@ -2710,9 +2734,10 @@ int
 Py_ReprEnter(PyObject *obj)
 {
 	if (_PyThreadState_Current) {
+		jboolean result;
 		env(0);
 		//Result true means 0, false means 1, error means -1
-		jboolean result = (*env)->CallIntMethod(env,
+		result = (*env)->CallIntMethod(env,
 					TS_GET_JY(_PyThreadState_Current),
 					pyThreadState_enterRepr,
 					JyNI_JythonPyObject_FromPyObject(obj)

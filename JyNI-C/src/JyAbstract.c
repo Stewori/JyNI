@@ -47,9 +47,11 @@
 #define PyNumberMethod1(name) \
 jobject JyNI_PyNumber_ ## name (jlong o, jlong tstate) \
 { \
+	PyObject* res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* res = PyNumber_ ## name ((PyObject*) o); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	res = PyNumber_ ## name ((PyObject*) o); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
 	return jres; \
@@ -58,10 +60,12 @@ jobject JyNI_PyNumber_ ## name (jlong o, jlong tstate) \
 #define PyMethod2(pref, name) \
 jobject JyNI_ ## pref ## _ ## name (jlong o1, jobject o2, jlong tstate) \
 { \
+	PyObject* arg, *res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2); \
-	PyObject* res = pref ## _ ## name ((PyObject*) o1, arg); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	arg = JyNI_PyObject_FromJythonPyObject(o2); \
+	res = pref ## _ ## name ((PyObject*) o1, arg); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(arg); \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
@@ -73,11 +77,13 @@ jobject JyNI_ ## pref ## _ ## name (jlong o1, jobject o2, jlong tstate) \
 #define PyNumberMethod3(name) \
 jobject JyNI_PyNumber_ ## name (jlong o1, jobject o2, jobject o3, jlong tstate) \
 { \
+	PyObject* arg2, *arg3, *res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* arg2 = JyNI_PyObject_FromJythonPyObject(o2); \
-	PyObject* arg3 = JyNI_PyObject_FromJythonPyObject(o3); \
-	PyObject* res = PyNumber_ ## name ((PyObject*) o1, arg2, arg3); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	arg2 = JyNI_PyObject_FromJythonPyObject(o2); \
+	arg3 = JyNI_PyObject_FromJythonPyObject(o3); \
+	res = PyNumber_ ## name ((PyObject*) o1, arg2, arg3); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(arg2); \
 	Py_XDECREF(arg3); \
 	Py_XDECREF(res); \
@@ -88,8 +94,9 @@ jobject JyNI_PyNumber_ ## name (jlong o1, jobject o2, jobject o3, jlong tstate) 
 #define PyLengthMethod(prefix) \
 jint JyNI_ ## prefix ## _Length(jlong o, jlong tstate) \
 { \
+	jint res; \
 	RE_ENTER_JyNI \
-	jint res = prefix ## _Length((PyObject*) o); \
+	res = prefix ## _Length((PyObject*) o); \
 	RE_LEAVE_JyNI \
 	return res; \
 }
@@ -97,9 +104,11 @@ jint JyNI_ ## prefix ## _Length(jlong o, jlong tstate) \
 #define PySequenceSizeArgFunc(name) \
 jobject JyNI_PySequence_ ## name (jlong o, jint l, jlong tstate) \
 { \
+	PyObject* res; \
+	jobject jres; \
 	ENTER_JyNI \
-	PyObject* res = PySequence_ ## name ((PyObject*) o, l); \
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res); \
+	res = PySequence_ ## name ((PyObject*) o, l); \
+	jres = JyNI_JythonPyObject_FromPyObject(res); \
 	Py_XDECREF(res); \
 	LEAVE_JyNI \
 	return jres; \
@@ -108,11 +117,14 @@ jobject JyNI_PySequence_ ## name (jlong o, jint l, jlong tstate) \
 
 jint JyNI_PyObject_Compare(jlong handle, jobject o, jlong tstate)
 {
+	jint res;
+	PyObject* obj;
+
 	RE_ENTER_JyNI
-	PyObject* obj = JyNI_PyObject_FromJythonPyObject(o);
+	obj = JyNI_PyObject_FromJythonPyObject(o);
 	//Maybe use _PyObject_Compare?
 	//jint res = _PyObject_Compare((PyObject*) handle, obj);
-	jint res = Py_TYPE((PyObject*) handle)->tp_compare((PyObject*) handle, obj);
+	res = Py_TYPE((PyObject*) handle)->tp_compare((PyObject*) handle, obj);
 	Py_XDECREF(obj);
 	RE_LEAVE_JyNI
 	return res;
@@ -120,12 +132,15 @@ jint JyNI_PyObject_Compare(jlong handle, jobject o, jlong tstate)
 
 jobject JyNI_PyObject_RichCompare(jlong handle, jobject o, jint op, jlong tstate)
 {
+	PyObject* res, * obj;
+	jobject jres;
+
 	RE_ENTER_JyNI
-	PyObject* obj = JyNI_PyObject_FromJythonPyObject(o);
+	obj = JyNI_PyObject_FromJythonPyObject(o);
 	//Maybe use PyObject_RichCompare?
 	//PyObject* res = PyObject_RichCompare((PyObject*) handle, obj);
-	PyObject* res = Py_TYPE((PyObject*) handle)->tp_richcompare((PyObject*) handle, obj, op);
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	res = Py_TYPE((PyObject*) handle)->tp_richcompare((PyObject*) handle, obj, op);
+	jres = JyNI_JythonPyObject_FromPyObject(res);
 	Py_XDECREF(obj);
 	Py_XDECREF(res);
 	RE_LEAVE_JyNI
@@ -134,9 +149,12 @@ jobject JyNI_PyObject_RichCompare(jlong handle, jobject o, jint op, jlong tstate
 
 jobject JyNI_PyObject_GetIter(jlong handle, jlong tstate)
 {
+	PyObject* res;
+	jobject jres;
+
 	RE_ENTER_JyNI
-	PyObject* res = PyObject_GetIter((PyObject*) handle);
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	res = PyObject_GetIter((PyObject*) handle);
+	jres = JyNI_JythonPyObject_FromPyObject(res);
 	Py_XDECREF(res);
 	RE_LEAVE_JyNI
 	return jres;
@@ -144,9 +162,12 @@ jobject JyNI_PyObject_GetIter(jlong handle, jlong tstate)
 
 jobject JyNI_PyIter_Next(jlong handle, jlong tstate)
 {
+	PyObject* res;
+	jobject jres;
+
 	RE_ENTER_JyNI
-	PyObject* res = PyIter_Next((PyObject*) handle);
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	res = PyIter_Next((PyObject*) handle);
+	jres = JyNI_JythonPyObject_FromPyObject(res);
 	Py_XDECREF(res);
 	RE_LEAVE_JyNI
 	return jres;
@@ -168,9 +189,12 @@ PyNumberMethod1(Absolute)
 
 jboolean JyNI_PyNumber_NonZero(jlong o, jlong tstate)
 {
+	PyObject* obj;
+	jboolean res;
+
 	RE_ENTER_JyNI
-	PyObject* obj = (PyObject*) o;
-	jboolean res = Py_TYPE(obj)->tp_as_number->nb_nonzero(obj);
+	obj = (PyObject*) o;
+	res = Py_TYPE(obj)->tp_as_number->nb_nonzero(obj);
 	RE_LEAVE_JyNI
 	return res;
 }
@@ -184,12 +208,16 @@ PyNumberMethod2(Or)
 
 jobject JyNI_PyNumber_Coerce(jlong o1, jobject o2, jlong tstate)
 {
+	PyObject* obj, * obj2, * obj2_tmp;
+	int ret;
+	jobject res;
+
 	RE_ENTER_JyNI
-	PyObject* obj = (PyObject*) o1;
-	PyObject* obj2 = JyNI_PyObject_FromJythonPyObject(o2);
-	PyObject* obj2_tmp = obj2;
-	int ret = Py_TYPE(obj)->tp_as_number->nb_coerce(&obj, &obj2_tmp);
-	jobject res = o2;
+	obj = (PyObject*) o1;
+	obj2 = JyNI_PyObject_FromJythonPyObject(o2);
+	obj2_tmp = obj2;
+	ret = Py_TYPE(obj)->tp_as_number->nb_coerce(&obj, &obj2_tmp);
+	res = o2;
 	if (!ret)
 	{
 		Py_XDECREF(obj);
@@ -204,23 +232,23 @@ jobject JyNI_PyNumber_Coerce(jlong o1, jobject o2, jlong tstate)
 PyNumberMethod1(Int)
 PyNumberMethod1(Long)
 PyNumberMethod1(Float)
-PyNumberMethod1(Oct)
-PyNumberMethod1(Hex)
-PyNumberMethod2(InplaceAdd)
-PyNumberMethod2(InplaceSubtract)
-PyNumberMethod2(InplaceMultiply)
-PyNumberMethod2(InplaceDivide)
-PyNumberMethod2(InplaceRemainder)
-PyNumberMethod3(InplacePower)
-PyNumberMethod2(InplaceLshift)
-PyNumberMethod2(InplaceRshift)
-PyNumberMethod2(InplaceAnd)
-PyNumberMethod2(InplaceXor)
-PyNumberMethod2(InplaceOr)
+//PyNumberMethod1(Oct)
+//PyNumberMethod1(Hex)
+PyNumberMethod2(InPlaceAdd)
+PyNumberMethod2(InPlaceSubtract)
+PyNumberMethod2(InPlaceMultiply)
+PyNumberMethod2(InPlaceDivide)
+PyNumberMethod2(InPlaceRemainder)
+PyNumberMethod3(InPlacePower)
+PyNumberMethod2(InPlaceLshift)
+PyNumberMethod2(InPlaceRshift)
+PyNumberMethod2(InPlaceAnd)
+PyNumberMethod2(InPlaceXor)
+PyNumberMethod2(InPlaceOr)
 PyNumberMethod2(FloorDivide)
 PyNumberMethod2(TrueDivide)
-PyNumberMethod2(InplaceFloorDivide)
-PyNumberMethod2(InplaceTrueDivide)
+PyNumberMethod2(InPlaceFloorDivide)
+PyNumberMethod2(InPlaceTrueDivide)
 PyNumberMethod1(Index)
 
 
@@ -232,9 +260,12 @@ PySequenceSizeArgFunc(GetItem)
 
 jobject JyNI_PySequence_GetSlice(jlong o, jint l1, jint l2, jlong tstate)
 {
+	PyObject* res;
+	jobject jres;
+
 	RE_ENTER_JyNI
-	PyObject* res = PySequence_GetSlice((PyObject*) o, l1, l2);
-	jobject jres = JyNI_JythonPyObject_FromPyObject(res);
+	res = PySequence_GetSlice((PyObject*) o, l1, l2);
+	jres = JyNI_JythonPyObject_FromPyObject(res);
 	Py_XDECREF(res);
 	RE_LEAVE_JyNI
 	return jres;
@@ -242,9 +273,12 @@ jobject JyNI_PySequence_GetSlice(jlong o, jint l1, jint l2, jlong tstate)
 
 jint JyNI_PySequence_SetItem(jlong o1, jint l, jobject o2, jlong tstate)
 {
+	PyObject* arg;
+	jint res;
+
 	ENTER_JyNI
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2);
-	jint res = PySequence_SetItem((PyObject*) o1, l, arg);
+	arg = JyNI_PyObject_FromJythonPyObject(o2);
+	res = PySequence_SetItem((PyObject*) o1, l, arg);
 	Py_XDECREF(arg);
 	LEAVE_JyNI
 	return res;
@@ -252,9 +286,12 @@ jint JyNI_PySequence_SetItem(jlong o1, jint l, jobject o2, jlong tstate)
 
 jint JyNI_PySequence_SetSlice(jlong o1, jint l1, jint l2, jobject o2, jlong tstate)
 {
+	PyObject* arg;
+	jint res;
+
 	ENTER_JyNI
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2);
-	jint res = PySequence_SetSlice((PyObject*) o1, l1, l2, arg);
+	arg = JyNI_PyObject_FromJythonPyObject(o2);
+	res = PySequence_SetSlice((PyObject*) o1, l1, l2, arg);
 	Py_XDECREF(arg);
 	LEAVE_JyNI
 	return res;
@@ -262,16 +299,19 @@ jint JyNI_PySequence_SetSlice(jlong o1, jint l1, jint l2, jobject o2, jlong tsta
 
 jint JyNI_PySequence_Contains(jlong o1, jobject o2, jlong tstate)
 {
+	jint res;
+	PyObject* arg;
+
 	RE_ENTER_JyNI
-	PyObject* arg = JyNI_PyObject_FromJythonPyObject(o2);
-	jint res = PySequence_Contains((PyObject*) o1, arg);
+	arg = JyNI_PyObject_FromJythonPyObject(o2);
+	res = PySequence_Contains((PyObject*) o1, arg);
 	Py_XDECREF(arg);
 	RE_LEAVE_JyNI
 	return res;
 }
 
-PyMethod2(PySequence, InplaceConcat)
-PySequenceSizeArgFunc(InplaceRepeat)
+PyMethod2(PySequence, InPlaceConcat)
+PySequenceSizeArgFunc(InPlaceRepeat)
 
 
 // PyMapping-methods:

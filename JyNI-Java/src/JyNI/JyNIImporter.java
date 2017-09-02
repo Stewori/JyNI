@@ -74,6 +74,10 @@ public class JyNIImporter extends PyObject {
 //			"cStringIO", "_csv", "_functools", "itertools", "_json",
 //			"math", "operator", "_random", "time", "bz2",
 			);
+	
+	public static List<String> builtinlist = System.getProperty("os.name").startsWith("Windows") ?
+			Arrays.asList("msvcrt", "_winreg", "mmap", "datetime") : // Windows case
+			Arrays.asList("datetime"); // POSIX case
 
 	List<String> knownPaths = null;
 	Vector<String> libPaths = new Vector<String>();
@@ -149,6 +153,10 @@ public class JyNIImporter extends PyObject {
 	public PyObject find_module(String name, PyObject path) {
 //		System.out.print("JyNI find... "+name);
 		if (dynModules.containsKey(name)) {/*System.out.println(" JyNI cache");*/ return this;}
+		if (builtinlist.contains(name)) {
+			dynModules.put(name, new JyNIModuleInfo(name, null, null));
+			return this;
+		}
 		/*Py.writeDebug("import", "trying " + name
 				+ " in packagemanager for path " + path);
 		PyObject ret = PySystemState.packageManager.lookupName(name.intern());
@@ -241,13 +249,14 @@ public class JyNIImporter extends PyObject {
 	public static String getSystemDependentDynamicLibraryExtension() {
 		String OS = System.getProperty("os.name").toLowerCase();
 		//if isWindows:
-		if (OS.indexOf("win") >= 0) return "dll";
+		if (OS.indexOf("win") >= 0) return "pyd";
 		else return "so";
 	}
 
-	/**	This method is actually not needed, since CPython-extensions ignore this naming-standard.
+	/*	This method is actually not needed, since CPython-extensions ignore this naming-standard.
 		Filenames only differ in the ending, i.e. ".so" vs ".dll".
 	*/
+	/*
 	public static String libNameToFileName(String libName) {
 		String OS = System.getProperty("os.name").toLowerCase();
 		//isWindows:
@@ -259,6 +268,7 @@ public class JyNIImporter extends PyObject {
 		//isMac:
 		if (OS.indexOf("mac") >= 0) return "lib"+libName+".so";
 		//isSolaris:
-		if (OS.indexOf("sunos") >= 0) return "lib"+libName+".so";*/
+		if (OS.indexOf("sunos") >= 0) return "lib"+libName+".so";*//*
 	}
+	*/
 }

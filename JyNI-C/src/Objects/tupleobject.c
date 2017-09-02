@@ -260,9 +260,10 @@ PyTuple_Pack(Py_ssize_t n, ...)
 static void
 tupledealloc(register PyTupleObject *op)
 {
-	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
 	register Py_ssize_t i;
-	register Py_ssize_t len =  Py_SIZE(op);
+	register Py_ssize_t len;
+	JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
+	len =  Py_SIZE(op);
 	_JyNI_GC_UNTRACK(op);
 	Py_TRASHCAN_SAFE_BEGIN(op)
 	if (len > 0) {

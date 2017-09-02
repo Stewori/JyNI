@@ -137,8 +137,8 @@ jobject  (*JyNI_PyNumber_Coerce)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_Int)(jlong, jlong);
 jobject  (*JyNI_PyNumber_Long)(jlong, jlong);
 jobject  (*JyNI_PyNumber_Float)(jlong, jlong);
-jobject  (*JyNI_PyNumber_Oct)(jlong, jlong);
-jobject  (*JyNI_PyNumber_Hex)(jlong, jlong);
+//jobject  (*JyNI_PyNumber_Oct)(jlong, jlong);
+//jobject  (*JyNI_PyNumber_Hex)(jlong, jlong);
 jobject  (*JyNI_PyNumber_InPlaceAdd)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_InPlaceSubtract)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_InPlaceMultiply)(jlong, jobject, jlong);
@@ -299,8 +299,8 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 	*(void **) (&JyNI_PyNumber_Int) = dlsym(JyNIHandle, "JyNI_PyNumber_Int");
 	*(void **) (&JyNI_PyNumber_Long) = dlsym(JyNIHandle, "JyNI_PyNumber_Long");
 	*(void **) (&JyNI_PyNumber_Float) = dlsym(JyNIHandle, "JyNI_PyNumber_Float");
-	*(void **) (&JyNI_PyNumber_Oct) = dlsym(JyNIHandle, "JyNI_PyNumber_Oct");
-	*(void **) (&JyNI_PyNumber_Hex) = dlsym(JyNIHandle, "JyNI_PyNumber_Hex");
+//	*(void **) (&JyNI_PyNumber_Oct) = dlsym(JyNIHandle, "JyNI_PyNumber_Oct");
+//	*(void **) (&JyNI_PyNumber_Hex) = dlsym(JyNIHandle, "JyNI_PyNumber_Hex");
 	*(void **) (&JyNI_PyNumber_InPlaceAdd) = dlsym(JyNIHandle, "JyNI_PyNumber_InPlaceAdd");
 	*(void **) (&JyNI_PyNumber_InPlaceSubtract) = dlsym(JyNIHandle, "JyNI_PyNumber_InPlaceSubtract");
 	*(void **) (&JyNI_PyNumber_InPlaceMultiply) = dlsym(JyNIHandle, "JyNI_PyNumber_InPlaceMultiply");
@@ -1057,27 +1057,27 @@ JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Float
 	return (*JyNI_PyNumber_Float)(o, tstate);
 }
 
-/*
- * Class:     JyNI_JyNI
- * Method:    JyNI_PyNumber_Oct
- * Signature: (JJ)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Oct
-  (JNIEnv *env, jclass class, jlong o, jlong tstate)
-{
-	return (*JyNI_PyNumber_Oct)(o, tstate);
-}
+///*
+// * Class:     JyNI_JyNI
+// * Method:    JyNI_PyNumber_Oct
+// * Signature: (JJ)Lorg/python/core/PyObject;
+// */
+//JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Oct
+//  (JNIEnv *env, jclass class, jlong o, jlong tstate)
+//{
+//	return (*JyNI_PyNumber_Oct)(o, tstate);
+//}
 
-/*
- * Class:     JyNI_JyNI
- * Method:    JyNI_PyNumber_Hex
- * Signature: (JJ)Lorg/python/core/PyObject;
- */
-JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Hex
-  (JNIEnv *env, jclass class, jlong o, jlong tstate)
-{
-	return (*JyNI_PyNumber_Hex)(o, tstate);
-}
+///*
+// * Class:     JyNI_JyNI
+// * Method:    JyNI_PyNumber_Hex
+// * Signature: (JJ)Lorg/python/core/PyObject;
+// */
+//JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1PyNumber_1Hex
+//  (JNIEnv *env, jclass class, jlong o, jlong tstate)
+//{
+//	return (*JyNI_PyNumber_Hex)(o, tstate);
+//}
 
 /*
  * Class:     JyNI_JyNI

@@ -129,34 +129,35 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 	if (size > PY_SSIZE_T_MAX - PyStringObject_SIZE) {
 		PyErr_SetString(PyExc_OverflowError, "string is too large");
 		return NULL;
-	}
+	} else {
 
-	/* Inline PyObject_NewVar */
-	//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
-	//if (op == NULL) return PyErr_NoMemory();
-	JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
-	PyObject_INIT_VAR(op, &PyString_Type, size);
-	op->ob_shash = -1;
-	op->ob_sstate = SSTATE_NOT_INTERNED;
-	if (str != NULL)
-		Py_MEMCPY(op->ob_sval, str, size);
-	op->ob_sval[size] = '\0';
-	/* share short strings */
-	if (size == 0) {
-		PyObject *t = (PyObject *)op;
-		PyString_InternInPlace(&t);
-		op = (PyStringObject *)t;
-		nullstring = op;
-		JyNI_InitSingleton(nullstring, JyEmptyString);
-		Py_INCREF(op);
-	} else if (size == 1 && str != NULL) {
-		PyObject *t = (PyObject *)op;
-		PyString_InternInPlace(&t);
-		op = (PyStringObject *)t;
-		characters[*str & UCHAR_MAX] = op;
-		Py_INCREF(op);
+		/* Inline PyObject_NewVar */
+		//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
+		//if (op == NULL) return PyErr_NoMemory();
+		JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
+		PyObject_INIT_VAR(op, &PyString_Type, size);
+		op->ob_shash = -1;
+		op->ob_sstate = SSTATE_NOT_INTERNED;
+		if (str != NULL)
+			Py_MEMCPY(op->ob_sval, str, size);
+		op->ob_sval[size] = '\0';
+		/* share short strings */
+		if (size == 0) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			nullstring = op;
+			JyNI_InitSingleton(nullstring, JyEmptyString);
+			Py_INCREF(op);
+		} else if (size == 1 && str != NULL) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			characters[*str & UCHAR_MAX] = op;
+			Py_INCREF(op);
+		}
+		return (PyObject *) op;
 	}
-	return (PyObject *) op;
 }
 
 PyObject *
@@ -185,55 +186,56 @@ PyString_FromString(const char *str)
 #endif
 		Py_INCREF(op);
 		return (PyObject *)op;
+	} else {
+
+		/* Inline PyObject_NewVar */
+		//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
+		//if (op == NULL) return PyErr_NoMemory();
+	//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
+
+
+		JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
+	//	JyObject* jy = (JyObject*) PyObject_RawMalloc((offsetof(PyStringObject, ob_sval) + 1) + size + sizeof(JyObject));
+	//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);
+	//		jputsLong((jlong) jy);
+	//		jputsLong((offsetof(PyStringObject, ob_sval) + 1) + size + sizeof(JyObject));
+	//	}
+	//	if (jy == NULL) return PyErr_NoMemory();
+	//	jy->jy = NULL;
+	//	jy->attr = NULL;
+	//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);
+	//		jputs("writing to position");
+	//		jputsLong((jlong) &(jy->flags));
+	//		jputs("tp_name-position");
+	//		jputsLong((jlong) &(tmpObserved->tp_name));
+	//	}
+	//	jy->flags = (256 | 512);
+	//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
+	//	op = (PyStringObject *) ((PyObject *)(((JyObject *)(jy))+1));
+	//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
+	//	if (Jy_memDebugFlags) JyRefMonitor_addAction(13 | 256, op, jy, (offsetof(PyStringObject, ob_sval) + 1) + size, PyString_Type.tp_name, __FUNCTION__, "/home/stefan/eclipseWorkspace/JyNI/JyNI-C/src/Objects/stringobject.c", 189);
+
+		PyObject_INIT_VAR(op, &PyString_Type, size);
+		op->ob_shash = -1;
+		op->ob_sstate = SSTATE_NOT_INTERNED;
+		Py_MEMCPY(op->ob_sval, str, size+1);
+		/* share short strings */
+		if (size == 0) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			nullstring = op;
+			JyNI_InitSingleton(nullstring, JyEmptyString);
+			Py_INCREF(op);
+		} else if (size == 1) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			characters[*str & UCHAR_MAX] = op;
+			Py_INCREF(op);
+		}
+		return (PyObject *) op;
 	}
-
-	/* Inline PyObject_NewVar */
-	//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
-	//if (op == NULL) return PyErr_NoMemory();
-//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
-
-
-	JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
-//	JyObject* jy = (JyObject*) PyObject_RawMalloc((offsetof(PyStringObject, ob_sval) + 1) + size + sizeof(JyObject));
-//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);
-//		jputsLong((jlong) jy);
-//		jputsLong((offsetof(PyStringObject, ob_sval) + 1) + size + sizeof(JyObject));
-//	}
-//	if (jy == NULL) return PyErr_NoMemory();
-//	jy->jy = NULL;
-//	jy->attr = NULL;
-//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);
-//		jputs("writing to position");
-//		jputsLong((jlong) &(jy->flags));
-//		jputs("tp_name-position");
-//		jputsLong((jlong) &(tmpObserved->tp_name));
-//	}
-//	jy->flags = (256 | 512);
-//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
-//	op = (PyStringObject *) ((PyObject *)(((JyObject *)(jy))+1));
-//	if (tmpObserved) {jputsLong(__LINE__); jputs(tmpObserved->tp_name);}
-//	if (Jy_memDebugFlags) JyRefMonitor_addAction(13 | 256, op, jy, (offsetof(PyStringObject, ob_sval) + 1) + size, PyString_Type.tp_name, __FUNCTION__, "/home/stefan/eclipseWorkspace/JyNI/JyNI-C/src/Objects/stringobject.c", 189);
-
-	PyObject_INIT_VAR(op, &PyString_Type, size);
-	op->ob_shash = -1;
-	op->ob_sstate = SSTATE_NOT_INTERNED;
-	Py_MEMCPY(op->ob_sval, str, size+1);
-	/* share short strings */
-	if (size == 0) {
-		PyObject *t = (PyObject *)op;
-		PyString_InternInPlace(&t);
-		op = (PyStringObject *)t;
-		nullstring = op;
-		JyNI_InitSingleton(nullstring, JyEmptyString);
-		Py_INCREF(op);
-	} else if (size == 1) {
-		PyObject *t = (PyObject *)op;
-		PyString_InternInPlace(&t);
-		op = (PyStringObject *)t;
-		characters[*str & UCHAR_MAX] = op;
-		Py_INCREF(op);
-	}
-	return (PyObject *) op;
 }
 
 PyObject *
@@ -504,31 +506,33 @@ PyObject *PyString_AsDecodedObject(PyObject *str,
 								   const char *encoding,
 								   const char *errors)
 {
-	PyObject *v;
-
-	if (!PyString_Check(str)) {
-		PyErr_BadArgument();
-		goto onError;
-	}
-
-	if (encoding == NULL) {
-#ifdef Py_USING_UNICODE
-		encoding = PyUnicode_GetDefaultEncoding();
-#else
-		PyErr_SetString(PyExc_ValueError, "no encoding specified");
-		goto onError;
-#endif
-	}
-
-	/* Decode via the codec registry */
-	v = _PyCodec_DecodeText(str, encoding, errors);
-	if (v == NULL)
-		goto onError;
-
-	return v;
-
- onError:
-	return NULL;
+	jputs("JyNI warning: PyString_AsDecodedObject not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject *v;
+//
+//	if (!PyString_Check(str)) {
+//		PyErr_BadArgument();
+//		goto onError;
+//	}
+//
+//	if (encoding == NULL) {
+//#ifdef Py_USING_UNICODE
+//		encoding = PyUnicode_GetDefaultEncoding();
+//#else
+//		PyErr_SetString(PyExc_ValueError, "no encoding specified");
+//		goto onError;
+//#endif
+//	}
+//
+//	/* Decode via the codec registry */
+//	v = _PyCodec_DecodeText(str, encoding, errors);
+//	if (v == NULL)
+//		goto onError;
+//
+//	return v;
+//
+// onError:
+//	return NULL;
 }
 
 PyObject *PyString_AsDecodedString(PyObject *str,
@@ -584,31 +588,33 @@ PyObject *PyString_AsEncodedObject(PyObject *str,
 								   const char *encoding,
 								   const char *errors)
 {
-	PyObject *v;
-
-	if (!PyString_Check(str)) {
-		PyErr_BadArgument();
-		goto onError;
-	}
-
-	if (encoding == NULL) {
-#ifdef Py_USING_UNICODE
-		encoding = PyUnicode_GetDefaultEncoding();
-#else
-		PyErr_SetString(PyExc_ValueError, "no encoding specified");
-		goto onError;
-#endif
-	}
-
-	/* Encode via the codec registry */
-	v = _PyCodec_EncodeText(str, encoding, errors);
-	if (v == NULL)
-		goto onError;
-
-	return v;
-
- onError:
-	return NULL;
+	jputs("JyNI warning: PyString_AsEncodedObject not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject *v;
+//
+//	if (!PyString_Check(str)) {
+//		PyErr_BadArgument();
+//		goto onError;
+//	}
+//
+//	if (encoding == NULL) {
+//#ifdef Py_USING_UNICODE
+//		encoding = PyUnicode_GetDefaultEncoding();
+//#else
+//		PyErr_SetString(PyExc_ValueError, "no encoding specified");
+//		goto onError;
+//#endif
+//	}
+//
+//	/* Encode via the codec registry */
+//	v = _PyCodec_EncodeText(str, encoding, errors);
+//	if (v == NULL)
+//		goto onError;
+//
+//	return v;
+//
+// onError:
+//	return NULL;
 }
 
 PyObject *PyString_AsEncodedString(PyObject *str,
@@ -912,9 +918,9 @@ PyString_AsStringAndSize(register PyObject *obj,
 #include "stringlib/stringdefs.h"
 #include "stringlib/fastsearch.h"
 
-//#include "stringlib/count.h"
+#include "stringlib/count.h"
 #include "stringlib/find.h"
-//#include "stringlib/partition.h"
+#include "stringlib/partition.h"
 #include "stringlib/split.h"
 
 #define _Py_InsertThousandsGrouping _PyString_InsertThousandsGrouping
@@ -1130,17 +1136,18 @@ string_concat(register PyStringObject *a, register PyObject *bb)
 		PyErr_SetString(PyExc_OverflowError,
 						"strings are too large to concat");
 		return NULL;
+	} else {
+		//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
+		//if (op == NULL) return PyErr_NoMemory();
+		JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
+		PyObject_INIT_VAR(op, &PyString_Type, size);
+		op->ob_shash = -1;
+		op->ob_sstate = SSTATE_NOT_INTERNED;
+		Py_MEMCPY(op->ob_sval, a->ob_sval, Py_SIZE(a));
+		Py_MEMCPY(op->ob_sval + Py_SIZE(a), b->ob_sval, Py_SIZE(b));
+		op->ob_sval[size] = '\0';
+		return (PyObject *) op;
 	}
-	//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
-	//if (op == NULL) return PyErr_NoMemory();
-	JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
-	PyObject_INIT_VAR(op, &PyString_Type, size);
-	op->ob_shash = -1;
-	op->ob_sstate = SSTATE_NOT_INTERNED;
-	Py_MEMCPY(op->ob_sval, a->ob_sval, Py_SIZE(a));
-	Py_MEMCPY(op->ob_sval + Py_SIZE(a), b->ob_sval, Py_SIZE(b));
-	op->ob_sval[size] = '\0';
-	return (PyObject *) op;
 #undef b
 }
 
@@ -1172,29 +1179,30 @@ string_repeat(register PyStringObject *a, register Py_ssize_t n)
 		PyErr_SetString(PyExc_OverflowError,
 			"repeated string is too long");
 		return NULL;
-	}
-	//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + nbytes);
-	//if (op == NULL) return PyErr_NoMemory();
-	JyNI_PyString_ALLOC(PyStringObject_SIZE + nbytes, op);
-	PyObject_INIT_VAR(op, &PyString_Type, size);
-	op->ob_shash = -1;
-	op->ob_sstate = SSTATE_NOT_INTERNED;
-	op->ob_sval[size] = '\0';
-	if (Py_SIZE(a) == 1 && n > 0) {
-		memset(op->ob_sval, a->ob_sval[0] , n);
+	} else {
+		//op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + nbytes);
+		//if (op == NULL) return PyErr_NoMemory();
+		JyNI_PyString_ALLOC(PyStringObject_SIZE + nbytes, op);
+		PyObject_INIT_VAR(op, &PyString_Type, size);
+		op->ob_shash = -1;
+		op->ob_sstate = SSTATE_NOT_INTERNED;
+		op->ob_sval[size] = '\0';
+		if (Py_SIZE(a) == 1 && n > 0) {
+			memset(op->ob_sval, a->ob_sval[0] , n);
+			return (PyObject *) op;
+		}
+		i = 0;
+		if (i < size) {
+			Py_MEMCPY(op->ob_sval, a->ob_sval, Py_SIZE(a));
+			i = Py_SIZE(a);
+		}
+		while (i < size) {
+			j = (i <= size-i)  ?  i  :  size-i;
+			Py_MEMCPY(op->ob_sval+i, op->ob_sval, j);
+			i += j;
+		}
 		return (PyObject *) op;
 	}
-	i = 0;
-	if (i < size) {
-		Py_MEMCPY(op->ob_sval, a->ob_sval, Py_SIZE(a));
-		i = Py_SIZE(a);
-	}
-	while (i < size) {
-		j = (i <= size-i)  ?  i  :  size-i;
-		Py_MEMCPY(op->ob_sval+i, op->ob_sval, j);
-		i += j;
-	}
-	return (PyObject *) op;
 }
 
 /* String slice a[i:j] consists of characters a[i] ... a[j-1] */
@@ -3976,35 +3984,36 @@ _PyString_Resize(PyObject **pv, Py_ssize_t newsize)
 		Py_DECREF(v);
 		PyErr_BadInternalCall();
 		return -1;
-	}
-	/* XXX UNREF/NEWREF interface should be more symmetrical */
-	_Py_DEC_REFTOTAL;
-	_Py_ForgetReference(v);
-	
-	//JyNI: We assume that no further use of the JyObject-fields has occurred, if
-	//crazy stuff like this method is performed.
-	//*pv = (PyObject *) PyObject_REALLOC((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
-	JyObject* jy;
-	if (IsJyNIDebug(JY_NATIVE_REALLOC | JY_INLINE_MASK))
-	{
-		JyObject* oldRef = AS_JY_NO_GC(v);
-		jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
-		JyNIDebug2(JY_NATIVE_REALLOC | JY_INLINE_MASK, oldRef, jy, PyStringObject_SIZE + newsize, PyString_Type.tp_name);
-	} else
-		jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
-	if (jy == NULL) {
-		PyObject_RawFree(jy);
-		PyErr_NoMemory();
-		return -1;
-	}
-	*pv = FROM_JY_NO_GC(jy);
+	} else {
+		JyObject* jy;
+		/* XXX UNREF/NEWREF interface should be more symmetrical */
+		_Py_DEC_REFTOTAL;
+		_Py_ForgetReference(v);
 
-	_Py_NewReference(*pv);
-	sv = (PyStringObject *) *pv;
-	Py_SIZE(sv) = newsize;
-	sv->ob_sval[newsize] = '\0';
-	sv->ob_shash = -1;          /* invalidate cached hash value */
-	return 0;
+		//JyNI: We assume that no further use of the JyObject-fields has occurred, if
+		//crazy stuff like this method is performed.
+		//*pv = (PyObject *) PyObject_REALLOC((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
+		if (IsJyNIDebug(JY_NATIVE_REALLOC | JY_INLINE_MASK))
+		{
+			JyObject* oldRef = AS_JY_NO_GC(v);
+			jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
+			JyNIDebug2(JY_NATIVE_REALLOC | JY_INLINE_MASK, oldRef, jy, PyStringObject_SIZE + newsize, PyString_Type.tp_name);
+		} else
+			jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
+		if (jy == NULL) {
+			PyObject_RawFree(jy);
+			PyErr_NoMemory();
+			return -1;
+		}
+		*pv = FROM_JY_NO_GC(jy);
+	
+		_Py_NewReference(*pv);
+		sv = (PyStringObject *) *pv;
+		Py_SIZE(sv) = newsize;
+		sv->ob_sval[newsize] = '\0';
+		sv->ob_shash = -1;          /* invalidate cached hash value */
+		return 0;
+	}
 }
 
 /* Helpers for formatstring */
@@ -4833,8 +4842,9 @@ PyString_InternInPlace(PyObject **p)
 			PyErr_Clear(); /* Don't leave an exception */
 			return;
 		} else {
+			jfieldID jyInterned;
 			env();
-			jfieldID jyInterned = (*env)->GetStaticFieldID(env, JyNIClass, "nativeInternedStrings", "Lorg/python/core/PyObject;");
+			jyInterned = (*env)->GetStaticFieldID(env, JyNIClass, "nativeInternedStrings", "Lorg/python/core/PyObject;");
 			(*env)->SetStaticObjectField(env, JyNIClass, jyInterned, JyNI_JythonPyObject_FromPyObject(interned));
 		}
 	}

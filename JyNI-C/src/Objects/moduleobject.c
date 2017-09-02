@@ -90,12 +90,14 @@ PyModule_GetDict(PyObject *m)
 	if (!PyModule_Check(m)) {
 		PyErr_BadInternalCall();
 		return NULL;
+	} else {
+		PyObject* er;
+		env(NULL);
+		//jobject jm = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict);
+		er = JyNI_PyObject_FromJythonPyObject(
+				(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModule_getDict));
+		return er;
 	}
-	env(NULL);
-	//jobject jm = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict);
-	PyObject* er = JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModule_getDict));
-	return er;
     /*PyObject *d;
     if (!PyModule_Check(m)) {
         PyErr_BadInternalCall();
@@ -118,21 +120,32 @@ PyModule_GetName(PyObject *m)
 	if (!PyModule_Check(m)) {
 		PyErr_BadArgument();
 		return NULL;
-	}
-	//stringIntern
-	env(NULL);
-	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject___getattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__name__"), string_intern));
-	if (pyStr == NULL)
-	{
-		PyErr_SetString(PyExc_SystemError, "nameless module");
-		return NULL;
-	}
-	jstring er = (*env)->CallObjectMethod(env, pyStr, pyObject_asString);
-	global_cstr_from_jstring(cstr, er);
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	} else {
+		char* cstr = JyNI_GetJyAttribute(AS_JY_NO_GC(m), JyAttributeModuleName);
+		if (cstr)
+			return cstr;
+		else {
+			//stringIntern
+			env(NULL);
+			{
+				jobject jtmp = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject___getattr__,
+						(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__name__"), string_intern));
+				if ((*env)->IsSameObject(env, jtmp, NULL))
+				{
+					PyErr_SetString(PyExc_SystemError, "nameless module");
+					return NULL;
+				} else {
+					//cstr_decl_global(cstr);
+					const char* utf_string;
+					jtmp = (*env)->CallObjectMethod(env, jtmp, pyObject_asString);
+					global_cstr_from_jstring(cstr, jtmp);
+					JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
-	return cstr;
+					return cstr;
+				}
+			}
+		}
+	}
 
 	/*
     PyObject *d;
@@ -162,25 +175,36 @@ PyModule_GetFilename(PyObject *m)
 	if (!PyModule_Check(m)) {
 		PyErr_BadArgument();
 		return NULL;
-	}
-	//stringIntern
-	env(NULL);
-	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject___getattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), string_intern));
-	if (pyStr == NULL)
-	{
-		puts("module filename missing");
-		//printf("PyExc_SystemError isException? %i\n", PyExceptionClass_Check2(PyExc_SystemError));
-		//printf("PyExc_SystemError isType? %i\n", PyType_Check(PyExc_SystemError));
-		//todo: fix this later
-		//PyErr_SetString(PyExc_SystemError, "module filename missing");
-		return NULL;
-	}
-	jstring er = (*env)->CallObjectMethod(env, pyStr, pyObject_asString);
-	global_cstr_from_jstring(cstr, er);
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+	} else {
+		char* cstr = JyNI_GetJyAttribute(AS_JY_NO_GC(m), JyAttributeModuleFile);
+		if (cstr)
+			return cstr;
+		else {
+			//stringIntern
+			env(NULL);
+			{
+				jobject jtmp = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject___getattr__,
+						(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), string_intern));
+				if ((*env)->IsSameObject(env, jtmp, NULL))
+				{
+					puts("module filename missing");
+					//printf("PyExc_SystemError isException? %i\n", PyExceptionClass_Check2(PyExc_SystemError));
+					//printf("PyExc_SystemError isType? %i\n", PyType_Check(PyExc_SystemError));
+					//todo: fix this later
+					//PyErr_SetString(PyExc_SystemError, "module filename missing");
+					return NULL;
+				} else {
+					//cstr_decl_global(cstr);
+					const char* utf_string;
+					jtmp = (*env)->CallObjectMethod(env, jtmp, pyObject_asString);
+					global_cstr_from_jstring(cstr, jtmp);
+					JyNI_AddOrSetJyAttributeWithFlags(AS_JY_NO_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
-	return cstr;
+					return cstr;
+				}
+			}
+		}
+	}
 
 	/*
     PyObject *d;

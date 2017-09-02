@@ -133,8 +133,9 @@ int PyCodec_Register(PyObject *search_function)
 
 PyObject *_PyCodec_Lookup(const char *encoding)
 {
+	jstring s;
 	env(NULL);
-	jstring s = (*env)->NewStringUTF(env, encoding);
+	s = (*env)->NewStringUTF(env, encoding);
 	return JyNI_PyObject_FromJythonPyObject(
 			(*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_lookup, s));
 //    PyInterpreterState *interp;
@@ -359,9 +360,11 @@ PyObject *PyCodec_Encode(PyObject *object,
                          const char *encoding,
                          const char *errors)
 {
+	jstring enc;
+	jstring err;
 	env(NULL);
-	jstring enc = (*env)->NewStringUTF(env, encoding);
-	jstring err = (*env)->NewStringUTF(env, errors);
+	enc = (*env)->NewStringUTF(env, encoding);
+	err = (*env)->NewStringUTF(env, errors);
 	return JyNI_PyObject_FromJythonPyObject( //todo: Type check of object - must be PyString or PyUnicode or a subtype of any of these
 			(*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_encode,
 					JyNI_JythonPyObject_FromPyObject(object), enc, err));
@@ -412,9 +415,11 @@ PyObject *PyCodec_Decode(PyObject *object,
                          const char *encoding,
                          const char *errors)
 {
+	jstring enc;
+	jstring err;
 	env(NULL);
-	jstring enc = (*env)->NewStringUTF(env, encoding);
-	jstring err = (*env)->NewStringUTF(env, errors);
+	enc = (*env)->NewStringUTF(env, encoding);
+	err = (*env)->NewStringUTF(env, errors);
 	return JyNI_PyObject_FromJythonPyObject( //todo: Type check of object - must be PyString or PyUnicode or a subtype of any of these
 			(*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_decode,
 					JyNI_JythonPyObject_FromPyObject(object), enc, err));
@@ -489,16 +494,19 @@ int PyCodec_RegisterError(const char *name, PyObject *error)
 PyObject *PyCodec_LookupError(const char *name)
 {
 	env(NULL);
-	jobject er = (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_lookup_error,
-		(*env)->NewStringUTF(env, name));
-	jstring tpName = (*env)->CallObjectMethod(env,
-				(*env)->CallObjectMethod(env, er, pyObject_getType),
-				pyType_getName);
-	//puts("tp name obtained:");
-	jputsLong(__LINE__);
-	cstr_from_jstring(cName, tpName);
-	jputs(cName);
-	return JyNI_PyObject_FromJythonPyObject(er);
+	{
+		cstr_decl(cName);
+		jobject er = (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecs_lookup_error,
+			(*env)->NewStringUTF(env, name));
+		jstring tpName = (*env)->CallObjectMethod(env,
+					(*env)->CallObjectMethod(env, er, pyObject_getType),
+					pyType_getName);
+		//puts("tp name obtained:");
+		jputsLong(__LINE__);
+		cstr_from_jstring(cName, tpName);
+		jputs(cName);
+		return JyNI_PyObject_FromJythonPyObject(er);
+	}
 //    PyObject *handler = NULL;
 //
 //    PyInterpreterState *interp = PyThreadState_GET()->interp;

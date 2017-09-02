@@ -1,0 +1,76 @@
+#  Copyright of JyNI:
+#  Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
+#  All rights reserved.
+#
+#
+#  Copyright of Python and Jython:
+#  Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+#  2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
+#  Python Software Foundation.
+#  All rights reserved.
+#
+#
+#  This file is part of JyNI.
+#
+#  JyNI is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation, either version 3 of
+#  the License, or (at your option) any later version.
+#
+#  JyNI is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+#
+# makefile for JyNI-DemoExtension on Windows
+# The recommended way for building DemoExtension is via setup.py.
+# Building via this makefile is just kind of a technological study.
+#
+# Author: Stefan Richthofer
+#
+
+# PYTHON_HOME and VC_Python might need adjustment by the user:
+PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
+
+# (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+# We set VC_Python to the default install location for a user-install.
+# This might need adjustment in some cases.
+SHELL = cmd
+$(eval USER = $(shell echo %username%))
+VC_Python = "C:\Users\$(USER)\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0"
+
+CC = $(VC_Python)\VC\bin\x86_amd64\cl
+LK = $(VC_Python)\VC\bin\x86_amd64\link
+
+OUTPUTDIR = build
+
+INCLUDES = /I $(PYTHON_HOME)/include /I $(VC_Python)/VC/Include /I $(VC_Python)/WinSDK/Include
+
+LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib
+CFLAGS = $(INCLUDES)
+
+SOURCES = DemoExtensionmodule.c
+OBJECTS = $(SOURCES:.c=.obj)
+all: $(OUTPUTDIR) demoExt
+	@echo.
+	@echo Build successful.
+
+$(OUTPUTDIR):
+	mkdir $(OUTPUTDIR)
+
+%.obj: %.c
+	$(CC) /c $(CFLAGS) $<
+
+demoExt: $(OBJECTS)
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/DemoExtension.pyd $(OBJECTS) $(LIBS64)
+
+clean:
+	del *.obj
+
+.PHONY: demoExt clean all
+

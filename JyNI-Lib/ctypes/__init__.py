@@ -39,10 +39,12 @@ import os as _os, sys as _sys
 
 # JyNI-adjustment:
 # Usually Jython does not have lib-dynload on its path, so ensure it here
-lib_dynload = '/usr/lib/python2.7/lib-dynload'
-#lib_dynload = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
-if not lib_dynload in _sys.path:
-    _sys.path.append(lib_dynload)
+import config_path
+config_path.auto_config()
+# lib_dynload = '/usr/lib/python2.7/lib-dynload'
+# #lib_dynload = '/data/workspace/linux/Python-2.7.11/build/lib.linux-x86_64-2.7'
+# if not lib_dynload in _sys.path:
+#     _sys.path.append(lib_dynload)
 
 
 __version__ = "1.1.0"
@@ -496,19 +498,17 @@ class LibraryLoader(object):
 cdll = LibraryLoader(CDLL)
 pydll = LibraryLoader(PyDLL)
 
-# Todo: Adjust libnames for JyNI when we extend support to these platforms:
-# if _os.name in ("nt", "ce"):
-#     pythonapi = PyDLL("python dll", None, _sys.dllhandle)
+if _os.name in ("nt", "ce"):
+    pythonapi = PyDLL("python dll", None, _sys.dllhandle)
 # elif _sys.platform == "cygwin":
 #     pythonapi = PyDLL("libpython%d.%d.dll" % _sys.version_info[:2])
-# else:
-
-# JyNI-Note:
-# From dlopen man-page:
-# If filename is NULL, then the returned handle is for the main program.
-# Given that in JyNI-case the main-program is the Java-loader (or LiJy)
-# this might need an adjustment, i.e. explicitly libJyNI.so as filename.
-pythonapi = PyDLL(None)
+else:
+    # JyNI-Note:
+    # From dlopen man-page:
+    # If filename is NULL, then the returned handle is for the main program.
+    # Given that in JyNI-case the main-program is the Java-loader (or LiJy)
+    # this might need an adjustment, i.e. explicitly libJyNI.so as filename.
+    pythonapi = PyDLL(None)
 
 
 if _os.name in ("nt", "ce"):

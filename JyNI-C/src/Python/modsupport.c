@@ -63,13 +63,12 @@ PyObject *
 Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 			   PyObject *passthrough, int module_api_version)
 {
-//	jputs("Py_InitModule4 called with name:");
-//	jputs(name);
-
 	//PyObject *m, *d, *v, *n;
 	jobject m, d;
 	PyObject *v, *n;
 	PyMethodDef *ml;
+//	jputs("Py_InitModule4 called with name:");
+//	jputs(name);
 	//PyInterpreterState *interp = PyThreadState_Get()->interp;
 	//if (interp->modules == NULL)
 	//	Py_FatalError("Python import machinery not initialized");
@@ -102,88 +101,92 @@ Py_InitModule4(const char *name, PyMethodDef *methods, const char *doc,
 	//puts("ready to add module...");
 	//return NULL;
 	//if ((m = PyImport_AddModule(name)) == NULL)
-	env(NULL);
-	m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_AddModule,
-				(*env)->NewStringUTF(env, name));
-	if (m == NULL)
-	{
-		jputs("PyImport_AddModule returned NULL on name:");
-		jputs(name);
-		return NULL;
-	}
-
-	//d = PyModule_GetDict(m);
-	d = (*env)->CallObjectMethod(env, m, pyModule_getDict);
-
-	if (methods != NULL) {
-		n = PyString_FromString(name);
-
-		if (n == NULL)
+	{ // env-area
+		PyObject* er;
+		env(NULL);
+		m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_PyImport_AddModule,
+					(*env)->NewStringUTF(env, name));
+		if (m == NULL)
+		{
+			jputs("PyImport_AddModule returned NULL on name:");
+			jputs(name);
 			return NULL;
-		for (ml = methods; ml->ml_name != NULL; ml++) {
-//			jputs("adding method...");
-//			jputs(ml->ml_name);
-			if ((ml->ml_flags & METH_CLASS) ||
-				(ml->ml_flags & METH_STATIC)) {
-				PyErr_SetString(PyExc_ValueError,
-					"module functions cannot set"
-					"METH_CLASS or METH_STATIC");
-				Py_DECREF(n);
-				return NULL;
-			}
-			v = PyCFunction_NewEx(ml, passthrough, n);
-//			jputsLong(v);
-			if (v == NULL) {
-				Py_DECREF(n);
-				return NULL;
-			}
-//			jputsPy(v);
-			jobject jv = JyNI_JythonPyObject_FromPyObject(v);
-//			if ((*env)->IsSameObject(env, jv, NULL)) jputs("jv is null");
-//			JyNI_jprintHash(jv);
-//			JyNI_jprintJ(jv);
-//			JyNI_jprintJ(jv);
-			/*if (PyDict_SetItemString(d, ml->ml_name, v) != 0) {
-				Py_DECREF(v);
-				Py_DECREF(n);
-				return NULL;
-			}*/
-			ENTER_SubtypeLoop_Safe_Mode(d, __setitem__)
-			(*env)->CallVoidMethod(env, d, JMID(__setitem__),
-					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, (*env)->NewStringUTF(env, ml->ml_name)),
-					jv);
-			LEAVE_SubtypeLoop_Safe_Mode(d, __setitem__)
-			Py_DECREF(v);
 		}
-		Py_DECREF(n);
+
+		//d = PyModule_GetDict(m);
+		d = (*env)->CallObjectMethod(env, m, pyModule_getDict);
+
+		if (methods != NULL) {
+			jobject jv;
+			n = PyString_FromString(name);
+
+			if (n == NULL)
+				return NULL;
+			for (ml = methods; ml->ml_name != NULL; ml++) {
+	//			jputs("adding method...");
+	//			jputs(ml->ml_name);
+				if ((ml->ml_flags & METH_CLASS) ||
+					(ml->ml_flags & METH_STATIC)) {
+					PyErr_SetString(PyExc_ValueError,
+						"module functions cannot set"
+						"METH_CLASS or METH_STATIC");
+					Py_DECREF(n);
+					return NULL;
+				}
+				v = PyCFunction_NewEx(ml, passthrough, n);
+	//			jputsLong(v);
+				if (v == NULL) {
+					Py_DECREF(n);
+					return NULL;
+				}
+	//			jputsPy(v);
+				jv = JyNI_JythonPyObject_FromPyObject(v);
+	//			if ((*env)->IsSameObject(env, jv, NULL)) jputs("jv is null");
+	//			JyNI_jprintHash(jv);
+	//			JyNI_jprintJ(jv);
+	//			JyNI_jprintJ(jv);
+				/*if (PyDict_SetItemString(d, ml->ml_name, v) != 0) {
+					Py_DECREF(v);
+					Py_DECREF(n);
+					return NULL;
+				}*/
+				ENTER_SubtypeLoop_Safe_Mode(d, __setitem__)
+				(*env)->CallVoidMethod(env, d, JMID(__setitem__),
+						(*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newString, (*env)->NewStringUTF(env, ml->ml_name)),
+						jv);
+				LEAVE_SubtypeLoop_Safe_Mode(d, __setitem__)
+				Py_DECREF(v);
+			}
+			Py_DECREF(n);
+		}
+	//	if (pyd) {
+	//		Exit_SubtypeLoop_Safe_ModeJy(pyd);
+	//		Py_DECREF(pyd);
+	//	}
+		//puts("add doc...");
+		if (doc != NULL) {
+	//		v = PyString_FromString(doc);
+	//		if (v == NULL) || PyDict_SetItemString(d, "__doc__", v) != 0)
+	//		{
+	//			Py_XDECREF(v);
+	//			return NULL;
+	//		}
+			/*(*env)->CallVoidMethod(env, d, pyDict__setitem__,
+					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__doc__"), stringIntern)),
+					(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, doc)));*/
+			PyModule_AddStringConstantJy(m, "__doc__", doc);
+			//Py_DECREF(v);
+		}
+		er = JyNI_PyObject_FromJythonPyObject(m);
+	//	jputs("initModule4 done");
+	//	jputsLong((jlong) er);
+	//	jputsPy(Py_TYPE(er));
+		//JyObject* jy = AS_JY(er);
+	//	jputsLong((jlong) jy);
+		//jputsLong(jy->flags);
+		//jputsLong(er);
+		return er;
 	}
-//	if (pyd) {
-//		Exit_SubtypeLoop_Safe_ModeJy(pyd);
-//		Py_DECREF(pyd);
-//	}
-	//puts("add doc...");
-	if (doc != NULL) {
-//		v = PyString_FromString(doc);
-//		if (v == NULL) || PyDict_SetItemString(d, "__doc__", v) != 0)
-//		{
-//			Py_XDECREF(v);
-//			return NULL;
-//		}
-		/*(*env)->CallVoidMethod(env, d, pyDict__setitem__,
-				(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__doc__"), stringIntern)),
-				(*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewString, (*env)->NewStringUTF(env, doc)));*/
-		PyModule_AddStringConstantJy(m, "__doc__", doc);
-		//Py_DECREF(v);
-	}
-	PyObject* er = JyNI_PyObject_FromJythonPyObject(m);
-//	jputs("initModule4 done");
-//	jputsLong((jlong) er);
-//	jputsPy(Py_TYPE(er));
-	//JyObject* jy = AS_JY(er);
-//	jputsLong((jlong) jy);
-	//jputsLong(jy->flags);
-	//jputsLong(er);
-	return er;
 }
 
 
@@ -726,8 +729,9 @@ inline int PyModule_AddObjectJy(jobject m, const char *name, jobject o)
 //	}
 
 	//dict = PyModule_GetDict(m);
+	jobject dict;
 	env(-1);
-	jobject dict = (*env)->CallObjectMethod(env, m, pyModule_getDict);
+	dict = (*env)->CallObjectMethod(env, m, pyModule_getDict);
 	//puts("dict obtained");
 	if (dict == NULL) {
 		//puts("dict NULL");

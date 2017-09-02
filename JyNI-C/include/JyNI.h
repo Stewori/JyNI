@@ -42,6 +42,7 @@
 //PyExc_UnicodeDecodeError
 #include <jni.h>
 #include <Python_JyNI.h>
+#include <Compat_C89_MSVC.h>
 //#include <JyNI_JyNI.h>
 #include <JyList.h>
 #include <JyTState.h>
@@ -89,48 +90,74 @@
  * Use with care!
  */
 #define RE_ENTER_JyNI \
-	int reenter = _PyThreadState_Current == (PyThreadState*) tstate; \
-	if (!reenter) { ENTER_JyNI }
+	{ \
+		int reenter = _PyThreadState_Current == (PyThreadState*) tstate; \
+		if (!reenter) { ENTER_JyNI }
 
 #define RE_LEAVE_JyNI \
-	if (!reenter) { LEAVE_JyNI } \
-	else {JyNI_GC_Explore();} //maybe also JyErr_InsertCurExc()...?
+		if (!reenter) { LEAVE_JyNI } \
+		else {JyNI_GC_Explore();} /*maybe also JyErr_InsertCurExc()...?*/ \
+	}
+
+#define cstr_decl(cstrName) \
+	const char* utf_string; \
+	VLA_DECL(char, cstrName)
+
+#define cstr_decl2(cstrName) \
+	VLA_DECL(char, cstrName)
+
+#define cstr_decl_global(cstrName) \
+	const char* utf_string; \
+	char* cstrName
+
+#define cstr_decl_global2(cstrName) \
+	char* cstrName
 
 /* Cleanly convert a jstring to a cstring with minimal JVM lock-time.
  * Use only once per Function. For further conversions use
  * cstr_from_jstring2. Note that at least one call of "env()" must
  * have happened before in the same block or in some parent block.
  * ("+1" in 3rd line is for 0-termination)
+ *
+ * Requires cstr_decl(cstrName) or cstr_decl2(cstrName).
  */
 #define cstr_from_jstring(cstrName, jstr) \
-	const char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
-	char cstrName[strlen(utf_string)+1]; \
+	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+	VLA(char, cstrName, strlen(utf_string)+1); \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
+/*
+ * Requires cstr_decl_global(cstrName) or cstr_decl_global2(cstrName)
+ */
 #define global_cstr_from_jstring(cstrName, jstr) \
-	const char* utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
-	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
+	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+	cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
 	strcpy(cstrName, utf_string); \
 	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
 /* Only use after one initial use of cstr_from_jstring in the same block.
  * ("+1" in 3rd line is for 0-termination)
+ *
+ * Requires VLA_DECL(char, cstrName).
  */
-#define cstr_from_jstring2(cstrName, jstr) \
-	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
-	char cstrName[strlen(utf_string)+1]; \
-	strcpy(cstrName, utf_string); \
-	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
+//#define cstr_from_jstring2(cstrName, jstr) \
+//	{
+//	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+//	VLA(char, cstrName, strlen(utf_string)+1); \
+//	strcpy(cstrName, utf_string); \
+//	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
 
-#define global_cstr_from_jstring2(cstrName, jstr) \
-	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
-	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
-	strcpy(cstrName, utf_string); \
-	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
+//#define global_cstr_from_jstring2(cstrName, jstr) \
+//	utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+//	char* cstrName = malloc((strlen(utf_string)+1)*sizeof(char)); \
+//	strcpy(cstrName, utf_string); \
+//	(*env)->ReleaseStringUTFChars(env, jstr, utf_string)
+
+#define pyTuple2jArray_decl(javaDestName) \
+	jobject javaDestName = NULL
 
 #define pyTuple2jArray(pyTuple, javaElementType, javaDestName) \
-	jobject javaDestName = NULL; \
 	if (PyTuple_GET_SIZE(pyTuple)) \
 	{ \
 		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), javaElementType, NULL); \
@@ -139,8 +166,10 @@
 				JyNI_JythonPyObject_FromPyObject(PyTuple_GET_ITEM(pyTuple, i))); \
 	}
 
+#define pyStrTuple2jStrArray_decl(javaDestName) \
+	jobject javaDestName = NULL
+
 #define pyStrTuple2jStrArray(pyTuple, javaDestName) \
-	jobject javaDestName = NULL; \
 	if (PyTuple_GET_SIZE(pyTuple)) \
 	{ \
 		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), stringClass, NULL); \
@@ -150,8 +179,10 @@
 					((PyStringObject*) PyTuple_GET_ITEM(pyTuple, i))))); \
 	}
 
-#define pyTuple2jStrArray(pyTuple, javaDestName) \
-	jobject javaDestName = NULL; \
+#define pyTuple2jStrArray_decl(pyTuple, javaDestName) \
+	jobject javaDestName = NULL
+
+#define pyTuple2jStrArray(javaDestName) \
 	if (PyTuple_GET_SIZE(pyTuple)) \
 	{ \
 		javaDestName = (*env)->NewObjectArray(env, PyTuple_GET_SIZE(pyTuple), stringClass, NULL); \
@@ -160,23 +191,29 @@
 				(*env)->NewStringUTF(env, PyString_AS_STRING(PyObject_Str(PyTuple_GET_ITEM(pyTuple, i))))); \
 	}
 
+#define jStringArray2pyTuple_decl(resultName) \
+	PyTupleObject* resultName
+
 #define jStringArray2pyTuple(jArray, resultName) \
-	Py_ssize_t jArraySize = 0; \
-	if (jArray) jArraySize = (*env)->GetArrayLength(env, jArray); \
-	PyTupleObject* resultName = PyTuple_New(jArraySize); \
-	if (jArraySize) \
 	{ \
-		Py_ssize_t i; \
-		char* utf_string; \
-		jobject jstr; \
-		for (i = 0; i < jArraySize; ++i) \
+		Py_ssize_t jArraySize = 0; \
+		VLA_DECL(char, cstr); \
+		if (jArray) jArraySize = (*env)->GetArrayLength(env, jArray); \
+		resultName = PyTuple_New(jArraySize); \
+		if (jArraySize) \
 		{ \
-			jstr = (*env)->GetObjectArrayElement(env, jArray, i); \
-			utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
-			char cstr[strlen(utf_string)+1]; \
-			strcpy(cstr, utf_string); \
-			(*env)->ReleaseStringUTFChars(env, jstr, utf_string); \
-			PyTuple_SET_ITEM(resultName, i, PyString_FromString(cstr)); \
+			Py_ssize_t i; \
+			char* utf_string; \
+			jobject jstr; \
+			for (i = 0; i < jArraySize; ++i) \
+			{ \
+				jstr = (*env)->GetObjectArrayElement(env, jArray, i); \
+				utf_string = (*env)->GetStringUTFChars(env, jstr, NULL); \
+				VLA(char, cstr, strlen(utf_string)+1); \
+				strcpy(cstr, utf_string); \
+				(*env)->ReleaseStringUTFChars(env, jstr, utf_string); \
+				PyTuple_SET_ITEM(resultName, i, PyString_FromString(cstr)); \
+			} \
 		} \
 	}
 
@@ -397,16 +434,19 @@ extern jlong ptrCount;
 			return NULL
 
 #define ENTER_SubtypeLoop_Safe_Mode(jObject, method) \
-	jmethodID jmid ## _ ## method = pyObject ## _ ## method; \
-	if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) \
-		jmid ## _ ## method = super ## method;
+	{ \
+		jmethodID jmid ## _ ## method = pyObject ## _ ## method; \
+		if ((*env)->IsInstanceOf(env, jObject, cPeerNativeDelegateInterface)) \
+			jmid ## _ ## method = super ## method;
 
 #define ENTER_SubtypeLoop_Safe_ModePy(jObject, pyObj, method) \
 	ENTER_SubtypeLoop_Safe_Mode(jObject, method)
 
-#define LEAVE_SubtypeLoop_Safe_Mode(jObject, method)
+#define LEAVE_SubtypeLoop_Safe_Mode(jObject, method) \
+	}
 
-#define LEAVE_SubtypeLoop_Safe_ModePy(jObject, method)
+#define LEAVE_SubtypeLoop_Safe_ModePy(jObject, method) \
+	LEAVE_SubtypeLoop_Safe_Mode(jObject, method)
 
 //#define ENTER_SubtypeLoop_Safe_Mode0(jObject, method) \
 //	jputs(__FUNCTION__); \
@@ -778,8 +818,8 @@ jobject  JyNI_PyNumber_Coerce(jlong o1, jobject o2, jlong tstate);
 jobject  JyNI_PyNumber_Int(jlong o1, jlong tstate);
 jobject  JyNI_PyNumber_Long(jlong o1, jlong tstate);
 jobject  JyNI_PyNumber_Float(jlong o1, jlong tstate);
-jobject  JyNI_PyNumber_Oct(jlong o1, jlong tstate);
-jobject  JyNI_PyNumber_Hex(jlong o1, jlong tstate);
+//jobject  JyNI_PyNumber_Oct(jlong o1, jlong tstate);
+//jobject  JyNI_PyNumber_Hex(jlong o1, jlong tstate);
 jobject  JyNI_PyNumber_InPlaceAdd(jlong o1, jobject o2, jlong tstate);
 jobject  JyNI_PyNumber_InPlaceSubtract(jlong o1, jobject o2, jlong tstate);
 jobject  JyNI_PyNumber_InPlaceMultiply(jlong o1, jobject o2, jlong tstate);
@@ -1088,6 +1128,7 @@ inline jboolean JyNI_HasJyAttribute(JyObject* obj, const char* name);
 
 //extern jlong JyNIDebugMode;
 
-PyObject* PyMemoryView_FromObject(PyObject *base);
+PyAPI_FUNC(PyObject*) PyMemoryView_FromObject(PyObject *base);
+jobject _PyImport_LoadBuiltinModuleJy(char *name);
 
 #endif /* JYNI_H_ */

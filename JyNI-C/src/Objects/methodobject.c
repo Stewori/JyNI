@@ -127,7 +127,7 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 	if (PyCFunction_GET_FLAGS(func) & METH_JYTHON)
 	{ // todo: Somehow include this into switch below
 //		jputs("Jython-flag!");
-		env(NULL);
+//		env(NULL);
 		jobject builtinCallable = JyNI_JythonPyObject_FromPyObject(func);
 		return JyNI_PyObject_Call(builtinCallable, arg, kw);
 	}
@@ -331,22 +331,23 @@ meth_hash(PyCFunctionObject *a)
 	{
 		env(-1);
 		return (*env)->CallIntMethod(env, JyNI_JythonPyObject_FromPyObject(a), object_hashCode);
-	}
-	long x,y;
-	if (a->m_self == NULL)
-		x = 0;
-	else {
-		x = PyObject_Hash(a->m_self);
-		if (x == -1)
+	} else {
+		long x,y;
+		if (a->m_self == NULL)
+			x = 0;
+		else {
+			x = PyObject_Hash(a->m_self);
+			if (x == -1)
+				return -1;
+		}
+		y = _Py_HashPointer((void*)(a->m_ml->ml_meth));
+		if (y == -1)
 			return -1;
+		x ^= y;
+		if (x == -1)
+			x = -2;
+		return x;
 	}
-	y = _Py_HashPointer((void*)(a->m_ml->ml_meth));
-	if (y == -1)
-		return -1;
-	x ^= y;
-	if (x == -1)
-		x = -2;
-	return x;
 }
 
 

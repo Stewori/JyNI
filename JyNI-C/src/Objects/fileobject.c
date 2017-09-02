@@ -112,13 +112,13 @@ extern "C" {
 FILE *
 PyFile_AsFile(PyObject *f)
 {
-    env(-1);
-    if (f == NULL)
-        puts("PyFile_AsFile with NULL-pointer");
-    jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
-    jint fd = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_PyFile_fd, f2);
-    // TODO get mode from PyFile
-    return fdopen(fd, "r");
+  env(-1);
+  if (f == NULL)
+    puts("PyFile_AsFile with NULL-pointer");
+  jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
+  jint fd = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_PyFile_fd, f2);
+  // TODO get mode from PyFile
+  return fdopen(fd, "r");
 }
 
 /*
@@ -2634,14 +2634,16 @@ PyFile_WriteObject(PyObject *v, PyObject *f, int flags)
 int
 PyFile_WriteString(const char *s, PyObject *f)
 {
-	env(-1);
 	if (f == NULL)
 		puts("PyFile_WriteString with NULL-pointer");
-	jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
-	//(*env)->CallVoidMethod(env, ((JyObject*) f)->jy, pyFileWrite, (*env)->NewStringUTF(env, s));
-	(*env)->CallVoidMethod(env, f2, pyFile_write, (*env)->NewStringUTF(env, s));
-	//todo: JNI Exception handling
-	return 0;
+	else {
+		jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
+		env(-1);
+		//(*env)->CallVoidMethod(env, ((JyObject*) f)->jy, pyFileWrite, (*env)->NewStringUTF(env, s));
+		(*env)->CallVoidMethod(env, f2, pyFile_write, (*env)->NewStringUTF(env, s));
+		//todo: JNI Exception handling
+		return 0;
+	}
 
     /*if (f == NULL) {
         // Should be caused by a pre-existing error
@@ -2674,7 +2676,7 @@ PyFile_WriteString(const char *s, PyObject *f)
     else
         return -1;*/
 }
-/*
+
 // Try to get a file-descriptor from a Python object.  If the object
 // is an integer or long integer, its value is returned.  If not, the
 // object's fileno() method is called if it exists; the method must return
@@ -2684,6 +2686,11 @@ PyFile_WriteString(const char *s, PyObject *f)
 
 int PyObject_AsFileDescriptor(PyObject *o)
 {
+	jputs("JyNI warning: PyObject_AsFileDescriptor not yet implemented.");
+	return -1;
+}
+
+/*
     int fd;
     PyObject *meth;
 
@@ -2729,24 +2736,26 @@ int PyObject_AsFileDescriptor(PyObject *o)
     }
     return fd;
 }
+*/
 
-// From here on we need access to the real fgets and fread
+/* From here on we need access to the real fgets and fread */
 #undef fgets
 #undef fread
 
-//
-// Py_UniversalNewlineFgets is an fgets variation that understands
-// all of \r, \n and \r\n conventions.
-// The stream should be opened in binary mode.
-// If fobj is NULL the routine always does newline conversion, and
-// it may peek one char ahead to gobble the second char in \r\n.
-// If fobj is non-NULL it must be a PyFileObject. In this case there
-// is no readahead but in stead a flag is used to skip a following
-// \n on the next read. Also, if the file is open in binary mode
-// the whole conversion is skipped. Finally, the routine keeps track of
-// the different types of newlines seen.
-// Note that we need no error handling: fgets() treats error and eof
-// identically.
+ /*
+ Py_UniversalNewlineFgets is an fgets variation that understands
+ all of \r, \n and \r\n conventions.
+ The stream should be opened in binary mode.
+ If fobj is NULL the routine always does newline conversion, and
+ it may peek one char ahead to gobble the second char in \r\n.
+ If fobj is non-NULL it must be a PyFileObject. In this case there
+ is no readahead but in stead a flag is used to skip a following
+ \n on the next read. Also, if the file is open in binary mode
+ the whole conversion is skipped. Finally, the routine keeps track of
+ the different types of newlines seen.
+ Note that we need no error handling: fgets() treats error and eof
+ identically.
+ */
 
 char *
 Py_UniversalNewlineFgets(char *buf, int n, FILE *stream, PyObject *fobj)
@@ -2826,7 +2835,7 @@ Py_UniversalNewlineFgets(char *buf, int n, FILE *stream, PyObject *fobj)
     return buf;
 }
 
-
+/*
 // Py_UniversalNewlineFread is an fread variation that understands
 // all of \r, \n and \r\n conventions.
 // The stream should be opened in binary mode.

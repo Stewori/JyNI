@@ -430,6 +430,7 @@ void unicode_dealloc(register PyUnicodeObject *unicode)
 	JyNIDebugOp(JY_NATIVE_FINALIZE, unicode, -1);
 	if (PyUnicode_CheckExact(unicode) &&
 		numfree < PyUnicode_MAXFREELIST) {
+		JyObject* jy;
 		/* Keep-Alive optimization */
 		if (unicode->length >= KEEPALIVE_SIZE_LIMIT) {
 			//PyObject_DEL(unicode->str);
@@ -445,7 +446,7 @@ void unicode_dealloc(register PyUnicodeObject *unicode)
 		free_list = unicode;
 		numfree++;
 		JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, unicode, -1);
-		JyObject* jy = AS_JY_NO_GC(unicode);
+		jy = AS_JY_NO_GC(unicode);
 		JyNI_CleanUp_JyObject(jy);
 	}
 	else {
@@ -1286,67 +1287,71 @@ PyObject *PyUnicode_Decode(const char *s,
 						   const char *encoding,
 						   const char *errors)
 {
-	PyObject *buffer = NULL, *unicode;
-
-	if (encoding == NULL)
-		encoding = PyUnicode_GetDefaultEncoding();
-
-	/* Shortcuts for common default encodings */
-	if (strcmp(encoding, "utf-8") == 0)
-		return PyUnicode_DecodeUTF8(s, size, errors);
-	else if (strcmp(encoding, "latin-1") == 0)
-		return PyUnicode_DecodeLatin1(s, size, errors);
-#if defined(MS_WINDOWS) && defined(HAVE_USABLE_WCHAR_T)
-	else if (strcmp(encoding, "mbcs") == 0)
-		return PyUnicode_DecodeMBCS(s, size, errors);
-#endif
-	else if (strcmp(encoding, "ascii") == 0)
-		return PyUnicode_DecodeASCII(s, size, errors);
-
-	/* Decode via the codec registry */
-	buffer = PyBuffer_FromMemory((void *)s, size);
-	if (buffer == NULL)
-		goto onError;
-	unicode = _PyCodec_DecodeText(buffer, encoding, errors);
-	if (unicode == NULL)
-		goto onError;
-	if (!PyUnicode_Check(unicode)) {
-		PyErr_Format(PyExc_TypeError,
-					 "decoder did not return an unicode object (type=%.400s)",
-					 Py_TYPE(unicode)->tp_name);
-		Py_DECREF(unicode);
-		goto onError;
-	}
-	Py_DECREF(buffer);
-	return unicode;
-
-  onError:
-	Py_XDECREF(buffer);
-	return NULL;
+	jputs("JyNI warning: PyUnicode_Decode not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject *buffer = NULL, *unicode;
+//
+//	if (encoding == NULL)
+//		encoding = PyUnicode_GetDefaultEncoding();
+//
+//	/* Shortcuts for common default encodings */
+//	if (strcmp(encoding, "utf-8") == 0)
+//		return PyUnicode_DecodeUTF8(s, size, errors);
+//	else if (strcmp(encoding, "latin-1") == 0)
+//		return PyUnicode_DecodeLatin1(s, size, errors);
+//#if defined(MS_WINDOWS) && defined(HAVE_USABLE_WCHAR_T)
+//	else if (strcmp(encoding, "mbcs") == 0)
+//		return PyUnicode_DecodeMBCS(s, size, errors);
+//#endif
+//	else if (strcmp(encoding, "ascii") == 0)
+//		return PyUnicode_DecodeASCII(s, size, errors);
+//
+//	/* Decode via the codec registry */
+//	buffer = PyBuffer_FromMemory((void *)s, size);
+//	if (buffer == NULL)
+//		goto onError;
+//	unicode = _PyCodec_DecodeText(buffer, encoding, errors);
+//	if (unicode == NULL)
+//		goto onError;
+//	if (!PyUnicode_Check(unicode)) {
+//		PyErr_Format(PyExc_TypeError,
+//					 "decoder did not return an unicode object (type=%.400s)",
+//					 Py_TYPE(unicode)->tp_name);
+//		Py_DECREF(unicode);
+//		goto onError;
+//	}
+//	Py_DECREF(buffer);
+//	return unicode;
+//
+//  onError:
+//	Py_XDECREF(buffer);
+//	return NULL;
 }
 
 PyObject *PyUnicode_AsDecodedObject(PyObject *unicode,
 									const char *encoding,
 									const char *errors)
 {
-	PyObject *v;
-
-	if (!PyUnicode_Check(unicode)) {
-		PyErr_BadArgument();
-		goto onError;
-	}
-
-	if (encoding == NULL)
-		encoding = PyUnicode_GetDefaultEncoding();
-
-	/* Decode via the codec registry */
-	v = _PyCodec_DecodeText(unicode, encoding, errors);
-	if (v == NULL)
-		goto onError;
-	return v;
-
-  onError:
-	return NULL;
+	jputs("JyNI warning: PyUnicode_AsDecodedObject not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject *v;
+//
+//	if (!PyUnicode_Check(unicode)) {
+//		PyErr_BadArgument();
+//		goto onError;
+//	}
+//
+//	if (encoding == NULL)
+//		encoding = PyUnicode_GetDefaultEncoding();
+//
+//	/* Decode via the codec registry */
+//	v = _PyCodec_DecodeText(unicode, encoding, errors);
+//	if (v == NULL)
+//		goto onError;
+//	return v;
+//
+//  onError:
+//	return NULL;
 }
 
 PyObject *PyUnicode_Encode(const Py_UNICODE *s,
@@ -1368,69 +1373,73 @@ PyObject *PyUnicode_AsEncodedObject(PyObject *unicode,
 									const char *encoding,
 									const char *errors)
 {
-	PyObject *v;
-
-	if (!PyUnicode_Check(unicode)) {
-		PyErr_BadArgument();
-		goto onError;
-	}
-
-	if (encoding == NULL)
-		encoding = PyUnicode_GetDefaultEncoding();
-
-	/* Encode via the codec registry */
-	v = _PyCodec_EncodeText(unicode, encoding, errors);
-	if (v == NULL)
-		goto onError;
-	return v;
-
-  onError:
-	return NULL;
+	jputs("JyNI warning: PyUnicode_AsEncodedObject not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject *v;
+//
+//	if (!PyUnicode_Check(unicode)) {
+//		PyErr_BadArgument();
+//		goto onError;
+//	}
+//
+//	if (encoding == NULL)
+//		encoding = PyUnicode_GetDefaultEncoding();
+//
+//	/* Encode via the codec registry */
+//	v = _PyCodec_EncodeText(unicode, encoding, errors);
+//	if (v == NULL)
+//		goto onError;
+//	return v;
+//
+//  onError:
+//	return NULL;
 }
 
 PyObject *PyUnicode_AsEncodedString(PyObject *unicode,
 									const char *encoding,
 									const char *errors)
 {
-	PyObject *v;
-
-	if (!PyUnicode_Check(unicode)) {
-		PyErr_BadArgument();
-		goto onError;
-	}
-
-	if (encoding == NULL)
-		encoding = PyUnicode_GetDefaultEncoding();
-
-	/* Shortcuts for common default encodings */
-	if (errors == NULL) {
-		if (strcmp(encoding, "utf-8") == 0)
-			return PyUnicode_AsUTF8String(unicode);
-		else if (strcmp(encoding, "latin-1") == 0)
-			return PyUnicode_AsLatin1String(unicode);
-#if defined(MS_WINDOWS) && defined(HAVE_USABLE_WCHAR_T)
-		else if (strcmp(encoding, "mbcs") == 0)
-			return PyUnicode_AsMBCSString(unicode);
-#endif
-		else if (strcmp(encoding, "ascii") == 0)
-			return PyUnicode_AsASCIIString(unicode);
-	}
-
-	/* Encode via the codec registry */
-	v = _PyCodec_EncodeText(unicode, encoding, errors);
-	if (v == NULL)
-		goto onError;
-	if (!PyString_Check(v)) {
-		PyErr_Format(PyExc_TypeError,
-					 "encoder did not return a string object (type=%.400s)",
-					 Py_TYPE(v)->tp_name);
-		Py_DECREF(v);
-		goto onError;
-	}
-	return v;
-
-  onError:
-	return NULL;
+	jputs("JyNI warning: PyUnicode_AsEncodedString not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject *v;
+//
+//	if (!PyUnicode_Check(unicode)) {
+//		PyErr_BadArgument();
+//		goto onError;
+//	}
+//
+//	if (encoding == NULL)
+//		encoding = PyUnicode_GetDefaultEncoding();
+//
+//	/* Shortcuts for common default encodings */
+//	if (errors == NULL) {
+//		if (strcmp(encoding, "utf-8") == 0)
+//			return PyUnicode_AsUTF8String(unicode);
+//		else if (strcmp(encoding, "latin-1") == 0)
+//			return PyUnicode_AsLatin1String(unicode);
+//#if defined(MS_WINDOWS) && defined(HAVE_USABLE_WCHAR_T)
+//		else if (strcmp(encoding, "mbcs") == 0)
+//			return PyUnicode_AsMBCSString(unicode);
+//#endif
+//		else if (strcmp(encoding, "ascii") == 0)
+//			return PyUnicode_AsASCIIString(unicode);
+//	}
+//
+//	/* Encode via the codec registry */
+//	v = _PyCodec_EncodeText(unicode, encoding, errors);
+//	if (v == NULL)
+//		goto onError;
+//	if (!PyString_Check(v)) {
+//		PyErr_Format(PyExc_TypeError,
+//					 "encoder did not return a string object (type=%.400s)",
+//					 Py_TYPE(v)->tp_name);
+//		Py_DECREF(v);
+//		goto onError;
+//	}
+//	return v;
+//
+//  onError:
+//	return NULL;
 }
 
 PyObject *_PyUnicode_AsDefaultEncodedString(PyObject *unicode,
@@ -6354,25 +6363,27 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
 	*/
 	if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError))
 		return NULL;
-	PyErr_Clear();
-	const char *text = (op == Py_EQ) ?
-	   "Unicode equal comparison "
-	   "failed to convert both arguments to Unicode - "
-	   "interpreting them as being unequal" :
-	   "Unicode unequal comparison "
-	   "failed to convert both arguments to Unicode - "
-	   "interpreting them as being unequal";
-	env(NULL);
-	(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_raiseUnicodeWarning, (*env)->NewStringUTF(env, text));
-	if ((*env)->ExceptionCheck(env))
-	{
-		(*env)->ExceptionClear(env);
-		return NULL;
+	else {
+		const char *text = (op == Py_EQ) ?
+		   "Unicode equal comparison "
+		   "failed to convert both arguments to Unicode - "
+		   "interpreting them as being unequal" :
+		   "Unicode unequal comparison "
+		   "failed to convert both arguments to Unicode - "
+		   "interpreting them as being unequal";
+		env(NULL);
+		PyErr_Clear();
+		(*env)->CallStaticVoidMethod(env, pyPyClass, pyPy_raiseUnicodeWarning, (*env)->NewStringUTF(env, text));
+		if ((*env)->ExceptionCheck(env))
+		{
+			(*env)->ExceptionClear(env);
+			return NULL;
+		}
+		if (PyErr_Warn(PyExc_UnicodeWarning, text) < 0)
+			return NULL;
+		result = (op == Py_NE);
+		return PyBool_FromLong(result);
 	}
-	if (PyErr_Warn(PyExc_UnicodeWarning, text) < 0)
-		return NULL;
-	result = (op == Py_NE);
-	return PyBool_FromLong(result);
 }
 
 int PyUnicode_Contains(PyObject *container,

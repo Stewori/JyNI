@@ -191,8 +191,9 @@ int_dealloc(PyIntObject *v)
 static void
 int_free(PyIntObject *v)
 {
+	JyObject* jy;
 	JyNIDebugOp(JY_NATIVE_FREE, v, -1);
-	JyObject* jy = AS_JY_NO_GC(v);
+	jy = AS_JY_NO_GC(v);
 	JyNI_CleanUp_JyObject(jy);
 	Py_TYPE(v) = (struct _typeobject *)free_list;
 	free_list = v;
@@ -1603,6 +1604,7 @@ PyInt_Fini(void)
 	PyIntBlock *list;
 	int i;
 	int u;                      /* total unfreed ints per block */
+	jint Py_VerboseFlag;
 
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
 	JyIntObject **q;
@@ -1616,9 +1618,10 @@ PyInt_Fini(void)
 	}
 #endif
 	u = PyInt_ClearFreeList();
-	env();
-	jint Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
-				JyNI_getDLVerbose);
+	{
+		env();
+		Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_getDLVerbose);
+	}
 	if (!Py_VerboseFlag)
 		return;
 	fprintf(stderr, "# cleanup ints");

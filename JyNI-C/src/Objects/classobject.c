@@ -704,15 +704,15 @@ instance_new(PyTypeObject* type, PyObject* args, PyObject *kw)
 static void
 instance_dealloc(register PyInstanceObject *inst)
 {
-	JyNIDebugOp(JY_NATIVE_FINALIZE, inst, -1);
-	PyObject *error_type, *error_value, *error_traceback;
-	PyObject *del;
+	PyObject *error_type, *error_value, *error_traceback, *del;
 	static PyObject *delstr;
+	JyObject* jy;
+	env();
 
+	JyNIDebugOp(JY_NATIVE_FINALIZE, inst, -1);
 	_JyNI_GC_UNTRACK(inst);
 
-	env();
-	JyObject* jy = AS_JY_WITH_GC(inst);
+	jy = AS_JY_WITH_GC(inst);
 	if (JyObject_IS_INITIALIZED(jy) && !(*env)->IsSameObject(env, jy->jy, NULL))
 	{
 		(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_restorePyInstanceFinalizer, jy->jy);

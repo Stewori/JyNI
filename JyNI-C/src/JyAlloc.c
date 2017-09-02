@@ -172,14 +172,16 @@ inline PyObject* JyNI_ExceptionAlloc(ExceptionMapEntry* eme)
 
 
 #define INIT_GREF(src, dest) \
-	jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src); \
-	if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) { \
-		gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory); \
-	} \
-	if (gref) { \
-		Py_INCREF(dest); \
-		incWeakRefCount(jy); \
-		(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest); \
+	{ \
+		jobject gref = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_getGlobalRef, src); \
+		if (gref && (*env)->IsInstanceOf(env, gref, GlobalRefClass)) { \
+			gref = (*env)->CallObjectMethod(env, gref, GlobalRef_retryFactory); \
+		} \
+		if (gref) { \
+			Py_INCREF(dest); \
+			incWeakRefCount(jy); \
+			(*env)->CallVoidMethod(env, gref, JyNIGlobalRef_initNativeHandle, (jlong) dest); \
+		} \
 	}
 
 #define INIT_JY(_jy, tme, src, dest) \
@@ -271,13 +273,14 @@ inline PyObject* JyNI_InitPyObjectSubtype(jobject src, PyTypeObject* subtype)
 	}
 	if (dest)
 	{
+		JyObject* jy;
 		Py_TYPE(dest) = subtype;
 		if (PyType_CheckExact(dest))
 		{ // Should not be relevant for subtype case:
 			jputs("JyNI-warning: dest is PyTypeObject in JyNI_InitPyObjectSubtype.");
 			((PyTypeObject*) dest)->tp_flags |= Py_TPFLAGS_HEAPTYPE;
 		}
-		JyObject* jy = AS_JY(dest);
+		jy = AS_JY(dest);
 		jy->flags |= JY_SUBTYPE_FLAG_MASK;
 		INIT_JY(jy, tme, src, dest)
 	}
@@ -297,10 +300,12 @@ jythontype_traverse(PyTypeObject *type, visitproc visit, void *arg)
 
 inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject src)
 {
-//	jputs(__FUNCTION__);
-//	jputs(tme->py_type->tp_name);
 	PyTypeObject* dest = NULL;
 	JyObject* jy;
+	env(NULL);
+
+//	jputs(__FUNCTION__);
+//	jputs(tme->py_type->tp_name);
 
 	dest = (PyTypeObject*) JyNI_Alloc(tme);
 	dest->ob_type = dest;
@@ -311,7 +316,6 @@ inline PyTypeObject* JyNI_AllocPyObjectNativeTypePeer(TypeMapEntry* tme, jobject
 	dest->tp_traverse = jythontype_traverse;
 
 	jy = AS_JY(dest);
-	env(NULL);
 	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) dest);
 	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK | JY_SUBTYPE_FLAG_MASK;// | JY_INITIALIZED_FLAG_MASK;
 	//jy->jy = (*env)->NewWeakGlobalRef(env, src);
@@ -354,32 +358,36 @@ inline PyObject* JyNI_InitPyException(ExceptionMapEntry* eme, jobject src)
 {
 	PyObject* obj = JyNI_ExceptionAlloc(eme);
 	if (obj == NULL) return PyErr_NoMemory();
-	JyObject* jy = AS_JY(obj);
-	env(NULL);
-	jy->jy = (*env)->NewWeakGlobalRef(env, src);
-	//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
-	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
-	jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-	jy->flags |= JY_INITIALIZED_FLAG_MASK;
-	if (PyType_IS_GC(eme->exc_type))
-		JyNI_GC_ExploreObject(obj);
-	/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
-	 * JY_INITIALIZED_FLAG_MASK has been set.
-	 */
-	return obj;
+	else {
+		JyObject* jy = AS_JY(obj);
+		env(NULL);
+		jy->jy = (*env)->NewWeakGlobalRef(env, src);
+		//if (jy->flags & JY_HAS_JHANDLE_FLAG_MASK == 0) { //Always true here
+		(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) obj);//, jy->flags & JY_TRUNCATE_FLAG_MASK);
+		jy->flags |= JY_HAS_JHANDLE_FLAG_MASK;
+		jy->flags |= JY_INITIALIZED_FLAG_MASK;
+		if (PyType_IS_GC(eme->exc_type))
+			JyNI_GC_ExploreObject(obj);
+		/* JyNI_GC_EnsureHeadObject not needed here, because object was explored right after
+		 * JY_INITIALIZED_FLAG_MASK has been set.
+		 */
+		return obj;
+	}
 }
 
 
 inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 {
+	jstring jName;
+	cstr_decl(cName);
+	PyTypeObject* dest;
+	env(NULL);
 //	jputs(__FUNCTION__);
 //	JyNI_jprintJ(srctype);
-	env(NULL);
-	jstring jName = (*env)->GetObjectField(env, srctype, pyType_nameField);
+	jName = (*env)->GetObjectField(env, srctype, pyType_nameField);
 	cstr_from_jstring(cName, jName);
 //	jputs(cName);
-	PyTypeObject* dest =
-			JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);
+	dest = JyNI_AllocPyObjectNativeTypePeer(&(builtinTypes[TME_INDEX_Type]), srctype);
 //	JyObject* jy = AS_JY(dest);
 	// Add flag to enforce delegation to Java:
 	//(is now done in JyNI_AllocPyObjectNativeTypePeer)
@@ -443,11 +451,14 @@ inline PyTypeObject* JyNI_InitPyObjectNativeTypePeer(jobject srctype)
 
 inline jobject JyNI_InitStaticJythonPyObject(PyObject* src)
 {
+	jobject er;
+	env(NULL);
+
 //	jputs(__FUNCTION__);
 //	jputs(Py_TYPE(src)->tp_name);
-	env(NULL);
+
 	//setup and return PyCPeer in this case...
-	jobject er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_lookupCPeerFromHandle, (jlong) src);
+	er = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_lookupCPeerFromHandle, (jlong) src);
 	if (er != NULL && !(*env)->IsSameObject(env, er, NULL)) return er;
 	else {
 		TypeMapEntry* tme = JyNI_JythonTypeEntry_FromSubType(Py_TYPE(src));

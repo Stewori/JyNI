@@ -147,38 +147,40 @@ static PyStructSequence_Desc floatinfo_desc = {
 PyObject *
 PyFloat_GetInfo(void)
 {
-	PyObject* floatinfo;
-	int pos = 0;
-
-	floatinfo = PyStructSequence_New(&FloatInfoType);
-	if (floatinfo == NULL) {
-		return NULL;
-	}
-
-#define SetIntFlag(flag) \
-	PyStructSequence_SET_ITEM(floatinfo, pos++, PyInt_FromLong(flag))
-#define SetDblFlag(flag) \
-	PyStructSequence_SET_ITEM(floatinfo, pos++, PyFloat_FromDouble(flag))
-
-	SetDblFlag(DBL_MAX);
-	SetIntFlag(DBL_MAX_EXP);
-	SetIntFlag(DBL_MAX_10_EXP);
-	SetDblFlag(DBL_MIN);
-	SetIntFlag(DBL_MIN_EXP);
-	SetIntFlag(DBL_MIN_10_EXP);
-	SetIntFlag(DBL_DIG);
-	SetIntFlag(DBL_MANT_DIG);
-	SetDblFlag(DBL_EPSILON);
-	SetIntFlag(FLT_RADIX);
-	SetIntFlag(FLT_ROUNDS);
-#undef SetIntFlag
-#undef SetDblFlag
-
-	if (PyErr_Occurred()) {
-		Py_CLEAR(floatinfo);
-		return NULL;
-	}
-	return floatinfo;
+	jputs("JyNI warning: PyFloat_GetInfo not yet implemented.");
+	return Py_NotImplemented;
+//	PyObject* floatinfo;
+//	int pos = 0;
+//
+//	floatinfo = PyStructSequence_New(&FloatInfoType);
+//	if (floatinfo == NULL) {
+//		return NULL;
+//	}
+//
+//#define SetIntFlag(flag) \
+//	PyStructSequence_SET_ITEM(floatinfo, pos++, PyInt_FromLong(flag))
+//#define SetDblFlag(flag) \
+//	PyStructSequence_SET_ITEM(floatinfo, pos++, PyFloat_FromDouble(flag))
+//
+//	SetDblFlag(DBL_MAX);
+//	SetIntFlag(DBL_MAX_EXP);
+//	SetIntFlag(DBL_MAX_10_EXP);
+//	SetDblFlag(DBL_MIN);
+//	SetIntFlag(DBL_MIN_EXP);
+//	SetIntFlag(DBL_MIN_10_EXP);
+//	SetIntFlag(DBL_DIG);
+//	SetIntFlag(DBL_MANT_DIG);
+//	SetDblFlag(DBL_EPSILON);
+//	SetIntFlag(FLT_RADIX);
+//	SetIntFlag(FLT_ROUNDS);
+//#undef SetIntFlag
+//#undef SetDblFlag
+//
+//	if (PyErr_Occurred()) {
+//		Py_CLEAR(floatinfo);
+//		return NULL;
+//	}
+//	return floatinfo;
 }
 
 PyObject *
@@ -2248,8 +2250,8 @@ _PyFloat_Init(void)
 	float_format = detected_float_format;
 
 	/* Init float info */
-	if (FloatInfoType.tp_name == 0)
-		PyStructSequence_InitType(&FloatInfoType, &floatinfo_desc);
+//	if (FloatInfoType.tp_name == 0)
+//		PyStructSequence_InitType(&FloatInfoType, &floatinfo_desc);
 }
 
 int
@@ -2306,11 +2308,10 @@ PyFloat_Fini(void)
 	PyFloatBlock *list;
 	int i;
 	int u;                      /* total unfreed floats per block */
-
-	u = PyFloat_ClearFreeList();
-
+	jint Py_VerboseFlag;
 	env();
-	jint Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
+	u = PyFloat_ClearFreeList();
+	Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
 				JyNI_getDLVerbose);
 	if (!Py_VerboseFlag)
 		return;

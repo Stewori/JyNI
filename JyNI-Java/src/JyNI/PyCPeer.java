@@ -429,21 +429,21 @@ public class PyCPeer extends PyObject implements CPeerInterface, FinalizableBuil
 		return super.__float__();
 	}
 
-	@Override
-	public PyString __oct__() {
-		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_OCT) != 0)
-			return (PyString) JyNI.maybeExc(JyNI.JyNI_PyNumber_Oct(objectHandle,
-					JyTState.prepareNativeThreadState(Py.getThreadState())));
-		return super.__oct__();
-	}
-
-	@Override
-	public PyString __hex__() {
-		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_HEX) != 0)
-			return (PyString) JyNI.maybeExc(JyNI.JyNI_PyNumber_Hex(objectHandle,
-					JyTState.prepareNativeThreadState(Py.getThreadState())));
-		return super.__hex__();
-	}
+//	@Override
+//	public PyString __oct__() {
+//		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_OCT) != 0)
+//			return (PyString) JyNI.maybeExc(JyNI.JyNI_PyNumber_Oct(objectHandle,
+//					JyTState.prepareNativeThreadState(Py.getThreadState())));
+//		return super.__oct__();
+//	}
+//
+//	@Override
+//	public PyString __hex__() {
+//		if ((((PyCPeerType) objtype).nativeMethodFlags & PyCPeerType.NB_HEX) != 0)
+//			return (PyString) JyNI.maybeExc(JyNI.JyNI_PyNumber_Hex(objectHandle,
+//					JyTState.prepareNativeThreadState(Py.getThreadState())));
+//		return super.__hex__();
+//	}
 
 	@Override
 	public PyObject __iadd__(PyObject other) {
