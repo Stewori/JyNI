@@ -36,6 +36,8 @@ import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules.gc;
 import org.python.modules._weakref.*;
 //import org.python.modules.gc.CycleMarkAttr;
+// TODO temporary import for static PyFile method
+import org.python.core.io.FileIO;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -1636,4 +1638,13 @@ public class JyNI {
 		} else System.out.println("not a TraversableGCHead");
 		System.out.println();
 	}
+
+
+  public static int PyFile_fd(PyObject fileo) {
+     PyFile file = (PyFile)fileo;
+     Object fileno = file.fileno().__tojava__(FileIO.class);
+     if (!(fileno instanceof FileIO))
+       System.out.println("Warning: JyNI will crash now because fileno is no FileIO");
+     return ((PyInteger)((FileIO)fileno).__int__()).getValue();
+  }
 }

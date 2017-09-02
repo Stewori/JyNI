@@ -133,6 +133,8 @@
 #define pack_exceptions            "org/python/core/exceptions"
 #define pack_structModule          "org/python/modules/struct"
 #define pack_structModuleFormatDef "org/python/modules/struct$FormatDef"
+#define pack_FileIO                "org/python/core/io/FileIO"
+
 //#define pack_pyArray             "org/python/core/PyArray"
 //#define pack_pyBaseString        "org/python/core/PyBaseString"
 //#define pack_pyXRange            "org/python/core/PyXRange"
@@ -235,6 +237,7 @@ extern jmethodID JyNI_getJythonLocals;
 extern jmethodID JyNI_getJythonGlobals;
 extern jmethodID JyNI_getJythonFrame;
 extern jmethodID JyNI_getPlatform;
+extern jmethodID JyNI_PyFile_fd;
 
 extern jclass JyTStateClass;
 extern jmethodID JyTState_setRecursionLimit;
@@ -506,14 +509,17 @@ extern jmethodID pyInstance_isSequenceType;
 
 extern jclass pyFileClass;
 extern jmethodID pyFile_write;
-extern jmethodID pyFile_fd;
+extern jmethodID pyFile_fileno;
+
+
+extern jclass FileIOClass;
+extern jmethodID FileIO___int__;
 
 extern jclass pyTracebackClass;
 extern jmethodID pyTraceback_byTracebackFrameConstructor;
 
 extern jclass pyNotImplementedClass;
 extern jclass pyNoneClass;
-extern jclass pyFileClass;
 
 extern jclass pyModuleClass;
 extern jmethodID pyModule_byStringConstructor;

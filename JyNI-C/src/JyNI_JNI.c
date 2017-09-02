@@ -141,6 +141,7 @@ jmethodID JyNI_getJythonLocals;
 jmethodID JyNI_getJythonGlobals;
 jmethodID JyNI_getJythonFrame;
 jmethodID JyNI_getPlatform;
+jmethodID JyNI_PyFile_fd;
 
 jclass JyTStateClass;
 jmethodID JyTState_setRecursionLimit;
@@ -447,7 +448,10 @@ jmethodID pyCodecs_register_error;
 
 jclass pyFileClass;
 jmethodID pyFile_write;
-jmethodID pyFile_fd;
+jmethodID pyFile_fileno;
+
+jclass FileIOClass;
+jmethodID FileIO___int__;
 
 jclass pyNotImplementedClass;
 jclass pyNoneClass;
@@ -780,6 +784,7 @@ inline jint initJyNI(JNIEnv *env)
 	JNI_METH_STATIC(JyNI, getJythonGlobals, pyObject)
 	JNI_METH_STATIC(JyNI, getJythonFrame, pyFrame)
 	JNI_METH_STATIC(JyNI, getPlatform, string)
+  JNI_METH_STATIC(JyNI, PyFile_fd, int, pyObject)
 
 	//Error stuff:
 	JNI_METH_STATIC(JyNI, JyErr_InsertCurExc, void,
@@ -1099,7 +1104,10 @@ inline jint initJythonObjects(JNIEnv *env)
 
 	JNI_CLASS(pyFile)
 	JNI_METH_CLASS(pyFile, write, void, string)
-  JNI_METH_CLASS(pyFile, fd, int)
+  JNI_METH_CLASS(pyFile, fileno, pyObject)
+
+  JNI_CLASS(FileIO)
+  JNI_METH_CLASS(FileIO, __int__, pyObject)
 
 	JNI_CLASS(pyModule)
 	JNI_CONSTRUCTOR(pyModule, byStringConstructor, string)

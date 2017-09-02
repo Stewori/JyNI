@@ -103,6 +103,7 @@
 extern "C" {
 #endif
 
+
 //Providing the following method via JyNI would be very hard or impossible.
 //However, we could create a FILE-Pointer to the same file and also adjust
 //io mode and seek-position to the values of the given PyFile.
@@ -111,26 +112,13 @@ extern "C" {
 FILE *
 PyFile_AsFile(PyObject *f)
 {
-    printf("Accessing file.\n");
     env(-1);
     if (f == NULL)
         puts("PyFile_AsFile with NULL-pointer");
     jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
-    //(*env)->CallVoidMethod(env, ((JyObject*) f)->jy, pyFileWrite, (*env)->NewStringUTF(env, s));
-    jint fd = (*env)->CallObjectMethod(env, f2, pyFile_fd);
-    printf("FD: %i \n", fd);
-    FILE *file = fdopen(fd, "r");
-    printf("File opened readable.\n");
-    return file;
-    //todo: JNI Exception handling
-//   return 0;
-
-/*
-    if (f == NULL || !PyFile_Check(f))
-        return NULL;
-    else
-    return ((PyFileObject *)f)->f_fp;*/
-// return NULL;
+    jint fd = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_PyFile_fd, f2);
+    // TODO get mode from PyFile
+    return fdopen(fd, "r");
 }
 
 /*
