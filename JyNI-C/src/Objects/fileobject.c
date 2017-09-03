@@ -112,13 +112,15 @@ extern "C" {
 FILE *
 PyFile_AsFile(PyObject *f)
 {
-  env(-1);
-  if (f == NULL)
-    puts("PyFile_AsFile with NULL-pointer");
-  jobject f2 = JyNI_JythonPyObject_FromPyObject(f);
-  jint fd = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_PyFile_fd, f2);
-  // TODO get mode from PyFile
-  return fdopen(fd, "r");
+	jobject f2;
+	jint fd;
+	env(-1);
+	if (f == NULL)
+		jputs("PyFile_AsFile with NULL-pointer");
+	f2 = JyNI_JythonPyObject_FromPyObject(f);
+	fd = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_PyFile_fd, f2);
+	// TODO get mode from PyFile
+	return fdopen(fd, "r");
 }
 
 /*
