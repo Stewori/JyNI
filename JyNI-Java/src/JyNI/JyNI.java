@@ -1706,11 +1706,11 @@ public class JyNI {
 	}
 
 
-  public static int PyFile_fd(PyObject fileo) {
-     PyFile file = (PyFile)fileo;
-     Object fileno = file.fileno().__tojava__(FileIO.class);
-     if (!(fileno instanceof FileIO))
-       System.out.println("Warning: JyNI will crash now because fileno is no FileIO");
-     return ((PyInteger)((FileIO)fileno).__int__()).getValue();
-  }
+	public static int PyFile_fd(PyObject fileo) {
+		PyFile file = (PyFile)fileo;
+		Object fileno = file.fileno().__tojava__(FileIO.class);
+		if (!(fileno instanceof FileIO))
+			System.out.println("Warning: JyNI will crash now because fileno is no FileIO");
+		return ((PyInteger)((FileIO)fileno).__int__()).getValue();
+	}
 }
