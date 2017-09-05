@@ -800,7 +800,7 @@ inline jint initJyNI(JNIEnv *env)
 	JNI_METH_STATIC(JyNI, getJythonGlobals, pyObject)
 	JNI_METH_STATIC(JyNI, getJythonFrame, pyFrame)
 	JNI_METH_STATIC(JyNI, getPlatform, string)
-  JNI_METH_STATIC(JyNI, PyFile_fd, int, pyObject)
+	JNI_METH_STATIC(JyNI, PyFile_fd, int, pyObject)
 
 	//Error stuff:
 	JNI_METH_STATIC(JyNI, JyErr_InsertCurExc, void,
@@ -1124,10 +1124,7 @@ inline jint initJythonObjects(JNIEnv *env)
 
 	JNI_CLASS(pyFile)
 	JNI_METH_CLASS(pyFile, write, void, string)
-  JNI_METH_CLASS(pyFile, fileno, pyObject)
-
-  JNI_CLASS(FileIO)
-  JNI_METH_CLASS(FileIO, __int__, pyObject)
+	JNI_METH_CLASS(pyFile, fileno, pyObject)
 
 	JNI_CLASS(pyModule)
 	JNI_CONSTRUCTOR(pyModule, byStringConstructor, string)
