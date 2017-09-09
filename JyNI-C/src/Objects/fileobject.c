@@ -112,16 +112,18 @@ extern "C" {
 FILE *
 PyFile_AsFile(PyObject *f)
 {
-	jputs("JyNI warning: PyFile_AsFile not yet implemented.");
-	return NULL;
-}
-/*
-    if (f == NULL || !PyFile_Check(f))
-        return NULL;
-    else
-        return ((PyFileObject *)f)->f_fp;
+	jobject f2;
+	jint fd;
+	env(-1);
+	if (f == NULL)
+		jputs("PyFile_AsFile with NULL-pointer");
+	f2 = JyNI_JythonPyObject_FromPyObject(f);
+	fd = (*env)->CallStaticIntMethod(env, JyNIClass, JyNI_PyFile_fd, f2);
+	// TODO get mode from PyFile
+	return fdopen(fd, "r");
 }
 
+/*
 void PyFile_IncUseCount(PyFileObject *fobj)
 {
     fobj->unlocked_count++;
