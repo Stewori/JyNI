@@ -774,7 +774,6 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	//	if (dbg) puts(__FUNCTION__);
 		PyObject *obj;
 		if (type->tp_new == NULL) {
-			jputsLong(__LINE__);
 			PyErr_Format(PyExc_TypeError,
 						 "cannot create '%.100s' instances (raised in type_call)",
 						 type->tp_name);

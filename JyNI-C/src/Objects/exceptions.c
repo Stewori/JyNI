@@ -63,8 +63,8 @@ static PyObject *
 BaseException_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyBaseExceptionObject *self;
-	jputs(__FUNCTION__);
-	jputs(type->tp_name);
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
 	//JyNI-note: This should call PyType_GenericAlloc actually:
 	//(and that's fine, since we adjusted that method to allocate space for JyObject)
 	//Note that currently all builtin exception types are fully truncated, i.e. all
@@ -865,7 +865,6 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 //		Py_DECREF(self->args);  /* replacing args */
 //		self->args = subslice;
 //	}
-	jputsLong(__LINE__);
 	return 0;
 }
 
@@ -2957,22 +2956,6 @@ SimpleExtendsException(PyExc_Warning, BytesWarning,
 //	PyModule_AddObject(m, # TYPE, PyExc_ ## TYPE); \
 //	if (PyDict_SetItemString(bdict, # TYPE, PyExc_ ## TYPE)) \
 //		Py_FatalError("Module dictionary insertion problem.");
-//
-//
-//On Linux:
-//>>> import exceptions
-//>>> dir(exceptions)
-//['ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException',
-// 'BufferError', 'BytesWarning', 'DeprecationWarning', 'EOFError', 'EnvironmentError',
-// 'Exception', 'FloatingPointError', 'FutureWarning', 'GeneratorExit', 'IOError',
-// 'ImportError', 'ImportWarning', 'IndentationError', 'IndexError', 'KeyError',
-// 'KeyboardInterrupt', 'LookupError', 'MemoryError', 'NameError', 'NotImplementedError',
-// 'OSError', 'OverflowError', 'PendingDeprecationWarning', 'ReferenceError',
-// 'RuntimeError', 'RuntimeWarning', 'StandardError', 'StopIteration', 'SyntaxError',
-// 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 'TypeError',
-// 'UnboundLocalError', 'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError',
-// 'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning',
-// 'ZeroDivisionError'
 
 PyMODINIT_FUNC
 _PyExc_Init(void)
