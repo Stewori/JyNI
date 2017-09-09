@@ -808,8 +808,7 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 	int i;
 
 	env(-1);
-	jputs(__FUNCTION__);
-	jputsLong(__LINE__);
+//	jputs(__FUNCTION__);
 	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
@@ -827,7 +826,6 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 			exceptions_EnvironmentError__init__, JyNI_JythonPyObject_FromPyObject((PyObject*) self), jargs, jkw);
 	if ((*env)->ExceptionCheck(env))
 	{
-		jputsLong(__LINE__);
 		(*env)->ExceptionDescribe(env);
 		(*env)->ExceptionClear(env);
 		return -1;
@@ -1158,7 +1156,7 @@ MiddlingExtendsException(PyExc_EnvironmentError, OSError,
 static int
 WindowsError_clear(PyWindowsErrorObject *self)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 //	Py_CLEAR(self->myerrno);
 //	Py_CLEAR(self->strerror);
 //	Py_CLEAR(self->filename);
@@ -1169,7 +1167,7 @@ WindowsError_clear(PyWindowsErrorObject *self)
 static void
 WindowsError_dealloc(PyWindowsErrorObject *self)
 {
-	jputs(__FUNCTION__);
+//	jputs(__FUNCTION__);
 	//_JyNI_GC_UNTRACK(self);
 //	WindowsError_clear(self); // does nothing anyway
 	// (Remember exceptions are truncated in JyNI)
@@ -1192,36 +1190,25 @@ WindowsError_init(PyWindowsErrorObject *self, PyObject *args, PyObject *kwds)
 	PyObject *o_errcode = NULL;
 	long errcode;
 	long posix_errno;
-	jputs(__FUNCTION__);
-	jputsLong(__LINE__);
+//	jputs(__FUNCTION__);
 	if (EnvironmentError_init((PyEnvironmentErrorObject *)self, args, kwds)
 			== -1) {
-		jputsLong(__LINE__);
 		return -1;
 	}
-	jputsLong(__LINE__);
 	if (self->myerrno == NULL)
 		return 0;
-	jputsLong(__LINE__);
 	/* Set errno to the POSIX errno, and winerror to the Win32
 	   error code. */
 	errcode = PyInt_AsLong(self->myerrno);
-	jputsLong(__LINE__);
 	if (errcode == -1 && PyErr_Occurred())
 		return -1;
-	jputsLong(__LINE__);
 	posix_errno = winerror_to_errno(errcode);
-	jputsLong(__LINE__);
 	Py_CLEAR(self->winerror);
 	self->winerror = self->myerrno;
-	jputsLong(__LINE__);
 	o_errcode = PyInt_FromLong(posix_errno);
-	jputsLong(__LINE__);
 	if (!o_errcode)
 		return -1;
-	jputsLong(__LINE__);
 	self->myerrno = o_errcode;
-	jputsLong(__LINE__);
 	return 0;
 }
 

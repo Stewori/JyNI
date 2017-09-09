@@ -115,18 +115,4 @@ void JySync_PyFrame_From_JyFrame(jobject src, PyObject* dest);
 
 void JySync_PyType_From_JyType(jobject src, PyObject* dest);
 
-//Exception factories:
-jobject JyExc_KeyErrorFactory();
-jobject JyExc_SystemExitFactory();
-jobject JyExc_EnvironmentErrorFactory();
-jobject JyExc_SyntaxErrorFactory();
-
-jobject JyExc_UnicodeErrorFactory();
-
-#ifdef Py_USING_UNICODE
-jobject JyExc_UnicodeEncodeErrorFactory();
-jobject JyExc_UnicodeDecodeErrorFactory();
-jobject JyExc_UnicodeTranslateErrorFactory();
-#endif
-
 #endif /* JYSYNC_H_ */

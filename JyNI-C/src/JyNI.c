@@ -1729,7 +1729,7 @@ inline void JyNI_SyncPy2Jy(PyObject* op, JyObject* jy)
 	if (sync != NULL && sync->py2jy != NULL) sync->py2jy(op, jy->jy);
 }
 
-inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src, JyObject* srcJy)
+inline jobject JyNI_InitJythonPyException(PyObject* src, JyObject* srcJy)
 {
 	jobject type, dest = NULL;
 	env(NULL);
@@ -1741,22 +1741,6 @@ inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src,
 		type = JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(src));
 		dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_subTypeConstructor, type);
 	}
-//	if (eme->exc_factory)
-//	{
-//		//Here, the actual values are not copied from src, since
-//		//src is truncated and does not actually contain these.
-//		//The tp_init method of the exception type is responsible
-//		//to fill in this data.
-//		dest = eme->exc_factory();
-//	} else
-//	{
-//		//Create base exception...
-//		jobject type = JyNI_JythonExceptionType_FromPyExceptionType((PyObject*) Py_TYPE(src));
-//		if (type)
-//			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_subTypeConstructor, type);
-//		else
-//			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_emptyConstructor);
-//	}
 	if (!dest) return NULL;
 
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);
@@ -1894,9 +1878,8 @@ inline jobject JyNI_JythonPyObject_FromPyObject(PyObject* op)
 			return JyNI_InitJythonPyObject(tme, op, jy);
 		else
 		{
-			ExceptionMapEntry* eme = JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op));
-			if (eme) {
-				return JyNI_InitJythonPyException(eme, op, jy);
+			if (JyNI_PyExceptionMapEntry_FromPyExceptionType(Py_TYPE(op))) {
+				return JyNI_InitJythonPyException(op, jy);
 			} else
 			{
 				jobject opType, er;

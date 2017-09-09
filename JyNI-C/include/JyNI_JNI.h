@@ -354,10 +354,6 @@ extern jfieldID pyPy_UnicodeEncodeErrorField;
 extern jfieldID pyPy_UnicodeDecodeErrorField;
 extern jfieldID pyPy_UnicodeTranslateErrorField;
 extern jfieldID pyPy_UnicodeWarningField;
-extern jmethodID pyPy_UnicodeErrorFactory;
-extern jmethodID pyPy_UnicodeEncodeErrorFactory;
-extern jmethodID pyPy_UnicodeDecodeErrorFactory;
-extern jmethodID pyPy_UnicodeTranslateErrorFactory;
 extern jmethodID pyPy_raiseUnicodeWarning;
 extern jmethodID pyPy_makeClass;
 extern jfieldID pyPy_integerCacheField;
@@ -700,32 +696,24 @@ extern jfieldID threadStateCurExcInfo_curexc_value;
 extern jfieldID threadStateCurExcInfo_curexc_traceback;
 
 extern jclass exceptionsClass;
-//extern jmethodID exceptions_KeyError;
 extern jmethodID exceptions_KeyError__str__;
-//extern jmethodID exceptions_EnvironmentError;
 extern jmethodID exceptions_EnvironmentError__init__;
 extern jmethodID exceptions_EnvironmentError__str__;
 extern jmethodID exceptions_EnvironmentError__reduce__;
-//extern jmethodID exceptions_SyntaxError;
 extern jmethodID exceptions_SyntaxError__init__;
 extern jmethodID exceptions_SyntaxError__str__;
-//extern jmethodID exceptions_SystemExit;
 extern jmethodID exceptions_SystemExit__init__;
 
-extern jmethodID exceptions_UnicodeError;
 #ifdef Py_USING_UNICODE
 extern jmethodID exceptions_getStart;
 extern jmethodID exceptions_getEnd;
 extern jmethodID exceptions_getString;
 extern jmethodID exceptions_getUnicode;
 extern jmethodID exceptions_UnicodeError__init__;
-extern jmethodID exceptions_UnicodeEncodeError;
 extern jmethodID exceptions_UnicodeEncodeError__init__;
 extern jmethodID exceptions_UnicodeEncodeError__str__;
-extern jmethodID exceptions_UnicodeDecodeError;
 extern jmethodID exceptions_UnicodeDecodeError__init__;
 extern jmethodID exceptions_UnicodeDecodeError__str__;
-extern jmethodID exceptions_UnicodeTranslateError;
 extern jmethodID exceptions_UnicodeTranslateError__init__;
 extern jmethodID exceptions_UnicodeTranslateError__str__;
 #endif

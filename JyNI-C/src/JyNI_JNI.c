@@ -274,10 +274,6 @@ jfieldID pyPy_UnicodeEncodeErrorField;
 jfieldID pyPy_UnicodeDecodeErrorField;
 jfieldID pyPy_UnicodeTranslateErrorField;
 jfieldID pyPy_UnicodeWarningField;
-jmethodID pyPy_UnicodeErrorFactory;
-jmethodID pyPy_UnicodeEncodeErrorFactory;
-jmethodID pyPy_UnicodeDecodeErrorFactory;
-jmethodID pyPy_UnicodeTranslateErrorFactory;
 jmethodID pyPy_raiseUnicodeWarning;
 jmethodID pyPy_makeClass;
 //pre-allocated:
@@ -662,32 +658,24 @@ jmethodID imp_importName;
 jmethodID imp_reload;
 
 jclass exceptionsClass;
-//jmethodID exceptions_KeyError;
 jmethodID exceptions_KeyError__str__;
-//jmethodID exceptions_EnvironmentError;
 jmethodID exceptions_EnvironmentError__init__;
 jmethodID exceptions_EnvironmentError__str__;
 jmethodID exceptions_EnvironmentError__reduce__;
-//jmethodID exceptions_SyntaxError;
 jmethodID exceptions_SyntaxError__init__;
 jmethodID exceptions_SyntaxError__str__;
-//jmethodID exceptions_SystemExit;
 jmethodID exceptions_SystemExit__init__;
 
-jmethodID exceptions_UnicodeError;
 #ifdef Py_USING_UNICODE
 jmethodID exceptions_getStart;
 jmethodID exceptions_getEnd;
 jmethodID exceptions_getString;
 jmethodID exceptions_getUnicode;
 jmethodID exceptions_UnicodeError__init__;
-jmethodID exceptions_UnicodeEncodeError;
 jmethodID exceptions_UnicodeEncodeError__init__;
 jmethodID exceptions_UnicodeEncodeError__str__;
-jmethodID exceptions_UnicodeDecodeError;
 jmethodID exceptions_UnicodeDecodeError__init__;
 jmethodID exceptions_UnicodeDecodeError__str__;
-jmethodID exceptions_UnicodeTranslateError;
 jmethodID exceptions_UnicodeTranslateError__init__;
 jmethodID exceptions_UnicodeTranslateError__str__;
 #endif
@@ -947,13 +935,6 @@ inline jint initJythonSite(JNIEnv *env)
 	JNI_FIELD_STATIC(pyPy, UnicodeDecodeError, pyObject)
 	JNI_FIELD_STATIC(pyPy, UnicodeTranslateError, pyObject)
 	JNI_FIELD_STATIC(pyPy, UnicodeWarning, pyObject)
-	JNI_METH_STATIC2(pyPy, UnicodeError, UnicodeErrorFactory, pyException, string)
-	JNI_METH_STATIC2(pyPy, UnicodeEncodeError, UnicodeEncodeErrorFactory,
-			pyException, string, string, int, int, string)
-	JNI_METH_STATIC2(pyPy, UnicodeDecodeError, UnicodeDecodeErrorFactory,
-			pyException, string, string, int, int, string)
-	JNI_METH_STATIC2(pyPy, UnicodeTranslateError, UnicodeTranslateErrorFactory,
-			pyException, string, int, int, string)
 	JNI_METH_STATIC2(pyPy, UnicodeWarning, raiseUnicodeWarning, void, string)
 	JNI_METH_STATIC(pyPy, makeClass, pyObject, string, pyObject array, pyObject)
 	JNI_FIELD_STATIC(pyPy, integerCache, pyInt array)
@@ -1317,25 +1298,20 @@ inline jint initJythonObjects(JNIEnv *env)
 	JNI_METH_STATIC(imp, reload, pyObject, pyModule)
 
 	JNI_CLASS(exceptions)
-//	JNI_METH_STATIC(exceptions, KeyError, pyObject)
 	JNI_METH_STATIC(exceptions, KeyError__str__, pyObject,
 			pyObject, pyObject array, string array)
-//	JNI_METH_STATIC(exceptions, EnvironmentError, pyObject)
 	JNI_METH_STATIC(exceptions, EnvironmentError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, EnvironmentError__str__, pyObject,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, EnvironmentError__reduce__, pyObject,
 			pyObject, pyObject array, string array)
-//	JNI_METH_STATIC(exceptions, SyntaxError, pyObject)
 	JNI_METH_STATIC(exceptions, SyntaxError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, SyntaxError__str__, pyString,
 			pyObject, pyObject array, string array)
-//	JNI_METH_STATIC(exceptions, SystemExit, pyObject)
 	JNI_METH_STATIC(exceptions, SystemExit__init__, void,
 			pyObject, pyObject array, string array)
-	JNI_METH_STATIC(exceptions, UnicodeError, pyObject)
 	#ifdef Py_USING_UNICODE
 	JNI_METH_STATIC(exceptions, getStart, int, pyObject, boolean)
 	JNI_METH_STATIC(exceptions, getEnd, int, pyObject, boolean)
@@ -1343,17 +1319,14 @@ inline jint initJythonObjects(JNIEnv *env)
 	JNI_METH_STATIC(exceptions, getUnicode, pyUnicode, pyObject, string)
 	JNI_METH_STATIC(exceptions, UnicodeError__init__, void,
 			pyObject, pyObject array, string array, pyType)
-	JNI_METH_STATIC(exceptions, UnicodeEncodeError, pyObject)
 	JNI_METH_STATIC(exceptions, UnicodeEncodeError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, UnicodeEncodeError__str__, pyString,
 			pyObject, pyObject array, string array)
-	JNI_METH_STATIC(exceptions, UnicodeDecodeError, pyObject)
 	JNI_METH_STATIC(exceptions, UnicodeDecodeError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, UnicodeDecodeError__str__, pyString,
 			pyObject, pyObject array, string array)
-	JNI_METH_STATIC(exceptions, UnicodeTranslateError, pyObject)
 	JNI_METH_STATIC(exceptions, UnicodeTranslateError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, UnicodeTranslateError__str__, pyString,
