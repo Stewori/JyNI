@@ -186,17 +186,13 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	jputsLong(PyErr_Occurred());
 	if (peer->ob_type->tp_call) {
 		PyObject *jargs, *jkw, *jres;
-//		jputsLong(__LINE__);
 //		if (Py_TYPE(peer) == &PyCFunction_Type) {
-//			jputsLong(__LINE__);
-////			jputsLong(((PyCFunctionObject*) peer)->m_ml);
-////			jputsLong(((PyCFunctionObject*) peer)->m_self);
+//			jputsLong(((PyCFunctionObject*) peer)->m_ml);
+//			jputsLong(((PyCFunctionObject*) peer)->m_self);
 //			jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
 //		} else if (Py_TYPE(peer) == &PyType_Type) {
 //			jputs(((PyTypeObject*) peer)->tp_name);
-//			// ToDo: If this prints exceptions.WindowsError, it will crash the JVM.
 //		} else {
-//			jputsLong(__LINE__);
 //			jputs(Py_TYPE(peer)->tp_name);
 //		}
 //		jputsLong(__LINE__);
@@ -207,7 +203,6 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //			jputsLong(PyTuple_GET_ITEM(jargs, 0));
 //		}
 		jkw = JyNI_PyObject_FromJythonPyObject(kw);
-//		jputs("before call");
 //		jputsPy(peer);
 		jres = peer->ob_type->tp_call(peer, jargs, jkw);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
@@ -1218,172 +1213,71 @@ inline void initBuiltinTypes()
 
 inline void initBuiltinExceptions()
 {
+	int i;
+
 	builtinExceptions[0].exc_type = (PyTypeObject*) PyExc_BaseException;
-	builtinExceptions[0].exc_factory = NULL;
-
 	builtinExceptions[1].exc_type = (PyTypeObject*) PyExc_Exception;
-	builtinExceptions[1].exc_factory = NULL;
-
 	builtinExceptions[2].exc_type = (PyTypeObject*) PyExc_StandardError;
-	builtinExceptions[2].exc_factory = NULL;
-
 	builtinExceptions[3].exc_type = (PyTypeObject*) PyExc_TypeError;
-	builtinExceptions[3].exc_factory = NULL;
-
 	builtinExceptions[4].exc_type = (PyTypeObject*) PyExc_StopIteration;
-	builtinExceptions[4].exc_factory = NULL;
-
 	builtinExceptions[5].exc_type = (PyTypeObject*) PyExc_GeneratorExit;
-	builtinExceptions[5].exc_factory = NULL;
-
 	builtinExceptions[6].exc_type = (PyTypeObject*) PyExc_SystemExit;
-	builtinExceptions[6].exc_factory = (jyFactoryMethod) JyExc_SystemExitFactory;
-
 	builtinExceptions[7].exc_type = (PyTypeObject*) PyExc_KeyboardInterrupt;
-	builtinExceptions[7].exc_factory = NULL;
-
 	builtinExceptions[8].exc_type = (PyTypeObject*) PyExc_ImportError;
-	builtinExceptions[8].exc_factory = NULL;
-
 	builtinExceptions[9].exc_type = (PyTypeObject*) PyExc_EnvironmentError;
-	builtinExceptions[9].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
-
 	builtinExceptions[10].exc_type = (PyTypeObject*) PyExc_IOError;
-	builtinExceptions[10].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
-
 	builtinExceptions[11].exc_type = (PyTypeObject*) PyExc_OSError;
-	builtinExceptions[11].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
-
 #ifdef MS_WINDOWS
 	builtinExceptions[12].exc_type = (PyTypeObject*) PyExc_WindowsError;
-	builtinExceptions[12].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
-	//JyNI-note: Would actually be WindowsError, but that seems to be not provided by Jython.
 #endif
 #ifdef __VMS
 	builtinExceptions[13].exc_type = (PyTypeObject*) PyExc_VMSError;
-	builtinExceptions[13].exc_factory = (jyFactoryMethod) JyExc_EnvironmentErrorFactory;
 #endif
 	builtinExceptions[14].exc_type = (PyTypeObject*) PyExc_EOFError;
-	builtinExceptions[14].exc_factory = NULL;
-
 	builtinExceptions[15].exc_type = (PyTypeObject*) PyExc_RuntimeError;
-	builtinExceptions[15].exc_factory = NULL;
-
 	builtinExceptions[16].exc_type = (PyTypeObject*) PyExc_NotImplementedError;
-	builtinExceptions[16].exc_factory = NULL;
-
 	builtinExceptions[17].exc_type = (PyTypeObject*) PyExc_NameError;
-	builtinExceptions[17].exc_factory = NULL;
-
 	builtinExceptions[18].exc_type = (PyTypeObject*) PyExc_UnboundLocalError;
-	builtinExceptions[18].exc_factory = NULL;
-
 	builtinExceptions[19].exc_type = (PyTypeObject*) PyExc_AttributeError;
-	builtinExceptions[19].exc_factory = NULL;
-
 	builtinExceptions[20].exc_type = (PyTypeObject*) PyExc_SyntaxError;
-	builtinExceptions[20].exc_factory = (jyFactoryMethod) JyExc_SyntaxErrorFactory;
-
 	builtinExceptions[21].exc_type = (PyTypeObject*) PyExc_IndentationError;
-	builtinExceptions[21].exc_factory = (jyFactoryMethod) JyExc_SyntaxErrorFactory;
-
 	builtinExceptions[22].exc_type = (PyTypeObject*) PyExc_TabError;
-	builtinExceptions[22].exc_factory = (jyFactoryMethod) JyExc_SyntaxErrorFactory;
-
 	builtinExceptions[23].exc_type = (PyTypeObject*) PyExc_LookupError;
-	builtinExceptions[23].exc_factory = NULL;
-
 	builtinExceptions[24].exc_type = (PyTypeObject*) PyExc_IndexError;
-	builtinExceptions[24].exc_factory = NULL;
-
 	builtinExceptions[25].exc_type = (PyTypeObject*) PyExc_KeyError;
-	builtinExceptions[25].exc_factory = NULL;
-
 	builtinExceptions[26].exc_type = (PyTypeObject*) PyExc_ValueError;
-	builtinExceptions[26].exc_factory = NULL;
-
 	//We don't put UnicodeError in the conditional code because it also isn't
 	//conditional in original exceptions.c.
 	builtinExceptions[27].exc_type = (PyTypeObject*) PyExc_UnicodeError;
-	builtinExceptions[27].exc_factory = JyExc_UnicodeErrorFactory;
-	//While its subclasses use the PyUnicodeErrorObject-body, UnicodeError itself doesn't.
-	//However, since Jython provides a factory method for UnicodeError, we use it here.
-
 #ifdef Py_USING_UNICODE
 	builtinExceptions[28].exc_type = (PyTypeObject*) PyExc_UnicodeEncodeError;
-	builtinExceptions[28].exc_factory = JyExc_UnicodeEncodeErrorFactory;
-
 	builtinExceptions[29].exc_type = (PyTypeObject*) PyExc_UnicodeDecodeError;
-	builtinExceptions[29].exc_factory = JyExc_UnicodeDecodeErrorFactory;
-
 	builtinExceptions[30].exc_type = (PyTypeObject*) PyExc_UnicodeTranslateError;
-	builtinExceptions[30].exc_factory = JyExc_UnicodeTranslateErrorFactory;
 #endif
-
 	builtinExceptions[31].exc_type = (PyTypeObject*) PyExc_AssertionError;
-	builtinExceptions[31].exc_factory = NULL;
-
 	builtinExceptions[32].exc_type = (PyTypeObject*) PyExc_ArithmeticError;
-	builtinExceptions[32].exc_factory = NULL;
-
 	builtinExceptions[33].exc_type = (PyTypeObject*) PyExc_FloatingPointError;
-	builtinExceptions[33].exc_factory = NULL;
-
 	builtinExceptions[34].exc_type = (PyTypeObject*) PyExc_OverflowError;
-	builtinExceptions[34].exc_factory = NULL;
-
 	builtinExceptions[35].exc_type = (PyTypeObject*) PyExc_ZeroDivisionError;
-	builtinExceptions[35].exc_factory = NULL;
-
 	builtinExceptions[36].exc_type = (PyTypeObject*) PyExc_SystemError;
-	builtinExceptions[36].exc_factory = NULL;
-
 	builtinExceptions[37].exc_type = (PyTypeObject*) PyExc_ReferenceError;
-	builtinExceptions[37].exc_factory = NULL;
-
 	builtinExceptions[38].exc_type = (PyTypeObject*) PyExc_MemoryError;
-	builtinExceptions[38].exc_factory = NULL;
-
 	builtinExceptions[39].exc_type = (PyTypeObject*) PyExc_BufferError;
-	builtinExceptions[39].exc_factory = NULL;
-
 	builtinExceptions[40].exc_type = (PyTypeObject*) PyExc_Warning;
-	builtinExceptions[40].exc_factory = NULL;
-
 	builtinExceptions[41].exc_type = (PyTypeObject*) PyExc_UserWarning;
-	builtinExceptions[41].exc_factory = NULL;
-
 	builtinExceptions[42].exc_type = (PyTypeObject*) PyExc_DeprecationWarning;
-	builtinExceptions[42].exc_factory = NULL;
-
 	builtinExceptions[43].exc_type = (PyTypeObject*) PyExc_PendingDeprecationWarning;
-	builtinExceptions[43].exc_factory = NULL;
-
 	builtinExceptions[44].exc_type = (PyTypeObject*) PyExc_SyntaxWarning;
-	builtinExceptions[44].exc_factory = NULL;
-
 	builtinExceptions[45].exc_type = (PyTypeObject*) PyExc_RuntimeWarning;
-	builtinExceptions[45].exc_factory = NULL;
-
 	builtinExceptions[46].exc_type = (PyTypeObject*) PyExc_FutureWarning;
-	builtinExceptions[46].exc_factory = NULL;
-
 	builtinExceptions[47].exc_type = (PyTypeObject*) PyExc_ImportWarning;
-	builtinExceptions[47].exc_factory = NULL;
-
 	builtinExceptions[48].exc_type = (PyTypeObject*) PyExc_UnicodeWarning;
-	builtinExceptions[48].exc_factory = NULL;
-
 	builtinExceptions[49].exc_type = (PyTypeObject*) PyExc_BytesWarning;
-	builtinExceptions[49].exc_factory = NULL;
 
+	for (i = 0; i < builtinExceptionCount; ++i)
 	{
-		int i;
-		for (i = 0; i < builtinExceptionCount; ++i)
-		{
-			if (builtinExceptions[i].exc_type)
-				builtinExceptions[i].exc_type->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
-		}
+		if (builtinExceptions[i].exc_type)
+			builtinExceptions[i].exc_type->tp_flags |= Jy_TPFLAGS_DYN_OBJECTS;
 	}
 }
 
@@ -1837,24 +1731,32 @@ inline void JyNI_SyncPy2Jy(PyObject* op, JyObject* jy)
 
 inline jobject JyNI_InitJythonPyException(ExceptionMapEntry* eme, PyObject* src, JyObject* srcJy)
 {
-	jobject dest = NULL;
+	jobject type, dest = NULL;
 	env(NULL);
-	if (eme->exc_factory)
+	type = JyNI_JythonExceptionType_FromPyExceptionType((PyObject*) Py_TYPE(src));
+	if (type)
 	{
-		//Here, the actual values are not copied from src, since
-		//src is truncated and does not actually contain these.
-		//The tp_init method of the exception type is responsible
-		//to fill in this data.
-		dest = eme->exc_factory();
-	} else
-	{
-		//Create base exception...
-		jobject type = JyNI_JythonExceptionType_FromPyExceptionType((PyObject*) Py_TYPE(src));
-		if (type)
-			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_subTypeConstructor, type);
-		else
-			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_emptyConstructor);
+		dest = (*env)->CallObjectMethod(env, type, pyObject___call__);
+	} else {
+		type = JyNI_JythonPyObject_FromPyObject((PyObject*) Py_TYPE(src));
+		dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_subTypeConstructor, type);
 	}
+//	if (eme->exc_factory)
+//	{
+//		//Here, the actual values are not copied from src, since
+//		//src is truncated and does not actually contain these.
+//		//The tp_init method of the exception type is responsible
+//		//to fill in this data.
+//		dest = eme->exc_factory();
+//	} else
+//	{
+//		//Create base exception...
+//		jobject type = JyNI_JythonExceptionType_FromPyExceptionType((PyObject*) Py_TYPE(src));
+//		if (type)
+//			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_subTypeConstructor, type);
+//		else
+//			dest = (*env)->NewObject(env, pyBaseExceptionClass, pyBaseException_emptyConstructor);
+//	}
 	if (!dest) return NULL;
 
 	srcJy->jy = (*env)->NewWeakGlobalRef(env, dest);

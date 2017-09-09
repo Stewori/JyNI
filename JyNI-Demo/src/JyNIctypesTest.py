@@ -33,17 +33,13 @@ Created on 03.10.2015
 '''
 
 import os, sys
-
-#Include native ctypes:
-sys.path.append('/usr/lib/python2.7/lib-dynload')
-
 import ctypes
-
+from ctypes import *
 import platform
+
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
 isWin = os.name in ("nt", "ce") or os.name == 'java' and os._name in ("nt", "ce")
-from ctypes import *
-# 
+
 # print "Demo of ctypes with os.name: "+platform.os.name
 # print ""
 

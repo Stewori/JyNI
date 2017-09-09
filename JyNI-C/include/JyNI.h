@@ -665,9 +665,10 @@ typedef struct {
 	char*             type_name;
 } TypeMapEntry;
 
+// ToDo: Get rid of ExceptionMapEntry struct by directly using the exc type.
 typedef struct {
 	PyTypeObject*     exc_type;
-	jyFactoryMethod   exc_factory;
+//	jyFactoryMethod   exc_factory;
 } ExceptionMapEntry;
 
 #define JyObject_HasJyGCHead(pyObject, jyObject) \

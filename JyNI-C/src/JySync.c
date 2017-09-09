@@ -49,6 +49,7 @@ typedef jlong (*jyChecksum)(jobject);
 typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync pyInit; pyChecksum pyCheck; jyChecksum jyCheck;} SyncFunctions;
 */
 
+
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  * For every item in the tuple also a new reference is created. However the tuple
@@ -57,37 +58,23 @@ typedef struct {jy2pySync jy2py; py2jySync py2jy; jyInitSync jyInit; pyInitSync 
 PyObject* JySync_Init_PyTuple_From_JyTuple(jobject src, PyTypeObject* nonNativeSubtype)
 {
 	jint srcSize;
-	PyObject* er, * item;
+	PyObject *er, *item;
 	int i;
 	//jputs("JySync_Init_PyTuple_From_JyTuple");
 	env(NULL);
 	//jarray back = (*env)->CallObjectMethod(env, src, pyTupleGetArray);
 	srcSize = (*env)->CallIntMethod(env, src, collection_size);
-	//jputs("### creating tuple...");
 	er = PyTuple_New(srcSize);
 	(*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_setNativeHandle, src, (jlong) er);//, JNI_FALSE);
 	AS_JY_WITH_GC(er)->flags |= JY_HAS_JHANDLE_FLAG_MASK;
-	//jputs("### created tuple...");
 	//Py_XINCREF(er);
 	//if (srcSize != PyTuple_GET_SIZE(dest)) //...throw exception since tuple is immutable
 	for (i = 0; i < srcSize; ++i)
 	{
-		//jputsLong(i);
 		item = JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pySequence_pyget, i));
 		//Py_XINCREF(item);
 		//PyTuple_SetItem(er, i, item);
 		PyTuple_SET_ITEM(er, i, item);
-//		if (!item) {
-//			jputs("Add null-item to tuple:");
-//			jputsLong(er);
-//			jobject jNull = (*env)->CallObjectMethod(env, src, pyTuplePyGet, i);
-//			if (!jNull) jputs("j also null");
-//			else if ((*env)->IsSameObject(env, jNull, NULL)) jputs("j equal null");
-//			else {
-//				jputs("j not null:");
-//				JyNI_printJInfo(jNull);
-//			}
-//		}
 	}
 	//JYNI_GC_TUPLE_EXPLORE(er);
 	return er;
@@ -125,6 +112,7 @@ jobject JySync_Init_JyTuple_From_PyTuple(PyObject* src, jclass subtype)
 		}
 	}
 }
+
 
 jboolean isPreAllocatedJythonString(jobject obj, char value)//jchar value)
 {
@@ -219,48 +207,6 @@ PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNat
 	return unicode;
 }
 
-//UTF-8 variant (not C89 compliant)
-//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNativeSubtype)
-//{
-////	jputs("JySync_Init_PyUnicode_From_JyUnicode");
-//	env(NULL);
-//	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
-//	//jchar* uc = (*env)->GetStringChars(env, jstr, NULL);
-//	jstring charsetName = (*env)->NewStringUTF(env, "UTF-8");
-//	jobject stringByteArray = (*env)->CallObjectMethod(env, jstr,
-//		stringGetBytesUsingCharset, charsetName);
-//	jbyte* stringBytes = (*env)->GetByteArrayElements(env, stringByteArray, NULL);
-//	//jsize len = (*env)->GetStringLength(env, jstr);
-//	jsize len = (*env)->GetArrayLength(env, stringByteArray);
-//	//jputsLong(len);
-//	PyObject* unicode = PyUnicode_DecodeUTF8((char*) stringBytes, len, NULL);
-//	(*env)->ReleaseByteArrayElements(env, stringByteArray, stringBytes, JNI_ABORT);
-//	return unicode;
-//}
-
-//PyObject* JySync_Init_PyUnicode_From_JyUnicode(jobject src, PyTypeObject* nonNativeSubtype)
-//{
-//	jputs("JySync_Init_PyUnicode_From_JyUnicode");
-//	env(NULL);
-//	jstring jstr = (*env)->CallObjectMethod(env, src, pyUnicodeAsString);
-//	jchar* uc = (*env)->GetStringChars(env, jstr, NULL);
-//	//PyObject* unicode = PyUnicode_EncodeUTF16(
-//	int byteOrder = 1;
-//	PyObject* unicode = PyUnicode_DecodeUTF16(
-//		    (char*) uc, //const char *string,         /* UTF-16 encoded string */
-//		    (*env)->GetStringLength(env, jstr), //Py_ssize_t length,          /* size of string */
-//		    NULL, //const char *errors,         /* error handling */
-//		    &byteOrder //int *byteorder             pointer to byteorder to use
-////		                                   0=native;-1=LE,1=BE;
-//		    );
-//	(*env)->ReleaseStringChars(env, jstr, uc);
-//	jputs("result-type:");
-//	jputs(unicode->ob_type->tp_name);
-//	return unicode;
-//	//cstr_from_jstring(cstr, jstr);
-//	//return PyString_FromString(cstr);
-//}
-
 jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src, jclass subtype)
 {
 	jstring charsetName;
@@ -288,26 +234,6 @@ jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src, jclass subtype)
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newUnicode, jstr);
 }
 
-//jobject JySync_Init_JyUnicode_From_PyUnicode(PyObject* src)
-//{
-////	jputs("JySync_Init_JyUnicode_From_PyUnicode");
-//	PyObject* utf8 = PyUnicode_AsUTF8String(src);
-//	//PyUnicode_GET_SIZE(src)
-//	Py_ssize_t len = PyString_GET_SIZE(utf8);
-////	jputsLong(len);
-//	env(NULL);
-//	//jstring jstr = (*env)->NewStringUTF(env, PyString_AS_STRING(src));
-//	jstring charsetName = (*env)->NewStringUTF(env, "UTF-8");
-//	jobject strByteArray = (*env)->NewByteArray(env, len);
-//	jbyte* strBytes = (*env)->GetByteArrayElements(env, strByteArray, NULL);
-//	memcpy(strBytes, PyString_AS_STRING(utf8), len);
-//	(*env)->ReleaseByteArrayElements(env, strByteArray, strBytes, 0); //copy back and free buffer
-//	jobject jstr = (*env)->NewObject(env, stringClass,
-//		stringFromBytesAndCharsetNameConstructor, strByteArray, charsetName);
-////	if (JyNI_HasJyAttribute(AS_JY_NO_GC(src), JyAttributeStringInterned))
-////		jstr = (*env)->CallObjectMethod(env, jstr, stringIntern);
-//	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPyNewUnicode, jstr);
-//}
 
 static inline jboolean isPreAllocatedJythonInt(jobject obj, jint value)
 {
@@ -362,6 +288,7 @@ jobject JySync_Init_JyInt_From_PyInt(PyObject* src, jclass subtype)
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newIntFromLong, (jlong) PyInt_AS_LONG(src));
 }
 
+
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
  */
@@ -376,6 +303,7 @@ jobject JySync_Init_JyFloat_From_PyFloat(PyObject* src, jclass subtype)
 	env(NULL);
 	return (*env)->CallStaticObjectMethod(env, pyPyClass, pyPy_newFloatFromDouble, (jdouble) PyFloat_AS_DOUBLE(src));
 }
+
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -395,6 +323,7 @@ jobject JySync_Init_JyComplex_From_PyComplex(PyObject* src, jclass subtype)
 			PyComplex_RealAsDouble(src),
 			PyComplex_ImagAsDouble(src));
 }
+
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -434,6 +363,7 @@ jobject JySync_Init_JyLong_From_PyLong(PyObject* src, jclass subtype)
 	}
 }
 
+
 jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
 {
 	jobject jyList;
@@ -462,7 +392,6 @@ jobject JySync_Init_JyList_From_PyList(PyObject* src, jclass subtype)
 //	}
 	return (*env)->CallStaticObjectMethod(env, pyListClass, pyList_fromList, jyList);
 }
-
 
 /*
  * This function returns a NEW reference, i.e. caller must decref it in the end.
@@ -509,13 +438,11 @@ PyObject* JySync_Init_PyList_From_JyList(jobject src, PyTypeObject* nonNativeSub
 		}
 		//(*env)->CallVoidMethod(env, jyList, JyListInstallToPyList, src);
 		(*env)->SetObjectField(env, src, pyList_listField, jyList);
-	//	jputsLong(__LINE__);
 		(*env)->CallObjectMethod(env, jyList, pyObjectGCHead_setPyObject, src);
 		(*env)->DeleteLocalRef(env, jyList);
 
 		//Py_INCREF(op); //For now we make the list immortal here. Later GC will take care of it.
 		//(should now work without this)
-		//jputsLong(__LINE__);
 		return op;
 	}
 }
@@ -541,6 +468,7 @@ PyObject* JySync_Init_PySet_From_JySet(jobject src, PyTypeObject* nonNativeSubty
 	(*env)->SetObjectField(env, src, pyBaseSet__setField, jySet);
 	return (PyObject*) so;
 }
+
 
 //jobject JySync_Init_JyFrozenSet_From_PyFrozenSet(PyObject* src) not needed because of truncation
 
@@ -625,25 +553,6 @@ PyObject* JySync_Init_PyInstance_From_JyInstance(jobject src, PyTypeObject* nonN
 	return er;
 }
 
-///*
-// * This function returns a NEW reference, i.e. caller must decref it in the end.
-// */
-//PyObject* JySync_Init_Special_PyInstance(jobject src, PyTypeObject* nonNativeSubtype)
-//{
-//	env(NULL);
-//	//todo: Care for finalizer also in this case.
-//	//(*env)->CallStaticVoidMethod(env, JyNIClass, JyNI_suspendPyInstanceFinalizer, src);
-//	jobject old_cls = (*env)->CallStaticObjectMethod(env, JyNIClass,
-//						JyNI_getTypeOldStyleParent, src);
-//
-//	PyObject* er = PyInstance_NewRaw(
-//		JyNI_PyObject_FromJythonPyObject(old_cls),
-//		JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env, src, pyObjectGetDict)));
-//	return er;
-//}
-
-
-
 
 jobject JySync_Init_JyMethod_From_PyMethod(PyObject* src, jclass subtype)
 {
@@ -667,6 +576,7 @@ PyObject* JySync_Init_PyMethod_From_JyMethod(jobject src, PyTypeObject* nonNativ
 		JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env, src, pyMethod_im_classField)));
 }
 
+
 jobject JySync_Init_JyClassMethod_From_PyClassMethod(PyObject* src, jclass subtype)
 {
 	env(NULL);
@@ -680,6 +590,7 @@ PyObject* JySync_Init_PyClassMethod_From_JyClassMethod(jobject src, PyTypeObject
 	return PyClassMethod_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
 		src, pyClassMethod_callableField)));
 }
+
 
 jobject JySync_Init_JyStaticMethod_From_PyStaticMethod(PyObject* src, jclass subtype)
 {
@@ -695,6 +606,7 @@ PyObject* JySync_Init_PyStaticMethod_From_JyStaticMethod(jobject src, PyTypeObje
 		src, pyStaticMethod_callableField)));
 }
 
+
 jobject JySync_Init_JyDictProxy_From_PyDictProxy(PyObject* src, jclass subtype)
 {
 	env(NULL);
@@ -708,6 +620,7 @@ PyObject* JySync_Init_PyDictProxy_From_JyDictProxy(jobject src, PyTypeObject* no
 	return PyDictProxy_New(JyNI_PyObject_FromJythonPyObject((*env)->GetObjectField(env,
 		src, pyDictProxy_dictField)));
 }
+
 
 jobject JySync_Init_JyProperty_From_PyProperty(PyObject* src, jclass subtype)
 {
@@ -746,6 +659,7 @@ PyObject* JySync_Init_PyProperty_From_JyProperty(jobject src, PyTypeObject* nonN
 	}
 	return (PyObject *) result;
 }
+
 
 #define PyWeakref_GET_OBJECT0(ref)                          \
     (Py_REFCNT(((PyWeakReference *)(ref))->wr_object) > 0   \
@@ -792,6 +706,7 @@ PyObject* JySync_Init_PyWeakReference_From_JyWeakReference(jobject src, PyTypeOb
 	}
 }
 
+
 jobject JySync_Init_JyWeakProxy_From_PyWeakProxy(PyObject* src, jclass subtype)
 {
 	PyObject* referent = PyWeakref_GET_OBJECT0(src);
@@ -825,6 +740,7 @@ PyObject* JySync_Init_PyWeakProxy_From_JyWeakProxy(jobject src, PyTypeObject* no
 		return result;
 	}
 }
+
 
 jobject JySync_Init_JyWeakCallableProxy_From_PyWeakCallableProxy(PyObject* src, jclass subtype)
 {
@@ -860,23 +776,6 @@ PyObject* JySync_Init_PyWeakCallableProxy_From_JyWeakCallableProxy(jobject src, 
 }
 
 
-//jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subtype)
-//{
-//	PyMethodDescrObject* inst = (PyMethodDescrObject*) src;
-//	env(NULL);
-//	return NULL;
-//}
-//
-///*
-// * This function returns a NEW reference, i.e. caller must decref it in the end.
-// */
-//PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject* nonNativeSubtype)
-//{
-//	env(NULL);
-//	return NULL;
-//}
-
-
 jobject JySync_Init_JyCFunction_From_PyCFunction(PyObject* src, jclass subtype)
 {
 	env(NULL);
@@ -906,21 +805,10 @@ jobject JySync_Init_JyCFunction_From_PyCFunction(PyObject* src, jclass subtype)
 		jobject result = (*env)->NewObject(env, pyCFunctionClass, pyCFunction_Constructor,
 				(jlong) src, jtype,
 				name, func->m_ml->ml_flags & METH_NOARGS, doc);
-	//	jputs("result:");
-	//	JyNI_jprintJ(result);
-	//	if ((*env)->IsSameObject(env, result, NULL)) jputs("result is null");
-	//	JyNI_printJInfo(result);
-	//	JyNI_jprintHash(result);
 		return result;
 	}
 }
 
-
-//static PyObject* jyBuiltinCall(PyObject* self, PyObject* args)
-//{
-//	jobject jself = JyNI_JythonPyObject_FromPyObject(self);
-//	return JyNI_PyObject_Call(jself, args, NULL);
-//}
 
 static PyObject* jyBuiltinCallWithKeywords(PyObject* self, PyObject* args, PyObject* kw)
 {
@@ -932,12 +820,6 @@ static PyObject* jyBuiltinCallWithKeywords(PyObject* self, PyObject* args, PyObj
 		return JyNI_PyObject_Call(jself, args, kw);
 	}
 }
-
-//static PyObject* jyBuiltinCallNoArgs(PyObject* self)
-//{
-//	jobject jself = JyNI_JythonPyObject_FromPyObject(self);
-//	return JyNI_PyObject_Call(jself, PyTuple_New(0), NULL);
-//}
 
 PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObject* nonNativeSubtype)
 {
@@ -991,6 +873,7 @@ PyObject* JySync_Init_PyCFunction_From_JyBuiltinCallable(jobject src, PyTypeObje
 		}
 	}
 }
+
 
 jobject JySync_Init_JyMethodDescr_From_PyMethodDescr(PyObject* src, jclass subtype)
 {
@@ -1062,7 +945,9 @@ PyObject* JySync_Init_PyMethodDescr_From_JyMethodDescr(jobject src, PyTypeObject
 
 
 //jobject JySync_Init_JyCode_From_PyCode(PyObject* src) not needed because of truncation
+
 //PyObject* JySync_Init_PyCode_From_JyCode(jobject src)
+
 void JySync_PyCode_From_JyCode(jobject src, PyObject* dest)
 {
 	env();
@@ -1096,6 +981,7 @@ void JySync_PyCode_From_JyCode(jobject src, PyObject* dest)
 	}
 }
 
+
 //PyObject* JySync_Init_PyFunction_From_JyFunction(jobject src)
 void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
 {
@@ -1125,6 +1011,7 @@ void JySync_PyFunction_From_JyFunction(jobject src, PyObject* dest)
 	((PyFunctionObject*) dest)->func_name = PyString_FromString(cName);
 }
 
+
 void JySync_JyCell_From_PyCell(PyObject* src, jobject dest)
 {
 	env();
@@ -1140,6 +1027,7 @@ void JySync_PyCell_From_JyCell(jobject src, PyObject* dest)
 		(*env)->GetObjectField(env, src, pyCell_ob_refField)));
 }
 
+
 void JySync_JyFrame_From_PyFrame(PyObject* src, jobject dest)
 {
 	// we only care for lineno so far
@@ -1154,55 +1042,6 @@ void JySync_PyFrame_From_JyFrame(jobject src, PyObject* dest)
 	((PyFrameObject*) dest)->f_lineno = (*env)->GetIntField(env, src, pyFrame_f_linenoField);
 }
 
-jobject JyExc_KeyErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_KeyError);
-}
-
-jobject JyExc_SystemExitFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_SystemExit);
-}
-
-jobject JyExc_EnvironmentErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_EnvironmentError);
-}
-
-jobject JyExc_SyntaxErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_SyntaxError);
-}
-
-jobject JyExc_UnicodeErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeError);
-}
-
-#ifdef Py_USING_UNICODE
-jobject JyExc_UnicodeEncodeErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeEncodeError);
-}
-
-jobject JyExc_UnicodeDecodeErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeDecodeError);
-}
-
-jobject JyExc_UnicodeTranslateErrorFactory()
-{
-	env(NULL);
-	return (*env)->CallStaticObjectMethod(env, exceptionsClass, exceptions_UnicodeTranslateError);
-}
-#endif
 
 PyObject* JySync_Init_PyTuple_From_JyTupleForMRO(jobject src)
 {

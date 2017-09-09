@@ -1226,26 +1226,26 @@ PyImport_AddModule(const char *name)
 //	Py_XDECREF(file);
 //	return m;
 //}
-
-
-/* Helper to test for built-in module */
-
-static int
-is_builtin(char *name)
-{
-	int i;
-	for (i = 0; PyImport_Inittab[i].name != NULL; i++) {
-		if (strcmp(name, PyImport_Inittab[i].name) == 0) {
-			if (PyImport_Inittab[i].initfunc == NULL)
-				return -1;
-			else
-				return 1;
-		}
-	}
-	return 0;
-}
-
-
+//
+//
+///* Helper to test for built-in module */
+//
+//static int
+//is_builtin(char *name)
+//{
+//	int i;
+//	for (i = 0; PyImport_Inittab[i].name != NULL; i++) {
+//		if (strcmp(name, PyImport_Inittab[i].name) == 0) {
+//			if (PyImport_Inittab[i].initfunc == NULL)
+//				return -1;
+//			else
+//				return 1;
+//		}
+//	}
+//	return 0;
+//}
+//
+//
 ///* Return an importer object for a sys.path/pkg.__path__ item 'p',
 //   possibly by fetching it from the path_importer_cache dict. If it
 //   wasn't yet cached, traverse path_hooks until a hook is found

@@ -1455,12 +1455,7 @@ PyQueryValue(PyObject *self, PyObject *args)
 		retSize = 256;
 	}
 	else if (rc != ERROR_SUCCESS) {
-		// JyNI-note:
-		// Using WindowsError currently crashes the JVM.
-		// ToDo: Fix this workaround.
-		PyErr_SetString(PyExc_SystemError, "RegQueryValue");
-//		return PyErr_SetFromWindowsErrWithFunction(rc, "RegQueryValue");
-		return NULL;
+		return PyErr_SetFromWindowsErrWithFunction(rc, "RegQueryValue");
 	}
 	bufSize = retSize;
 	retBuf = (char *) PyMem_Malloc(bufSize);

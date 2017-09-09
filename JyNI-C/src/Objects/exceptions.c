@@ -63,8 +63,12 @@ static PyObject *
 BaseException_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyBaseExceptionObject *self;
+	jputs(__FUNCTION__);
+	jputs(type->tp_name);
 	//JyNI-note: This should call PyType_GenericAlloc actually:
 	//(and that's fine, since we adjusted that method to allocate space for JyObject)
+	//Note that currently all builtin exception types are fully truncated, i.e. all
+	//values must be managed on Java-side.
 	self = (PyBaseExceptionObject *)type->tp_alloc(type, 0);
 	if (!self)
 		return NULL;
@@ -804,6 +808,8 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 	int i;
 
 	env(-1);
+	jputs(__FUNCTION__);
+	jputsLong(__LINE__);
 	jdict = JyNI_JythonPyObject_FromPyObject(kwds);
 	ENTER_SubtypeLoop_Safe_ModePy(jdict, kwds, __len__)
 	dictSize = (*env)->CallIntMethod(env, jdict, JMID(__len__));
@@ -821,6 +827,8 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 			exceptions_EnvironmentError__init__, JyNI_JythonPyObject_FromPyObject((PyObject*) self), jargs, jkw);
 	if ((*env)->ExceptionCheck(env))
 	{
+		jputsLong(__LINE__);
+		(*env)->ExceptionDescribe(env);
 		(*env)->ExceptionClear(env);
 		return -1;
 	}
@@ -859,6 +867,7 @@ EnvironmentError_init(PyEnvironmentErrorObject *self, PyObject *args, PyObject *
 //		Py_DECREF(self->args);  /* replacing args */
 //		self->args = subslice;
 //	}
+	jputsLong(__LINE__);
 	return 0;
 }
 
@@ -1149,30 +1158,33 @@ MiddlingExtendsException(PyExc_EnvironmentError, OSError,
 static int
 WindowsError_clear(PyWindowsErrorObject *self)
 {
-	Py_CLEAR(self->myerrno);
-	Py_CLEAR(self->strerror);
-	Py_CLEAR(self->filename);
-	Py_CLEAR(self->winerror);
+	jputs(__FUNCTION__);
+//	Py_CLEAR(self->myerrno);
+//	Py_CLEAR(self->strerror);
+//	Py_CLEAR(self->filename);
+//	Py_CLEAR(self->winerror);
 	return BaseException_clear((PyBaseExceptionObject *)self);
 }
 
 static void
 WindowsError_dealloc(PyWindowsErrorObject *self)
 {
-	_JyNI_GC_UNTRACK(self);
-	WindowsError_clear(self);
+	jputs(__FUNCTION__);
+	//_JyNI_GC_UNTRACK(self);
+//	WindowsError_clear(self); // does nothing anyway
+	// (Remember exceptions are truncated in JyNI)
 	Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-static int
-WindowsError_traverse(PyWindowsErrorObject *self, visitproc visit, void *arg)
-{
-	Py_VISIT(self->myerrno);
-	Py_VISIT(self->strerror);
-	Py_VISIT(self->filename);
-	Py_VISIT(self->winerror);
-	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
-}
+//static int
+//WindowsError_traverse(PyWindowsErrorObject *self, visitproc visit, void *arg)
+//{
+//	Py_VISIT(self->myerrno);
+//	Py_VISIT(self->strerror);
+//	Py_VISIT(self->filename);
+//	Py_VISIT(self->winerror);
+//	return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
+//}
 
 static int
 WindowsError_init(PyWindowsErrorObject *self, PyObject *args, PyObject *kwds)
@@ -1180,30 +1192,36 @@ WindowsError_init(PyWindowsErrorObject *self, PyObject *args, PyObject *kwds)
 	PyObject *o_errcode = NULL;
 	long errcode;
 	long posix_errno;
-
+	jputs(__FUNCTION__);
+	jputsLong(__LINE__);
 	if (EnvironmentError_init((PyEnvironmentErrorObject *)self, args, kwds)
-			== -1)
+			== -1) {
+		jputsLong(__LINE__);
 		return -1;
-
+	}
+	jputsLong(__LINE__);
 	if (self->myerrno == NULL)
 		return 0;
-
+	jputsLong(__LINE__);
 	/* Set errno to the POSIX errno, and winerror to the Win32
 	   error code. */
 	errcode = PyInt_AsLong(self->myerrno);
+	jputsLong(__LINE__);
 	if (errcode == -1 && PyErr_Occurred())
 		return -1;
+	jputsLong(__LINE__);
 	posix_errno = winerror_to_errno(errcode);
-
+	jputsLong(__LINE__);
 	Py_CLEAR(self->winerror);
 	self->winerror = self->myerrno;
-
+	jputsLong(__LINE__);
 	o_errcode = PyInt_FromLong(posix_errno);
+	jputsLong(__LINE__);
 	if (!o_errcode)
 		return -1;
-
+	jputsLong(__LINE__);
 	self->myerrno = o_errcode;
-
+	jputsLong(__LINE__);
 	return 0;
 }
 
@@ -2944,22 +2962,37 @@ SimpleExtendsException(PyExc_Warning, BytesWarning,
 //	/* Sentinel */
 //	{NULL, NULL}
 //};
-//
-//#define PRE_INIT(TYPE) if (PyType_Ready(&_PyExc_ ## TYPE) < 0) \
-//	Py_FatalError("exceptions bootstrapping error.");
-//
+
+#define PRE_INIT(TYPE) if (PyType_Ready(&_PyExc_ ## TYPE) < 0) \
+	Py_FatalError("exceptions bootstrapping error.");
+
 //#define POST_INIT(TYPE) Py_INCREF(PyExc_ ## TYPE); \
 //	PyModule_AddObject(m, # TYPE, PyExc_ ## TYPE); \
 //	if (PyDict_SetItemString(bdict, # TYPE, PyExc_ ## TYPE)) \
 //		Py_FatalError("Module dictionary insertion problem.");
 //
 //
-//PyMODINIT_FUNC
-//_PyExc_Init(void)
-//{
+//On Linux:
+//>>> import exceptions
+//>>> dir(exceptions)
+//['ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException',
+// 'BufferError', 'BytesWarning', 'DeprecationWarning', 'EOFError', 'EnvironmentError',
+// 'Exception', 'FloatingPointError', 'FutureWarning', 'GeneratorExit', 'IOError',
+// 'ImportError', 'ImportWarning', 'IndentationError', 'IndexError', 'KeyError',
+// 'KeyboardInterrupt', 'LookupError', 'MemoryError', 'NameError', 'NotImplementedError',
+// 'OSError', 'OverflowError', 'PendingDeprecationWarning', 'ReferenceError',
+// 'RuntimeError', 'RuntimeWarning', 'StandardError', 'StopIteration', 'SyntaxError',
+// 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 'TypeError',
+// 'UnboundLocalError', 'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError',
+// 'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning',
+// 'ZeroDivisionError'
+
+PyMODINIT_FUNC
+_PyExc_Init(void)
+{
 //	PyObject *m, *bltinmod, *bdict;
-//
-//	PRE_INIT(BaseException)
+
+	PRE_INIT(BaseException)
 //	PRE_INIT(Exception)
 //	PRE_INIT(StandardError)
 //	PRE_INIT(TypeError)
@@ -2968,12 +3001,12 @@ SimpleExtendsException(PyExc_Warning, BytesWarning,
 //	PRE_INIT(SystemExit)
 //	PRE_INIT(KeyboardInterrupt)
 //	PRE_INIT(ImportError)
-//	PRE_INIT(EnvironmentError)
+	PRE_INIT(EnvironmentError)
 //	PRE_INIT(IOError)
-//	PRE_INIT(OSError)
-//#ifdef MS_WINDOWS
-//	PRE_INIT(WindowsError)
-//#endif
+	PRE_INIT(OSError)
+#ifdef MS_WINDOWS
+	PRE_INIT(WindowsError)
+#endif
 //#ifdef __VMS
 //	PRE_INIT(VMSError)
 //#endif
@@ -3020,6 +3053,13 @@ SimpleExtendsException(PyExc_Warning, BytesWarning,
 //		(PyObject *)NULL, PYTHON_API_VERSION);
 //	if (m == NULL)
 //		return;
+//
+//	In JyNI:
+//	env(NULL);
+//	jobject m = (*env)->CallStaticObjectMethod(env, JyNIClass, JyNI_JyNI_GetModule, (*env)->NewStringUTF(env, name));
+//	PyModule_AddObjectJy(jobject m, const char *name, jobject o);
+//	...
+//
 //
 //	bltinmod = PyImport_ImportModule("__builtin__");
 //	if (bltinmod == NULL)
@@ -3112,7 +3152,7 @@ SimpleExtendsException(PyExc_Warning, BytesWarning,
 //		Py_DECREF(args_tuple);
 //	}
 //	Py_DECREF(bltinmod);
-//}
+}
 
 void
 _PyExc_Fini(void)

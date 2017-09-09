@@ -285,6 +285,8 @@ methoddescr_call(PyMethodDescrObject *descr, PyObject *args, PyObject *kwds)
 		self = PyTuple_GET_ITEM(args, 0);
 		if (!_PyObject_RealIsSubclass((PyObject *)Py_TYPE(self),
 									  (PyObject *)(descr->d_type))) {
+			jputs(__FUNCTION__);
+			jputsLong(__LINE__);
 			PyErr_Format(PyExc_TypeError,
 						 "descriptor '%.200s' "
 						 "requires a '%.100s' object "
@@ -336,6 +338,8 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 //	printf("%d\n", __LINE__);
 	self = PyTuple_GET_ITEM(args, 0);
 	if (!PyType_Check(self)) {
+		jputs(__FUNCTION__);
+		jputsLong(__LINE__);
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%s' requires a type "
 					 "but received a '%.100s'",
@@ -352,6 +356,8 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
 		return NULL;
 	}
 	if (!PyType_IsSubtype((PyTypeObject *)self, descr->d_type)) {
+		jputs(__FUNCTION__);
+		jputsLong(__LINE__);
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%s' "
 					 "requires a subtype of '%.100s' "
@@ -403,6 +409,8 @@ wrapperdescr_call(PyWrapperDescrObject *descr, PyObject *args, PyObject *kwds)
 //		jputs(Py_TYPE(self)->tp_name);
 //		jputs("is not a subclass of");
 //		jputs(descr->d_type->tp_name);
+		jputs(__FUNCTION__);
+		jputsLong(__LINE__);
 		PyErr_Format(PyExc_TypeError,
 					 "descriptor '%.200s' "
 					 "requires a '%.100s' object "

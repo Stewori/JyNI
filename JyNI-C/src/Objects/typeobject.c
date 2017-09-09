@@ -761,10 +761,12 @@ type_repr(PyTypeObject *type)
 static PyObject *
 type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-	jobject delegate = JyNI_GetJythonDelegate(type);
+	jobject delegate;
+//	jputs(__FUNCTION__);
+//	jputs(type->tp_name);
+	delegate = JyNI_GetJythonDelegate(type);
 	if (delegate) {
-//		puts(__FUNCTION__);
-//		puts("delegate");
+//		jputs("delegate");
 //		putsPy(type);
 		return JyNI_PyObject_Call(delegate, args, kwds);
 	} else {
@@ -772,6 +774,7 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	//	if (dbg) puts(__FUNCTION__);
 		PyObject *obj;
 		if (type->tp_new == NULL) {
+			jputsLong(__LINE__);
 			PyErr_Format(PyExc_TypeError,
 						 "cannot create '%.100s' instances (raised in type_call)",
 						 type->tp_name);
@@ -792,11 +795,13 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 			if (!PyType_IsSubtype(obj->ob_type, type)) {
 				return obj;
 			}
+//			jputs(obj->ob_type->tp_name);
+//			jputs(type->tp_name);
 			type = obj->ob_type;
-
 			if (PyType_HasFeature(type, Py_TPFLAGS_HAVE_CLASS) &&
 				type->tp_init != NULL &&
 				type->tp_init(obj, args, kwds) < 0) {
+//				jputs(type->tp_name);
 				Py_DECREF(obj);
 				obj = NULL;
 			}

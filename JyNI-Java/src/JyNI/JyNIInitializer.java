@@ -49,7 +49,8 @@ import org.python.modules._weakref.GlobalRef;
 
 public class JyNIInitializer implements JythonInitializer {
 
-	public static boolean initialized = false;
+	protected static boolean initialized = false;
+	protected static boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 	static JyNIImporter importer;
 
 	static class SentinelFinalizer implements JyGCHead {
@@ -106,6 +107,9 @@ public class JyNIInitializer implements JythonInitializer {
 		initState.__setattr__(JyNI.DLOPENFLAGS_NAME, Py.newInteger(JyNI.RTLD_JyNI_DEFAULT));
 		initState.__setattr__("setdlopenflags".intern(), Py.newJavaFunc(JyNI.class, "sys_setdlopenflags"));
 		initState.__setattr__("getdlopenflags".intern(), Py.newJavaFunc(JyNI.class, "sys_getdlopenflags"));
+		if (isWindows) {
+			WindowsException.exceptionsAddWindowsError();
+		}
 
 		//Set up Jython hooks for JyNI:
 		FinalizeTrigger.factory = new JyNIFinalizeTriggerFactory();

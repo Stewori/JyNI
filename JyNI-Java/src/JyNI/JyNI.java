@@ -900,6 +900,12 @@ public class JyNI {
 		int pin = name.indexOf('.');
 		if (pin != -1) rawName = rawName.substring(pin+1);
 		//System.out.println("rawName: "+rawName);
+		if (JyNIInitializer.isWindows && rawName.equals("WindowsError")) {
+			if (WindowsException.WindowsError == null) {
+				System.err.println("JyNI-Warning: Could not obtain WindowsError: "+name);
+			}
+			return WindowsException.WindowsError;
+		}
 		try {
 			Field exc = Py.class.getField(rawName);
 			PyObject er = (PyObject) exc.get(null);
@@ -907,9 +913,10 @@ public class JyNI {
 //			System.out.println("class: "+er.getClass());
 			return er;
 		} catch (NoSuchFieldException nsfe) {
+			System.err.println("JyNI-Warning: Could not obtain Exception (1): "+name);
 			return null;
 		} catch (Exception e) {
-//			System.err.println("JyNI-Warning: Could not obtain Exception: "+name);
+			System.err.println("JyNI-Warning: Could not obtain Exception (2): "+name);
 //			System.err.println("  Reason: "+e);
 			return null;
 		}

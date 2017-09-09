@@ -662,16 +662,16 @@ jmethodID imp_importName;
 jmethodID imp_reload;
 
 jclass exceptionsClass;
-jmethodID exceptions_KeyError;
+//jmethodID exceptions_KeyError;
 jmethodID exceptions_KeyError__str__;
-jmethodID exceptions_EnvironmentError;
+//jmethodID exceptions_EnvironmentError;
 jmethodID exceptions_EnvironmentError__init__;
 jmethodID exceptions_EnvironmentError__str__;
 jmethodID exceptions_EnvironmentError__reduce__;
-jmethodID exceptions_SyntaxError;
+//jmethodID exceptions_SyntaxError;
 jmethodID exceptions_SyntaxError__init__;
 jmethodID exceptions_SyntaxError__str__;
-jmethodID exceptions_SystemExit;
+//jmethodID exceptions_SystemExit;
 jmethodID exceptions_SystemExit__init__;
 
 jmethodID exceptions_UnicodeError;
@@ -1317,22 +1317,22 @@ inline jint initJythonObjects(JNIEnv *env)
 	JNI_METH_STATIC(imp, reload, pyObject, pyModule)
 
 	JNI_CLASS(exceptions)
-	JNI_METH_STATIC(exceptions, KeyError, pyObject)
+//	JNI_METH_STATIC(exceptions, KeyError, pyObject)
 	JNI_METH_STATIC(exceptions, KeyError__str__, pyObject,
 			pyObject, pyObject array, string array)
-	JNI_METH_STATIC(exceptions, EnvironmentError, pyObject)
+//	JNI_METH_STATIC(exceptions, EnvironmentError, pyObject)
 	JNI_METH_STATIC(exceptions, EnvironmentError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, EnvironmentError__str__, pyObject,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, EnvironmentError__reduce__, pyObject,
 			pyObject, pyObject array, string array)
-	JNI_METH_STATIC(exceptions, SyntaxError, pyObject)
+//	JNI_METH_STATIC(exceptions, SyntaxError, pyObject)
 	JNI_METH_STATIC(exceptions, SyntaxError__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, SyntaxError__str__, pyString,
 			pyObject, pyObject array, string array)
-	JNI_METH_STATIC(exceptions, SystemExit, pyObject)
+//	JNI_METH_STATIC(exceptions, SystemExit, pyObject)
 	JNI_METH_STATIC(exceptions, SystemExit__init__, void,
 			pyObject, pyObject array, string array)
 	JNI_METH_STATIC(exceptions, UnicodeError, pyObject)
@@ -1429,6 +1429,7 @@ jint JyNI_init(JavaVM *jvm)
 	_PySys_Init();
 	PyEval_InitThreads();
 	_PyInt_Init();
+	_PyExc_Init();
 	PyType_Ready(&PyBool_Type);
 
 	return JNI_VERSION_1_2;

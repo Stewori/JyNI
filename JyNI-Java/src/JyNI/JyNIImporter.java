@@ -74,8 +74,9 @@ public class JyNIImporter extends PyObject {
 //			"cStringIO", "_csv", "_functools", "itertools", "_json",
 //			"math", "operator", "_random", "time", "bz2",
 			);
-	
-	public static List<String> builtinlist = System.getProperty("os.name").startsWith("Windows") ?
+
+	/* Keep this in sync with config.c! */
+	public static List<String> builtinlist = JyNIInitializer.isWindows ?
 			Arrays.asList("msvcrt", "_winreg", "mmap", "datetime") : // Windows case
 			Arrays.asList("datetime"); // POSIX case
 

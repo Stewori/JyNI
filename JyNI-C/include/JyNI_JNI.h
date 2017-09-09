@@ -700,16 +700,16 @@ extern jfieldID threadStateCurExcInfo_curexc_value;
 extern jfieldID threadStateCurExcInfo_curexc_traceback;
 
 extern jclass exceptionsClass;
-extern jmethodID exceptions_KeyError;
+//extern jmethodID exceptions_KeyError;
 extern jmethodID exceptions_KeyError__str__;
-extern jmethodID exceptions_EnvironmentError;
+//extern jmethodID exceptions_EnvironmentError;
 extern jmethodID exceptions_EnvironmentError__init__;
 extern jmethodID exceptions_EnvironmentError__str__;
 extern jmethodID exceptions_EnvironmentError__reduce__;
-extern jmethodID exceptions_SyntaxError;
+//extern jmethodID exceptions_SyntaxError;
 extern jmethodID exceptions_SyntaxError__init__;
 extern jmethodID exceptions_SyntaxError__str__;
-extern jmethodID exceptions_SystemExit;
+//extern jmethodID exceptions_SystemExit;
 extern jmethodID exceptions_SystemExit__init__;
 
 extern jmethodID exceptions_UnicodeError;
