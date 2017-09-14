@@ -78,7 +78,8 @@ LIBS64 = $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/libcmt.l
 LIBS_CTYPES = $(VC_Python)/WinSDK/Lib/x64/ole32.lib $(VC_Python)/WinSDK/Lib/x64/OLEAUT32.lib
 
 
-CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE /MD
+CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE /MD /nologo /Ox /GS- /DNDEBUG
+
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
 JFLAGS= -cp $(JYTHON);$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
 
@@ -116,9 +117,10 @@ $(JYTHON):
 
 libJyNI: $(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
 	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll/python27.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
-	$(MT) -manifest JyNI-C/python27.dll.manifest -outputresource:$(OUTPUTDIR)/JyNI.dll/python27.dll;2
+	$(MT) -nologo -manifest JyNI-C/python27.dll.manifest -outputresource:$(OUTPUTDIR)/JyNI.dll/python27.dll;2
 	del $(OUTPUTDIR)\JyNI.dll\python27.lib
 	del $(OUTPUTDIR)\JyNI.dll\python27.exp
+	del $(OUTPUTDIR)\JyNI.dll\python27.dll.manifest
 # We delete JyNI.dll\python27.lib here, because in any case one should link against original python27.lib.
 # So this is a useless file and we avoid confusion and invalid linking.
 
@@ -154,7 +156,6 @@ clean:
 	del JyNI-C\src\Modules\*.obj
 	del JyNI-C\src\PC\*.obj
 	RD /S /Q $(JYNIBIN)
-# del JyNI-Loader\JyNILoader.obj
 
 #.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
 .PHONY: all

@@ -267,7 +267,7 @@ PyAPI_FUNC(PyObject *) PyErr_NewExceptionWithDoc(
 PyAPI_FUNC(void) PyErr_WriteUnraisable(PyObject *);
 
 /* In sigcheck.c or signalmodule.c */
-//PyAPI_FUNC(int) PyErr_CheckSignals(void);
+PyAPI_FUNC(int) PyErr_CheckSignals(void);
 PyAPI_FUNC(void) PyErr_SetInterrupt(void);
 
 /* In signalmodule.c */

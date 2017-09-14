@@ -855,6 +855,13 @@ jint    JyNI_PyMapping_Length(jlong o, jlong tstate);
 //jobject JyNI_PyMapping_Subscript(jlong o1, jobject o2, jlong tstate);
 //jint    JyNI_PyMapping_AssSubscript(jlong o1, jobject o2, jobject o3, jlong tstate);
 
+// Utility call-ins:
+jint JyNI_putenv(JNIEnv *env, jstring value);
+
+/* implemented in _codecsmodule.c */
+jobject JyNI_mbcs_encode(jobject input, jobject errors, jlong tstate);
+jobject JyNI_mbcs_decode(jobject input, jobject errors, jobject final, jlong tstate);
+
 
 #define builtinTypeCount 42
 extern TypeMapEntry builtinTypes[builtinTypeCount];

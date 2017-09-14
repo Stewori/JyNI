@@ -732,54 +732,59 @@ PyBuffer_IsContiguous(Py_buffer *view, char fort)
 //	return;
 //}
 
+/*
+ * Until we implement real buffer protocol support for JyNI this function
+ * does not work with truncated types. However e.g. PyString is a common use
+ * case that is already workable.
+ */
 int
 PyBuffer_FillInfo(Py_buffer *view, PyObject *obj, void *buf, Py_ssize_t len,
 			  int readonly, int flags)
 {
-	jputs("JyNI warning: PyBuffer_FillInfo not yet implemented.");
-	return -1;
-}
-//	if (view == NULL) return 0;
-//	if (((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) &&
-//		(readonly == 1)) {
-//		PyErr_SetString(PyExc_BufferError,
-//						"Object is not writable.");
-//		return -1;
-//	}
-//
-//	view->obj = obj;
-//	if (obj)
-//		Py_INCREF(obj);
-//	view->buf = buf;
-//	view->len = len;
-//	view->readonly = readonly;
-//	view->itemsize = 1;
-//	view->format = NULL;
-//	if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT)
-//		view->format = "B";
-//	view->ndim = 1;
-//	view->shape = NULL;
-//	if ((flags & PyBUF_ND) == PyBUF_ND)
-//		view->shape = &(view->len);
-//	view->strides = NULL;
-//	if ((flags & PyBUF_STRIDES) == PyBUF_STRIDES)
-//		view->strides = &(view->itemsize);
-//	view->suboffsets = NULL;
-//	view->internal = NULL;
-//	return 0;
-//}
+	if (view == NULL) return 0;
+	if (((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) &&
+		(readonly == 1)) {
+		PyErr_SetString(PyExc_BufferError,
+						"Object is not writable.");
+		return -1;
+	}
 
+	view->obj = obj;
+	if (obj)
+		Py_INCREF(obj);
+	view->buf = buf;
+	view->len = len;
+	view->readonly = readonly;
+	view->itemsize = 1;
+	view->format = NULL;
+	if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT)
+		view->format = "B";
+	view->ndim = 1;
+	view->shape = NULL;
+	if ((flags & PyBUF_ND) == PyBUF_ND)
+		view->shape = &(view->len);
+	view->strides = NULL;
+	if ((flags & PyBUF_STRIDES) == PyBUF_STRIDES)
+		view->strides = &(view->itemsize);
+	view->suboffsets = NULL;
+	view->internal = NULL;
+	return 0;
+}
+
+/*
+ * Until we implement real buffer protocol support for JyNI this function
+ * does not work with truncated types. However e.g. PyString is a common use
+ * case that is already workable.
+ */
 void
 PyBuffer_Release(Py_buffer *view)
 {
-	jputs("JyNI warning: PyBuffer_Release not yet implemented.");
+	PyObject *obj = view->obj;
+	if (obj && Py_TYPE(obj)->tp_as_buffer && Py_TYPE(obj)->tp_as_buffer->bf_releasebuffer)
+		Py_TYPE(obj)->tp_as_buffer->bf_releasebuffer(obj, view);
+	Py_XDECREF(obj);
+	view->obj = NULL;
 }
-//	PyObject *obj = view->obj;
-//	if (obj && Py_TYPE(obj)->tp_as_buffer && Py_TYPE(obj)->tp_as_buffer->bf_releasebuffer)
-//		Py_TYPE(obj)->tp_as_buffer->bf_releasebuffer(obj, view);
-//	Py_XDECREF(obj);
-//	view->obj = NULL;
-//}
 
 PyObject *
 PyObject_Format(PyObject* obj, PyObject *format_spec)

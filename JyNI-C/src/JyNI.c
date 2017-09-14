@@ -2518,3 +2518,23 @@ PyMemoryView_FromObject(PyObject *base)
 //    Py_INCREF(base);
 //    return (PyObject *)mview;
 }
+
+#ifdef HAVE_PUTENV
+
+jint JyNI_putenv(JNIEnv *env, jstring value)
+{
+	const char* utf_string = (*env)->GetStringUTFChars(env, value, ((void *)0));
+	jint res = putenv(utf_string);
+	(*env)->ReleaseStringUTFChars(env, value, utf_string);
+	return res;
+}
+
+#else  /* HAVE_PUTENV */
+
+jint JyNI_putenv(JNIEnv *env, jstring value)
+{
+	jputs("JyNI error: putenv is not available on this platform.");
+	return -1;
+}
+
+#endif /* HAVE_PUTENV */

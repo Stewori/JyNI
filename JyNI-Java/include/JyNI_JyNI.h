@@ -783,6 +783,30 @@ JNIEXPORT jlongArray JNICALL Java_JyNI_JyNI_JyGC_1nativeTraverse
 JNIEXPORT void JNICALL Java_JyNI_JyNI_releaseWeakReferent
   (JNIEnv *, jclass, jlong, jlong);
 
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_putenv
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1putenv
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_mbcs_encode
+ * Signature: (Lorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1mbcs_1encode
+  (JNIEnv *, jclass, jobject, jobject, jlong);
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_mbcs_decode
+ * Signature: (Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1mbcs_1decode
+  (JNIEnv *, jclass, jobject, jobject, jobject, jlong);
+
 #ifdef __cplusplus
 }
 #endif

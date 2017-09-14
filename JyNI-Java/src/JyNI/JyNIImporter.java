@@ -33,6 +33,7 @@ package JyNI;
 import org.python.core.Py;
 import org.python.core.PyModule;
 import org.python.core.PyObject;
+import org.python.core.PyShadowString;
 import org.python.core.PySystemState;
 import org.python.core.Untraversable;
 import org.python.core.imp;
@@ -137,7 +138,7 @@ public class JyNIImporter extends PyObject {
 	 *
 	 * @param name the fully qualified name of the module
 	 * @return a loader instance if this importer can load the module, None
-	 *		 otherwise
+	 *         otherwise
 	 */
 	public PyObject find_module(String name) {
 		return find_module(name, Py.None);
@@ -149,10 +150,25 @@ public class JyNIImporter extends PyObject {
 	 * @param name the fully qualified name of the module
 	 * @param path if installed on the meta-path None or a module path
 	 * @return a loader instance if this importer can load the module, None
-	 *		 otherwise
+	 *         otherwise
 	 */
 	public PyObject find_module(String name, PyObject path) {
-//		System.out.print("JyNI find... "+name);
+		if (JyNIInitializer.isWindows && name.equals("Tkinter")) {
+			/* Here we try some dirty hacks that allow CPython's FixTk script to work
+			 * properly on Jython. If everything goes well, it is able to find and use
+			 * Tcl/Tk bundled/installed with CPython. */
+			try {
+				PyModule config_util = (PyModule) imp.load("config_util");
+				PyModule python_home_winreg = (PyModule) imp.load("python_home_winreg");
+				PyObject pyHome = python_home_winreg.__findattr__("python_home").__call__();
+				PySystemState.prefix = new PyShadowString(PySystemState.prefix, pyHome.toString());
+				((PyShadowString) PySystemState.prefix).addTarget("FixTk.*", null);
+				config_util.__findattr__("_monkeypatch_os_path_for_Tk").__call__(pyHome);
+			} catch (Exception exc) {
+				System.err.println("Error while preparing for Tk: "+exc+
+						"\nTkinter might require manual configuration.");
+			}
+		}
 		if (dynModules.containsKey(name)) {/*System.out.println(" JyNI cache");*/ return this;}
 		if (builtinlist.contains(name)) {
 			dynModules.put(name, new JyNIModuleInfo(name, null, null));

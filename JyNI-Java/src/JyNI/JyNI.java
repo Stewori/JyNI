@@ -367,6 +367,21 @@ public class JyNI {
 	protected static native void releaseWeakReferent(long handle, long tstate);
 	//public static native JyGCHead JyGC_lookupGCHead(long handle);
 
+	/* Utility stuff */
+	public static native int JyNI_putenv(String value);
+	public static native PyObject JyNI_mbcs_encode(PyObject input, PyObject errors, long tstate);
+	public static native PyObject JyNI_mbcs_decode(PyObject input, PyObject errors, PyObject fnl, long tstate);
+
+	public static PyObject mbcs_encode(PyObject input, PyObject errors) {
+		return JyNI_mbcs_encode(input, errors,
+				JyTState.prepareNativeThreadState(Py.getThreadState()));
+	}
+
+	public static PyObject mbcs_decode(PyObject input, PyObject errors, PyObject fnl) {
+		return JyNI_mbcs_decode(input, errors, fnl,
+				JyTState.prepareNativeThreadState(Py.getThreadState()));
+	}
+
 	public static PyObject getPyObjectByName(String name)
 	{
 		//todo: Check, whether this does what it is supposed to
@@ -1231,6 +1246,26 @@ public class JyNI {
 		// Not considering cygwin for now...
 		if (osname.startsWith("Windows")) return "win32";
 		return osname.replaceAll("[\\s/]", "").toLowerCase();
+	}
+
+	/**
+	 * Implements a true putenv by using the native C function.
+	 * Entries submitted via this function will be added to the
+	 * system's environment set for the current user and process.
+	 *
+	 * This is needed e.g. for Tkinter to configure the location
+	 * of TCL, TK and TIX on Windows, because the backend queries
+	 * the corresponding environment variables (TCL_LIBRARY,
+	 * TK_LIBRARY, TIX_LIBRARY) from the system rather than by
+	 * looking into os.environ. JyNI monkeypatches os.environ to
+	 * take this putenv implementation into account.
+	 */
+	public static int putenv(CharSequence key, CharSequence value) {
+		StringBuilder sb = new StringBuilder(key.length()+value.length()+1);
+		sb.append(key);
+		sb.append('=');
+		sb.append(value);
+		return JyNI_putenv(sb.toString());
 	}
 
 	/**

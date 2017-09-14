@@ -30,11 +30,13 @@
 @author: Stefan Richthofer
 '''
 
-import sys
+import sys, os
 
 #Include native Tkinter:
-sys.path.append('/usr/lib/python2.7/lib-dynload')
-sys.path.append('/usr/lib/python2.7/lib-tk')
+if os.name == 'java':
+	import config_util
+	config_util.autoconfig_dynload_path()
+	config_util.autoconfig_lib_tk_path()
 
 from Tkinter import Tk, StringVar, Label, Entry, Button
 

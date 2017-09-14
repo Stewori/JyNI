@@ -1156,3 +1156,36 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PyMapping_1Length
 //{
 //	return JyNI_PyMapping_AssSubscript(o1, o2, o3, tstate);
 //}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_putenv
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1putenv
+  (JNIEnv *env, jclass cls, jstring value)
+{
+	return JyNI_putenv(env, value);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_mbcs_encode
+ * Signature: (Lorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1mbcs_1encode
+  (JNIEnv *env, jclass cls, jobject input, jobject errors, jlong tstate)
+{
+	return JyNI_mbcs_encode(input, errors, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_mbcs_decode
+ * Signature: (Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1mbcs_1decode
+  (JNIEnv *env, jclass cls, jobject input, jobject errors, jobject final, jlong tstate)
+{
+	return JyNI_mbcs_decode(input, errors, final, tstate);
+}

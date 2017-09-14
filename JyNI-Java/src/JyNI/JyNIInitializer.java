@@ -102,6 +102,7 @@ public class JyNIInitializer implements JythonInitializer {
 		// and thus all subsequently created PySystemStates too.
 		// That's why we needn't do it in PySystemStateJyNI. 
 		((PyShadowString) initState.platform).addTarget("OpenGL.*", null);
+		((PyShadowString) initState.platform).addTarget("Tkinter.*", null);
 
 		//add support for sys.setdlopenflags and sys.getdlopenflags as available in common CPython:
 		initState.__setattr__(JyNI.DLOPENFLAGS_NAME, Py.newInteger(JyNI.RTLD_JyNI_DEFAULT));
@@ -118,6 +119,16 @@ public class JyNIInitializer implements JythonInitializer {
 		gc.addJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS);
 		gc.registerPreFinalizationProcess(new Runnable(){
 				public void run() {JyNI.preProcessCStubGCCycle();}});
+
+		/* Here we patch os.environ to use a proper putenv implementation.
+		 * This gets it close to CPython semantics. */
+		PyModule config_util = (PyModule) imp.load("config_util");
+		config_util.__findattr__("_patch_os_environ").__call__();
+
+		if (isWindows) {
+			/* This enables support for mbcs encoding if we run on Windows. */
+			config_util.__findattr__("_register_mbcs_encoding").__call__();
+		}
 //		System.out.println("Init JyNI done");
 		initialized = true;
 	}

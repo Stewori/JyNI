@@ -114,8 +114,7 @@ void (*JyNI_releaseWeakReferent)(JNIEnv*, jclass, jlong, jlong);
 
 //void JyNI_unload(JavaVM *jvm);
 
-
-//PyNumber-methods:
+//PyNumber methods:
 jobject  (*JyNI_PyNumber_Add)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_Subtract)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_Multiply)(jlong, jobject, jlong);
@@ -156,7 +155,7 @@ jobject  (*JyNI_PyNumber_InPlaceFloorDivide)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_InPlaceTrueDivide)(jlong, jobject, jlong);
 jobject  (*JyNI_PyNumber_Index)(jlong, jlong);
 
-// PySequence-methods:
+// PySequence methods:
 jint    (*JyNI_PySequence_Length)(jlong, jlong);
 jobject (*JyNI_PySequence_Concat)(jlong, jobject, jlong);
 jobject (*JyNI_PySequence_Repeat)(jlong, jint, jlong);
@@ -168,10 +167,15 @@ jint    (*JyNI_PySequence_Contains)(jlong, jobject, jlong);
 jobject (*JyNI_PySequence_InPlaceConcat)(jlong, jobject, jlong);
 jobject (*JyNI_PySequence_InPlaceRepeat)(jlong, jint, jlong);
 
-// PyMapping-methods:
+// PyMapping methods:
 jint    (*JyNI_PyMapping_Length)(jlong, jlong);
 //jobject (*JyNI_PyMapping_Subscript)(jlong, jobject, jlong);
 //jint    (*JyNI_PyMapping_AssSubscript)(jlong, jobject, jobject, jlong);
+
+// Utility methods:
+jint (*JyNI_putenv)(JNIEnv*, jstring);
+jobject (*JyNI_mbcs_encode)(jobject, jobject, jlong);
+jobject (*JyNI_mbcs_decode)(jobject, jobject, jobject, jlong);
 
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
@@ -335,6 +339,9 @@ JNIEXPORT void JNICALL Java_JyNI_JyNI_initJyNI
 //	*(void **) (&JyNI_PyMapping_Subscript) = dlsym(JyNIHandle, "JyNI_PyMapping_Subscript");
 //	*(void **) (&JyNI_PyMapping_AssSubscript) = dlsym(JyNIHandle, "JyNI_PyMapping_AssSubscript");
 
+	*(void **) (&JyNI_putenv) = dlsym(JyNIHandle, "JyNI_putenv");
+	*(void **) (&JyNI_mbcs_encode) = dlsym(JyNIHandle, "JyNI_mbcs_encode");
+	*(void **) (&JyNI_mbcs_decode) = dlsym(JyNIHandle, "JyNI_mbcs_decode");
 
 	jint result = (*JyNIInit)(java);
 	if (result != JNI_VERSION_1_2) puts("Init-result indicates error!");
@@ -1407,3 +1414,37 @@ JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1PyMapping_1Length
 //{
 //	return (*JyNI_PyMapping_AssSubscript)(o1, o2, o3, tstate);
 //}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_putenv
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_JyNI_JyNI_JyNI_1putenv
+  (JNIEnv *env, jclass cls, jstring value)
+{
+	return (*JyNI_putenv)(env, value);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_mbcs_encode
+ * Signature: (Lorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1mbcs_1encode
+  (JNIEnv *env, jclass cls, jobject input, jobject errors, jlong tstate)
+{
+	return (*JyNI_mbcs_encode)(input, errors, tstate);
+}
+
+/*
+ * Class:     JyNI_JyNI
+ * Method:    JyNI_mbcs_decode
+ * Signature: (Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_JyNI_JyNI_JyNI_1mbcs_1decode
+  (JNIEnv *env, jclass cls, jobject input, jobject errors, jobject final, jlong tstate)
+{
+	return (*JyNI_mbcs_decode)(input, errors, final, tstate);
+}
+

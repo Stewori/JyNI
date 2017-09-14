@@ -75,6 +75,7 @@ import DemoExtension
 import unittest
 import time
 import weakref
+# ToDo: If _winreg was imported before this point, one test will fail. Why...?
 
 from JyNI import JyNI
 from JyNI import JyReferenceMonitor as monitor
