@@ -1412,10 +1412,6 @@ jint JyNI_init(JavaVM *jvm)
 	_PyExc_Init();
 	PyType_Ready(&PyBool_Type);
 
-//	_putenv("TCL_LIBRARY=C:\\Program Files\\Python\\Python2.7.13\\tcl\\tcl8.5");
-//	_putenv("TK_LIBRARY=C:\\Program Files\\Python\\Python2.7.13\\tcl\\tk8.5");
-//	_putenv("TIX_LIBRARY=C:\\Program Files\\Python\\Python2.7.13\\tcl\\tix8.4.3");
-
 	return JNI_VERSION_1_2;
 }
 

@@ -372,15 +372,6 @@ public class JyNI {
 	public static native PyObject JyNI_mbcs_encode(PyObject input, PyObject errors, long tstate);
 	public static native PyObject JyNI_mbcs_decode(PyObject input, PyObject errors, PyObject fnl, long tstate);
 
-	public static PyObject mbcs_encode(PyObject input, PyObject errors) {
-		return JyNI_mbcs_encode(input, errors,
-				JyTState.prepareNativeThreadState(Py.getThreadState()));
-	}
-
-	public static PyObject mbcs_decode(PyObject input, PyObject errors, PyObject fnl) {
-		return JyNI_mbcs_decode(input, errors, fnl,
-				JyTState.prepareNativeThreadState(Py.getThreadState()));
-	}
 
 	public static PyObject getPyObjectByName(String name)
 	{
@@ -1268,6 +1259,24 @@ public class JyNI {
 		return JyNI_putenv(sb.toString());
 	}
 
+	public static PyObject mbcs_encode(PyObject input, PyObject errors) {
+		return JyNI_mbcs_encode(input, errors,
+				JyTState.prepareNativeThreadState(Py.getThreadState()));
+	}
+
+	public static PyObject mbcs_decode(PyObject input, PyObject errors, PyObject fnl) {
+		return JyNI_mbcs_decode(input, errors, fnl,
+				JyTState.prepareNativeThreadState(Py.getThreadState()));
+	}
+
+	public static int PyFile_fd(PyObject fileo) {
+		PyFile file = (PyFile)fileo;
+		Object fileno = file.fileno().__tojava__(FileIO.class);
+		if (!(fileno instanceof FileIO))
+			System.out.println("Warning: JyNI will crash now because fileno is no FileIO");
+		return ((PyInteger)((FileIO)fileno).__int__()).getValue();
+	}
+
 	/**
 	 * a variant of the builtin type() constructor producing a type
 	 * backed by old-style class.
@@ -1745,14 +1754,5 @@ public class JyNI {
 			((TraversableGCHead) obj).printLinks(System.out);
 		} else System.out.println("not a TraversableGCHead");
 		System.out.println();
-	}
-
-
-	public static int PyFile_fd(PyObject fileo) {
-		PyFile file = (PyFile)fileo;
-		Object fileno = file.fileno().__tojava__(FileIO.class);
-		if (!(fileno instanceof FileIO))
-			System.out.println("Warning: JyNI will crash now because fileno is no FileIO");
-		return ((PyInteger)((FileIO)fileno).__int__()).getValue();
 	}
 }
