@@ -104,11 +104,10 @@ extern "C" {
 #endif
 
 
-//Providing the following method via JyNI would be very hard or impossible.
-//However, we could create a FILE-Pointer to the same file and also adjust
-//io mode and seek-position to the values of the given PyFile.
-//But this may lead to conflicts in systems not supporting multiple file
-//access (i.e. windows) and would not stand equality-checks via pointer-wise "==".
+/*
+ * JyNI note:
+ * See https://github.com/Stewori/JyNI/issues/11
+ */
 FILE *
 PyFile_AsFile(PyObject *f)
 {
