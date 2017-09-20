@@ -105,10 +105,10 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 endif
 
 libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
-	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
+	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.dylib
 
 libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.o
-	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
+	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.dylib
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
