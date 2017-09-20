@@ -74,7 +74,7 @@ JyNI enables support for the `mbcs` encoding in Jython.
 
 Parse and build functions `PyArg_ParseTuple()`, `PyArg_ParseTupleAndKeywords()`,
 `PyArg_Parse()`, `Py_BuildValue` and related work with format strings corresponding
-to built-in types that are already supported. Alternatively supported built-in types
+to built-in types that are already supported. Alternatively, supported built-in types
 can be accessed via their C API functions.
 
 
@@ -125,13 +125,14 @@ If you want to built JyNI yourself, skip to section [4. Building and testing](#4
 * Download `JyNI.jar` and the binaries for your system.
 
 * Make the binary files available to your JVM.
-  - On Linux, OS-X and other systems that use `libLD` to load binaries, place
+  - On Linux, OS-X and other systems using `libLD` to load binaries, place
     `libJyNI.so` and `libJyNI-loader.so` somewhere on your `LD_LIBRARY_PATH` or
     tell the JVM via `-Djava.library.path` where to find them or place them on the
     Java classpath.
-  - On Windows `JyNI.dll` will be a folder containing `python27.dll`. This has
-    technical reasons explained on the [JyNI GSoC-2017 blog](http://gsoc2017-jyni.blogspot.de/2017/08/major-milestone-achieved-jyni-builds.html).
-    Treat the folder `JyNI.dll` as if it were the binary dll file.
+  - On Windows, `JyNI.dll` will be a folder containing `python27.dll`.
+    This is due to technical reasons explained on the
+    [JyNI GSoC-2017 blog](http://gsoc2017-jyni.blogspot.de/2017/08/major-milestone-achieved-jyni-builds.html).
+    Treat the folder `JyNI.dll` as if it were the binary dll file itself.
     It (i.e. its parent directory) must be available on the Java classpath.
 
 * Have `JyNI.jar` on the Java classpath when calling Jython. For details and examples
@@ -152,7 +153,7 @@ On Windows use `;` instead of `:` and `\` instead of `/`:
 java -cp jython.jar;build\JyNI.jar org.python.util.jython someFile.py
 ```
 
-Alternatively one can use Jython's start-script
+Alternatively, one can use Jython's start script
 (assuming you copied it to the JyNI base directory):
 
 ```
@@ -190,10 +191,10 @@ To run tests and demos, see section [Test Example](#test-example)
   configured properly on the `path` variable and assumes that `java` links to
   the JRE bundled with the JDK.
 
-  Alternatively you can explicitly configure the `JAVA_HOME` variable to point
+  Alternatively, you can explicitly configure the `JAVA_HOME` variable to point
   to the JDK.
 
-  On POSIX systems JyNI also looks for the symlink `/usr/lib/jvm/default-java`,
+  On POSIX systems, JyNI also looks for the symlink `/usr/lib/jvm/default-java`,
   which is provided by some systems (e.g. Linux MINT) and points to the
   specific Java folder name composed of Java version and architecture.
 
@@ -219,20 +220,20 @@ To run tests and demos, see section [Test Example](#test-example)
   Linux, OS-X or likewise or install CPython 2.7 if you build on Windows.
   JyNI only needs `pyconfig.h` from that package/installation.
 
-  Alternatively (if you know what you're doing) you can provide your own `pyconfig.h`.
+  Alternatively, (if you know what you're doing) you can provide your own `pyconfig.h`.
   In that case you'll have to adjust the corresponding include-path in the makefile.
 
 * Make sure that a C compiler is installed.
 
-  On Linux JyNI supports building with GCC or CLANG, on OS-X only CLANG is supported.
+  On Linux, JyNI supports building with GCC or CLANG, on OS-X only CLANG is supported.
 
-  To build JyNI on Windows install
+  To build JyNI on Windows, install
   [MSVC for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266).
 
 * You need to have a proper implementation of the `make` command on your
   system `path`.
 
-  On Windows we use [GNU Make](https://www.gnu.org/software/make/), but CMake might
+  On Windows, we use [GNU Make](https://www.gnu.org/software/make/), but CMake might
   work as well (not tested).
 
 * Build JyNI:
@@ -357,7 +358,7 @@ We hope that most extensions are not affected by this issue.
 
 ## 7. Summary of changes to Python code
 
-Briefly speaking, we took the python files crucial for loading native
+Briefly, we took the Python files crucial for loading native
 C extensions and modified them to perform the explained purpose of JyNI.
 Mainly we changed alloc and dealloc behavior of `PyObject`s consequently, also
 when inlined like in `stringobject.c` or `intobject.c`. The new allocation
@@ -365,25 +366,25 @@ behavior adds a header called `JyObject` before the `PyObject` header or even in
 front of `PyGC_Head` if present. This header contains information that allows to
 wrap or mirror a corresponding Jython `jobject` in a seamless way.
 
-Mirror mode is used for built-in types that allow access to their data-structure
+Mirror mode is used for built-in types that allow access to their data structure
 via macros. To keep these accesses valid, the data structure mirrors the actual
 Jython `jobject`. Syncing is not an issue for immutable objects and can be done
-initially for each object. One mutable built-in object needing mirror-mode is
+initially for each object. One mutable built-in object needing mirror mode is
 `PyList`. We perform sync from Java by inserting a special `java.util.List`
 implementation as a backend into the corresponding Jython `PyList`.
-A bit more tricky is `PyByteArray`, which also features a direct-access-macro,
-namely `PyByteArray_AS_STRING`. However a fix for this has low priority, as this
+A bit more tricky is `PyByteArray`, which also features a direct access macro,
+namely `PyByteArray_AS_STRING`. However, a fix for this has low priority, as this
 macro is not used by NumPy. Nevertheless, we can say a bit about this issue. As
-`PyByteArray` in Jython uses a primitive byte[]-array as backend, we can't replace
-the backend by a subclass. Our most promising idea to solve the issue anyway, is
-to insert a custom implementation of `SequenceIndexDelegate` as delegator
-(`PyByteArray` is a subclass of `PySequence` and thus offers a delegator-field
-that allows to customize the indexed access-behavior).
+`PyByteArray` in Jython uses a primitive `byte[]` array as backend, we cannot replace
+the backend by a subclass. Our most promising idea to solve the issue anyway is
+to insert a custom implementation of `SequenceIndexDelegate` as delegator.
+`PyByteArray` is a subclass of `PySequence` and thus offers a delegator field
+that allows to customize the indexed access behavior.
 
-Built-ins that don't provide access via macros can be wrapped. That means, the
-original CPython data structure is not used and not even allocated. All
-functions of such objects are rewritten to delegate their calls to Jython.
-However, also in these cases, we usually don't rewrite everything. Functions
+Built-ins not providing access via macros can be wrapped. The original
+CPython data structure is not used and not even allocated. All functions of
+such objects are rewritten to delegate their calls to Jython.
+However, also in these cases, we usually do not rewrite everything. Functions
 that access the data only via other functions are mostly kept unchanged.
 
 
@@ -409,26 +410,29 @@ The software in this package is distributed under the
 GNU Lesser General Public License.
 
 A copy of GNU Lesser General Public License (LGPL) is included in this
-distribution, in the files "COPYING" and "COPYING.LESSER".
+distribution in the files
+[COPYING](https://github.com/Stewori/JyNI/blob/master/COPYING) and
+[COPYING.LESSER](https://github.com/Stewori/JyNI/blob/master/COPYING.LESSER).
 If you do not have the source code, it is available at:
 
 [https://github.com/Stewori/JyNI](https://github.com/Stewori/JyNI)
 
 
-JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
+JyNI is partly based on source files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12 and 2.7.13.
 As such, it includes the common license of CPython
 2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12,
-2.7.13 and Jython in
-the file "PSF-LICENSE-2". Whether a source-file is directly based on CPython
-source-code is documented at the beginning of each file.
+2.7.13 and Jython in the file
+[PSF-LICENSE-2](https://github.com/Stewori/JyNI/blob/master/PSF-LICENSE-2).
+Whether a source file is directly based on CPython
+source code is documented at the beginning of each file.
 
 For compliance with PSF LICENSE AGREEMENT FOR PYTHON 2, section 3,
 the required overview of changes done to CPython code is given
 in [section 7](#7-summary-of-changes-to-python-code) of this file.
 
 For convenience, a copy of the current section is provided in the file
-"LICENSE".
+[LICENSE](https://github.com/Stewori/JyNI/blob/master/LICENSE).
 
 
 

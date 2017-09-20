@@ -2,19 +2,19 @@ The software in this package is distributed under the
 GNU Lesser General Public License.
 
 A copy of GNU Lesser General Public License (LGPL) is included in this
-distribution, in the files "COPYING" and "COPYING.LESSER".
+distribution in the files "COPYING" and "COPYING.LESSER".
 If you do not have the source code, it is available at:
 
     https://github.com/Stewori/JyNI
 
 
-JyNI is partly based on source-files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
+JyNI is partly based on source files from CPython 2.7.3, 2.7.4, 2.7.5, 2.7.6,
 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12 and 2.7.13.
 As such, it includes the common license of CPython
 2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12,
 2.7.13 and Jython in
-the file "PSF-LICENSE-2". Whether a source-file is directly based on CPython
-source-code is documented at the beginning of each file.
+the file "PSF-LICENSE-2". Whether a source file is directly based on CPython
+source code is documented at the beginning of each file.
 
 For compliance with PSF LICENSE AGREEMENT FOR PYTHON 2, section 3,
 the file "README.md" contains the required overview of
