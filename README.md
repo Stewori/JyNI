@@ -146,7 +146,11 @@ To run Jython with JyNI support, call (from JyNI base dir)
 java -cp jython.jar:build/JyNI.jar org.python.util.jython someFile.py
 ```
 
-(on Windows use `;` instead of `:` and `\` instead of `/`)
+On Windows use `;` instead of `:` and `\` instead of `/`:
+
+```
+java -cp jython.jar;build\JyNI.jar org.python.util.jython someFile.py
+```
 
 Alternatively one can use Jython's start-script
 (assuming you copied it to the JyNI base directory):
@@ -178,42 +182,56 @@ To run tests and demos, see section [Test Example](#test-example)
 * Download the sources from the latest release or clone the [github repository](https://github.com/Stewori/JyNI).
 
 * Provide Java:
-Make sure that Java 7 JDK or newer is installed.
-As of 2.7-alpha.4 JyNI attempts to guess the JDK location from the
-JRE location. This requires the `java` and `javac` commands to be
-configured properly on the `path` variable and assumes that `java` links to
-the JRE bundled with the JDK.
-Alternatively you can explicitly configure the `JAVA_HOME` variable to point
-to the JDK.
-On POSIX systems JyNI also looks for the symlink `/usr/lib/jvm/default-java`
-which is provided by some systems (e.g. Linux MINT) and points to the
-specific Java folder name composed of Java version and architecture.
-If the above attempts fail for some reason, you can still adjust the JyNI
-makefile directly: Open the `makefile` appropriate for your system
-(located in the JyNI base folder) and adjust the variable `JAVA_HOME` as
-desired.
 
-* Provide Jython: You have two ways to provide Jython. Either you copy
-(on non-Windows you can also (sym)link) `jython.jar` into the JyNI base
-directory or you edit `makefile` and adjust the `JYTHON`-variable to point
-to `jython.jar`.
-To use JyNIDemo.sh or other other demonstration shell scripts/batch files
-you need to adjust Jython path in that file(s) respectively.
-Note that current JyNI requires
-[Jython 2.7.1](http://fwierzbicki.blogspot.de/2017/07/jython-271-final-released.html).
+  Make sure that Java 7 JDK or newer is installed.
+
+  As of 2.7-alpha.4 JyNI attempts to guess the JDK location from the
+  JRE location. This requires the `java` and `javac` commands to be
+  configured properly on the `path` variable and assumes that `java` links to
+  the JRE bundled with the JDK.
+
+  Alternatively you can explicitly configure the `JAVA_HOME` variable to point
+  to the JDK.
+
+  On POSIX systems JyNI also looks for the symlink `/usr/lib/jvm/default-java`,
+  which is provided by some systems (e.g. Linux MINT) and points to the
+  specific Java folder name composed of Java version and architecture.
+
+  If the above attempts fail for some reason, you can still adjust the JyNI
+  `makefile` directly: Open the `makefile` appropriate for your system
+  (located in the JyNI base folder) and adjust the variable `JAVA_HOME` as
+  desired.
+
+* Provide Jython:
+
+  You have two ways to provide Jython. Either you copy
+  (on non-Windows you can also (sym)link) `jython.jar` into the JyNI base
+  directory or you edit `makefile` and adjust the `JYTHON`-variable to point
+  to `jython.jar`.
+
+  To use JyNIDemo.sh or other other demonstration shell scripts/batch files
+  you need to adjust Jython path in that file(s) respectively.
+
+  Note that current JyNI requires
+  [Jython 2.7.1](http://fwierzbicki.blogspot.de/2017/07/jython-271-final-released.html).
 
 * If not yet done, install the dev-package of Python 2.7 if you build on
-Linux, OS-X or likewise or install CPython 2.7 if you build on Windows.
-JyNI only needs `pyconfig.h` from that package/installation.
-Alternatively (if you know what you're doing) you can provide your own `pyconfig.h`.
-In that case you'll have to adjust the corresponding include-path in the makefile.
+  Linux, OS-X or likewise or install CPython 2.7 if you build on Windows.
+  JyNI only needs `pyconfig.h` from that package/installation.
 
-* Make sure that a C compiler is installed. On Linux JyNI supports building with
-GCC or CLANG, on OS-X only CLANG is supported. To build JyNI on Windows install
-[MSVC for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266).
+  Alternatively (if you know what you're doing) you can provide your own `pyconfig.h`.
+  In that case you'll have to adjust the corresponding include-path in the makefile.
+
+* Make sure that a C compiler is installed.
+
+  On Linux JyNI supports building with GCC or CLANG, on OS-X only CLANG is supported.
+
+  To build JyNI on Windows install
+  [MSVC for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266).
 
 * You need to have a proper implementation of the `make` command on your
   system `path`.
+
   On Windows we use [GNU Make](https://www.gnu.org/software/make/), but CMake might
   work as well (not tested).
 
@@ -223,15 +241,16 @@ GCC or CLANG, on OS-X only CLANG is supported. To build JyNI on Windows install
   - for OS-X type `make -f makefile.osx`
   - for Windows type `make -f makefile.win`
   - for Wine type `make -f makefile.wine`
-Optionally run `make clean` or e.g. `make -f makefile.osx clean` respectively.
-The resulting binaries are placed in the subfolder named `build`.
+
+  Optionally run `make clean` or e.g. `make -f makefile.osx clean` respectively.
+  The resulting binaries are placed in the subfolder named `build`.
 
 * Make the binary files available to your JVM.
   - On Linux, OS-X and other systems that use `libLD` to load binaries, place
     `libJyNI.so` and `libJyNI-loader.so` somewhere on your `LD_LIBRARY_PATH` or
     tell the JVM via `-Djava.library.path` where to find them or place them on the
     Java classpath.
-  - On Windows `JyNI.dll` will be a folder containing `python27.dll`. This has
+  - On Windows, `JyNI.dll` will be a folder containing `python27.dll`. This has
     technical reasons explained on the [JyNI GSoC-2017 blog](http://gsoc2017-jyni.blogspot.de/2017/08/major-milestone-achieved-jyni-builds.html).
     Treat the folder `JyNI.dll` as if it were the binary dll file.
     It (i.e. its parent directory) must be available on the Java classpath.
