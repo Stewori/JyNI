@@ -38,37 +38,39 @@ VC_PYTHON_HOME_WINE = "/windows/Users/Stefan/AppData/Local/Programs/Common/Micro
 PYTHON_HOME_WINE = "/windows/Program Files/Python/Python2.7.13"
 JAVA_HOME_WINE = "/windows/Program Files/Java/jdk1.8.0_121"
 
+# Adjust the following line to point to Jython >=2.7.1
+JYTHON = ./jython.jar
+# for instance, if you extracted it to your home folder:
+# JYTHON = /home/your_name/jython.jar
+
 PYTHON_HOME = ./Python_wine
 VC_Python = ./VCPython_wine
 JAVA_HOME = ./Java_wine
 
 CC = wine $(VC_Python)/VC/bin/x86_amd64/cl
 LK = wine $(VC_Python)/VC/bin/x86_amd64/link
+MT = wine $(VC_Python)/WinSDK/Bin/x64/mt
 JC = javac
 JAVA = java
 OUTPUTDIR = build
-
-# Adjust the following line to point to Jython 2.7
-JYTHON = ./jython.jar
-# for instance, if you extracted it to your home folder:
-# JYTHON = /home/your_name/jython.jar
 
 PLATFORM = win32
 
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
+JYNIBIN2 = JyNI-Java\\bin
 
 JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
-LIBS64 = $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib
+LIBS64 = $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib $(VC_Python)/WinSDK/lib/x64/Dbghelp.lib $(VC_Python)/WinSDK/lib/x64/AdvAPI32.lib
 
-CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE
+CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE /MD /nologo /Ox /GS- /DNDEBUG
+
 # You can optionally remove -source 1.7 -target 1.7. It's purpose is to achieve maximal compatibility by default.
 JFLAGS= -cp $(JYTHON):$(JYNI) -d $(JYNIBIN) -source 1.7 -target 1.7
 
-#SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c)
-SOURCES = $(wildcard JyNI-C/src/PC/*.c) $(wildcard JyNI-C/src/Modules/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c)
+SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcard JyNI-C/src/Objects/*.c) $(wildcard JyNI-C/src/Modules/*.c) $(wildcard JyNI-C/src/PC/*.c)
 OBJECTS = $(SOURCES:.c=.obj)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 
@@ -79,6 +81,9 @@ all: $(OUTPUTDIR) libJyNI JyNI
 $(OUTPUTDIR):
 	mkdir $(OUTPUTDIR)
 
+$(OUTPUTDIR)/JyNI.dll:
+	mkdir $(OUTPUTDIR)/JyNI.dll
+
 %.obj: %.c
 	$(CC) /c /Fo./$@ $(CFLAGS) $<
 
@@ -86,15 +91,15 @@ JyNI-C/src/Python/dynload_win.obj:
 	$(CC) /c /Fo./JyNI-C/src/Python/dynload_win.obj $(CFLAGS) JyNI-C/src/Python/dynload/dynload_win.c
 
 $(JYTHON):
-	@echo.
-	@echo ------------------------------------------------
-	@echo Fatal error: Could not find jython.jar.
-	@echo Either put jython.jar into the JyNI base folder,
-	@echo or adjust the JYTHON-variable at the top of
-	@echo makefile to point to your installed jython.jar.
-	@echo Be sure to use Jython 2.7.1 or newer.
-	@echo ------------------------------------------------
-	@echo.
+	@echo ''
+	@echo '------------------------------------------------'
+	@echo 'Fatal error: Could not find jython.jar.'
+	@echo 'Either put jython.jar into the JyNI base folder,
+	@echo 'or adjust the JYTHON-variable at the top of'
+	@echo 'makefile to point to your installed jython.jar.'
+	@echo 'Be sure to use Jython 2.7.1 or newer.'
+	@echo '------------------------------------------------'
+	@echo ''
 	@false
 
 $(JAVA_HOME): $(JYTHON)

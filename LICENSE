@@ -17,7 +17,7 @@ the file "PSF-LICENSE-2". Whether a source-file is directly based on CPython
 source-code is documented at the beginning of each file.
 
 For compliance with PSF LICENSE AGREEMENT FOR PYTHON 2, section 3,
-the file "README" contains the required overview of
-changes done to CPython-code in section 6.
+the file "README.md" contains the required overview of
+changes done to CPython code in section 7.
 
-A copy of the content of this file is provided in the file "README" in section 8.
+A copy of the content of this file is provided in the file "README.md" in section 9.

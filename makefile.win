@@ -75,8 +75,6 @@ JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
 
 LIBS64 = $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib $(VC_Python)/WinSDK/lib/x64/uuid.lib $(VC_Python)/WinSDK/lib/x64/User32.lib $(VC_Python)/WinSDK/lib/x64/Dbghelp.lib $(VC_Python)/WinSDK/lib/x64/AdvAPI32.lib
-LIBS_CTYPES = $(VC_Python)/WinSDK/Lib/x64/ole32.lib $(VC_Python)/WinSDK/Lib/x64/OLEAUT32.lib
-
 
 CFLAGS = /w $(INCLUDES) /DPy_BUILD_CORE /MD /nologo /Ox /GS- /DNDEBUG
 
