@@ -36,8 +36,6 @@ import sys
 import os
 import platform
 
-# This will vastly simplify once Jython 2.7.1 is out and we have
-# uname and mac_ver available in Jython:
 if os.name == 'java':
 	systm = platform.java_ver()[-1][0].lower().replace(' ', '')
 	if systm == 'macosx':
@@ -45,15 +43,17 @@ if os.name == 'java':
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join((systm, ver, 'intel'))
 	else:
-		buildf = '-'.join((systm, platform.uname()[-1]))
+		if systm.startswith('win'):
+			systm = 'win'
+		buildf = '-'.join((systm, os.uname()[-1]))
 else:
-	systm = platform.uname()[0].lower()
+	systm = os.uname()[0].lower()
 	if systm == 'darwin':
 		ver = platform.mac_ver()[0]
 		ver = ver[:ver.rfind('.')]
 		buildf = '-'.join(('macosx', ver, 'intel'))
 	else:
-		buildf = '-'.join((systm, platform.uname()[-1]))
+		buildf = '-'.join((systm, os.uname()[-1]))
 
 
 #Since invalid paths do no harm, we add several possible paths here, where

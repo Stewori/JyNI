@@ -35,8 +35,6 @@ import sys
 import os
 import platform
 
-# This will vastly simplify once Jython 2.7.1 is out and we have
-# uname and mac_ver available in Jython:
 if os.name == 'java':
 	systm = platform.java_ver()[-1][0].lower().replace(' ', '')
 	if systm == 'macosx':
