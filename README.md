@@ -126,8 +126,9 @@ If you want to built JyNI yourself, skip to section [4. Building and testing](#4
 
 * Make the binary files available to your JVM.
   - On Linux, OS-X and other systems using `libLD` to load binaries, place
-    `libJyNI.so` and `libJyNI-loader.so` somewhere on your `LD_LIBRARY_PATH` or
-    tell the JVM via `-Djava.library.path` where to find them or place them on the
+    `libJyNI.so` and `libJyNI-loader.so`
+    (OS-X: `libJyNI.dylib` and `libJyNI-loader.dylib`) somewhere on your `LD_LIBRARY_PATH`
+    or tell the JVM via `-Djava.library.path` where to find them or place them on the
     Java classpath.
   - On Windows, `JyNI.dll` will be a folder containing `python27.dll`.
     This is due to technical reasons explained on the
@@ -250,9 +251,10 @@ To run tests and demos, see section [Test Example](#test-example)
 
 * Make the binary files available to your JVM.
   - On Linux, OS-X and other systems that use `libLD` to load binaries, place
-    `libJyNI.so` and `libJyNI-loader.so` somewhere on your `LD_LIBRARY_PATH` or
-    tell the JVM via `-Djava.library.path` where to find them or place them on the
-    Java classpath.
+    `libJyNI.so` and `libJyNI-loader.so`
+    (OS-X: `libJyNI.dylib` and `libJyNI-loader.dylib`)
+    somewhere on your `LD_LIBRARY_PATH` or tell the JVM via `-Djava.library.path`
+    where to find them or place them on the Java classpath.
   - On Windows, `JyNI.dll` will be a folder containing `python27.dll`. This has
     technical reasons explained on the [JyNI GSoC-2017 blog](http://gsoc2017-jyni.blogspot.de/2017/08/major-milestone-achieved-jyni-builds.html).
     Treat the folder `JyNI.dll` as if it were the binary dll file.
