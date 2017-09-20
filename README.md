@@ -14,7 +14,7 @@ If not yet done, make sure to visit our project homepage at [www.jyni.org](http:
 4. [Building and testing](#4-building-and-testing)
 5. [Roadmap](#5-roadmap)
 6. [Binary compatibility](#6-binary-compatibility)
-7. [Summary of changes to Python-code](#7-summary-of-changes-to-python-code)
+7. [Summary of changes to Python code](#7-summary-of-changes-to-python-code)
 8. [Copyright notice](#8-copyright-notice)
 9. [License](#9-license)
 10. [Contact](#10-contact)
@@ -30,7 +30,7 @@ A current issue of Jython hindering its wider adoption is that it does not
 support native extensions written for CPython like NumPy and SciPy. Since
 most scientific Python code fundamentally depends on exactly these native
 extensions, it usually cannot be run with Jython. JyNI aims to bridge this
-gap. It is a layer enabling Jython users to load native CPython extensions
+gap. It is a layer allowing Jython users to load native CPython extensions
 and access them from Jython the same way they would in CPython. In order to
 enable JyNI, you only have to put it on the Java classpath when Jython is
 launched. It neither requires recompiling the extension code, nor building
@@ -53,7 +53,7 @@ JyNI runs on Linux, OS-X and theoretically on various other POSIX systems
 
 ## 2. Current state
 
-We are currently able to load a C-extension into Jython, call methods and access
+We are currently able to load a C extension into Jython, call methods and access
 attributes, provided that the extension uses only CPython API we have already
 implemented.
 
@@ -66,15 +66,15 @@ Proceedings of the 8th European Conference on Python in Science (EuroSciPy 2015)
 CoRR abs/1607.00825 (2016), arxiv.org/abs/1607.00825](https://arxiv.org/abs/1607.00825)
 
 As of JyNI-alpha.4 JyNI supports new-style classes. Support for defining new types
-via C API that extend existing builtin types is still limited.
+via C API that extend existing built-in types is still limited.
 
-As of JyNI-alpha.5 JyNI supports Windows and properly manages builtin extensions.
-Most notably, `datetime` and `_winreg` are now builtin. When running on Windows,
+As of JyNI-alpha.5 JyNI supports Windows and properly manages built-in extensions.
+Most notably, `datetime` and `_winreg` are now built-in. When running on Windows,
 JyNI enables support for the `mbcs` encoding in Jython.
 
-Parse- and build-functions `PyArg_ParseTuple()`, `PyArg_ParseTupleAndKeywords()`,
-`PyArg_Parse()`, `Py_BuildValue` and related work with format-strings corresponding
-to builtin types that are already supported. Alternatively supported builtin types
+Parse and build functions `PyArg_ParseTuple()`, `PyArg_ParseTupleAndKeywords()`,
+`PyArg_Parse()`, `Py_BuildValue` and related work with format strings corresponding
+to built-in types that are already supported. Alternatively supported built-in types
 can be accessed via their C API functions.
 
 
@@ -111,8 +111,8 @@ JyNI has been tested on
 * Windows 7 (64 bit)
 
 It would presumably work also on other POSIX systems.
-If you try it on further distributions, please consider to report your results
-(see contact section).
+If you try it on further distributions, please consider reporting your results
+(see [contact section](#10-contact)).
 
 
 
@@ -235,7 +235,9 @@ To run tests and demos, see section [Test Example](#test-example)
   On Windows we use [GNU Make](https://www.gnu.org/software/make/), but CMake might
   work as well (not tested).
 
-* Build JyNI: Open a terminal and enter the JyNI base directory.
+* Build JyNI:
+
+  Open a terminal and enter the JyNI base directory.
   - for Linux/GCC type `make`
   - for Linux/CLANG type `make -f makefile.clang`
   - for OS-X type `make -f makefile.osx`
@@ -282,7 +284,7 @@ assuming that `jython.jar` is placed or (sym)linked in JyNI's directory.
 Otherwise you need to fix the path of `jython.jar` in the command.
 
 `JyNI-Demo/src/JyNIDemo.py` demonstrates the use of `DemoExtension` from
-Python-side. It should run perfectly with either CPython 2.7.x or
+Python side. It should run perfectly with either CPython 2.7.x or
 Jython+JyNI. To run it, type
 ```
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDemo.py
@@ -291,7 +293,7 @@ You can alternatively run
 `./JyNIDemo.sh` / `JyNIDemo.bat`.
 
 To see a basic demonstration that JyNI is capable of using the original
-`datetime` module (a builtin module as of JyNI-alpha.5), run
+`datetime` module (a built-in module as of JyNI-alpha.5), run
 ```
 java -cp jython.jar:build/JyNI.jar org.python.util.jython JyNI-Demo/src/JyNIDatetimeTest.py
 ```
@@ -338,35 +340,35 @@ the macros `PyObject_MALLOC`, `PyObject_REALLOC` and `PyObject_FREE` directly.
 If they use these macros with `WITH_PYMALLOC` not activated, JyNI will most
 likely produce segmentation faults. Without the flag these macros directly
 map to the system's `malloc` function family. In that case JyNI would not be
-able to prepare the `JyObject`-header in every case.
+able to prepare the `JyObject` header in every case.
 However, it would be easy to recompile such extensions for JyNI. Simply add
-the `WITH_PYMALLOC`-definition at compile-time or replace the macros by their
-corresponding function-calls.
+the `WITH_PYMALLOC` definition at compile time or replace the macros by their
+corresponding function calls.
 
 In general, the less an extension hacks with CPython-specific internals,
 the greater the chance it will run with JyNI. Especially
 allocation/deallocation should not be done by hand, since JyNI must be able
-to setup the `JyObject`-headers.
+to setup the `JyObject` headers.
 
 We hope that most extensions are not affected by this issue.
 
 
 
 
-## 7. Summary of changes to Python-code
+## 7. Summary of changes to Python code
 
 Briefly speaking, we took the python files crucial for loading native
-C-extensions and modified them to perform the explained purpose of JyNI.
+C extensions and modified them to perform the explained purpose of JyNI.
 Mainly we changed alloc and dealloc behavior of `PyObject`s consequently, also
 when inlined like in `stringobject.c` or `intobject.c`. The new allocation
 behavior adds a header called `JyObject` before the `PyObject` header or even in
 front of `PyGC_Head` if present. This header contains information that allows to
 wrap or mirror a corresponding Jython `jobject` in a seamless way.
 
-Mirror mode is used for builtin types that allow access to their data-structure
+Mirror mode is used for built-in types that allow access to their data-structure
 via macros. To keep these accesses valid, the data structure mirrors the actual
 Jython `jobject`. Syncing is not an issue for immutable objects and can be done
-initially for each object. One mutable builtin object needing mirror-mode is
+initially for each object. One mutable built-in object needing mirror-mode is
 `PyList`. We perform sync from Java by inserting a special `java.util.List`
 implementation as a backend into the corresponding Jython `PyList`.
 A bit more tricky is `PyByteArray`, which also features a direct-access-macro,
@@ -378,7 +380,7 @@ to insert a custom implementation of `SequenceIndexDelegate` as delegator
 (`PyByteArray` is a subclass of `PySequence` and thus offers a delegator-field
 that allows to customize the indexed access-behavior).
 
-Builtins that don't provide access via macros can be wrapped. That means, the
+Built-ins that don't provide access via macros can be wrapped. That means, the
 original CPython data structure is not used and not even allocated. All
 functions of such objects are rewritten to delegate their calls to Jython.
 However, also in these cases, we usually don't rewrite everything. Functions
@@ -422,7 +424,7 @@ the file "PSF-LICENSE-2". Whether a source-file is directly based on CPython
 source-code is documented at the beginning of each file.
 
 For compliance with PSF LICENSE AGREEMENT FOR PYTHON 2, section 3,
-the required overview of changes done to CPython-code is given
+the required overview of changes done to CPython code is given
 in [section 7](#7-summary-of-changes-to-python-code) of this file.
 
 For convenience, a copy of the current section is provided in the file
