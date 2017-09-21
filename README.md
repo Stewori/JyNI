@@ -137,7 +137,7 @@ If you want to built JyNI yourself, skip to section [4. Building and testing](#4
     It (i.e. its parent directory) must be available on the Java classpath.
 
 * Have `JyNI.jar` on the Java classpath when calling Jython. For details and examples
-  see the following section [Running JyNI](#running-jyni)
+  see the following section [Running JyNI](#running-jyni).
 
 
 ### Running JyNI

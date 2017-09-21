@@ -28,20 +28,30 @@
 
 from _winreg import HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, QueryValue
 
-key1 = "SOFTWARE\\Python\\PythonCore\\2.7\\InstallPath"
-key2 = "SOFTWARE\\Wow6432Node\\Python\\PythonCore\\2.7\\InstallPath"
+key = "SOFTWARE\\Python\\PythonCore\\2.7\\InstallPath"
+key32 = "SOFTWARE\\Wow6432Node\\Python\\PythonCore\\2.7\\InstallPath"
 
 def python_home():
 	try:
-		return QueryValue(HKEY_LOCAL_MACHINE, key2)
+		# On 32 bit Java we prefer a Python in Wow6432Node if it exists:
+		from java.lang import System
+		if System.getProperty("sun.arch.data.model") == "32":
+			try:
+				return QueryValue(HKEY_CURRENT_USER, key32)
+			except WindowsError:
+				pass
+			try:
+				return QueryValue(HKEY_LOCAL_MACHINE, key32)
+			except WindowsError:
+				pass
+	except:
+		pass
+	try:
+		return QueryValue(HKEY_CURRENT_USER, key)
 	except WindowsError:
 		pass
 	try:
-		return QueryValue(HKEY_LOCAL_MACHINE, key1)
-	except WindowsError:
-		pass
-	try:
-		return QueryValue(HKEY_CURRENT_USER, key1)
+		return QueryValue(HKEY_LOCAL_MACHINE, key)
 	except WindowsError:
 		pass
 

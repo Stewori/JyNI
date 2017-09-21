@@ -41,7 +41,7 @@ def autoconfig_dynload_path():
 		else:
 			return
 		if not lib_dynload in sys.path:
-			sys.path.insert(0, lib_dynload)
+			sys.path.append(lib_dynload)
 
 def autoconfig_lib_tk_path():
 	'''Automatically adds the lib-tk folder of the system's
@@ -56,7 +56,7 @@ def autoconfig_lib_tk_path():
 		else:
 			return
 		if not lib_tk in sys.path:
-			sys.path.insert(0, lib_tk)
+			sys.path.append(lib_tk)
 
 def _monkeypatch_os_path_for_Tk(py_home):
 	'''For internal use only. Do not call.'''
