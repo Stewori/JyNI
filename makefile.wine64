@@ -32,6 +32,16 @@
 # Author: Stefan Richthofer
 #
 
+# This is an experimental makefile to build JyNI's Windows version using Wine.
+#
+# Note:
+# Using Wine 1.6.2 it is currently not possible to successfully build JyNI
+# with this makefile. This might change with a future Wine release.
+#
+# More specifically the manifest tool mt.exe seems not to run properly.
+# However, this makefile is still helpful to check MSVC compatibility of
+# source files while working on Linux or OS-X.
+
 # These lines must be configured by the user specifically for current wine setup:
 # (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
 VC_PYTHON_HOME_WINE = "/windows/Users/Stefan/AppData/Local/Programs/Common/Microsoft/Visual C++ for Python/9.0"
@@ -58,7 +68,6 @@ PLATFORM = win32
 
 JYNI = ./JyNI-Java/src
 JYNIBIN = ./JyNI-Java/bin
-JYNIBIN2 = JyNI-Java\\bin
 
 JYNI_INCLUDES = /I./JyNI-C/include /I./JyNI-C/include/Python_JyNI /I./JyNI-Java/include /I./JyNI-C/src/PC /I $(JAVA_HOME)/include /I $(JAVA_HOME)/include/$(PLATFORM)
 INCLUDES = /I$(VC_Python)/VC/Include /I$(VC_Python)/WinSDK/Include $(JYNI_INCLUDES) /I$(PYTHON_HOME)/include
@@ -111,8 +120,15 @@ $(PYTHON_HOME):
 $(VC_Python):
 	ln -s $(VC_PYTHON_HOME_WINE) $(VC_Python)
 
-libJyNI: $(VC_Python) $(JAVA_HOME) $(PYTHON_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
-	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
+libJyNI: $(VC_Python) $(PYTHON_HOME) $(JAVA_HOME) $(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
+	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll/python27.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
+	$(MT) -nologo -manifest JyNI-C/python27.dll.manifest -outputresource:$(OUTPUTDIR)/JyNI.dll/python27.dll;2
+	rm $(OUTPUTDIR)/JyNI.dll/python27.lib
+	rm $(OUTPUTDIR)/JyNI.dll/python27.exp
+	rm $(OUTPUTDIR)/JyNI.dll/python27.dll.manifest
+# We delete JyNI.dll/python27.lib here, because in any case one should link against original python27.lib.
+# So this is a useless file and we avoid confusion and invalid linking.
+
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -134,14 +150,12 @@ cleanJ:
 clean:
 	rm -rf $(JYNIBIN)
 	rm -f ./JyNI-C/src/Python/*.obj
-	rm -f ./JyNI-C/src/Python/dynload_win.c
 	rm -f ./JyNI-C/src/Objects/*.obj
 	rm -f ./JyNI-C/src/Modules/*.obj
-	rm -f ./JyNI-Loader/JyNILoader.obj
+	rm -f ./JyNI-C/src/PC/*.obj
 	rm $(VC_Python)
 	rm $(JAVA_HOME)
 	rm $(PYTHON_HOME)
 
-#.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
-.PHONY: all
+.PHONY: JyNI libJyNI clean cleanJ all
 

@@ -149,7 +149,6 @@ cleanJ:
 clean:
 	del JyNI-C\src\*.obj
 	del JyNI-C\src\Python\*.obj
-	del JyNI-C\src\Python\dynload_win.c
 	del JyNI-C\src\Objects\*.obj
 	del JyNI-C\src\Modules\*.obj
 	del JyNI-C\src\PC\*.obj
