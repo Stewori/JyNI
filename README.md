@@ -243,8 +243,8 @@ To run tests and demos, see section [Test Example](#test-example)
   - for Linux/GCC type `make`
   - for Linux/CLANG type `make -f makefile.clang`
   - for OS-X type `make -f makefile.osx`
-  - for Windows type `make -f makefile.win`
-  - for Wine type `make -f makefile.wine`
+  - for Windows type `make -f makefile.win64`
+  - for Wine type `make -f makefile.wine64`
 
   Optionally run `make clean` or e.g. `make -f makefile.osx clean` respectively.
   The resulting binaries are placed in the subfolder named `build`.
