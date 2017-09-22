@@ -53,11 +53,11 @@
 //#include "eval.h"
 //#include "marshal.h"
 //#include "abstract.h"
-//
-//#ifdef HAVE_SIGNAL_H
-//#include <signal.h>
-//#endif
-//
+
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+
 //#ifdef MS_WINDOWS
 //#include "malloc.h" /* for alloca */
 //#endif
