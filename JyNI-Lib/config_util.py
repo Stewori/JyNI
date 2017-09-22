@@ -37,7 +37,10 @@ def autoconfig_dynload_path():
 			lib_dynload = '/usr/lib/python2.7/lib-dynload'
 		elif os._name in ("nt", "ce"):
 			import python_home_winreg
-			lib_dynload = python_home_winreg.python_home()+'DLLs'
+			py_home = python_home_winreg.python_home()
+			if py_home is None:
+				return
+			lib_dynload = py_home+'DLLs'
 		else:
 			return
 		if not lib_dynload in sys.path:
@@ -52,7 +55,10 @@ def autoconfig_lib_tk_path():
 			lib_tk = '/usr/lib/python2.7/lib-tk'
 		elif os._name in ("nt", "ce"):
 			import python_home_winreg
-			lib_tk = python_home_winreg.python_home()+'Lib\\lib-tk'
+			py_home = python_home_winreg.python_home()
+			if py_home is None:
+				return
+			lib_tk = py_home+'Lib\\lib-tk'
 		else:
 			return
 		if not lib_tk in sys.path:

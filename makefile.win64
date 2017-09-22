@@ -115,7 +115,7 @@ $(JYTHON):
 
 libJyNI: $(OUTPUTDIR)/JyNI.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj
 	$(LK) /DLL /OUT:$(OUTPUTDIR)/JyNI.dll/python27.dll $(OBJECTS) JyNI-C/src/Python/dynload_win.obj $(LIBS64)
-	$(MT) -nologo -manifest JyNI-C/python27.dll.manifest -outputresource:$(OUTPUTDIR)/JyNI.dll/python27.dll;2
+	$(MT) -nologo -manifest JyNI-C/dll.manifest_amd64/python27.dll.manifest -outputresource:$(OUTPUTDIR)/JyNI.dll/python27.dll;2
 	del $(OUTPUTDIR)\JyNI.dll\python27.lib
 	del $(OUTPUTDIR)\JyNI.dll\python27.exp
 	del $(OUTPUTDIR)\JyNI.dll\python27.dll.manifest

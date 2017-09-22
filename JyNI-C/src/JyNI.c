@@ -389,7 +389,7 @@ jint JyNI_PyObjectLength
  * Method:    descr_get
  * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)Lorg/python/core/PyObject;
  */
-jobject JNICALL JyNI_descr_get
+jobject JyNI_descr_get
   (jlong self, jobject obj, jobject type, jlong tstate)
 {
 	jobject res;
@@ -413,7 +413,7 @@ jobject JNICALL JyNI_descr_get
  * Method:    descr_set
  * Signature: (JLorg/python/core/PyObject;Lorg/python/core/PyObject;J)I
  */
-jint JNICALL JyNI_descr_set
+jint JyNI_descr_set
   (jlong self, jobject obj, jobject value, jlong tstate)
 {
 	jint res;
@@ -2438,14 +2438,17 @@ inline void putsPy(PyObject* o)
 
 void jPrintCStackTrace()
 {
+
 #ifdef MS_WINDOWS
+#ifndef _WIN32
+	// fails to link properly on win32 for some reason
 	// jputs("jPrintCStackTrace is not yet supported on Windows.");
 	HANDLE process;
 	SYMBOL_INFO *symbol;
 	WORD numberOfFrames;
     void *stack[255];
     int i;
-    puts("jPrintCStackTrace windows...");
+    jputs("jPrintCStackTrace windows...");
     process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
     numberOfFrames = CaptureStackBackTrace(0, 255, stack, NULL);
@@ -2459,7 +2462,7 @@ void jPrintCStackTrace()
     {
         DWORD64 address = (DWORD64)(stack[i]);
         SymFromAddr(process, address, NULL, symbol);
-        puts(symbol->Name);
+        jputs(symbol->Name);
         /*if (SymGetLineFromAddr64(process, address, &displacement, line))
         {
             printf("\tat %s in %s: line: %lu: address: 0x%0X\n", symbol->Name, line->FileName, line->LineNumber, symbol->Address);
@@ -2469,6 +2472,7 @@ void jPrintCStackTrace()
             printf("\tat %s, address 0x%0X.\n", symbol->Name, symbol->Address);
         }*/
     }
+#endif
 #else
 	void* buf[300];
 	int size;

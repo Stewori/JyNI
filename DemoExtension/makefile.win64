@@ -35,7 +35,8 @@
 #
 
 # PYTHON_HOME and VC_Python might need adjustment by the user:
-PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
+#PYTHON_HOME = "C:\Program Files\Python\Python2.7.13"
+PYTHON_HOME = "$(shell python ..\JyNI-Lib\python_home_winreg.py)"
 
 # (get the compiler from https://www.microsoft.com/en-us/download/details.aspx?id=44266)
 # We set VC_Python to the default install location for a user-install.
@@ -49,10 +50,11 @@ LK = $(VC_Python)\VC\bin\x86_amd64\link
 
 OUTPUTDIR = build
 
-INCLUDES = /I $(PYTHON_HOME)/include /I $(VC_Python)/VC/Include /I $(VC_Python)/WinSDK/Include
+INCLUDES = /I $(PYTHON_HOME)/include /I $(PYTHON_HOME)/PC /I $(VC_Python)/VC/Include /I $(VC_Python)/WinSDK/Include
 
-LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/libcmt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib
-CFLAGS = $(INCLUDES)
+LIBS64 = $(PYTHON_HOME)/libs/python27.lib $(VC_Python)/VC/lib/amd64/msvcrt.lib $(VC_Python)/VC/lib/amd64/OLDNAMES.lib $(VC_Python)/WinSDK/lib/x64/Kernel32.lib
+
+CFLAGS = /c /nologo /Ox /MD /W3 /GS- /DNDEBUG $(INCLUDES)
 
 SOURCES = DemoExtensionmodule.c
 OBJECTS = $(SOURCES:.c=.obj)

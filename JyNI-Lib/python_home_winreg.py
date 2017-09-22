@@ -32,20 +32,31 @@ key = "SOFTWARE\\Python\\PythonCore\\2.7\\InstallPath"
 key32 = "SOFTWARE\\Wow6432Node\\Python\\PythonCore\\2.7\\InstallPath"
 
 def python_home():
-	try:
-		# On 32 bit Java we prefer a Python in Wow6432Node if it exists:
+	# Running 32 bit we prefer a Python in Wow6432Node if it exists:
+	import platform, os
+	if os.name == "java":
+		# When running JyNI we cannot use platform.architecture(),
+		# because it tries to load ctypes which crashes exactly due
+		# to the 64 bit vs 32 bit issue we want to avoid here.
+		# Note that platform.architecture() works well with plain
+		# Jython, because if it cannot find ctypes at all it performs
+		# some fallback.
 		from java.lang import System
-		if System.getProperty("sun.arch.data.model") == "32":
-			try:
-				return QueryValue(HKEY_CURRENT_USER, key32)
-			except WindowsError:
-				pass
-			try:
-				return QueryValue(HKEY_LOCAL_MACHINE, key32)
-			except WindowsError:
-				pass
-	except:
-		pass
+		arch = System.getProperty("sun.arch.data.model")+"bit"
+	else:
+		arch = platform.architecture()[0]
+	if arch == "32bit":
+		try:
+			return QueryValue(HKEY_CURRENT_USER, key32)
+		except WindowsError:
+			pass
+		try:
+			return QueryValue(HKEY_LOCAL_MACHINE, key32)
+		except WindowsError:
+			pass
+		if platform.uname()[4].endswith('64'):
+			# Running 32 bit on a 64 bit platform we abort here
+			return
 	try:
 		return QueryValue(HKEY_CURRENT_USER, key)
 	except WindowsError:

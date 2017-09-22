@@ -244,7 +244,7 @@ To run tests and demos, see section [Test Example](#test-example)
   - for Linux/CLANG type `make -f makefile.clang`
   - for OS-X type `make -f makefile.osx`
   - for Windows (64 bit) type `make -f makefile.win64`
-  - for Windows (32 bit) type `make -f makefile.win32` (not tested)
+  - for Windows (32 bit) type `make -f makefile.win32`
 
   Optionally run `make clean` or e.g. `make -f makefile.osx clean` respectively.
   The resulting binaries are placed in the subfolder named `build`.
