@@ -39,7 +39,7 @@ if os.name == 'java':
 	systm = platform.java_ver()[-1][0].lower().replace(' ', '')
 	if systm == 'macosx':
 		ver = platform.java_ver()[-1][1]
-		ver = ver[:ver.rfind('.')]
+		ver = ver[:5] # e.g."10.12.4" => "10.12"
 		buildf = '-'.join((systm, ver, 'intel'))
 	else:
 		buildf = '-'.join((systm, os.uname()[-1]))
@@ -47,7 +47,7 @@ else:
 	systm = os.uname()[0].lower()
 	if systm == 'darwin':
 		ver = platform.mac_ver()[0]
-		ver = ver[:ver.rfind('.')]
+		ver = ver[:5] # e.g."10.12.4" => "10.12"
 		buildf = '-'.join(('macosx', ver, 'intel'))
 	else:
 		buildf = '-'.join((systm, os.uname()[-1]))
