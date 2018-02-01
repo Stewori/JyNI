@@ -36,6 +36,7 @@ import JyNI.gc.JyNIFinalizeTriggerFactory;
 
 import java.io.File;
 import java.util.Properties;
+import java.security.CodeSource;
 import org.python.core.JythonInitializer;
 import org.python.core.PySystemState;
 import org.python.core.Py;
@@ -88,24 +89,32 @@ public class JyNIInitializer implements JythonInitializer {
 		PyShadowString os_name = ((PyShadowString) osModule.__getattr__("name".intern()));
 
 		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
-		String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
-		for (int i = 0; i < cp.length; ++i) {
-			/*
-				\b WordBoundary				
-				. All characters 
-				* 0 or n times
-				Need to start by JyNI and only JyNI (JyNII will return false, but JyNI-a will return true)
-				Need to end by .jar
-				the jar need to be named JyNI[...].jar
-			*/
-			Pattern p  = Pattern.compile("\\bJyNI\\b.*\\b\\.jar\\b");
-			Matcher m = p.matcher(cp[i]);
-			if (m.find()) {
-				initState.path.add(0, cp[i]);
-				//initState.path.add(0, cp[i]+"/lib-tk");
+		try
+		{
+			Class mClass = JyNIInitializer.class;
+			CodeSource mCodeSource = mClass.getProtectionDomain().getCodeSource();
+			initState.path.add(0, (new File(mCodeSource.getLocation().toURI()).getAbsolutePath()));
+		}
+		catch (Exception ex)
+		{
+			String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
+			for (int i = 0; i < cp.length; ++i) {
+				/*
+					\b WordBoundary				
+					. All characters 
+					* 0 or n times
+					Need to start by JyNI and only JyNI (JyNII will return false, but JyNI-a will return true)
+					Need to end by .jar
+					the jar need to be named JyNI[...].jar
+				*/
+				Pattern p  = Pattern.compile("\\bJyNI\\b.*\\b\\.jar\\b");
+				Matcher m = p.matcher(cp[i]);
+				if (m.find()) {
+					initState.path.add(0, cp[i]);
+					//initState.path.add(0, cp[i]+"/lib-tk");
+				}
 			}
 		}
-
 		// We add some targets for receiving native os.name and sys.platform values:
 		// (this list will need constant maintenance as extension support grows)
 		os_name.addTarget("ctypes.*", null);
