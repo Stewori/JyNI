@@ -47,6 +47,8 @@ import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules.gc;
 import org.python.modules._weakref.GlobalRef;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JyNIInitializer implements JythonInitializer {
 
@@ -87,17 +89,34 @@ public class JyNIInitializer implements JythonInitializer {
 		PyShadowString os_name = ((PyShadowString) osModule.__getattr__("name".intern()));
 
 		// We make sure that JyNI.jar is not only on classpath, but also on Jython-path:
-		try
+		Class mClass = JyNIInitializer.class;
+		CodeSource mCodeSource = mClass.getProtectionDomain().getCodeSource();
+		if (mCodeSource != null)
 		{
-			Class mClass = JyNIInitializer.class;
-			CodeSource mCodeSource = mClass.getProtectionDomain().getCodeSource();
-			if (mCodeSource != null) 
+			try
 			{
 				initState.path.add(0, (new File(mCodeSource.getLocation().toURI()).getAbsolutePath()));
 			}
-		}
-		catch(Exception e)
-		{
+			catch (URISyntaxException ex)
+			{
+				String[] cp = System.getProperty("java.class.path").split(File.pathSeparator);
+				for (int i = 0; i < cp.length; ++i) {
+					/*
+						\b WordBoundary				
+						. All characters 
+						* 0 or n times
+						Need to start by JyNI and only JyNI (JyNII will return false, but JyNI-a will return true)
+						Need to end by .jar
+						the jar need to be named JyNI[...].jar
+					*/
+					Pattern p  = Pattern.compile("\\bJyNI\\b.*\\b\\.jar\\b");
+					Matcher m = p.matcher(cp[i]);
+					if (m.find()) {
+						initState.path.add(0, cp[i]);
+						//initState.path.add(0, cp[i]+"/lib-tk");
+					}
+				}
+			}
 		}
 
 		// We add some targets for receiving native os.name and sys.platform values:
