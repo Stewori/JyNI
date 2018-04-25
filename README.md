@@ -120,7 +120,7 @@ If you try it on further distributions, please consider reporting your results
 ## 3. Installing JyNI
 
 This section explains how to install JyNI using prebuilt binary files.
-If you want to built JyNI yourself, skip to section [4. Building and testing](#4-building-and-testing).
+If you want to build JyNI yourself, skip to section [4. Building and testing](#4-building-and-testing).
 
 * Download `JyNI.jar` and the binaries for your system.
 
@@ -261,7 +261,7 @@ To run tests and demos, see section [Test Example](#test-example)
     It (i.e. its parent directory) must be available on the Java classpath.
 
 * For running JyNI see section [Running JyNI](#running-jyni).
-  To run tests read the section following section [Test Example](#test-example).
+  To run tests read the following section [Test Example](#test-example).
 
 
 ### Test Example

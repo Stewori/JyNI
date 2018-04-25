@@ -31,7 +31,6 @@ Created on 03.10.2015
 
 @author: Stefan Richthofer
 '''
-print "start..."
 
 import os, sys
 import ctypes

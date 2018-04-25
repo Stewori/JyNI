@@ -72,7 +72,7 @@ def _monkeypatch_os_path_for_Tk(py_home):
 		# has been inserted into sys.prefix. We use the
 		# PyShadowString magic here to assert that only very
 		# specific modules (i.e. FixTk) are affected by this hack.
-		if sys.prefix==a and sys.prefix==py_home:
+		if sys.prefix==a and sys.prefix==py_home and not py_home is None:
 			return _os_path_join(py_home, *p)
 		else:
 			return _os_path_join(a, *p)
