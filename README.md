@@ -59,7 +59,7 @@ implemented.
 
 As of JyNI-alpha.3 JyNI performs a method for garbage collection that bridges
 Java's and Jython's mark-and-sweep-based approach and CPython's
-reference-counting-based approach as used int the C extensions. JyNI's approach
+reference-counting-based approach as used in C extensions. JyNI's approach
 is explained in detail in the publication
 [Garbage Collection in JyNI - How to bridge Mark/Sweep and Reference Counting GC.,
 Proceedings of the 8th European Conference on Python in Science (EuroSciPy 2015),
@@ -396,11 +396,11 @@ that access the data only via other functions are mostly kept unchanged.
 
 Copyright of Python and Jython:
 Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012, 2013, 2014, 2015, 2016, 2017 Python Software Foundation.
+2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 Python Software Foundation.
 All rights reserved.
 
 Copyright of JyNI:
-Copyright (c) 2013, 2014, 2015, 2016, 2017 Stefan Richthofer.
+Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018 Stefan Richthofer.
 All rights reserved.
 
 
