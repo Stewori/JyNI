@@ -956,6 +956,7 @@ public class JyNI {
 		if (obj == null && JyNI_exc != null) {
 			PyException tmp_exc = JyNI_exc;
 			JyNI_exc = null;
+//			System.out.println("JyNI.maybeExc triggered:");
 //			System.out.println(tmp_exc);
 //			tmp_exc.printStackTrace();
 			throw tmp_exc;

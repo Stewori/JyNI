@@ -39,7 +39,7 @@
 
 inline void JyErr_InsertCurExc()
 {
-//	jputs(__FUNCTION__);
+	//jputs(__FUNCTION__);
 	PyThreadState *tstate = PyThreadState_GET();
 	PyObject *curexc_type, *curexc_value, *curexc_traceback;
 	env();

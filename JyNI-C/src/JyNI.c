@@ -173,7 +173,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 	jobject er;
 	PyObject* peer = (PyObject*) peerHandle;
 
-//	jputs(__FUNCTION__);
+	//jputs(__FUNCTION__);
 	//note: here should be done sync
 	//(maybe sync-idea is obsolete anyway)
 //	jputsLong(peerHandle);
@@ -186,16 +186,15 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	jputsLong(PyErr_Occurred());
 	if (peer->ob_type->tp_call) {
 		PyObject *jargs, *jkw, *jres;
-//		if (Py_TYPE(peer) == &PyCFunction_Type) {
+		if (Py_TYPE(peer) == &PyCFunction_Type) {
 //			jputsLong(((PyCFunctionObject*) peer)->m_ml);
 //			jputsLong(((PyCFunctionObject*) peer)->m_self);
-//			jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
+			//jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
 //		} else if (Py_TYPE(peer) == &PyType_Type) {
 //			jputs(((PyTypeObject*) peer)->tp_name);
 //		} else {
 //			jputs(Py_TYPE(peer)->tp_name);
-//		}
-//		jputsLong(__LINE__);
+		}
 		jargs = JyNI_PyObject_FromJythonPyObject(args);
 //		if (jdbg) {
 //			jputsLong(jargs);
@@ -204,8 +203,11 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //		}
 		jkw = JyNI_PyObject_FromJythonPyObject(kw);
 //		jputsPy(peer);
+		//jputsLong(__LINE__);
 		jres = peer->ob_type->tp_call(peer, jargs, jkw);
+		//jputsLong(__LINE__);
 		er = JyNI_JythonPyObject_FromPyObject(jres);
+		//jputsLong(__LINE__);
 		Py_XDECREF(jargs);
 		Py_XDECREF(jkw);
 //		puts("decref result....");
@@ -217,7 +219,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 		er = NULL;
 	}
 	LEAVE_JyNI
-//	jputs("JyNI_callPyCPeer done");
+	//jputs("JyNI_callPyCPeer done");
 	return er;
 }
 
@@ -2476,12 +2478,13 @@ void jPrintCStackTrace()
 #else
 	void* buf[300];
 	int size;
-	char** funcs = backtrace_symbols(buf, size);
+	char** funcs;
 	int i;
 
 	jputs(__FUNCTION__);
 	size = backtrace(buf, 300);
 	jputsLong(size);
+	funcs = backtrace_symbols(buf, size);
 	for (i = 0; i < size; ++i)
 		jputs(funcs[i]);
 	free(funcs);

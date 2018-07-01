@@ -33,9 +33,14 @@ Created on 03.10.2015
 '''
 
 import os, sys
+#sys.path.remove(sys.path.insert(0, '/data/workspace/linux/CPython/Python-2.7.14/build/lib.linux-x86_64-2.7'))
+#sys.path.insert(0, '/data/workspace/linux/CPython/Python-2.7.14/build/lib.linux-x86_64-2.7')
+#sys.path.insert(0, '/data/workspace/linux/CPython/Python-2.7.15/build/lib.linux-x86_64-2.7')
+print 38, sys.path
 import ctypes
 from ctypes import *
 import platform
+print 43, sys.path
 
 isMac = platform.java_ver()[-1][0] == 'Mac OS X' or platform.mac_ver()[0] != ''
 isWin = os.name in ("nt", "ce") or os.name == 'java' and os._name in ("nt", "ce")

@@ -70,7 +70,11 @@ extern "C" {
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
+	//printf("%s %i %ld\n", __FUNCTION__, __LINE__, value);
+//	if (value && PyString_Check(value))
+//		puts(PyString_AS_STRING(value));
 //	jputs(__FUNCTION__);
+//	jputsLong(value);
 //	jputsPy(value);
 //	jPrintCStackTrace();
 //	if (traceback != NULL && !PyTraceBack_Check(traceback)) {
