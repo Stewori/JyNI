@@ -186,7 +186,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //	jputsLong(PyErr_Occurred());
 	if (peer->ob_type->tp_call) {
 		PyObject *jargs, *jkw, *jres;
-		if (Py_TYPE(peer) == &PyCFunction_Type) {
+//		if (Py_TYPE(peer) == &PyCFunction_Type) {
 //			jputsLong(((PyCFunctionObject*) peer)->m_ml);
 //			jputsLong(((PyCFunctionObject*) peer)->m_self);
 			//jputs(((PyCFunctionObject*) peer)->m_ml->ml_name);
@@ -194,7 +194,7 @@ jobject JyNI_callPyCPeer(JNIEnv *env, jclass class, jlong peerHandle, jobject ar
 //			jputs(((PyTypeObject*) peer)->tp_name);
 //		} else {
 //			jputs(Py_TYPE(peer)->tp_name);
-		}
+//		}
 		jargs = JyNI_PyObject_FromJythonPyObject(args);
 //		if (jdbg) {
 //			jputsLong(jargs);
