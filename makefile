@@ -71,6 +71,12 @@ all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
 	@echo ''
 	@echo 'Build successful.'
 
+debug: CFLAGS += -g
+debug: all
+
+tests:
+	@echo 'Tests have not been implemented yet'
+
 $(OUTPUTDIR):
 	mkdir $(OUTPUTDIR)
 
@@ -140,5 +146,5 @@ clean:
 	rm -f ./JyNI-C/src/Modules/*.o
 	rm -f ./JyNI-Loader/JyNILoader.o
 
-.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
+.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all debug tests
 
