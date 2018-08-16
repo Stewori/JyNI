@@ -74,10 +74,18 @@ all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
 debug: CFLAGS += -g
 debug: all
 
+clean:
+	rm -rf $(JYNIBIN)
+	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
+	rm -f ./JyNI-Loader/JyNILoader.o
+
 tests: build-tests run-tests
 
 build-tests:
-	@echo 'building tests is not fully supported yet, this will either not work or install the demo extension as an actuall extension'
+	@echo 'building tests is not fully supported yet, this will either not work or try to install the demo extension as an actuall extension'
 	python ./DemoExtension/setup.py install
 	
 run-tests:
@@ -121,11 +129,24 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
 endif
 
+# assume you want debug if you are just compiling one portion of the codebase
+libJyNI:  CFLAGS += -g
 libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
 	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
 
+cleanC:
+	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
+
+# assume you want debug if you are just compiling one portion of the codebase
+libJyNI-Loader:  CFLAGS += -g
 libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
+
+cleanLoader:
+	rm -f ./JyNI-Loader/JyNILoader.o
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -144,13 +165,5 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 cleanJ:
 	rm -rf $(JYNIBIN)
 
-clean:
-	rm -rf $(JYNIBIN)
-	rm -f ./JyNI-C/src/*.o
-	rm -f ./JyNI-C/src/Python/*.o
-	rm -f ./JyNI-C/src/Objects/*.o
-	rm -f ./JyNI-C/src/Modules/*.o
-	rm -f ./JyNI-Loader/JyNILoader.o
-
-.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all debug tests run-tests build-tests
+.PHONY: JyNI libJyNI libJyNI-Loader clean cleanC cleanLoader cleanJ JAVA_HOME_hint all debug tests run-tests build-tests
 
