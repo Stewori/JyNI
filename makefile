@@ -86,7 +86,7 @@ tests: build-tests run-tests
 
 # each line is in a subshell so this must be all on one line, also we don't need to cd back up at the end
 build-tests:
-	cd ./DemoExtension && python ./setup.py build || echo "" && echo "Building tests failed"
+	cd ./DemoExtension && python ./setup.py build || echo "Building tests failed"
 	
 run-tests:
 	java -Djava.library.path=./build/ -cp $(JYTHON):./build/JyNI.jar org.python.util.jython ./JyNI-Demo/src/test_all.py

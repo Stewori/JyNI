@@ -80,7 +80,7 @@ clean:
 tests: build-tests run-tests
 
 build-tests:
-	cd ./DemoExtension && python ./setup.py build || echo "" && echo "Building tests failed"
+	cd ./DemoExtension && python ./setup.py build || echo "Building tests failed"
 	
 run-tests:
 	java -Djava.library.path=./build/ -cp $(JYTHON):./build/JyNI.jar org.python.util.jython ./JyNI-Demo/src/test_all.py
