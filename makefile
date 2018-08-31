@@ -84,9 +84,9 @@ clean:
 
 tests: build-tests run-tests
 
+# each line is in a subshell so this must be all on one line, also we don't need to cd back up at the end
 build-tests:
-	@echo 'building tests is not fully supported yet, this will either not work or try to install the demo extension as an actuall extension'
-	python ./DemoExtension/setup.py install
+	cd /scratch/calum/JyNI_summer/JyNI/DemoExtension && python ./setup.py build || echo "" && echo "Building tests failed"
 	
 run-tests:
 	java -Djava.library.path=./build/ -cp $(JYTHON):./build/JyNI.jar org.python.util.jython ./JyNI-Demo/src/test_all.py
@@ -129,23 +129,26 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
 endif
 
-# assume you want debug if you are just compiling one portion of the codebase
 libJyNI:  CFLAGS += -g
 libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
 	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
 
-cleanC:
+debug-libJyNI: CFLAGS += -g
+debug-libJyNI: libJyNI
+
+clean-libJyNI:
 	rm -f ./JyNI-C/src/*.o
 	rm -f ./JyNI-C/src/Python/*.o
 	rm -f ./JyNI-C/src/Objects/*.o
 	rm -f ./JyNI-C/src/Modules/*.o
 
-# assume you want debug if you are just compiling one portion of the codebase
-libJyNI-Loader:  CFLAGS += -g
 libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
-cleanLoader:
+debug-libJyNI-Loader: CFLAGS += -g
+debug-libJyNI-Loader: libJyNI-Loader
+
+clean-libJyNI-Loader:
 	rm -f ./JyNI-Loader/JyNILoader.o
 
 $(JYNIBIN):
@@ -165,5 +168,5 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 cleanJ:
 	rm -rf $(JYNIBIN)
 
-.PHONY: JyNI libJyNI libJyNI-Loader clean cleanC cleanLoader cleanJ JAVA_HOME_hint all debug tests run-tests build-tests
+.PHONY: all debug clean libJyNI debug-libJyNI clean-libJyNI libJyNI-Loader debug-libJyNI-Loader clean-libJyNI-Loader JyNI cleanJ JAVA_HOME_hint tests run-tests build-tests
 
