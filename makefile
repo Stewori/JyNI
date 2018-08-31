@@ -86,7 +86,7 @@ tests: build-tests run-tests
 
 # each line is in a subshell so this must be all on one line, also we don't need to cd back up at the end
 build-tests:
-	cd /scratch/calum/JyNI_summer/JyNI/DemoExtension && python ./setup.py build || echo "" && echo "Building tests failed"
+	cd ./DemoExtension && python ./setup.py build || echo "" && echo "Building tests failed"
 	
 run-tests:
 	java -Djava.library.path=./build/ -cp $(JYTHON):./build/JyNI.jar org.python.util.jython ./JyNI-Demo/src/test_all.py
@@ -129,7 +129,6 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
 endif
 
-libJyNI:  CFLAGS += -g
 libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
 	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
 
