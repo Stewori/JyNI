@@ -67,15 +67,29 @@ SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcar
 OBJECTS = $(SOURCES:.c=.o)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 
-all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
+all: $(OUTPUTDIR) _libJyNI _libJyNI-Loader JyNI
 	@echo ''
 	@echo 'Build successful.'
 
 debug: CFLAGS += -g
 debug: all
 
-tests:
-	@echo 'Tests have not been implemented yet'
+clean:
+	rm -rf $(JYNIBIN)
+	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
+	rm -f ./JyNI-Loader/JyNILoader.o
+
+tests: build-tests run-tests
+
+# each line is in a subshell so this must be all on one line, also we don't need to cd back up at the end
+build-tests:
+	cd ./DemoExtension && python ./setup.py build || echo "Building tests failed"
+	
+run-tests:
+	java -Djava.library.path=./build/ -cp $(JYTHON):./build/JyNI.jar org.python.util.jython ./JyNI-Demo/src/test_all.py
 
 $(OUTPUTDIR):
 	mkdir $(OUTPUTDIR)
@@ -115,11 +129,26 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
 endif
 
-libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
+_libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
 	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
 
-libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
+libJyNI: CFLAGS += -g
+libJyNI: _libJyNI
+
+clean-libJyNI:
+	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
+
+_libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
+
+libJyNI-Loader: CFLAGS += -g
+libJyNI-Loader: _libJyNI-Loader
+
+clean-libJyNI-Loader:
+	rm -f ./JyNI-Loader/JyNILoader.o
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -138,13 +167,5 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 cleanJ:
 	rm -rf $(JYNIBIN)
 
-clean:
-	rm -rf $(JYNIBIN)
-	rm -f ./JyNI-C/src/*.o
-	rm -f ./JyNI-C/src/Python/*.o
-	rm -f ./JyNI-C/src/Objects/*.o
-	rm -f ./JyNI-C/src/Modules/*.o
-	rm -f ./JyNI-Loader/JyNILoader.o
-
-.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all debug tests
+.PHONY: all debug clean _libJyNI libJyNI clean-libJyNI _libJyNI-Loader libJyNI-Loader clean-libJyNI-Loader JyNI cleanJ JAVA_HOME_hint tests run-tests build-tests
 
