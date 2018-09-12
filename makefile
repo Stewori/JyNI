@@ -67,7 +67,7 @@ SOURCES = $(wildcard JyNI-C/src/*.c) $(wildcard JyNI-C/src/Python/*.c) $(wildcar
 OBJECTS = $(SOURCES:.c=.o)
 JSOURCES = $(wildcard JyNI-Java/src/JyNI/*.java) $(wildcard JyNI-Java/src/JyNI/gc/*.java)
 
-all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
+all: $(OUTPUTDIR) _libJyNI _libJyNI-Loader JyNI
 	@echo ''
 	@echo 'Build successful.'
 
@@ -129,11 +129,11 @@ ifeq "$(wildcard $(JAVA_HOME) )" ""
 	$(eval JAVA_HOME = $(shell $(JAVA) -jar $(JYTHON) -c "from java.lang import System; print System.getProperty('java.home')[:-4]"))
 endif
 
-libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
+_libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
 	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.so
 
-debug-libJyNI: CFLAGS += -g
-debug-libJyNI: libJyNI
+libJyNI: CFLAGS += -g
+libJyNI: _libJyNI
 
 clean-libJyNI:
 	rm -f ./JyNI-C/src/*.o
@@ -141,11 +141,11 @@ clean-libJyNI:
 	rm -f ./JyNI-C/src/Objects/*.o
 	rm -f ./JyNI-C/src/Modules/*.o
 
-libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
+_libJyNI-Loader: $(JAVA_HOME) JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.so
 
-debug-libJyNI-Loader: CFLAGS += -g
-debug-libJyNI-Loader: libJyNI-Loader
+libJyNI-Loader: CFLAGS += -g
+libJyNI-Loader: _libJyNI-Loader
 
 clean-libJyNI-Loader:
 	rm -f ./JyNI-Loader/JyNILoader.o
@@ -167,5 +167,5 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 cleanJ:
 	rm -rf $(JYNIBIN)
 
-.PHONY: all debug clean libJyNI debug-libJyNI clean-libJyNI libJyNI-Loader debug-libJyNI-Loader clean-libJyNI-Loader JyNI cleanJ JAVA_HOME_hint tests run-tests build-tests
+.PHONY: all debug clean _libJyNI libJyNI clean-libJyNI _libJyNI-Loader libJyNI-Loader clean-libJyNI-Loader JyNI cleanJ JAVA_HOME_hint tests run-tests build-tests
 
