@@ -1,8 +1,8 @@
 # JyNI – Jython Native Interface
 
-If not yet done, make sure to visit our project homepage at [www.jyni.org](http://www.jyni.org).
+If not yet done, make sure to visit our project homepage at [jyni.12hp.de](http://jyni.12hp.de).
 
-![JyNI Logo](http://www.jyni.org/_static/JyNILogoShadow_s.png)
+![JyNI Logo](http://jyni.12hp.de/_static/JyNILogoShadow_s.png)
 
 
 ## Table of contents
@@ -441,5 +441,5 @@ For convenience, a copy of the current section is provided in the file
 
 ## 10. Contact
 
-Please use the contact information provided on [www.jyni.org/#contact](http://www.jyni.org/#contact).
+Please use the contact information provided on [jyni.12hp.de/#contact](http://jyni.12hp.de/#contact).
 
