@@ -66,6 +66,25 @@ all: $(OUTPUTDIR) libJyNI libJyNI-Loader JyNI
 	@echo ''
 	@echo 'Build successful.'
 
+debug: CFLAGS += -g
+debug: all
+
+clean:
+	rm -rf $(JYNIBIN)
+	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
+	rm -f ./JyNI-Loader/JyNILoader.o
+
+tests: build-tests run-tests
+
+build-tests:
+	cd ./DemoExtension && python ./setup.py build || echo "Building tests failed"
+	
+run-tests:
+	java -Djava.library.path=./build/ -cp $(JYTHON):./build/JyNI.jar org.python.util.jython ./JyNI-Demo/src/test_all.py
+
 $(OUTPUTDIR):
 	mkdir $(OUTPUTDIR)
 
@@ -107,8 +126,23 @@ endif
 libJyNI: $(JAVA_HOME) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o
 	$(CC) $(LDFLAGS) $(OBJECTS) JyNI-C/src/Python/dynload_shlib.o -o $(OUTPUTDIR)/libJyNI.dylib
 
+debug-libJyNI: CFLAGS += -g
+debug-libJyNI: libJyNI
+
+clean-libJyNI:
+	rm -f ./JyNI-C/src/*.o
+	rm -f ./JyNI-C/src/Python/*.o
+	rm -f ./JyNI-C/src/Objects/*.o
+	rm -f ./JyNI-C/src/Modules/*.o
+
 libJyNI-Loader: $(JAVA_HOME) ./JyNI-Loader/JyNILoader.o
 	$(CC) $(LDFLAGS) ./JyNI-Loader/JyNILoader.o -o $(OUTPUTDIR)/libJyNI-Loader.dylib
+
+debug-libJyNI-Loader: CFLAGS += -g
+debug-libJyNI-Loader: libJyNI-Loader
+
+clean-libJyNI-Loader:
+	rm -f ./JyNI-Loader/JyNILoader.o
 
 $(JYNIBIN):
 	mkdir $(JYNIBIN)
@@ -127,13 +161,5 @@ JyNI: $(JYTHON) $(JYNIBIN)/JyNI $(JYNIBIN)/Lib
 cleanJ:
 	rm -rf $(JYNIBIN)
 
-clean:
-	rm -rf $(JYNIBIN)
-	rm -f ./JyNI-C/src/*.o
-	rm -f ./JyNI-C/src/Python/*.o
-	rm -f ./JyNI-C/src/Objects/*.o
-	rm -f ./JyNI-C/src/Modules/*.o
-	rm -f ./JyNI-Loader/JyNILoader.o
-
-.PHONY: JyNI libJyNI libJyNI-Loader clean cleanJ JAVA_HOME_hint all
+.PHONY: all debug clean libJyNI debug-libJyNI clean-libJyNI libJyNI-Loader debug-libJyNI-Loader clean-libJyNI-Loader JyNI cleanJ JAVA_HOME_hint tests run-tests build-tests
 
